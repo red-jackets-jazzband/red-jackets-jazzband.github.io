@@ -36,7 +36,7 @@ function parse_songlist(data) {
 }
 
 function loadSongs() {
-    readFile('/songs/_index_of_songs.txt', parse_songlist)
+    readFile('_index_of_songs.txt', parse_songlist)
 }
 
 window[ addEventListener ? 'addEventListener' : 'attachEvent' ]( addEventListener ? 'load' : 'onload', loadSongs )
