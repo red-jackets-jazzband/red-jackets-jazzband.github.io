@@ -424,9 +424,11 @@ video.video {
     position: relative;
     left: 50%;
     transform: translate(-50%, 0%);
+    table-layout: fixed; 
 }
 #chordtable > table, td {
     border-width: 1px;
     border-style: solid;
     border-color: #000000;
 }
+
