@@ -1,14 +1,30 @@
+var current_song = null
+var transpose_halfsteps = 0
+
 function renderSong(path)
 {
     readFile(path, renderAbcFile)
 }
 
-function renderAbcFile(text)
+function rerenderFile()
 {
-    var song = string_to_abc_tune(text)
+    var transposeInput = document.getElementById("transpose");
+
+    if(window.current_song !== undefined)
+        renderAbcFile(window.current_song, transposeInput.valueAsNumber)    
+}
+
+function renderAbcFile(text, transpose_steps)
+{
+    if (transpose_steps === undefined) {
+      transpose_steps = 0;
+    }
+    window.current_song = text
+    var song = string_to_abc_tune(text, transpose_steps)
     var chords = parse_chord_scheme(song)
 
-    ABCJS.renderAbc('notation', text, { responsive: "resize",
+    var abcParams = { visualTranspose: transpose_steps,
+	                                responsive: "resize",
 	                                add_classes: true,
                                         format: {
 					     headerfont: "MuseJazzText", 
@@ -20,7 +36,9 @@ function renderAbcFile(text)
 					     headerfont: "MuseJazzText",
 					     tempofont: "MuseJazzText"
 					}
-				      } );
+				      } ;
+
+    ABCJS.renderAbc('notation', text, abcParams);
 
     document.getElementById("notation").querySelectorAll(".abcjs-title").forEach((el) => {
         el.setAttribute("display", "none");
@@ -66,8 +84,8 @@ function parse_songlist(data) {
 }
 
 
-function string_to_abc_tune(text) {
-    var tunes = ABCJS.parseOnly(text);
+function string_to_abc_tune(text, transpose_steps) {
+    var tunes = ABCJS.parseOnly(text, {visualTranspose:transpose_steps});
     return tunes[0]
 }
 
