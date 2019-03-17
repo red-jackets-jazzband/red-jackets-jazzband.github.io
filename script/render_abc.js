@@ -3,6 +3,7 @@ var transpose_halfsteps = 0
 
 function renderSong(path)
 {
+    document.getElementById("transpose").value = 0;
     readFile(path, renderAbcFile)
 }
 
