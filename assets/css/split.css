@@ -449,6 +449,7 @@ video.video {
     border-color: #000000;
 }
 #sheetmenu{
+    text-align:center;
     background-color:#111111;
     color:#eeeeee;
     font-size: small;
