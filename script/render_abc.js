@@ -7,7 +7,9 @@ function renderAbcFile(text)
 {
     var song = string_to_abc_tune(text)
     var chords = parse_chord_scheme(song)
+
     ABCJS.renderAbc('notation', text, { responsive: "resize",
+	                                add_classes: true,
                                         format: {
 					     headerfont: "MuseJazzText", 
 					     gchordfont: "MuseJazzText", 
@@ -20,7 +22,15 @@ function renderAbcFile(text)
 					}
 				      } );
 
+    document.getElementById("notation").querySelectorAll(".abcjs-title").forEach((el) => {
+        el.setAttribute("display", "none");
+    });
+
     create_chord_table(chords);
+
+    var chordtable = document.getElementById("songtitle");
+    chordtable.innerHTML = song.metaText.title;
+
 }
 
 function readFile(file, callback)
