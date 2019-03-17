@@ -61,7 +61,7 @@ function parse_songlist(data) {
         var song_name = songs[i].split(",")[0];
         var song_path = songs[i].split(",")[1];
 
-        div.innerHTML += "<a href=\"#\" onclick=\"renderSong('" + song_path + "')\" >" + song_name +"</a> | "
+        div.innerHTML += "<a href=\"#songtitle\" onclick=\"renderSong('" + song_path + "')\" >" + song_name +"</a> | "
     }
 }
 
@@ -94,7 +94,6 @@ function parse_chord_scheme(song) {
     var chords = [];
     var current_measure = [];
 
-    var parsed_first_bar = false;
     var parsed_valid_chord = false;
     var did_not_parse_chord_in_this_measure = true;
 
@@ -108,7 +107,7 @@ function parse_chord_scheme(song) {
 
             if (element.el_type === "bar") {
 
-                if (did_not_parse_chord_in_this_measure && parsed_first_bar) {
+                if (did_not_parse_chord_in_this_measure && parsed_valid_chord) {
                     current_measure.push(" % ");
                 }
 
@@ -118,7 +117,6 @@ function parse_chord_scheme(song) {
                 }
 
                 did_not_parse_chord_in_this_measure = true;
-                parsed_first_bar = true;
             }
 
             if (element.chord !== undefined) {
