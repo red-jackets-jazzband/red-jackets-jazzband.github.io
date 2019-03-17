@@ -11,7 +11,8 @@ function renderAbcFile(text)
                                         format: {
 					     vocalfont: "MuseJazzText", 
 					     headerfont: "MuseJazzText"
-					} );
+					}
+				      } );
 
     create_chord_table(chords);
 }
