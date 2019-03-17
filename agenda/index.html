@@ -63,7 +63,7 @@
         
         <div class="split-intro">
   <h1>Red Jackets Jazzband</h1>
-  <span class="tagline">Agenda</span>
+  <span class="tagline">Shows. Places. Times.</span>
 </div>
 
 
@@ -71,31 +71,53 @@
         
           
           <div class="split-bio">
-  <table>
-<thead>
-<tr>
-<th align="left"><strong>When</strong></th>
-<th align="left"><strong>Where</strong></th>
-</tr>
-</thead>
+  <script type="text/javascript">
+function readFile(file, callback)
+{
+    var f = new XMLHttpRequest();
+    f.open("GET", file, false);
+    f.onreadystatechange = function ()
+    {
+        if(f.readyState === 4)
+        {
+            if(f.status === 200 || f.status == 0)
+            {
+                var res= f.responseText;
+                callback(res);
+            }
+        }
+    }
+    f.send(null);
+}
 
-<tbody>
-<tr>
-<td align="left">03/11/2018</td>
-<td align="left">Heerlen Jazzt</td>
-</tr>
+function parse_showlist(data) {
+    var shows = data.split('\n');
+    var number_of_shows = shows.length - 1;
 
-<tr>
-<td align="left">27/10/2018</td>
-<td align="left">Jazz &amp; So</td>
-</tr>
+    var table = document.getElementById("showTable");
 
-<tr>
-<td align="left">15/09/2018</td>
-<td align="left">Jazz by the Sea</td>
-</tr>
-</tbody>
-</table>
+    for (var i = 0; i < number_of_shows; i++) {
+        var show_date = shows[i].split(",")[0];
+        var show_name = shows[i].split(",")[1];
+
+        var row = table.insertRow(-1);
+        var cell = row.insertCell(-1);
+    cell.innerHTML = show_date
+        var cell = row.insertCell(-1);
+        cell.innerHTML = show_name
+    }
+}
+
+function loadShows() {
+    readFile('shows.txt', parse_showlist) 
+}
+
+window[ addEventListener ? 'addEventListener' : 'attachEvent' ]( addEventListener ? 'load' : 'onload', loadShows )
+
+</script>
+
+<table id="showTable" style="width:100%;">
+</table> 
 
 </div>
 

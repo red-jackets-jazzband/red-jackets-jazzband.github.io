@@ -454,3 +454,11 @@ video.video {
     color:#eeeeee;
     font-size: small;
 }
+
+#showTable > table, td {
+    border: none;
+    text-align:center;
+    color:#eeeeee;
+    font-size: x-large;
+}
+
