@@ -443,7 +443,7 @@ video.video {
     transform: translate(-50%, 0%);
     table-layout: fixed; 
 }
-#chordtable > table, td {
+#chordtable > table {
     border-width: 1px;
     border-style: solid;
     border-color: #000000;
@@ -455,7 +455,7 @@ video.video {
     font-size: small;
 }
 
-#showTable > table, td {
+#showTable > table, #showTable > td {
     border: none;
     text-align:center;
     color:#eeeeee;

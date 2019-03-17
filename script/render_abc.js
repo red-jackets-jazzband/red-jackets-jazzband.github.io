@@ -172,6 +172,9 @@ function create_chord_table(chords) {
 	    if(chord_idx < chords.length) {
                 var cell = row.insertCell(-1);
                 cell.innerHTML = chords[chord_idx];
+                cell.style.borderWidth = "1px";
+                cell.style.borderStyle = "solid";
+                cell.style.borderColor = "#000000";
 	    }
         }
     }
