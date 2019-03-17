@@ -412,12 +412,20 @@ video.video {
   height: 100%;
 }
 
+@font-face {
+  font-family: 'MuseJazzText';
+  src: url('/fonts/MuseJazzText.woff') format('woff'), /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+   url('/fonts/MuseJazzText.ttf') format('truetype'); /* Chrome 4+, Firefox 3.5, Opera 10+, Safari 3—5 */
+}  
+
 #chordtable{
     background-color:#ffffee;
     color:#000000;
+    font-family:'MuseJazzText';
 }
 
 #chordtable > table {
+    padding: 10px;
     width: 90%;
     text-align: center;
     margin: 10;
@@ -431,4 +439,3 @@ video.video {
     border-style: solid;
     border-color: #000000;
 }
-

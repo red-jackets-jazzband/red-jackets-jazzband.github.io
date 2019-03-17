@@ -7,7 +7,11 @@ function renderAbcFile(text)
 {
     var song = string_to_abc_tune(text)
     var chords = parse_chord_scheme(song)
-    ABCJS.renderAbc('notation', text, { responsive: "resize" } );
+    ABCJS.renderAbc('notation', text, { responsive: "resize",
+                                        format: {
+					     vocalfont: "MuseJazzText"
+					     headerfont: "MuseJazzText"
+					} );
 
     create_chord_table(chords);
 }
