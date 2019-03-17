@@ -9,8 +9,14 @@ function renderAbcFile(text)
     var chords = parse_chord_scheme(song)
     ABCJS.renderAbc('notation', text, { responsive: "resize",
                                         format: {
+					     headerfont: "MuseJazzText", 
+					     gchordfont: "MuseJazzText", 
+					     infofont: "MuseJazzText", 
+					     composerfont: "MuseJazzText", 
+					     titlefont: "MuseJazzText 18 bold", 
 					     vocalfont: "MuseJazzText", 
-					     headerfont: "MuseJazzText"
+					     headerfont: "MuseJazzText",
+					     tempofont: "MuseJazzText"
 					}
 				      } );
 
