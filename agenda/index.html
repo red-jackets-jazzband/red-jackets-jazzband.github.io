@@ -99,12 +99,19 @@ function parse_showlist(data) {
     for (var i = 0; i < number_of_shows; i++) {
         var show_date = shows[i].split(",")[0];
         var show_name = shows[i].split(",")[1];
+        var show_loc = shows[i].split(",")[2];
 
         var row = table.insertRow(-1);
         var cell = row.insertCell(-1);
     cell.innerHTML = show_date
+    cell.style.fontWeight = "bold";
         var cell = row.insertCell(-1);
         cell.innerHTML = show_name
+    cell.style.fontWeight = "bold";
+        var row = table.insertRow(-1);
+        row.insertCell(-1);
+        var cell = row.insertCell(-1);
+        cell.innerHTML = show_loc
     }
 }
 

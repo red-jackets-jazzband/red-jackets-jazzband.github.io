@@ -1,3 +1,38 @@
-03/11/2018,Heerlen Jazzt
-27/10/2018,Jazz & So
-15/09/2018,Jazz by the Sea
+03/11/2018,Heerlen Jazzt,Heerlen
+27/10/2018,Jazz & So,Zuthpen
+15/09/2018,Jazz by the Sea,Oostkapelle
+09/09/2018,Oirschot Jazzfestival,Oirschot
+16/06/2018,ZeelandJazz 2018,Middelburg
+09/06/2018,Celler Streetparade,Celle (DE)
+26/05/2018,JazzBoz 2018,Bergen op Zoom
+19/05/2018,Emma's JazzBoz,Bergen op Zoom
+11/05/2018,Breda Jazz Festival,Breda
+21/04/2018,Jazzfestival Gorinchem,Gorinchem
+02/07/2017,Concordia at Sea,Bergen op Zoom
+23-25/06/2017,Quedlinburg Swingt,Quedlinburg (DE)
+17/06/2017,ZeelandJazz 2017,Middelburg
+10/06/2017,JazzBoz 2017,Bergen op Zoom
+26/05/2017,Breda Jazz Festival,Breda
+18/06/2016,ZeelandJazz 2016,Middelburg
+28/05/2016,Vaals,Vaals
+21/05/2016,JazzBoz 2016,Bergen op Zoom
+08/05/2016,Jazzfest Gronau,Gronau (DE)
+06/05/2015,Breda Jazz Festival,Breda
+13/06/2015,Celler Streetparade,Celle (DE)
+31/05/2015,Jazz in the Woods,Apeldoorn
+30/05/2015,JazzBoz 2015,Bergen op Zoom
+17/05/2015,Breda Jazz Festival,Breda
+14/05/2015,Breda Jazz Festival,Breda
+20/09/2014,Jazz by the Sea,Domburg
+06/07/2014,Vaals,Vaals
+07/06/2014,JazzBoz,Bergen op Zoom
+01/06/2014,Breda Jazz Festival,Breda
+31/05/2014,Breda Jazz Festival,Breda
+26/04/2014,Koningsdag - Grote markt,Bergen op Zoom
+02/11/2013,Heerlen Jazzt,Heerlen
+26/05/2013,ScheldeJazz,Terneuzen
+20/04/2013,Jazzfestival Gorinchem,Gorinchem
+09/09/2012,Gouden steprace,Wouw
+01/06/2012,JazzBoz 2012,Bergen op Zoom
+13/05/2012,Muziek op 't Ravelijn,Bergen op Zoom
+20/08/2011,Mosselfeesten,Middelburg
