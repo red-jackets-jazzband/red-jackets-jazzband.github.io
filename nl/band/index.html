@@ -78,7 +78,7 @@ if (!doNotTrack) {
         
         <div class="split-intro">    
   <div ><h1> <a href="/"><image src="/images/Home_Icon.svg" height=19px></a> <a href="/">en</a> | <a href="/nl">nl</a> | <a href="/de">de</a></h1></div>
-  <span class="tagline">Agenda</span> 
+  <span class="tagline">Band</span> 
 </div>
 
 
@@ -86,60 +86,26 @@ if (!doNotTrack) {
         
           
           <div class="split-bio">
-  <script type="text/javascript">
-function readFile(file, callback)
-{
-    var f = new XMLHttpRequest();
-    f.open("GET", file, false);
-    f.onreadystatechange = function ()
-    {
-        if(f.readyState === 4)
-        {
-            if(f.status === 200 || f.status == 0)
-            {
-                var res= f.responseText;
-                callback(res);
-            }
-        }
-    }
-    f.send(null);
-}
+  
 
-function parse_showlist(data) {
-    var shows = data.split('\n');
-    var number_of_shows = shows.length - 1;
+<h1 id="biografie">Biografie</h1>
 
-    var table = document.getElementById("showTable");
+<p>Gestart in 2009, verspreiden we na tien jaar nog steeds de vreugde van traditionele jazzmuziek en gerelateerde muziekstijlen. We hebben veel festivals in Nederland en het buitenland gezien en kijken uit naar nieuwe kansen.</p>
 
-    for (var i = 0; i < number_of_shows; i++) {
-        var show_date = shows[i].split(",")[0];
-        var show_name = shows[i].split(",")[1];
-        var show_loc = shows[i].split(",")[2];
+<h1 id="leden">Leden</h1>
 
-        var row = table.insertRow(-1);
-        var cell = row.insertCell(-1);
-    cell.innerHTML = show_date
-    cell.style.fontWeight = "bold";
-        var cell = row.insertCell(-1);
-        cell.innerHTML = show_name
-    cell.style.fontWeight = "bold";
-        var row = table.insertRow(-1);
-        row.insertCell(-1);
-        var cell = row.insertCell(-1);
-        cell.innerHTML = show_loc
-    }
-}
-
-function loadShows() {
-    readFile('shows.txt', parse_showlist) 
-}
-
-window[ addEventListener ? 'addEventListener' : 'attachEvent' ]( addEventListener ? 'load' : 'onload', loadShows )
-
-</script>
-
-<table id="showTable" style="width:100%;">
-</table> 
+<ul>
+<li><strong>Trompet &amp; Zang</strong> - Winfried Thiemessen</li>
+<li><strong>Trompet</strong> - Martien de Nijs</li>
+<li><strong>Trombone</strong> - Tom Senders</li>
+<li><strong>Saxofoon</strong> - Richard Kieboom</li>
+<li><strong>Klarinet</strong> - Johan Luijks</li>
+<li><strong>Sousafoon</strong> - Ben Spoor</li>
+<li><strong>Banjo</strong> - Wilfried van Weesenbeecke</li>
+<li><strong>Wasbord</strong> - Peter Maas</li>
+<li><strong>Snaredrum</strong> - Werner Schoutens</li>
+<li><strong>Bass Drum</strong> - Wouter Suykerbuik</li>
+</ul>
 
 </div>
 
