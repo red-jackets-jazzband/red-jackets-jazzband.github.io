@@ -99,6 +99,7 @@ a:hover {
 }
 
 /* -- Content -- */
+@media screen {
 @keyframes fadein {
   from {
     opacity: 0;
@@ -412,6 +413,8 @@ video.video {
   height: 100%;
 }
 
+}
+
 @font-face {
   font-family: 'MuseJazzText';
   src: url('/fonts/MuseJazzText.woff') format('woff'), /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
@@ -419,13 +422,13 @@ video.video {
 }  
 
 #chordtable{
-    background-color:#ffffee;
+    background-color:#ffffff;
     color:#000000;
     font-family:'MuseJazzText';
 }
 
 #songtitle{
-    background-color:#ffffee;
+    background-color:#ffffff;
     color:#000000;
     font-family:'MuseJazzText';
     text-align: center;
@@ -449,10 +452,19 @@ video.video {
     border-color: #000000;
 }
 #sheetmenu{
+    font-family:"Montserrat", sans-serif;
     text-align:center;
-    background-color:#111111;
-    color:#eeeeee;
+    background-color:#222222;
     font-size: small;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #e29d0f;
+}
+#sheetmenu > a {
+  color: #e29d0f;
+}
+#notation {
+  background:#ffffff;
 }
 
 #showTable > table, #showTable > td {
@@ -462,3 +474,48 @@ video.video {
     font-size: x-large;
 }
 
+#printLogo {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 15%;
+  -webkit-filter: grayscale(100%);
+  -moz-filter: grayscale(100%);
+    -o-filter: grayscale(100%);
+   -ms-filter: grayscale(100%);
+       filter: grayscale(100%); 
+}
+
+#songPrintFooter {
+  text-align:center;
+  color:#000000;
+  position: fixed;
+  bottom: 0;
+  left: 0; 
+  right: 0; 
+  margin-left: auto; 
+  margin-right: auto; 
+}
+
+@media print {
+  #chordtable > table {
+    font-size: xx-large;
+  }
+}
+
+@media print {
+  .hideOnprint {
+      display: none !important;
+  }
+  .hideOnScreen {
+      display: block;
+  }
+}
+@media screen {
+  .hideOnprint {
+      display: block;
+  }
+  .hideOnScreen {
+      display: none !important;  
+  }
+}

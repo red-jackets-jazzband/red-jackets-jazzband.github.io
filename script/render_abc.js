@@ -80,7 +80,7 @@ function parse_songlist(data) {
         var song_name = songs[i].split(",")[0];
         var song_path = songs[i].split(",")[1];
 
-        div.innerHTML += "<a href=\"#songtitle\" onclick=\"renderSong('" + song_path + "')\" >" + song_name +"</a> | "
+        div.innerHTML += "<a href=\"#sheetmenu\" onclick=\"renderSong('" + song_path + "')\" >" + song_name +"</a> | "
     }
 }
 
