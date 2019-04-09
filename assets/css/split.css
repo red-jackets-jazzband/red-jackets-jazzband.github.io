@@ -467,13 +467,6 @@ video.video {
   background:#ffffff;
 }
 
-#showTable > table, #showTable > td {
-    border: none;
-    text-align:center;
-    color:#eeeeee;
-    font-size: x-large;
-}
-
 #printLogo {
   display: block;
   margin-left: auto;
