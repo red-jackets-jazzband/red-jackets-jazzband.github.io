@@ -2,6 +2,7 @@ Bourbon Street Parade,bourbon_street_parade.abc
 Glory Halleluja,glory_halleluja.abc
 Doctor Jazz,doctor_jazz.abc
 Just a closer walk with thee,closer_walk.abc
+Just a little talk with Jesus,little_talk.abc
 Mercedes Benz,mercedes_benz.abc
 Oh when the Saints,oh_when_the_saints.abc
 Second line Limbo,limbo_rock.abc
