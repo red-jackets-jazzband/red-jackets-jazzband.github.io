@@ -490,6 +490,10 @@ video.video {
   margin-right: auto; 
 }
 
+.upcomingShow {
+  color: #cccccc;
+}
+
 @media print {
   #chordtable > table {
     font-size: xx-large;
