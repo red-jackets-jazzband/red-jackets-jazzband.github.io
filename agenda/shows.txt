@@ -2,7 +2,7 @@
 2019/09/21,Jazz by the Sea,Domburg
 2019/08/25,Jazzfestival Oirschot,Oirschot
 2019/06/15,JazzBoz 2019,Bergen op Zoom
-2019/05/25,Brussels Jazz Weekend 2019,Brussel(BE)
+2019/05/25,Brussels Jazz Weekend 2019,Brussel (BE)
 2019/05/03-4,Jazzfest Gronau,Gronau (DE)
 2018/11/03,Heerlen Jazzt,Heerlen
 2018/10/27,Jazz & So,Zuthpen
