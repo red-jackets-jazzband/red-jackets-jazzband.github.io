@@ -1,45 +1,54 @@
-var current_song = null
-var transpose_halfsteps = 0
+"use strict";
+
+var current_song = null;
+var transpose_halfsteps = 0;
 
 function renderSong(path)
 {
     document.getElementById("transpose").value = 0;
-    readFile(path, renderAbcFile)
+    readFile(path, renderAbcFile);
 }
 
 function rerenderFile()
 {
     var transposeInput = document.getElementById("transpose");
 
-    if(window.current_song !== undefined)
-        renderAbcFile(window.current_song, transposeInput.valueAsNumber)    
+    if(window.current_song !== undefined) {
+        renderAbcFile(window.current_song, transposeInput.valueAsNumber);
+    }
 }
 
+/*
+   Funcion: renderAbcFile
+   Render a song from a abc text
+   Parameters:
+       text - String containing (valid) abc file
+       transpose_steps - Number of halfsteps to transpose
+*/
 function renderAbcFile(text, transpose_steps)
 {
     if (transpose_steps === undefined) {
       transpose_steps = 0;
     }
-    window.current_song = text
-    var song = string_to_abc_tune(text, transpose_steps)
-    var chords = parse_chord_scheme(song)
+    window.current_song = text;
+    var song = string_to_abc_tune(text, transpose_steps);
+    var chords = parse_chord_scheme(song);
 
     var abcParams = { visualTranspose: transpose_steps,
                                     responsive: "resize",
                                     paddingTop: 0,
                                     paddingBottom: 0,
-	                                add_classes: true,
+                                    add_classes: true,
                                         format: {
-					     headerfont: "MuseJazzText", 
-					     gchordfont: "MuseJazzText", 
-					     infofont: "MuseJazzText", 
-					     composerfont: "MuseJazzText", 
-					     titlefont: "MuseJazzText 18 bold", 
-					     vocalfont: "MuseJazzText", 
-					     headerfont: "MuseJazzText",
-					     tempofont: "MuseJazzText"
-					}
-				      } ;
+                         headerfont: "MuseJazzText",
+                         gchordfont: "MuseJazzText",
+                         infofont: "MuseJazzText",
+                         composerfont: "MuseJazzText",
+                         titlefont: "MuseJazzText 18 bold",
+                         vocalfont: "MuseJazzText",
+                         tempofont: "MuseJazzText"
+                    }
+                      } ;
 
     ABCJS.renderAbc('notation', text, abcParams);
 
@@ -51,9 +60,15 @@ function renderAbcFile(text, transpose_steps)
 
     var chordtable = document.getElementById("songtitle");
     chordtable.innerHTML = song.metaText.title;
-
 }
 
+/*
+   Funcion: readFile
+   Read a file from an address
+   Parameters:
+       file - Path to file to read
+       callback - Function to call with data if loaded succesfully
+*/
 function readFile(file, callback)
 {
     var f = new XMLHttpRequest();
@@ -68,28 +83,41 @@ function readFile(file, callback)
                 callback(res);
             }
         }
-    }
+    };
     f.send(null);
 }
 
+/*
+   Funcion: parse_songlist
+   Read index_of_songs.txt and parse each line
+   Parameters:
+       data - A string containing index_of_songs.txt
+*/
 function parse_songlist(data) {
     var songs = data.split('\n');
-    var number_of_songs = songs.length - 1;
+    songs.forEach (create_song_link);
+}
 
+/*
+   Funcion: create_song_link
+   From a entry in index_of_songs.txt parse the fields and add link to page
+   Parameters:
+       song - A string containing line from index_of_songs.txt
+*/
+function create_song_link(song) {
     var div = document.getElementById('songslist');
+    var song_name = song.split(",")[0];
+    var song_path = song.split(",")[1];
+    var song_title = song_path? song_path.split(".")[0] : "";
 
-    for (var i = 0; i < number_of_songs; i++) {
-        var song_name = songs[i].split(",")[0];
-        var song_path = songs[i].split(",")[1];
-
-        div.innerHTML += "<a href=\"#s=" + song_path.split(".")[0] + "\" onclick=\"renderSong('" + song_path + "')\" >" + song_name +"</a> | "
+    if(song_title != "") {
+        div.innerHTML += "<a href=\"#s=" + song_title + "\" onclick=\"renderSong('" + song_path + "')\" >" + song_name +"</a> | ";
     }
 }
 
-
 function string_to_abc_tune(text, transpose_steps) {
     var tunes = ABCJS.parseOnly(text, {visualTranspose:transpose_steps});
-    return tunes[0]
+    return tunes[0];
 }
 
 /*
@@ -103,7 +131,7 @@ function string_to_abc_tune(text, transpose_steps) {
 function replace_accidental_with_utf8_char(note) {
         return note.replace("b ", "♭")
                    .replace("#", "♯");
-    };
+    }
 
 /*
    Funcion: parse_chord_scheme
@@ -118,11 +146,11 @@ function parse_chord_scheme(song) {
     var parsed_valid_chord = false;
     var did_not_parse_chord_in_this_measure = true;
 
-    for (var i = 0; i < song.lines.length; i++) {
+    for (var i = 0; i < song.lines.length; i+=1) {
 
         var line = song.lines[i].staff[0].voices[0];
 
-        for (var line_idx = 0; line_idx < line.length; line_idx++) {
+        for (var line_idx = 0; line_idx < line.length; line_idx+=1) {
 
             var element = line[line_idx];
 
@@ -156,7 +184,12 @@ function parse_chord_scheme(song) {
     return chords;
 }
 
-
+/*
+   Funcion: create_chord_table
+   Create a table from a list of chords
+   Returns:
+       chords - A list of lists with the chords per measure
+*/
 function create_chord_table(chords) {
     var table = document.createElement("TABLE");
     table.border = "1";
@@ -168,16 +201,16 @@ function create_chord_table(chords) {
     var rows = Math.ceil(chords.length / cols);
 
     for (var y = 0; y < rows; y++) {
-        row = table.insertRow(-1);
+        var row = table.insertRow(-1);
         for (var x = 0; x < cols; x++) {
             var chord_idx = x + y * cols;
-	    if(chord_idx < chords.length) {
+        if(chord_idx < chords.length) {
                 var cell = row.insertCell(-1);
                 cell.innerHTML = chords[chord_idx];
                 cell.style.borderWidth = "1px";
                 cell.style.borderStyle = "solid";
                 cell.style.borderColor = "#000000";
-	    }
+        }
         }
     }
 
@@ -186,6 +219,12 @@ function create_chord_table(chords) {
     chordtable.appendChild(table);
 }
 
+/*
+   Funcion: parse_song_from_hash
+   Parse which song os the currently selected song and render that (usefull for sharing)
+   Returns:
+       hash - Hash of the window.location
+*/
 function parse_song_from_hash(hash) {
     const hash2Obj = hash.split("#")[1].split("&")
                          .map(v => v.split("="))
@@ -199,7 +238,7 @@ function loadSongs() {
 
     if(window.location.hash) {
         parse_song_from_hash(window.location.hash)
-    } 
+    }
 }
 
 window[ addEventListener ? 'addEventListener' : 'attachEvent' ]( addEventListener ? 'load' : 'onload', loadSongs )
