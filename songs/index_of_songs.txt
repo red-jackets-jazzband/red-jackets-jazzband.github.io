@@ -1,6 +1,7 @@
 Bourbon Street Parade,bourbon_street_parade.abc
 Glory Halleluja,glory_halleluja.abc
 Doctor Jazz,doctor_jazz.abc
+Jambalaya,jambalaya.abc
 Just a closer walk with thee,closer_walk.abc
 Just a little talk with Jesus,little_talk.abc
 Mercedes Benz,mercedes_benz.abc
