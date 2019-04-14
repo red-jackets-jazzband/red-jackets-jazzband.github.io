@@ -227,16 +227,16 @@ function parse_song_from_hash(hash) {
                          .map(v => v.split("="))
                          .reduce( (pre, [key, value]) => ({ ...pre, [key]: value }), {} );
 
-    renderSong(hash2Obj["s"] + ".abc")
+    renderSong(hash2Obj["s"] + ".abc");
 }
 
 function loadSongs() {
-    readFile('index_of_songs.txt', parse_songlist)
+    readFile('index_of_songs.txt', parse_songlist);
 
     if(window.location.hash) {
-        parse_song_from_hash(window.location.hash)
+        parse_song_from_hash(window.location.hash);
     }
 }
 
-window[ addEventListener ? 'addEventListener' : 'attachEvent' ]( addEventListener ? 'load' : 'onload', loadSongs )
+window[ addEventListener ? 'addEventListener' : 'attachEvent' ]( addEventListener ? 'load' : 'onload', loadSongs );
 
