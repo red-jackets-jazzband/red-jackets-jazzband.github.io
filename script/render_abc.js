@@ -52,14 +52,16 @@ function renderAbcFile(text, transpose_steps)
 
     ABCJS.renderAbc('notation', text, abcParams);
 
+    /* Hide title below chord table */
     document.getElementById("notation").querySelectorAll(".abcjs-title").forEach((el) => {
         el.setAttribute("display", "none");
     });
 
     create_chord_table(chords);
 
-    var chordtable = document.getElementById("songtitle");
-    chordtable.innerHTML = song.metaText.title;
+    /* Add own title, above chordTable */
+    var songtitle = document.getElementById("songtitle");
+    songtitle.innerHTML = song.metaText.title;
 }
 
 /*
@@ -73,14 +75,10 @@ function readFile(file, callback)
 {
     var f = new XMLHttpRequest();
     f.open("GET", file, false);
-    f.onreadystatechange = function ()
-    {
-        if(f.readyState === 4)
-        {
-            if(f.status === 200 || f.status == 0)
-            {
-                var res= f.responseText;
-                callback(res);
+    f.onreadystatechange = function () {
+        if(f.readyState === 4) {
+            if(f.status === 200 || f.status === 0) {
+                callback(f.responseText);
             }
         }
     };
@@ -105,12 +103,13 @@ function parse_songlist(data) {
        song - A string containing line from index_of_songs.txt
 */
 function create_song_link(song) {
-    var div = document.getElementById('songslist');
-    var song_name = song.split(",")[0];
-    var song_path = song.split(",")[1];
+    var song_parts = song.split(",");
+    var song_name = song_parts[0];
+    var song_path = song_parts[1];
     var song_title = song_path? song_path.split(".")[0] : "";
 
     if(song_title != "") {
+        var div = document.getElementById('songslist');
         div.innerHTML += "<a href=\"#s=" + song_title + "\" onclick=\"renderSong('" + song_path + "')\" >" + song_name +"</a> | ";
     }
 }
@@ -204,13 +203,11 @@ function create_chord_table(chords) {
         var row = table.insertRow(-1);
         for (var x = 0; x < cols; x++) {
             var chord_idx = x + y * cols;
-        if(chord_idx < chords.length) {
+            if(chord_idx < chords.length) {
                 var cell = row.insertCell(-1);
                 cell.innerHTML = chords[chord_idx];
-                cell.style.borderWidth = "1px";
-                cell.style.borderStyle = "solid";
-                cell.style.borderColor = "#000000";
-        }
+                cell.classList.add('chordCell');
+            }
         }
     }
 

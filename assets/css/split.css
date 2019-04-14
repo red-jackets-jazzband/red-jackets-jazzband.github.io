@@ -490,6 +490,12 @@ video.video {
   margin-right: auto; 
 }
 
+.chordCell {
+  border-width: 1px;
+  border-style: solid;
+  border-color: #000000;
+}
+
 .upcomingShow {
   color: #cccccc;
 }
