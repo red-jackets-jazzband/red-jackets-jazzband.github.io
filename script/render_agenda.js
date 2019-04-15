@@ -40,7 +40,7 @@ function render_show(show) {
     }
 
     var dateCell = topRow.insertCell(-1);
-    dateCell.innerHTML = show.date.getDate() + show.last_day + "/" + show.date.getMonth() + "/" + show.date.getFullYear();
+    dateCell.innerHTML = show.date.getDate() + show.last_day + "/" + (show.date.getMonth() + 1) + "/" + show.date.getFullYear();
     dateCell.classList.add('dateCell');
 
     var nameCell = topRow.insertCell(-1);
