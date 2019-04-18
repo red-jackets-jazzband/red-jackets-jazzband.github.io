@@ -5,6 +5,7 @@ Chinatown,chinatown.abc
 Doctor Jazz,doctor_jazz.abc
 Down by the Riverside,down_by_the_riverside.abc
 Exactly like you,exactly_like_you.abc
+Five Foot Two,five_foot_two.abc
 Glory Halleluja,glory_halleluja.abc
 I'll fly away,ill_fly_away.abc
 Jambalaya,jambalaya.abc
