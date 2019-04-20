@@ -8,6 +8,7 @@ Down by the Riverside,down_by_the_riverside.abc
 Exactly like you,exactly_like_you.abc
 Five Foot Two,five_foot_two.abc
 Glory Halleluja,glory_halleluja.abc
+Home Sweet Home,home_sweet_home.abc
 I'll fly away,ill_fly_away.abc
 Jambalaya,jambalaya.abc
 Just a closer walk with thee,closer_walk.abc
