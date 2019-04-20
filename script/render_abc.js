@@ -46,6 +46,7 @@ function renderAbcFile(text, transpose_steps)
                          composerfont: "MuseJazzText",
                          titlefont: "MuseJazzText 18 bold",
                          vocalfont: "MuseJazzText",
+                         partsfont: "MuseJazzText",
                          tempofont: "MuseJazzText"
                     }
                       } ;
