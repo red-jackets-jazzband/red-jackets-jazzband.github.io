@@ -14,6 +14,7 @@ Jambalaya,jambalaya.abc
 Just a closer walk with thee,closer_walk.abc
 Just a little talk with Jesus,little_talk.abc
 Lady be good,lady_be_good.abc
+Li'l Liza Jane,lil_liza_jane.abc
 Margie,margie.abc
 Mercedes Benz,mercedes_benz.abc
 Oh when the Saints,oh_when_the_saints.abc
