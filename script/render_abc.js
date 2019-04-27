@@ -87,34 +87,11 @@ function readFile(file, callback)
 }
 
 /*
-   Funcion: parse_songlist
-   Read index_of_songs.txt and parse each line
-   Parameters:
-       data - A string containing index_of_songs.txt
-*/
-function parse_songlist(data) {
-    var songs = data.split('\n');
-    songs.forEach (create_song_link);
-}
-
-/*
    Funcion: create_song_link
    From a entry in index_of_songs.txt parse the fields and add link to page
    Parameters:
        song - A string containing line from index_of_songs.txt
 */
-function create_song_link(song) {
-    var song_parts = song.split(",");
-    var song_name = song_parts[0];
-    var song_path = song_parts[1];
-    var song_title = song_path? song_path.split(".")[0] : "";
-
-    if(song_title != "") {
-        var div = document.getElementById('songslist');
-        div.innerHTML += "<a href=\"#s=" + song_title + "\" onclick=\"renderSong('" + song_path + "')\" >" + song_name +"</a> | ";
-    }
-}
-
 function create_song_link_text(song) {
     var song_parts = song.split(",");
     var song_name = song_parts[0];
@@ -264,17 +241,17 @@ function createAllDropdowns(data) {
 
 function createMapFromSongList(songList) {
 
-    var songMap = {'A': []};
+    var songMap = {};
     var i = 0;
     for(; i < songList.length; ++i) {
-            if (songMap[songList[i].charAt(0)] === undefined)
-            {
-                songMap[songList[i].charAt(0)] = [songList[i]];
-            }
-            else
-            {
-                songMap[songList[i].charAt(0)].push(songList[i]);
-            }
+        if (songMap[songList[i].charAt(0)] === undefined)
+        {
+            songMap[songList[i].charAt(0)] = [songList[i]];
+        }
+        else
+        {
+            songMap[songList[i].charAt(0)].push(songList[i]);
+        }
     }
 
     return songMap;
