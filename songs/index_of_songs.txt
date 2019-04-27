@@ -26,5 +26,5 @@ Sweet Georgia Brown,sweet_georgia_brown.abc
 Sweet Sue,sweet_sue.abc
 This Little Light of Mine,little_light.abc
 When you're Smiling,when_youre_smiling.abc
-Willy the Weeper,willy_the_weeper.abc
+Willie the Weeper,willie_the_weeper.abc
 You are my Sunshine,you_are_my_sunshine.abc
