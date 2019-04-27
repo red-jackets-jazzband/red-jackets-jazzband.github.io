@@ -21,6 +21,7 @@ Margie,margie.abc
 Mercedes Benz,mercedes_benz.abc
 Oh when the Saints,oh_when_the_saints.abc
 Second line Limbo,limbo_rock.abc
+See See Rider,see_see_rider.abc
 Shame Shame Shame,shame_shame_shame.abc
 Sheik of Araby,sheik_of_araby.abc
 Some of these Days,some_of_these_days.abc
