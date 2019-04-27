@@ -20,6 +20,7 @@ Louisiana Fairytale,louisiana_fairytale.abc
 Margie,margie.abc
 Mercedes Benz,mercedes_benz.abc
 Oh when the Saints,oh_when_the_saints.abc
+Saint James Infirmary,st_james_infirmary.abc
 Second line Limbo,limbo_rock.abc
 See See Rider,see_see_rider.abc
 Shame Shame Shame,shame_shame_shame.abc
