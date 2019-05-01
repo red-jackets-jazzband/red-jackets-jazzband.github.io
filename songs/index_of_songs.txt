@@ -17,6 +17,7 @@ Just a little talk with Jesus,little_talk.abc
 Lady be good,lady_be_good.abc
 Li'l Liza Jane,lil_liza_jane.abc
 Louisiana Fairytale,louisiana_fairytale.abc
+Love Letters in the Sand,love_letters.abc
 Margie,margie.abc
 Mercedes Benz,mercedes_benz.abc
 Milenburg Joys,milenburg_joys.abc
