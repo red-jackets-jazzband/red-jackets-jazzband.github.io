@@ -3,6 +3,7 @@ Bourbon Street Parade,bourbon_street_parade.abc
 By and By,by_and_by.abc
 Chinatown,chinatown.abc
 Corrine Corrina,corrine_corrina.abc
+Dinah,dinah.abc
 Doctor Jazz,doctor_jazz.abc
 Do Lord,do_lord.abc
 Down by the Riverside,down_by_the_riverside.abc
