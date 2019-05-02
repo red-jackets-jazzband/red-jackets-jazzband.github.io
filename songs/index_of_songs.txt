@@ -1,4 +1,5 @@
 All of me,all_of_me.abc
+Amazing Grace,amazing_grace.abc
 Bourbon Street Parade,bourbon_street_parade.abc
 By and By,by_and_by.abc
 Chinatown,chinatown.abc
