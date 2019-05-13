@@ -2,6 +2,7 @@
 2019/09/21,Jazz by the Sea,Domburg
 2019/08/25,Jazzfestival Oirschot,Oirschot
 2019/06/15,JazzBoz 2019,Bergen op Zoom
+2019/05/31,Breda Jazzfestival,Breda
 2019/05/25,Brussels Jazz Weekend 2019,Brussel (BE)
 2019/05/03-4,Jazzfest Gronau,Gronau (DE)
 2018/11/03,Heerlen Jazzt,Heerlen
@@ -41,4 +42,13 @@
 2012/09/09,Gouden steprace,Wouw
 2012/06/01,JazzBoz 2012,Bergen op Zoom
 2012/05/13,Muziek op 't Ravelijn,Bergen op Zoom
-2011/08/20,Mosselfeesten,Middelburg
+2011/11/06,Opening outlet Bosstraat,Bergen op Zoom
+2011/08/20,Mosselfeesten,Yerseke
+2011/08/16,JazzBoz 2011,Bergen op Zoom
+2011/07/09,Krabbenfoor,Bergen op Zoom
+2011/06/13,Roparun,Bergen op Zoom
+2010/12/18,WinterBoz,Bergen op Zoom
+2010/08/21,Mosselfeesten,Yerseke
+2010/06/21,JazzBoz 2010,Bergen op Zoom
+2010/06/06,Multi culti Ravelijn,Bergen op Zoom
+2009/06/07,JazzBoz 2009,Bergen op Zoom
