@@ -44,10 +44,12 @@ function renderAbcFile(text, transpose_steps)
                          gchordfont: "MuseJazzText",
                          infofont: "MuseJazzText",
                          composerfont: "MuseJazzText",
-                         titlefont: "MuseJazzText 18 bold",
+                         titlefont: "MuseJazzText 4 bold",
                          vocalfont: "MuseJazzText",
                          partsfont: "MuseJazzText",
-                         tempofont: "MuseJazzText"
+                         tempofont: "MuseJazzText",
+                         wordfont: "MuseJazzText",
+                         footerfont: "MuseJazzText"
                     }
                       } ;
 
