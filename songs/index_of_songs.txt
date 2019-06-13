@@ -29,6 +29,7 @@ Saint James Infirmary,st_james_infirmary.abc
 Second line Limbo,limbo_rock.abc
 See See Rider,see_see_rider.abc
 Shame Shame Shame,shame_shame_shame.abc
+Shake that Thing,shake_that_thing.abc
 Sheik of Araby,sheik_of_araby.abc
 Some of these Days,some_of_these_days.abc
 Sweet Georgia Brown,sweet_georgia_brown.abc
