@@ -8,6 +8,7 @@ Dinah,dinah.abc
 Doctor Jazz,doctor_jazz.abc
 Do Lord,do_lord.abc
 Down by the Riverside,down_by_the_riverside.abc
+Drop me off in New Orleans,drop_me_off_in_new_orleans.abc
 Exactly like you,exactly_like_you.abc
 Five Foot Two,five_foot_two.abc
 Glory Halleluja,glory_halleluja.abc
