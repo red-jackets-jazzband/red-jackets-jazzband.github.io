@@ -12,6 +12,7 @@ Down by the Riverside,down_by_the_riverside.abc
 Drop me off in New Orleans,drop_me_off_in_new_orleans.abc
 Exactly like you,exactly_like_you.abc
 Five Foot Two,five_foot_two.abc
+Glad when you're dead,you_rascal_you.abc
 Glory Halleluja,glory_halleluja.abc
 Home Sweet Home,home_sweet_home.abc
 I'll fly away,ill_fly_away.abc
@@ -46,3 +47,4 @@ We shall not be moved,we_shall_not_be_moved.abc
 When you're Smiling,when_youre_smiling.abc
 Willie the Weeper,willie_the_weeper.abc
 You are my Sunshine,you_are_my_sunshine.abc
+You Rascal You,you_rascal_you.abc
