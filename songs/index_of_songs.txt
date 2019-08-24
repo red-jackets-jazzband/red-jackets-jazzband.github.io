@@ -38,6 +38,7 @@ Some of these Days,some_of_these_days.abc
 Sweet Georgia Brown,sweet_georgia_brown.abc
 Sweet Sue,sweet_sue.abc
 This Little Light of Mine,little_light.abc
+We shall not be moved,we_shall_not_be_moved.abc
 When you're Smiling,when_youre_smiling.abc
 Willie the Weeper,willie_the_weeper.abc
 You are my Sunshine,you_are_my_sunshine.abc
