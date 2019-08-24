@@ -137,6 +137,7 @@ function parse_chord_scheme(song) {
 
     var parsed_valid_chord = false;
     var did_not_parse_chord_in_this_measure = true;
+    var in_alternative_ending = false;
 
     for (var i = 0; i < song.lines.length; i+=1) {
 
@@ -146,25 +147,40 @@ function parse_chord_scheme(song) {
 
             var element = line[line_idx];
 
-            if (element.el_type === "bar") {
+            if (element.el_type === "bar")  {
 
-                if (did_not_parse_chord_in_this_measure && parsed_valid_chord) {
-                    current_measure.push(" % ");
+                if (element.startEnding !== undefined) {
+                    if (element.startEnding > 1) {
+                        in_alternative_ending = true;
+                    }
+                }
+                else {
+                    if ((element.endEnding !== undefined)&&(in_alternative_ending)) {
+                        in_alternative_ending = false;
+                    }
                 }
 
-                if (current_measure.length > 0) {
-                    chords.push(current_measure.slice(0));
-                    current_measure = [];
-                }
+                if(!in_alternative_ending) {
+                    if (did_not_parse_chord_in_this_measure && parsed_valid_chord) {
+                        current_measure.push(" % ");
+                    }
 
-                did_not_parse_chord_in_this_measure = true;
+                    if (current_measure.length > 0) {
+                        chords.push(current_measure.slice(0));
+                        current_measure = [];
+                    }
+
+                    did_not_parse_chord_in_this_measure = true;
+                }
             }
 
-            if (element.chord !== undefined) {
-                var chord = replace_accidental_with_utf8_char(element.chord[0].name);
-                current_measure.push(chord);
-                did_not_parse_chord_in_this_measure = false;
-                parsed_valid_chord = true;
+            if(!in_alternative_ending) {
+                if (element.chord !== undefined) {
+                    var chord = replace_accidental_with_utf8_char(element.chord[0].name);
+                    current_measure.push(chord);
+                    did_not_parse_chord_in_this_measure = false;
+                    parsed_valid_chord = true;
+                }
             }
         }
     }
