@@ -19,6 +19,7 @@ Ice Cream,ice_cream.abc
 Jambalaya,jambalaya.abc
 Just a closer walk with thee,closer_walk.abc
 Just a little talk with Jesus,little_talk.abc
+Joe Avery Blues,second_line.abc
 Lady be good,lady_be_good.abc
 Li'l Liza Jane,lil_liza_jane.abc
 Louisiana Fairytale,louisiana_fairytale.abc
@@ -29,6 +30,7 @@ Milenburg Joys,milenburg_joys.abc
 Oh Didn't He Ramble,didnt_he_ramble.abc
 Oh when the Saints,oh_when_the_saints.abc
 Saint James Infirmary,st_james_infirmary.abc
+Second line,second_line.abc
 Second line Limbo,limbo_rock.abc
 See See Rider,see_see_rider.abc
 Shame Shame Shame,shame_shame_shame.abc
