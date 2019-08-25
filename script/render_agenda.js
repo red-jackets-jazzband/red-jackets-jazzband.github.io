@@ -31,11 +31,13 @@ function render_show(show) {
     var table = document.getElementById("showTable");
 
     var now = new Date();
+    /* Don't care about time */
+    now.setHours(0,0,0,0);
 
     show = parse_show_line(show);
 
     var topRow = table.insertRow(-1);
-    if (show.date > now) {
+    if (show.date >= now) {
         topRow.classList.add('upcomingShow');
     }
 
@@ -48,7 +50,7 @@ function render_show(show) {
     nameCell.classList.add('nameCell');
 
     var bottomRow = table.insertRow(-1);
-    if (show.date > now) {
+    if (show.date >= now) {
         bottomRow.classList.add('upcomingShow');
     }
     bottomRow.insertCell(-1);
