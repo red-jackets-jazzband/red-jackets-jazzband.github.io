@@ -50,6 +50,7 @@ Some of these Days,some_of_these_days.abc
 Sweet Georgia Brown,sweet_georgia_brown.abc
 Sweet Sue,sweet_sue.abc
 This Little Light of Mine,little_light.abc
+Walking on a Thin Line,walking_on_a_thin_line.abc
 We shall not be moved,we_shall_not_be_moved.abc
 When you're Smiling,when_youre_smiling.abc
 Willie the Weeper,willie_the_weeper.abc
