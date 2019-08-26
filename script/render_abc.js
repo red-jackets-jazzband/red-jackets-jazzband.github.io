@@ -34,6 +34,8 @@ function renderAbcFile(text, transpose_steps)
     var song = string_to_abc_tune(text, transpose_steps);
     var chords = parse_chord_scheme(song);
 
+    add_inspiration_link(song.metaText.url);
+
     var abcParams = { visualTranspose: transpose_steps,
                                     responsive: "resize",
                                     paddingTop: 0,
@@ -223,6 +225,34 @@ function create_chord_table(chords) {
     var chordtable = document.getElementById("chordtable");
     chordtable.innerHTML = "";
     chordtable.appendChild(table);
+}
+
+/*
+   Funcion: add_inspiration_link
+   Adds a link to the sheetmenu if anabc tune contains a F field
+*/
+function add_inspiration_link(url) {
+    if (url !== undefined) {
+
+        var link = document.getElementById("inspirationLink");
+        if (link !== null) {
+            link.href = url;
+        }
+        else {
+            var link = document.createElement("A");
+            link.innerHTML = "| inspiration";
+            link.href = url;
+            link.target = "_blank";
+            link.id = "inspirationLink";
+            var menu = document.getElementById("sheetmenu");
+            menu.appendChild(link);
+        }
+    } else {
+        var link = document.getElementById("inspirationLink");
+        if (link !== null) {
+            link.parentNode.removeChild(link);
+        }
+    }
 }
 
 /*
