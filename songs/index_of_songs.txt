@@ -22,6 +22,7 @@ Home Sweet Home,home_sweet_home.abc
 I'll fly away,ill_fly_away.abc
 Ice Cream,ice_cream.abc
 Jambalaya,jambalaya.abc
+Jesus on the Mainline,jesus_on_the_mainline.abc
 Just a closer walk with thee,closer_walk.abc
 Just a little talk with Jesus,little_talk.abc
 Just over in the Gloryland,gloryland.abc
