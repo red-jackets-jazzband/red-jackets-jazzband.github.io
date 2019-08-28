@@ -3,6 +3,14 @@
 var current_song = null;
 var transpose_halfsteps = 0;
 
+/* Fix for IE that does not implement forEach 
+   see https://tips.tutorialhorizon.com/2017/01/06/object-doesnt-support-property-or-method-foreach/
+*/
+(function() {
+  if (typeof NodeList.prototype.forEach === "function") return false;
+  NodeList.prototype.forEach = Array.prototype.forEach;
+})();
+
 function renderSong(path) {
   document.getElementById("transpose").value = 0;
   readFile(path, renderAbcFile);
