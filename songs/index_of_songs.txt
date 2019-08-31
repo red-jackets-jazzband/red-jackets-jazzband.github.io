@@ -20,6 +20,7 @@ Go to the Mardi Gras,go_to_the_mardi_gras.abc
 Happy Birthday,happy_birthday.abc
 Home Sweet Home,home_sweet_home.abc
 I'll fly away,ill_fly_away.abc
+I Wanna Be Like You,be_like_you.abc
 Ice Cream,ice_cream.abc
 Jambalaya,jambalaya.abc
 Jesus on the Mainline,jesus_on_the_mainline.abc
