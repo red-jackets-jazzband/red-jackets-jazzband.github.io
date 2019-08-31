@@ -17,11 +17,46 @@ function renderSong(path) {
 }
 
 function rerenderFile() {
-  var transposeInput = document.getElementById("transpose");
-
   if (window.current_song !== undefined) {
-    renderAbcFile(window.current_song, transposeInput.valueAsNumber);
+    renderAbcFile(window.current_song);
   }
+}
+
+function change_cleff_for_instrument(instrument, text) {
+  switch (instrument) {
+    case "sousaphone":
+    case "trombone":
+      text = text.replace(/(K:\s*\w+)/g, "$1 clef=bass middle=D");
+      break;
+    default:
+      text = text.replace(/clef=bass\ middle=D/g, "");
+      break;
+  }
+
+  return text;
+}
+
+function offset_for_instrument(instrument) {
+  var steps = 0;
+
+  switch (instrument) {
+    case "tenor_saxophone":
+      steps = 9;
+      break;
+    case "alto_saxophone":
+      steps = 6;
+      break;
+    case "sousaphone":
+    case "trumpet":
+    case "clarinet_bb":
+      steps = 2;
+      break;
+    default:
+      steps = 0;
+      break;
+  }
+
+  return steps;
 }
 
 /*
@@ -29,12 +64,14 @@ function rerenderFile() {
    Render a song from a abc text
    Parameters:
        text - String containing (valid) abc file
-       transpose_steps - Number of halfsteps to transpose
 */
-function renderAbcFile(text, transpose_steps) {
-  if (transpose_steps === undefined) {
-    transpose_steps = 0;
-  }
+function renderAbcFile(text) {
+  var transpose_steps = document.getElementById("transpose").valueAsNumber;
+  var instrument = document.getElementById("instrument").value;
+
+  text = change_cleff_for_instrument(instrument, text);
+  transpose_steps += offset_for_instrument(instrument);
+
   window.current_song = text;
   var song = string_to_abc_tune(text, transpose_steps);
   var chords = parse_chord_scheme(song);
@@ -293,11 +330,44 @@ function parseQueryString(queryString) {
 }
 
 function loadSongs() {
+  createInstrumentDropdown();
   readFile("index_of_songs.txt", createAllDropdowns);
 
   if (window.location.hash) {
     parse_song_from_hash(window.location.hash);
   }
+}
+
+function createInstrumentDropdown() {
+  var div = document.createElement("DIV");
+  div.classList.add("dropdown");
+
+  var select = document.createElement("SELECT");
+  select.classList.add("dropbtn");
+  select.innerText = "Instrument";
+  select.id = "instrument";
+  select.onchange = rerenderFile;
+  div.appendChild(select);
+
+  var instruments = [
+    "Concert pitch",
+    "Alto Saxophone",
+    "Clarinet Bb",
+    "Sousaphone",
+    "Tenor Saxophone",
+    "Trombone",
+    "Trumpet"
+  ];
+  var i;
+  for (i = 0; i < instruments.length; i++) {
+    var option = document.createElement("OPTION");
+    option.innerHTML = instruments[i].toUpperCase();
+    option.value = instruments[i].toLowerCase().replace(" ", "_");
+    select.appendChild(option);
+  }
+
+  var abc_menu = document.getElementById("sheetmenu");
+  abc_menu.appendChild(div);
 }
 
 function createAllDropdowns(data) {

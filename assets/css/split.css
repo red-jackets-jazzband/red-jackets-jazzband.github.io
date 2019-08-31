@@ -542,6 +542,12 @@ video.video {
   cursor: pointer;
 }
 
+#instrument {
+  padding: 0px;
+  font: inherit;
+  font-size: inherit;
+}
+
 .dropdown {
   position: relative;
   display: inline-block;
