@@ -1,17 +1,17 @@
-X: 1
-T: Second Line (Joe Avery Blues)
-M: 4/4
-L: 1/8
-R: Traditional
-K: C
-C: Willie Norman "Bill" Sinegal 
+X:1
+T:Second Line (Joe Avery Blues)
+M:4/4
+L:1/8
+R:Traditional
+C:Willie Norman "Bill" Sinegal 
+K:Bbmaj
 P:Intro
-f g2| _a8 | f2 z2 z f g2 | _a8| f'2 z2 z4|
+e f2| _g8 | e2 z2 z e f2 | _g8| e'2 z2 z4|
 P:A
-|:"C7" c2 e2 g2 z2| c2 eg z g gg| c2 e2 g2 z2 | c2 eg z g gg |
-"F7" f2 a2 c'2 z2 | f2 a c' z c' c'c' | "C7" c2 e2 g2 z2| c2 eg z g gg|
-"G7" g2 gg g2 gg | g f3 e2 d2 | "C7" c2 z ^G Acdf | z4 z c d2 ||
+|:"Bb7" B2 d2 f2 z2| B2 df z f ff| B2 d2 f2 z2 | B2 df z f ff |
+"Eb7" e2 g2 b2 z2 | e2 g b z b bb | "Bb7" B2 d2 f2 z2| B2 df z f ff|
+"F7" f2 ff f2 ff | f e3 d2 c2 | "Bb7" B2 z ^F GBce | z4 z B c2 ||
 P:B
-"C7" c'2 z2 c'2 z2 | z2 c'2 c'2 z2 | c'2 c'2 c'2 c'2 |z2 c'2 c'2 z2 | "F7" f2 a2 c'2 z2 |
-f2 a c' z c' c'c' | "C7" c2 e2 g2 z2| c2 eg z2 gg|
-"G7" g2 gg g2 gg | g f3 e2 d2 | "C7" c2 z ^G Acdf | z4 z c d2 :|
+"Bb7" b2 z2 b2 z2 | z2 b2 b2 z2 | b2 b2 b2 b2 |z2 b2 b2 z2 | "Eb7" e2 g2 b2 z2 |
+e2 g b z b bb | "Bb7" B2 d2 f2 z2| B2 df z2 ff|
+"F7" f2 ff f2 ff | f e3 d2 c2 | "Bb7" B2 z ^F GBce | z4 z B c2 :|
