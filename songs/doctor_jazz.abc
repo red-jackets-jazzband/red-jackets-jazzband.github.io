@@ -1,12 +1,12 @@
-X: 1
-T: Doctor Jazz
-A: King Oliver (1926)
-M: 4/4
-L: 1/8
-Q:1/4=160
+X:1
+T:Doctor Jazz
+A:King Oliver (1926)
+M:4/4
+L:1/8
+Q:1/2=100
 K:Eb
-"F" zF GF =A2 B2| "C7" c2 d2 _A2<G2| "F" F8-| F6 z2| "F" zF GF =A2 B2| "C7" c2 d2 _A2<G2| 
-"F" F8-| F2 z6| "Bb" z2 fd fd2f-| f6 d2| "F" c4- c=B _B2| "D7"  =A8| "G7" G4- G=A =Bc|
-"G7" dz _dz =dz ez| "C7" =ez gz =e2<d2| c6 z2| "F" zF GF =A2 _B2| "C7" c2 d2 _A2<G2| 
-"F" F8-| "F7" F6 z2| "Bb" z d fd fd2f-| f2 F2 G2 A2| "A7" =A8-| =A2 z6| "D7" z2 d_d =d2<c2| 
-d=e2d4-d| "G7" z2 d=B d2 =e2| d=B2G3 z2| "C7" c2<=B2 _B2<G2| c2<d2 _A2 G2| "F" F8-|F6 |
+"Eb" E2 F2 G2 A2| "Bb7" B2 c2 _G2<F2| "Eb" E8-| E6 z2| "Eb" zE FE G2 A2| "Bb7" B2 c2 _G2<F2| 
+"Eb" E8-| E2 z6| "Ab" z2 ec ec2e-| e6 c2| "Eb" B4- B=A _A2| "C7" G8| "F7" F4- FG =AB|
+"F7" c2 _c2 =c2 d2| "Bb7" d2 f2 d2<c2| B6 z2| "Eb" E2 F2 G2 _A2| "Bb7" B2 c2 _G2<F2| 
+"Eb" E8-| "Eb7" E6 z2| "Ab" z c ec ec2e-| e2 E2 F2 G2| "G7" G8-| G2 z6| "C7" z2 c_c =c2<B2| 
+cd2c4-c| "F7" z2 c=A c2 d2| c=A2F3 z2| "Bb7" B2<=A2 _A2<F2| B2<c2 _G2 F2| "Eb" E8-|E6 z2|

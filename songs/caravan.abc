@@ -1,13 +1,13 @@
-X: 1
-T: Caravan
-M: 4/4
-L: 1/4
-C: Duke Ellington (1936)
-R: Uptempo
-K: Bb
+X:1
+T:Caravan
+M:4/4
+L:1/4
+C:Duke Ellington (1936)
+R:Uptempo
+K:Ebmaj
 P:A
-|: "G7" g4-|g4| z _a gd |fg (3b/2=b/2-b/2 d | f4-|f4|
-z g_ag|_ag ^f2/3=f/8e/8 d| f4-|f4| zg ^f=f|=e_ed=B| "Cm7" c4 | z4| z4 | z4 :|
+|: "C7" c4-|c4| z _d cG |Bc (3e/2=e/2-e/2 G | B4-|B4|
+z c_dc|_dc =B G| B4-|B4| zc =B_B|=A_AG=E| "Fm7" F4 | z4| z4 | z4 :|
 P:B
-"C7" c'4 | a2 g2 | d4- | d2 c2 | "F7"  g4 | d2 c2 | G4- | G4 | "Bb7" b4 | g2 f2 | B4- |
-B2 A B | "Eb" e4 - | e2 f e | "G7" d4- | d4||
+"F7" f4 | d2 c2 | G4- | G2 F2 | "Bb7" c4 | G2 F2 | C4- | C4 | "Eb7" e4 | c2 B2 | E4- |
+E2 D E | "Ab" A4 - | A2 B A | "C7" G4- | G4|]

@@ -1,22 +1,22 @@
-X: 1
-T: All Of Me
-C: Seymour Simons & Gerald Marks (1931)
-M: 4/4
-K: Cmaj
-L: 1/4
-"C" c> G E2- | E2 (3 c d c | "E7" B> ^G E2- | E4 |
-w: All of me, | * why not take | all of me.*
-"A7" A> G E2- | E ^D (3 E _B A | "Dm7" G2 F2- | F4 ||
-w: Can't you see | I'm no good with-| out you?*
-"E7" E> _E D2- | D2 (3 E ^G B | "Am7" d2 c2- | c4 |
-w: Take my lips | * I want to | lose them.*
-"D7" B>_B A2- | A2 (3 A D B | "Dm" A4 | "G7" G4 ||
-w: Take my arms | * I'll ne-ver | lose | them.
-"C" c> G E2- | E2 (3 c d c | "E7" B> ^G E2- | E4 |
-w: Your good-bye | * left me with | eyes that cry
-"A7" A> G E2- | E ^D (3 D _B A | "Dm7" G2 F2- | F4||
-w: How can I | * go on dear with- | out you?
-"F" c4 c B | "Fm" d3 c | "C" B2 "Bb" E G | "A7" B3 A |
-w: You took the | part that | once was my | hear, so
-"Dm7" c2 A c | "G7" e2 e2 | "C" c4 | z4 |]
-w: Why not take | all of | me
+X:1
+T:All Of Me
+C:Seymour Simons & Gerald Marks (1931)
+M:4/4
+K:Bbmaj
+L:1/4
+"Bb" B> F D2- | D2 (3 B c B | "D7" A> ^F D2- | D4 |
+w:All of me, | * why not take | all of me.*
+"G7" G> F D2- | D ^C (3 D _A G | "Cm7" F2 E2- | E4 |
+w:Can't you see | I'm no good with-| out you?*
+"D7" D> _D C2- | C2 (3 D ^F A | "Gm7" c2 B2- | B4 |
+w:Take my lips | * I want to | lose them.*
+"C7" A>_A G2- | G2 (3 G C A | "Cm" G4 | "F7" F4 |
+w:Take my arms | * I'll ne-ver | lose | them.
+"Bb" B> F D2- | D2 (3 B c B | "D7" A> ^F D2- | D4 |
+w:Your good-bye | * left me with | eyes that cry
+"G7" G> F D2- | D ^C (3 C _A G | "Cm7" F2 E2- | E4|
+w:How can I | * go on dear with- | out you?
+"Eb" B2 B A | "Ebm" c3 B | "Bb" A2 "Ab" D F | "G7" A3 G |
+w:You took the | part that | once was my | hear, so
+"Cm7" B2 G B | "F7" d2 d2 | "Bb" B4 | z4 |]
+w:Why not take | all of | me
