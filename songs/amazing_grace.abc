@@ -1,16 +1,17 @@
-X: 1
-T: Amazing Grace
-M: 3/4
-L: 1/8
-K: G
+X:1
+T:Amazing Grace
+M:4/4
 L:1/4
+C:William Walker, John Newton (1779)
+R:Spiritual
 F:https://www.youtube.com/watch?v=Ghupw_2va7Y
-Q:120
-D|"G"G2(3B/2A/2G/2|B2A|"C"G2E|"G"D2D|
+Q:1/4=120
+K:Fmaj
+C||"F"F2 z A/2G/4F/4|A2z G|"Bb"F2zD|"F"C2zC|
 w:A-ma-zing _ _ Grace, how sweet the sound, That
-G2 (3B/2A/2G/2|"Em"B2 A/B/|"D"d3-|d2B|
-w: saved a _ _ wretch li-ke me. _ I
-"G"d2(3B/2A/2G/2|B2A|"C"G2E|"G"D2D|
-w: once was _ _ < lost, but now I'm found
-G2 (3B/2A/2G/2|"D"B2A|"G"G3-|G2||
-w:Was blind, _ _ but now I see.
+F2 z A/2G/4F/4|"Dm"A2 z G/2A/2|"C"c4-|c2z A|
+w:saved a _ _ wretch li-ke me. _ I
+"F"c2 z A/2G/4F/4|A2 z G|"Bb"F2 z D|"F"C2z C|
+w:once was _ _  lost, but now I'm found. Was
+F2 z A/2G/4F/4|"C"A2zG|"F"F4-|F2z2|]
+w:blind, but  _ _ now I see.
