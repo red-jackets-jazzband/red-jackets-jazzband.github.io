@@ -30,6 +30,7 @@ Just over in the Gloryland,gloryland.abc
 Joe Avery Blues,second_line.abc
 Lady be good,lady_be_good.abc
 Li'l Liza Jane,lil_liza_jane.abc
+Limbo Rock,limbo_rock.abc
 Lord Lord Lord,lord_lord_lord.abc
 Louisiana Fairytale,louisiana_fairytale.abc
 Love Letters in the Sand,love_letters.abc
@@ -54,6 +55,7 @@ Sweet Sue,sweet_sue.abc
 This Little Light of Mine,little_light.abc
 Walking on a Thin Line,walking_on_a_thin_line.abc
 We shall not be moved,we_shall_not_be_moved.abc
+We'll understand it better by and by,by_and_by.abc
 When you're Smiling,when_youre_smiling.abc
 Willie the Weeper,willie_the_weeper.abc
 You are my Sunshine,you_are_my_sunshine.abc

@@ -1,23 +1,25 @@
-X: 1
-T: Milenberg Joys
-C: Leon Roppolo, Paul Mates, Jelly Roll Morton, Walter Melrose (1923)
-M: 4/4
-L: 1/8
-Q:110
-K: C
-"C" c2c2c4 | z2 _BA G^D E2| G8-|G2 z2 z4|
-w: Rock my soul, with the mil-en-burg joys,
-"C" c2c2c4 | z2 _BA G^D E2| "G7" G4 ^F4|F8|
-w: Rock my soul, with the mil-en-burg joys,
-"G7" f2 d2 B G3| B2 A G4-G | ffdd B2 G2 | B2A G4-G |
-w: Play 'em ma-ma, don't re-fuse. _ Se-pa-rate me from the wear-y blues
-"G7" G6 A2 | G6 z2| "C" z2 e2 c4 | "G7" z2 ec dcAG   |
+X:1
+T:Milenberg Joys
+C:Leon Roppolo, Paul Mates, Jelly Roll Morton, Walter Melrose (1923)
+M:4/4
+L:1/8
+Q:1/4=110
+K:Bbmaj
+"Bb" B2B2B4 | z2 _AG F^C D2| F8-|F2 z2 z4|
+w:Rock my soul, with the mil-en-burg joys,
+"Bb" B2B2B4 | z2 _AG F^C D2| "F7" F4 =E4|E8|
+w:Rock my soul, with the mil-en-burg joys,
+"F7" e2 c2 A F3| A2 G F4-F | eecc A2 F2 | A2G F4-F |
+w:Play 'em ma-ma, don't re-fuse. _ Se-pa-rate me from the wear-y blues
+"F7" F6 G2 | F6 z2| "Bb" z2 d2 B4 | "F7" z2 dB cBGF |
 w:Hey, Hey, Hey, Sweet girl, syn-co-pate your ma-ma
-"C" c2c2c4 | z2 _BA G^D E2| G8-|G2 z2 z4|
-w: All night long, with that Di-xie-land strain,
-"C7" c2c2c4 | z2 c2 dc d2 | "F" c8-|c2 z2 z4 |
+"Bb" B2B2B4 | z2 _AG F^C D2| F8-|F2 z2 z4|
+w:All night long, with that Di-xie-land strain,
+"Bb7" B2B2B4 | z2 B2 cB c2 | "Eb" B8-|B2 z2 z4 |
 w:Play it down, then do it a-gain
-"C" _e e2 e3 c2| "Cdim" _e e c4-c | "C" G G2 G3 ^DE | "A7" A A2 A4-A |
-w: Ev'-ry time I hear that tune, _ Good luck says I'll be with you soon
-"D7" A A2 A4-A | "G7" z GAG AG A2 | "C" c8- | c4 z4 |
-w: That's just why, _ I've got the Mil-en-burg joys
+"Bb" _d d2 d3 B2 | "Bbdim" _d d2 B4-B |
+w:Ev'-ry time I hear that tune,
+ "Bb" F F2 F3 ^CD | "G7" G G2 G4-G |
+w:_ Good luck says I'll be with you soon
+"C7" G G2 G4-G | "F7" z FGF GF G2 | "Bb" B8- | B4 z4 |
+w:That's just why, _ I've got the Mil-en-burg joys

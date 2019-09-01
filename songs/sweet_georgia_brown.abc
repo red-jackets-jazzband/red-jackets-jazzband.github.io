@@ -4,17 +4,19 @@ O:USA
 M:4/4
 L:1/8
 Q:1/4=121
-K:Bb
+R:Uptempo
+C:Ben Bernie and Maceo Pinkard (1925)
+K:Abmaj
 V:1
-"G7" G2 A2 =B2 G2 | d =B2 =e4 d | g4 d =B2 (G|G6) z2| "C7" G A2 B4 G |
-w:1.~No gal made has got a shade on Sweet Geor-gia Brown _ Two left feet but 
-d B2 =e4 c |g4 =e d2 (c|c6) z2 | "F7" F G2 A4 F| c A2 d4 c| 
-w: oh so neat has Sweet Geor-gia Brown _ They all sigh and wan-na die for 
-f4 d A2 (F|F2) F(G G)F G2| "Bb" (d8|d2) F(G G)F G2| d6 d2| c6 z2| 
-w: Sweet Geor-gia Brown. _ I'll tell _ you just why, _ you know _ I don't lie, not much! 
-"G7" G2 A2 =B2 G2 | d =B2 =e4 d | g4 d =B2 (G|G6) z2| "C7" G A2 B4 G |
-w: It's been said she knocks 'em dead  when she lands in town _ Since she came why 
-d B2 =e4 c|g4 =e d2 (c|c4) z4 | "Gm" d3 d3 z2 | "D7" c A2 d3 d2 | "Gm" d3 d3 z2 | 
-w: it's  a shame how she cools 'em down _ Fel-lers she can't get are fel-lers 
-"D7" c A2 d3 z2 | "Bb" F G2 B2 d3 | "G7" f ^f2 g2 d3 | "C7" c4 f "F7" d2 (B|"Bb"B8)||
-w: she ain't met, Geor-gia claimed her, Geor-gia named her Sweet Geor-gia Brown.
+"F7" F2 G2 =A2 F2 | c =A2 =d4 c | f4 c =A2 (F|F6) z2| "Bb7" F G2 A4 F |
+w:1.~No gal made has got a shade on Sweet Geor-gia Brown _ Two left feet but
+c A2 =d4 B |f4 =d c2 (B|B6) z2 | "Eb7" E F2 G4 E| B G2 c4 B| 
+w:oh so neat has Sweet Geor-gia Brown _ They all sigh and wan-na die for
+e4 c G2 (E|E2) E(F F)E F2| "Ab" (c8|c2) E(F F)E F2| c6 c2| B6 z2| 
+w:Sweet Geor-gia Brown. _ I'll tell _ you just why, _ you know _ I don't lie, not much!
+"F7" F2 G2 =A2 F2 | c =A2 =d4 c | f4 c =A2 (F|F6) z2| "Bb7" F G2 A4 F |
+w:It's been said she knocks 'em dead  when she lands in town _ Since she came why
+c A2 =d4 B|f4 =d c2 (B|B4) z4 | "Fm" c3 c3 z2 | "C7" B G2 c3 c2 | "Fm" c3 c3 z2 | 
+w:it's  a shame how she cools 'em down _ Fel-lers she can't get are fel-lers
+"C7" B G2 c3 z2 | "Ab" E F2 A2 c3 | "F7" e =e2 f2 c3 | "Bb7" B4 e "Eb7" c2 (A|"Ab"A8)||
+w:she ain't met, Geor-gia claimed her, Geor-gia named her Sweet Geor-gia Brown.

@@ -2,23 +2,17 @@ X:1
 T:Sweet Sue
 M:4/4
 L:1/4
-Q:190
-C: Victor Young and Will J. Harris (1928)
-R: Traditional
-K:C
-DE|"Am7" AAA2-|"D7" A2 DE|"Am7" AAA2-|"D7" A2 B2| 
-w: eve-ry star a-bove, _ knows the one I love, _ Sweet 
-"G" E4-| E2  B2| E4-|E2 DE|
-w: Sue, _ just you. _ And the 
-"Am7" AAA2-|"D7" A2 DE|"Am7" AAA2-|"D7" A2 B2| 
-w: moon up high, _ knows the rea-son why, _ Sweet
-"G" E4-| E2  B2| E4-| E2  Bc|
-w: Sue, _ it's you. _ No one 
-"G7" ddd2-| d2 Bc|"E7" ddd2-| d2^DE |
-w: else it seems, _e-ver shares my dreams, _ And with
-"Am7" cccc|ccBA| c4-| "D7" c2 DE| 
-w: -out you dear,  I don't know what I'd do. _ In this
-"Am7" A A A2-|"D7" A2 DE|"Am7" AAA2-|"D7" A2B2|
-w: heart of mine, _ you live all the time, _ Sweet
-"G" G4-|G2 "C7" E2|"G"G4-|G4 |
-w:  Sue, _   Just you
+Q:1/4=190
+C:Victor Young and Will J. Harris (1928)
+R:Traditional
+K:Ebmaj
+FG|"Cm7" ccc2-|"F7" c2 FG|"Cm7" ccc2-|"F7" c2 d2| "Bb" G4-| G2 d2| G4-|
+w:eve-ry star a-bove, _ knows the one I love, _ Sweet Sue, _ just you.
+G2 FG|"Cm7" ccc2-|"F7" c2 FG|"Cm7" ccc2-|"F7" c2 d2| "Bb" G4-| G2 d2| G4-| 
+w: _ And the moon up high, _ knows the rea-son why, _ Sweet Sue, _ it's you. 
+G2 de| "Bb7" fff2-| f2 de|"G7" fff2-| f2^FG |
+w:_ No one else it seems, _e-ver shares my dreams, _ And with
+"Cm7" eeee|eedc| e4-| "F7" e2 FG| 
+w:-out you dear,  I don't know what I'd do. _ In this
+"Cm7" c c c2-|"F7" c2 FG|"Cm7" ccc2-|"F7" c2d2| "Bb" B4-|B2 "Eb7" G2|"Bb"B4-|B4 |
+w:heart of mine, _ you live all the time, _ Sweet Sue, _   Just you
