@@ -40,12 +40,10 @@ function offset_for_instrument(instrument) {
   var steps = 0;
 
   switch (instrument) {
-    case "tenor_saxophone":
+    case "alto_saxophone":
       steps = 9;
       break;
-    case "alto_saxophone":
-      steps = 6;
-      break;
+    case "tenor_saxophone":
     case "sousaphone":
     case "trumpet":
     case "clarinet_bb":
