@@ -64,7 +64,9 @@ function offset_for_instrument(instrument) {
        text - String containing (valid) abc file
 */
 function renderAbcFile(text) {
-  var transpose_steps = document.getElementById("transpose").valueAsNumber;
+  var transpose_steps = document.getElementById("transpose").value;
+  // Don't use valueAsNumber to let IE users also enjoy transposing
+  transpose_steps = Number(transpose_steps);
   var instrument = document.getElementById("instrument").value;
 
   text = change_cleff_for_instrument(instrument, text);
