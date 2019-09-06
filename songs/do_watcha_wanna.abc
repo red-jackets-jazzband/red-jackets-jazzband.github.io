@@ -6,11 +6,16 @@ Q:1/8=190
 C:Rebirth Brass Band (1996)
 R:Rebirth
 F:https://www.youtube.com/watch?v=X_AOwrXev60
-K:Ebmaj
+K:Fmaj
+V:1 clef=treble name="Trumpet" " 
+V:2 clef=bass transpose=-24 name="Sousaphone" middle=d " 
 P:A
-z4 zB/2B/2 c/2ec/2|:e4 z B/2B/2 c/2ec/2|
-e4 z B/2B/2 c/2ec/2|e4 z B/2B/2 c/2ec/2|e2 z2 e4 |
-z8 | z8 | z8 | z8 | z8 | z8 | z8 | z8 :|
+[V:1] z4 zc/2c/2 d/2fd/2 |: f4 z c/2c/2 d/2fd/2 |
+[V:2] F/2 z A3/2c/2 z/2 B/2 z d3/2f/2 z/2 |: F/2 z A3/2c/2 z/2 B/2 z d3/2f/2 z/2 |
+[V:1] f4 z c/2c/2 d/2fd/2 | f4 z c/2c/2 d/2fd/2 | f2 z2 f4 :|
+[V:2] F/2 z A3/2c/2 z/2 B/2 z d3/2f/2 z/2 | F/2 z A3/2c/2 z/2 B/2 z d3/2f/2 z/2 | F/2 z A3/2c/2 z/2 B/2 z d3/2f/2 z/2 :|
 P:B
-|:e/2e/2 z _d/2d/2 z c/2c/2 z B/2 z/2 G-|
-GBBc _G/2F/2E z =G-|GBBc _d z cB | z8 :|
+[V:1]|:f/2f/2 z _e/2e/2 z d/2d/2 z c/2 z/2 A-| Accd _A/2G/2F z =A-|Accd _e z dc |
+[V:2]|:F/2 z A3/2c/2 z/2 B/2 z d3/2f/2 z/2 | F/2 z A3/2c/2 z/2 B/2 z d3/2f/2 z/2 |F/2 z A3/2c/2 z/2 B/2 z d3/2f/2 z/2 |
+[V:1] z8 :|
+[V:2] F/2 z A3/2c/2 z/2 B/2 z d3/2f/2 z/2 :|

@@ -194,42 +194,46 @@ function parse_chord_scheme(song) {
   var in_alternative_ending = false;
 
   for (var i = 0; i < song.lines.length; i += 1) {
-    var line = song.lines[i].staff[0].voices[0];
 
-    for (var line_idx = 0; line_idx < line.length; line_idx += 1) {
-      var element = line[line_idx];
+    // Subtitle is added to song.lines, don't break when line has no staff
+    if (song.lines[i].staff !== undefined) {
+      var line = song.lines[i].staff[0].voices[0];
 
-      if (element.el_type === "bar") {
-        if (element.startEnding !== undefined) {
-          if (element.startEnding > 1) {
-            in_alternative_ending = true;
+      for (var line_idx = 0; line_idx < line.length; line_idx += 1) {
+        var element = line[line_idx];
+
+        if (element.el_type === "bar") {
+          if (element.startEnding !== undefined) {
+            if (element.startEnding > 1) {
+              in_alternative_ending = true;
+            }
+          } else {
+            if (element.endEnding !== undefined && in_alternative_ending) {
+              in_alternative_ending = false;
+            }
           }
-        } else {
-          if (element.endEnding !== undefined && in_alternative_ending) {
-            in_alternative_ending = false;
+
+          if (!in_alternative_ending) {
+            if (did_not_parse_chord_in_this_measure && parsed_valid_chord) {
+              current_measure.push(" % ");
+            }
+
+            if (current_measure.length > 0) {
+              chords.push(current_measure.slice(0));
+              current_measure = [];
+            }
+
+            did_not_parse_chord_in_this_measure = true;
           }
         }
 
         if (!in_alternative_ending) {
-          if (did_not_parse_chord_in_this_measure && parsed_valid_chord) {
-            current_measure.push(" % ");
+          if (element.chord !== undefined) {
+            var chord = replace_accidental_with_utf8_char(element.chord[0].name);
+            current_measure.push(chord);
+            did_not_parse_chord_in_this_measure = false;
+            parsed_valid_chord = true;
           }
-
-          if (current_measure.length > 0) {
-            chords.push(current_measure.slice(0));
-            current_measure = [];
-          }
-
-          did_not_parse_chord_in_this_measure = true;
-        }
-      }
-
-      if (!in_alternative_ending) {
-        if (element.chord !== undefined) {
-          var chord = replace_accidental_with_utf8_char(element.chord[0].name);
-          current_measure.push(chord);
-          did_not_parse_chord_in_this_measure = false;
-          parsed_valid_chord = true;
         }
       }
     }
