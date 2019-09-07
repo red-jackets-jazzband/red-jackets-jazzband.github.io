@@ -26,7 +26,7 @@
 2016/05/28,Vaals,Vaals
 2016/05/21,JazzBoz 2016,Bergen op Zoom
 2016/05/08,Jazzfest Gronau,Gronau (DE)
-2015/05/06,Breda Jazz Festival,Breda
+2016/05/06,Breda Jazz Festival,Breda
 2015/06/13,Celler Streetparade,Celle (DE)
 2015/05/31,Jazz in the Woods,Apeldoorn
 2015/05/30,JazzBoz 2015,Bergen op Zoom
