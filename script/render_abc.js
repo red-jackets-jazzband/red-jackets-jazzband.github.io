@@ -94,7 +94,8 @@ function renderAbcFile(text) {
       partsfont: "MuseJazzText",
       tempofont: "MuseJazzText",
       wordfont: "MuseJazzText",
-      footerfont: "MuseJazzText"
+      footerfont: "MuseJazzText",
+      voicefont: "MuseJazzText"
     }
   };
 
