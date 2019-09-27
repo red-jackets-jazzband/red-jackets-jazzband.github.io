@@ -31,6 +31,7 @@ Jambalaya,jambalaya.abc
 Jesus on the Mainline,jesus_on_the_mainline.abc
 Just a closer walk with thee,closer_walk.abc
 Just a little talk with Jesus,little_talk.abc
+Just a little while,just_a_little_while.abc
 Just over in the Gloryland,gloryland.abc
 Joe Avery Blues,second_line.abc
 Lady be good,lady_be_good.abc
