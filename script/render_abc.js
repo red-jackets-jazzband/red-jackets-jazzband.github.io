@@ -63,20 +63,33 @@ function offset_for_instrument(instrument) {
    Parameters:
        text - String containing (valid) abc file
 */
-function renderAbcFile(text) {
-  var transpose_steps = document.getElementById("transpose").value;
+function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePrefix, add_link) {
+
+  notationElt = (typeof notationElt !== 'undefined') ?  notationElt : "notation";
+  chordTableElt = (typeof chordTableElt !== 'undefined') ?  chordTableElt : "chordtable";
+  songTitleElt = (typeof songTitleElt !== 'undefined') ?  songTitleElt : "songtitle";
+  titlePrefix = (typeof titlePrefix !== 'undefined') ?  titlePrefix : "";
+  add_link = (typeof add_link !== 'undefined') ?  add_link : true;
+
+  var transpose_steps = document.getElementById("transpose");
+  transpose_steps = (transpose_steps !== null) ? transpose_steps.value : 0;
+
   // Don't use valueAsNumber to let IE users also enjoy transposing
   transpose_steps = Number(transpose_steps);
   var instrument = document.getElementById("instrument").value;
 
-  text = change_cleff_for_instrument(instrument, text);
-  transpose_steps += offset_for_instrument(instrument);
+  if (text.search(/\[V:.*\]/g) == -1) {
+    text = change_cleff_for_instrument(instrument, text);
+    transpose_steps += offset_for_instrument(instrument);
+  }
 
   window.current_song = text;
   var song = string_to_abc_tune(text, transpose_steps);
   var chords = parse_chord_scheme(song);
 
-  add_inspiration_link(song.metaText.url);
+  if (add_link) {
+    add_inspiration_link(song.metaText.url);
+  }
 
   var abcParams = {
     visualTranspose: transpose_steps,
@@ -99,21 +112,22 @@ function renderAbcFile(text) {
     }
   };
 
-  ABCJS.renderAbc("notation", text, abcParams);
+  ABCJS.renderAbc(notationElt, text, abcParams);
 
   /* Hide title below chord table */
   document
-    .getElementById("notation")
+    .getElementById(notationElt)
     .querySelectorAll(".abcjs-title")
     .forEach(function(el) {
       el.setAttribute("display", "none");
     });
 
-  create_chord_table(chords);
+  var chordtable = document.getElementById(chordTableElt);
+  create_chord_table(chords, chordtable);
 
   /* Add own title, above chordTable */
-  var songtitle = document.getElementById("songtitle");
-  songtitle.innerHTML = song.metaText.title;
+  var songtitle = document.getElementById(songTitleElt);
+  songtitle.innerHTML = titlePrefix.concat(song.metaText.title);
 }
 
 /*
@@ -125,7 +139,6 @@ function renderAbcFile(text) {
 */
 function readFile(file, callback) {
   var f = new XMLHttpRequest();
-  f.open("GET", file, false);
   f.onreadystatechange = function() {
     if (f.readyState === 4) {
       if (f.status === 200 || f.status === 0) {
@@ -133,6 +146,7 @@ function readFile(file, callback) {
       }
     }
   };
+  f.open("GET", file, true);
   f.send(null);
 }
 
@@ -253,7 +267,7 @@ function parse_chord_scheme(song) {
    Returns:
        chords - A list of lists with the chords per measure
 */
-function create_chord_table(chords) {
+function create_chord_table(chords, chordtable) {
   var table = document.createElement("TABLE");
   table.border = "1";
 
@@ -275,7 +289,6 @@ function create_chord_table(chords) {
     }
   }
 
-  var chordtable = document.getElementById("chordtable");
   chordtable.innerHTML = "";
   chordtable.appendChild(table);
 }
@@ -421,8 +434,3 @@ function createLetterDropDown(letter, songs) {
   var abc_menu = document.getElementById("abc_menu");
   abc_menu.appendChild(div);
 }
-
-window[addEventListener ? "addEventListener" : "attachEvent"](
-  addEventListener ? "load" : "onload",
-  loadSongs
-);

@@ -1,0 +1,52 @@
+All of me,all_of_me.abc
+Amazing Grace,amazing_grace.abc
+Bei mir bist du Schon,bei_mir_bist_du_schon.abc
+Big Chief,big_chief.abc
+Bourbon Street Parade,bourbon_street_parade.abc
+Caravan,caravan.abc
+Chinatown,chinatown.abc
+Corrine Corrina,corrine_corrina.abc
+Dinah,dinah.abc
+Doctor Jazz,doctor_jazz.abc
+Do Lord,do_lord.abc
+Do Watcha Wanna,do_watcha_wanna.abc
+Down by the Riverside,down_by_the_riverside.abc
+Drop me off in New Orleans,drop_me_off_in_new_orleans.abc
+Exactly like you,exactly_like_you.abc
+Five Foot Two,five_foot_two.abc
+Glory Halleluja,glory_halleluja.abc
+Go to the Mardi Gras,go_to_the_mardi_gras.abc
+Happy Birthday,happy_birthday.abc
+Home Sweet Home,home_sweet_home.abc
+I'll fly away,ill_fly_away.abc
+I'm Walking,im_walking.abc
+I Wanna Be Like You,be_like_you.abc
+Ice Cream,ice_cream.abc
+Jambalaya,jambalaya.abc
+Jesus on the Mainline,jesus_on_the_mainline.abc
+Just a closer walk with thee,closer_walk.abc
+Just a little talk with Jesus,little_talk.abc
+Joe Avery Blues,second_line.abc
+Lady be good,lady_be_good.abc
+Li'l Liza Jane,lil_liza_jane.abc
+Lord Lord Lord,lord_lord_lord.abc
+Mercedes Benz,mercedes_benz.abc
+Milenburg Joys,milenburg_joys.abc
+Oh Didn't He Ramble,didnt_he_ramble.abc
+Oh when the Saints,oh_when_the_saints.abc
+Over in the Gloryland,gloryland.abc
+Saint James Infirmary,st_james_infirmary.abc
+See See Rider,see_see_rider.abc
+Shame Shame Shame,shame_shame_shame.abc
+Shake that Thing,shake_that_thing.abc
+Sheik of Araby,sheik_of_araby.abc
+Some of these Days,some_of_these_days.abc
+Sweet Georgia Brown,sweet_georgia_brown.abc
+Sweet Sue,sweet_sue.abc
+This Little Light of Mine,little_light.abc
+Walking on a Thin Line,walking_on_a_thin_line.abc
+We shall not be moved,we_shall_not_be_moved.abc
+We'll understand it better by and by,by_and_by.abc
+When you're Smiling,when_youre_smiling.abc
+You are my Sunshine,you_are_my_sunshine.abc
+You Rascal You,you_rascal_you.abc

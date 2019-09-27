@@ -421,13 +421,15 @@ video.video {
    url('/fonts/MuseJazzText.ttf') format('truetype'); /* Chrome 4+, Firefox 3.5, Opera 10+, Safari 3—5 */
 }  
 
-#chordtable{
+.chordtable{
     background-color:#ffffff;
     color:#000000;
     font-family:'MuseJazzText';
+    line-height: 40px;
+    font-size: x-large;
 }
 
-#songtitle{
+.songtitle{
     background-color:#ffffff;
     color:#000000;
     font-family:'MuseJazzText';
@@ -436,7 +438,7 @@ video.video {
     padding: 20px;
 }
 
-#chordtable > table {
+.chordtable > table {
     padding: 10px;
     width: 90%;
     text-align: center;
@@ -446,7 +448,7 @@ video.video {
     transform: translate(-50%, 0%);
     table-layout: fixed; 
 }
-#chordtable > table {
+.chordtable > table {
     border-width: 1px;
     border-style: solid;
     border-color: #000000;
@@ -463,11 +465,11 @@ video.video {
 #sheetmenu > a {
   color: #e29d0f;
 }
-#notation {
+.notation {
   background:#ffffff;
 }
 
-#printLogo {
+.printLogo {
   display: block;
   margin-left: auto;
   margin-right: auto;
@@ -479,7 +481,7 @@ video.video {
        filter: grayscale(100%); 
 }
 
-#songPrintFooter {
+.songPrintFooter {
   text-align:center;
   color:#000000;
   position: fixed;
@@ -510,25 +512,92 @@ video.video {
 }
 
 @media print {
-  #chordtable > table {
+  .chordtable > table {
     font-size: xx-large;
   }
 }
 
+.bookCover {
+  width:auto;
+  height:auto;
+  max-width:100%;
+  max-height:100%;
+  margin: 0mm;
+  padding: 0mm;
+}
+
+/* Container holding the image and the text */
+.container {
+  position: relative;
+}
+
+/* Bottom right text */
+.text-block {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: black !important;
+  color: white !important;
+  padding-left: 20px;
+  padding-right: 20px;
+  font-family:'MuseJazzText';
+}
+
+.bookContent {
+  background-color:#ffffff;
+  color:#000000;
+  padding: 20px;
+  font-family:'MuseJazzText';
+  text-align: center;
+  font-size: medium;
+  line-height: 20px;
+}
+
+.bookContent > h1 {
+  font-size: xx-large;
+  padding: 40px;
+}
+
+.bookIndexList {
+  column-count: 2;
+  font-size: large;
+  text-align: left;
+}
+
+.bookIndexList > ul, li {
+  list-style-type: none;
+}
+
+
 @media print {
+
+  @page { size: A4 portrait;
+          margin: 0mm;
+  }
+
+  .bookContent {
+    margin: 2mm 10mm;
+    padding: 20px;
+  }
+
   .hideOnprint {
       display: none !important;
   }
   .hideOnScreen {
       display: block;
   }
+
+  .pageBreakBefore {
+      page-break-before: always;
+  }
+
 }
 @media screen {
   .hideOnprint {
       display: block;
   }
   .hideOnScreen {
-      display: none !important;  
+      display: none !important;
   }
 }
 
