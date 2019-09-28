@@ -207,6 +207,7 @@ function parse_chord_scheme(song) {
   var parsed_valid_chord = false;
   var did_not_parse_chord_in_this_measure = true;
   var in_alternative_ending = false;
+  var note_or_rest_in_measure = false;
 
   for (var i = 0; i < song.lines.length; i += 1) {
 
@@ -216,6 +217,10 @@ function parse_chord_scheme(song) {
 
       for (var line_idx = 0; line_idx < line.length; line_idx += 1) {
         var element = line[line_idx];
+
+        if (element.el_type === "note") {
+          note_or_rest_in_measure = true;
+        }
 
         if (element.el_type === "bar") {
           if (element.startEnding !== undefined) {
@@ -229,13 +234,16 @@ function parse_chord_scheme(song) {
           }
 
           if (!in_alternative_ending) {
-            if (did_not_parse_chord_in_this_measure && parsed_valid_chord) {
+            if (did_not_parse_chord_in_this_measure &&
+                parsed_valid_chord &&
+                note_or_rest_in_measure) {
               current_measure.push(" % ");
             }
 
             if (current_measure.length > 0) {
               chords.push(current_measure.slice(0));
               current_measure = [];
+              note_or_rest_in_measure = false;
             }
 
             did_not_parse_chord_in_this_measure = true;
