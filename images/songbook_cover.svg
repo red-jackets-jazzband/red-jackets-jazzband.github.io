@@ -167,10 +167,10 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.7"
-     inkscape:cx="290.42636"
+     inkscape:cx="-1.0022114"
      inkscape:cy="551.85886"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g894"
      showgrid="false"
      inkscape:window-width="1920"
      inkscape:window-height="1028"
@@ -185,7 +185,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -273,81 +273,46 @@
          inkscape:connector-curvature="0" />
       <text
          id="text1022"
-         y="223.7346"
-         x="56.63208"
-         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:12.38091946px;line-height:125%;font-family:'Josefin Slab';-inkscape-font-specification:'Josefin Slab, Light';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#191102;fill-opacity:1;stroke:none;stroke-width:0.30952296px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         y="277.76501"
+         x="13.751066"
+         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:23.95747566px;line-height:125%;font-family:'Josefin Slab';-inkscape-font-specification:'Josefin Slab, Light';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#6f1207;fill-opacity:1;stroke:none;stroke-width:0.5989368px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:19.73983383px;font-family:'Akura Popo';-inkscape-font-specification:'Akura Popo';fill:#191102;fill-opacity:1;stroke-width:0.30952296px"
-           y="223.7346"
-           x="56.63208"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:38.19721222px;font-family:'Akura Popo';-inkscape-font-specification:'Akura Popo';fill:#6f1207;fill-opacity:1;stroke-width:0.5989368px"
+           y="277.76501"
+           x="13.751066"
            id="tspan1020"
-           sodipodi:role="line">Cheers to</tspan></text>
-      <text
-         id="text1022-0"
-         y="223.39693"
-         x="158.375"
-         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:12.52692032px;line-height:125%;font-family:'Josefin Slab';-inkscape-font-specification:'Josefin Slab, Light';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#191102;fill-opacity:1;stroke:none;stroke-width:0.313173px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         xml:space="preserve"><tspan
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:19.73983383px;font-family:'Akura Popo';-inkscape-font-specification:'Akura Popo';fill:#191102;fill-opacity:1;stroke-width:0.313173px"
-           y="223.39693"
-           x="158.375"
-           id="tspan1020-5"
-           sodipodi:role="line">Years!</tspan></text>
+           sodipodi:role="line">streetclassics</tspan></text>
       <text
          id="text5500-8-0"
-         y="56.440968"
-         x="24.137749"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:9.02390385px;line-height:125%;font-family:P052;-inkscape-font-specification:P052;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#191102;fill-opacity:1;stroke:none;stroke-width:0.10574887px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         y="79.431496"
+         x="30.383289"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.3492794px;line-height:125%;font-family:P052;-inkscape-font-specification:P052;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#191102;fill-opacity:1;stroke:none;stroke-width:0.16815561px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan870-9"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20.30378532px;font-family:Saniretro;-inkscape-font-specification:Saniretro;fill:#191102;fill-opacity:1;stroke-width:0.10574887px"
-           y="56.440968"
-           x="24.137749"
-           sodipodi:role="line">Jazzband</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:32.28588104px;font-family:Saniretro;-inkscape-font-specification:Saniretro;fill:#191102;fill-opacity:1;stroke-width:0.16815561px"
+           y="79.431496"
+           x="30.383289"
+           sodipodi:role="line">songbook</tspan></text>
       <text
          id="text5500-8"
-         y="41.712837"
-         x="12.56701"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20.7241497px;line-height:125%;font-family:P052;-inkscape-font-specification:P052;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#191102;fill-opacity:1;stroke:none;stroke-width:0.24286109px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         y="53.873695"
+         x="11.698378"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:28.63063622px;line-height:125%;font-family:P052;-inkscape-font-specification:P052;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#191102;fill-opacity:1;stroke:none;stroke-width:0.3355152px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            id="tspan870"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:46.6293335px;font-family:Saniretro;-inkscape-font-specification:Saniretro;fill:#191102;fill-opacity:1;stroke-width:0.24286109px"
-           y="41.712837"
-           x="12.56701"
-           sodipodi:role="line">RED JACKETS</tspan></text>
-      <text
-         inkscape:export-ydpi="299"
-         inkscape:export-xdpi="299"
-         id="text1144"
-         y="229.33101"
-         x="122.19437"
-         style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:17.38365746px;line-height:125%;font-family:'Josefin Slab';-inkscape-font-specification:'Josefin Slab, Light';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#b51102;fill-opacity:1;stroke:none;stroke-width:0.43459138px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         xml:space="preserve"><tspan
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:37.08513641px;font-family:'Tanglewood Tales NF';-inkscape-font-specification:'Tanglewood Tales NF';fill:#b51102;fill-opacity:1;stroke-width:0.43459138px"
-           y="229.33101"
-           x="122.19437"
-           id="tspan1142"
-           sodipodi:role="line">10</tspan></text>
-      <text
-         id="text1236"
-         y="286.38617"
-         x="26.989605"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.28888893px;line-height:125%;font-family:Saniretro;-inkscape-font-specification:'Saniretro, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         xml:space="preserve"><tspan
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:46.91942215px;font-family:Saniretro;-inkscape-font-specification:'Saniretro, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke-width:0.26458332px"
-           y="286.38617"
-           x="26.989605"
-           id="tspan1234"
-           sodipodi:role="line">SONGBOOK</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:64.41892242px;font-family:Saniretro;-inkscape-font-specification:Saniretro;fill:#191102;fill-opacity:1;stroke-width:0.3355152px"
+           y="53.873695"
+           x="11.698378"
+           sodipodi:role="line">N.O.A.D.S.</tspan></text>
       <text
          id="text1236-4-7"
-         y="48.886189"
-         x="137.85793"
+         y="288.03326"
+         x="78.279869"
          style="font-style:normal;font-variant:normal;font-weight:300;font-stretch:normal;font-size:7.06826878px;line-height:125%;font-family:'Josefin Slab';-inkscape-font-specification:'Josefin Slab, Light';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#191102;fill-opacity:1;stroke:none;stroke-width:0.17670672px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
            style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Saniretro;-inkscape-font-specification:Saniretro;fill:#191102;fill-opacity:1;stroke-width:0.17670672px"
-           y="48.886189"
-           x="137.85793"
+           y="288.03326"
+           x="78.279869"
            id="tspan1234-7-5"
            sodipodi:role="line">www.redjackets.nl</tspan></text>
     </g>
