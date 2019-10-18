@@ -1,0 +1,18 @@
+X: 1
+T: Oye Como Va
+C: Tito Puente (1963)
+M: 4/4
+L: 1/8
+R: Mambo
+Q:1/4=120
+K: G
+"Am7" [AEC]2 [AEC]2 z [AEC]2 "D7"[AEC]-|[AEC] z z [AEC]- [AEC] [AEC]2 z | "Am7" [AEC]2 [AEC]2 z [AEC]2 "D7"[AEC]-|[AEC] z z [AEC]- [AEC] [AEC]2 z :|
+P:A
+|:"Am7" A2 AB cd z B | "D7" z A3 z4 | "Am7" A2 AB cd z B- |1 "D7" B2 z2  z4 :|2 "D7" z D FA d2 z2 ||
+"Am7" A2 AA z A AA | z A AA "D7"dA e2 | "Am7" A2 A2 AA z "D7" d | z A e2 z2 e2|
+P:Chorus
+|: "Am7" Adcd A2 z2 | "D7" z3 c e2d2 | "Am7" Adcd A2 z2 | "D7" z3 G A2 A2 :|
+P:B
+"Am7" A2 AA z A AA | z A AA "D7"dA e2 ||
+P:Solos
+"Am7" z8 | "D7" z8 |
