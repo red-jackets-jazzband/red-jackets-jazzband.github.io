@@ -13,8 +13,10 @@ Doctor Jazz,doctor_jazz.abc
 Do Lord,do_lord.abc
 Do Watcha Wanna,do_watcha_wanna.abc
 Down by the Riverside,down_by_the_riverside.abc
+Down in Honky Tonk Town,honky_tonk_town.abc
 Drop me off in New Orleans,drop_me_off_in_new_orleans.abc
 Exactly like you,exactly_like_you.abc
+Feel like Funkin' it up,feel_like_funkin_it_up.abc
 Five Foot Two,five_foot_two.abc
 Glad when you're dead,you_rascal_you.abc
 Glory Halleluja,glory_halleluja.abc
@@ -48,8 +50,10 @@ No it ain't my fault,aint_my_fault.abc
 Oh Didn't He Ramble,didnt_he_ramble.abc
 Oh when the Saints,oh_when_the_saints.abc
 Over in the Gloryland,gloryland.abc
+Paul Barbarins Second Line,paul_barbarins_second_line.abc
 Saint James Infirmary,st_james_infirmary.abc
-Second line,second_line.abc
+Second line (Joe Avery),second_line.abc
+Second Line (Paul Barbarins),paul_barbarins_second_line.abc
 Second line Limbo,limbo_rock.abc
 See See Rider,see_see_rider.abc
 Shame Shame Shame,shame_shame_shame.abc
