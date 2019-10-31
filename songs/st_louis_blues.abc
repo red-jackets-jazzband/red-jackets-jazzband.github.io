@@ -1,0 +1,19 @@
+X:1
+T:St. Louis Blues
+C:W.C. Handy(1914)
+M:4/4
+L:1/8
+R:Traditional
+F:https://www.youtube.com/watch?v=LPHzoWU_-QM
+K:Fmaj
+P:A
+c c_A ||: "Fm"c c3-c4 | z B B=B c _A3 | "C7" G8 | z4 z B BG|
+"C7" B B3-B4 | z B B=B c _A3 |1 "Fm" F8 | "Fm" z4 "C7" z c c_A :|2 "Fm" F4 "G7" G4 | "C7"c3 c-B4 ||
+P:B
+"F7" AcAF-F4 | "Bb7" z ^C DF _A2 GF-|"F7"F8| z8|
+"F7" z D FG-G4 | "Bb7" z D FG _A2 GF-|"F7"F8 |z8|
+"C7" EGEC-C4 | z _A2 A A2 GF-|"F7" F8 | "C7" z8 |]
+P:C
+"F"F2 ^GA F2 GA | "Bb7" F2 ^GA FGAF-| "F" F8 | "F7" z4 z2 ^GA|
+"Bb" G2 FD F2 G_A | G2 FD FG_AF-| "F" F8 | z4 z2 ^GA|
+"C7" c2 ^GA C^GAB,-|B,^GAC- CGAF-|"F7"F8 |"C7"z8 |]

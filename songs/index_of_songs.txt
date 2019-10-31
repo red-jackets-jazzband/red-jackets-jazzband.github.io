@@ -52,6 +52,7 @@ Oh when the Saints,oh_when_the_saints.abc
 Over in the Gloryland,gloryland.abc
 Paul Barbarins Second Line,paul_barbarins_second_line.abc
 Saint James Infirmary,st_james_infirmary.abc
+Saint Louis Blues,st_louis_blues.abc
 Second line (Joe Avery),second_line.abc
 Second Line (Paul Barbarins),paul_barbarins_second_line.abc
 Second line Limbo,limbo_rock.abc
