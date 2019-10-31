@@ -1,19 +1,19 @@
-X: 1
-T: Big Chief
-C: Earl King
+X:1
+T:Big Chief
+C:Earl King
 R:Second line
-M: 4/4
-L: 1/8
+M:4/4
+L:1/8
 Q:1/4=120
 F:https://www.youtube.com/watch?v=w7tN3jDrw_w
-K:Ab
-V:1 clef=treble name="Trumpet" transpose=0 
-V:2 clef=bass transpose=-24 name="Sousaphone" middle=d
-[V:1] z Bc e/2ee/2 ecB|| "Eb" E z3 z4        | z Bc e/2ee/2 ecB| E z3 z4        |  z Bce/2e e/2efz |
-[V:2] z8              || e z2 d zB zd   | e z3 z4         | e z2 d z B z d |  e z3  z4        |
+K:Bbmaj
+V:1 clef=treble transpose=0 name="Trumpet" " 
+V:2 clef=bass transpose=-24 name="Sousaphone" middle=d " 
+[V:1] z cd f/2ff/2 fdc|| "F" F z3 z4 | z cd f/2ff/2 fdc| F z3 z4 | z cdf/2f f/2fgz |
+[V:2] z8 || f z2 e zc ze | f z3 z4 | f z2 e z c z e | f z3 z4 |
 w:
-[V:1] "Ab" ecG z z4     | z Bce/2e e/2ecB | "Eb" E z7      | 
-[V:2] A z2 F z E z  F   |   A2  z2 z4     | e z2 d zB zd   |
+[V:1] "Bb" fdA z z4 | z cdf/2f f/2fdc | "F" F z7 | 
+[V:2] B z2 G z F z G | B2 z2 z4 | f z2 e zc ze |
 w:
-[V:1] z4 e/2eeGB/2-     |"Bb" Bz/2c2z/2  z4 | z BcecBGG    | "Eb" E z3 z4   | z8     |
-[V:2] e z3 z4           |Bz2A zG zA         | B2 z2 z4     | e z2 d zB zG   | E z3 z4|
+[V:1] z4 f/2ffAc/2- |"C" cz/2d2z/2 z4 | z cdfdcAA | "F" F z3 z4 | z8 |
+[V:2] f z3 z4 |cz2B zA zB | c2 z2 z4 | f z2 e zc zA | F z3 z4|
