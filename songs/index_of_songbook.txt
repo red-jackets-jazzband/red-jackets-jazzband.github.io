@@ -9,10 +9,12 @@ Go to the Mardi Gras,go_to_the_mardi_gras.abc
 I Got That Feelin',i_got_that_feeling.abc
 I'm Walking,im_walking.abc
 I Wanna Be Like You,be_like_you.abc
+Ice Cream,ice_cream.abc
 Jambalaya,jambalaya.abc
 Joe Avery Blues,second_line.abc
 Lord Lord Lord,lord_lord_lord.abc
 Milenburg Joys,milenburg_joys.abc
+Oh When the Saints,oh_when_the_saints.abc
 Oye Como Va,oye_como_va.abc
 See See Rider,see_see_rider.abc
 Steamin' Blues,steamin_blues.abc
