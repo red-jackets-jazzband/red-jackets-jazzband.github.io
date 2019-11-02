@@ -19,6 +19,7 @@ Exactly like you,exactly_like_you.abc
 Feel like Funkin' it up,feel_like_funkin_it_up.abc
 Five Foot Two,five_foot_two.abc
 Glad when you're dead,you_rascal_you.abc
+Glory Glory,lay_my_burden_down.abc
 Glory Halleluja,glory_halleluja.abc
 Gloryland,gloryland.abc
 Go to the Mardi Gras,go_to_the_mardi_gras.abc
@@ -37,6 +38,7 @@ Just a little while,just_a_little_while.abc
 Just over in the Gloryland,gloryland.abc
 Joe Avery Blues,second_line.abc
 Lady be good,lady_be_good.abc
+Lay my burden down,lay_my_burden_down.abc
 Li'l Liza Jane,lil_liza_jane.abc
 Limbo Rock,limbo_rock.abc
 Lord Lord Lord,lord_lord_lord.abc
@@ -68,6 +70,7 @@ This Little Light of Mine,little_light.abc
 Walking on a Thin Line,walking_on_a_thin_line.abc
 We shall not be moved,we_shall_not_be_moved.abc
 We'll understand it better by and by,by_and_by.abc
+When I lay my burden down,lay_my_burden_down.abc
 When you're Smiling,when_youre_smiling.abc
 Willie the Weeper,willie_the_weeper.abc
 You are my Sunshine,you_are_my_sunshine.abc
