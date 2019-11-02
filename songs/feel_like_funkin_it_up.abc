@@ -1,0 +1,27 @@
+X:1
+T:Feel like Funkin' it up
+M:4/4
+L:1/8
+Q:1/4=190
+C:Rebirth Brass Band (1996)
+R:Rebirth
+F:https://www.youtube.com/watch?v=X_AOwrXev60
+V:1 clef=treble transpose=0 name="Trumpet" +12 " 
+V:2 clef=bass transpose=-24 name="Sousaphone" middle=d " 
+K:F
+P:A
+[V:1] z8 |: z2 f2 f2 f2 |fffg z2 f2- |f2f2 fffg | z8 :|
+w:I feel like fun-kin' it up feel _ like fun-kin' it up!
+[V:2] z4 c2d2 |:f2 z c-c2 d2 | F2 z c-c2 =B2 | B2 z B-B2 B2 | _e2 d2 c2d2 :|
+P:B
+[V:1] |: z2 [fc'][fc']- [fc'][fc'] z [fc']-| [fc']2 [fc'][fc'] [fc']2 [fc'] z | z2 [B^e][Be] z [Be] z [Be] |1 cBcd B2G2 :|2 cBcd zc zd ||
+[V:2] |:f2 z c-c2 d2 | F2 z c-c2 =B2 | B2 z B-B2 B2 |1 cBcd B2G2 :|2 cBcd B2G2 ||
+P:C
+[V:1] |: _edc z _A z GF-| F2 z2 z4 | z2 D z FG z _A | z4 z c z d |
+[V:2] |: f2 z c-c2 d2 | F2 z c-c2 =B2 | B2 z B-B2 B2 | _e2 d2 c2d2 |
+[V:1] _edc z _A z GF-| F2 z2 c z =B_B-| B2 z2 FG z _A | z4 z c z d |
+[V:2] f2 z c-c2 d2 | F2 z c-c2 =B2 | B2 z B-B2 B2 | _e2 d2 c2d2 |
+[V:1] _edc z _A z GF-| F2 z2 z4 | z2 D z FG z _A |-_A2 z2 z2 FG |
+[V:2] f2 z c-c2 d2 | F2 z c-c2 =B2 | B2 z B-B2 B2 | _e2 d2 c2d2 |
+[V:1] A2-AA-A2 A2-|A4 z2 FG | A2 AG z GF2 | z4 z2 FG | A2-AA-A2 A2- | A3 F-F2 G2 | AAA zzc z d | z4 z c z d :|
+[V:2] A2-AA-A2 A2-|A4 z2 FG | A2 AG z GF2 | z4 z2 FG | A2-AA-A2 A2- | A3 F-F2 G2 | AAA zzc z d | z4 z c z d :|

@@ -5,6 +5,7 @@ C'est Magnifique,cest_magnifique.abc
 Corrine Corrina,corrine_corrina.abc
 Do Watcha Wanna,do_watcha_wanna.abc
 Down In Honky Tonk Town,honky_tonk_town.abc
+Feel like funkin it up,feel_like_funkin_it_up.abc
 Go to the Mardi Gras,go_to_the_mardi_gras.abc
 I Got That Feelin',i_got_that_feeling.abc
 I'm Walking,im_walking.abc
