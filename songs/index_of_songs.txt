@@ -69,6 +69,7 @@ Sweet Sue,sweet_sue.abc
 This Little Light of Mine,little_light.abc
 Walking on a Thin Line,walking_on_a_thin_line.abc
 We shall not be moved,we_shall_not_be_moved.abc
+We shall walk through the streets of our city,we_shall_walk_through_the_streets.abc
 We'll understand it better by and by,by_and_by.abc
 When I lay my burden down,lay_my_burden_down.abc
 When you're Smiling,when_youre_smiling.abc
