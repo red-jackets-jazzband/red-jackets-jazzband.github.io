@@ -72,6 +72,7 @@ We shall not be moved,we_shall_not_be_moved.abc
 We shall walk through the streets of our city,we_shall_walk_through_the_streets.abc
 We'll understand it better by and by,by_and_by.abc
 When I lay my burden down,lay_my_burden_down.abc
+When My Dreamboat Comes Home,when_my_dreamboat.abc
 When you're Smiling,when_youre_smiling.abc
 Willie the Weeper,willie_the_weeper.abc
 You are my Sunshine,you_are_my_sunshine.abc
