@@ -53,6 +53,7 @@ Oh Didn't He Ramble,didnt_he_ramble.abc
 Oh when the Saints,oh_when_the_saints.abc
 Over in the Gloryland,gloryland.abc
 Paul Barbarins Second Line,paul_barbarins_second_line.abc
+Precious Lord Take My Hand,take_my_hand.abc
 Saint James Infirmary,st_james_infirmary.abc
 Saint Louis Blues,st_louis_blues.abc
 Second line (Joe Avery),second_line.abc
@@ -63,9 +64,11 @@ Shame Shame Shame,shame_shame_shame.abc
 Shake that Thing,shake_that_thing.abc
 Sheik of Araby,sheik_of_araby.abc
 Short Dressed Gal,short_dressed_gal.abc
+Sing On,sing_on.abc
 Some of these Days,some_of_these_days.abc
 Sweet Georgia Brown,sweet_georgia_brown.abc
 Sweet Sue,sweet_sue.abc
+Take My Hand Precious Lord,take_my_hand.abc
 This Little Light of Mine,little_light.abc
 Walking on a Thin Line,walking_on_a_thin_line.abc
 We shall not be moved,we_shall_not_be_moved.abc
