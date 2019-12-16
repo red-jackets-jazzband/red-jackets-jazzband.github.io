@@ -76,11 +76,12 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
 
   // Don't use valueAsNumber to let IE users also enjoy transposing
   transpose_steps = Number(transpose_steps);
-  var instrument = document.getElementById("instrument").value;
+  var instrumentSelect = document.getElementById("instrument");
+  document.getElementById("instrumentText").innerHTML = instrumentSelect.options[instrumentSelect.selectedIndex].text.toLowerCase();
 
   if (text.search(/\[V:.*\]/g) == -1) {
-    text = change_cleff_for_instrument(instrument, text);
-    transpose_steps += offset_for_instrument(instrument);
+    text = change_cleff_for_instrument(instrumentSelect.value, text);
+    transpose_steps += offset_for_instrument(instrumentSelect.value);
   }
 
   window.current_song = text;
@@ -251,7 +252,8 @@ function parse_chord_scheme(song) {
         }
 
         if (!in_alternative_ending) {
-          if (element.chord !== undefined) {
+          var chordFirstLetter = /^[A-G]/i;
+          if (element.chord !== undefined && chordFirstLetter.test(element.chord[0].name)) {
             var chord = replace_accidental_with_utf8_char(element.chord[0].name);
             current_measure.push(chord);
             did_not_parse_chord_in_this_measure = false;
