@@ -498,6 +498,43 @@ video.video {
   border-color: #000000;
 }
 
+.chordDiv {
+  height: 40px;
+  overflow: hidden;
+}
+
+.chordCellDoubleThinBarRight {
+  border-right-style: double;
+  border-right-width: medium;
+}
+
+.chordCellDoubleThinBarLeft {
+  border-left-style: double;
+  border-left-width: medium;
+}
+
+.chordCellRightRepeat {
+  border-right-width: thick;
+  border-right-style: double;
+}
+
+.chordRightRepeatSign {
+  text-align:right;
+  float:right;
+  padding-right:1px
+}
+
+.chordCellLeftRepeat {
+  border-left-width: thick;
+  border-left-style: double;
+}
+
+.chordLeftRepeatSign {
+  text-align:left;
+  float:left;
+  padding-left:1px
+}
+
 .upcomingShow {
   color: #cccccc;
 }

@@ -203,7 +203,8 @@ function replace_accidental_with_utf8_char(note) {
 */
 function parse_chord_scheme(song) {
   var chords = [];
-  var current_measure = [];
+  var current_measure = {};
+  current_measure.text = [];
 
   var parsed_valid_chord = false;
   var did_not_parse_chord_in_this_measure = true;
@@ -224,6 +225,20 @@ function parse_chord_scheme(song) {
         }
 
         if (element.el_type === "bar") {
+          if (element.type === "bar_left_repeat") {
+            current_measure.leftRepeat = true;
+          }
+          else if (element.type === "bar_right_repeat") {
+            current_measure.rightRepeat = true;
+          }
+          else if (element.type === "bar_thin_thin") {
+            if (note_or_rest_in_measure && parsed_valid_chord) {
+              current_measure.doubeThinBarRight = true;
+            } else {
+              current_measure.doubeThinBarLeft = true;
+            }
+          }
+
           if (element.startEnding !== undefined) {
             if (element.startEnding > 1) {
               in_alternative_ending = true;
@@ -238,12 +253,15 @@ function parse_chord_scheme(song) {
             if (did_not_parse_chord_in_this_measure &&
                 parsed_valid_chord &&
                 note_or_rest_in_measure) {
-              current_measure.push(" % ");
+              current_measure.text.push(" % ");
             }
 
-            if (current_measure.length > 0) {
-              chords.push(current_measure.slice(0));
-              current_measure = [];
+            if (current_measure.text.length > 0) {
+              current_measure.text = current_measure.text.slice(0);
+
+              chords.push(current_measure);
+              current_measure = {};
+              current_measure.text = [];
               note_or_rest_in_measure = false;
             }
 
@@ -255,7 +273,7 @@ function parse_chord_scheme(song) {
           var chordFirstLetter = /^[A-G]/i;
           if (element.chord !== undefined && chordFirstLetter.test(element.chord[0].name)) {
             var chord = replace_accidental_with_utf8_char(element.chord[0].name);
-            current_measure.push(chord);
+            current_measure.text.push(chord);
             did_not_parse_chord_in_this_measure = false;
             parsed_valid_chord = true;
           }
@@ -293,8 +311,33 @@ function create_chord_table(chords, chordtable) {
       var chord_idx = x + y * cols;
       if (chord_idx < chords.length) {
         var cell = row.insertCell(-1);
-        cell.innerHTML = chords[chord_idx];
+        var chordDiv = document.createElement("DIV");
+        chordDiv.classList.add("chordDiv");
+        chordDiv.innerHTML = chords[chord_idx].text;
+        cell.appendChild(chordDiv);
         cell.classList.add("chordCell");
+
+        if (chords[chord_idx].doubeThinBarLeft !== undefined) {
+          cell.classList.add("chordCellDoubleThinBarLeft");
+        }
+        if (chords[chord_idx].doubeThinBarRight !== undefined) {
+          cell.classList.add("chordCellDoubleThinBarRight");
+        }
+
+        if (chords[chord_idx].rightRepeat !== undefined) {
+          cell.classList.add("chordCellRightRepeat");
+          var span = document.createElement("span");
+          span.classList.add("chordRightRepeatSign");
+          span.innerHTML = ":";
+          chordDiv.appendChild(span);
+        }
+        if (chords[chord_idx].leftRepeat !== undefined) {
+          cell.classList.add("chordCellLeftRepeat");
+          var span = document.createElement("span");
+          span.classList.add("chordLeftRepeatSign");
+          span.innerHTML = ":";
+          chordDiv.insertBefore(span, chordDiv.childNodes[0]);
+        }
       }
     }
   }
