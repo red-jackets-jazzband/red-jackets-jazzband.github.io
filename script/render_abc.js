@@ -447,7 +447,7 @@ function irealProFromAbc(song, chords) {
       irealProText += '}';
     }
     else if (chords[i].doubeThinBarRight !== undefined) {
-      irealProText += 'Z';
+      irealProText += 'Z Y |';
     }
     else
     {
