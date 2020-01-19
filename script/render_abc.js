@@ -411,7 +411,7 @@ function irealProFromAbc(song, chords) {
 
   var title = song.metaText.title;
   var composer = (song.metaText.composer !== undefined) ? song.metaText.composer : "Unknown";
-  var style = "Traditional";
+  var style = "Second Line";
 
   var irealProText = 'irealbook://' + title + '=' + composer + '=' + style + '=' + key + '=n=T' + num + denom;
   for (var i = 0; i < chords.length; i++) {
@@ -427,7 +427,7 @@ function irealProFromAbc(song, chords) {
       irealProText += '|';
     }
 
-    irealProText += chords[i].text;
+    irealProText += " " + chords[i].text + " ";
 
     if (chords[i].rightRepeat !== undefined) {
       irealProText += '}';
@@ -441,7 +441,7 @@ function irealProFromAbc(song, chords) {
     }
   }
 
-  irealProText = irealProText.replace(/%/g, 'x').replace(/♭/g, "b").replace(/♯/g, "#").replace(/\|$/,"Z");
+  irealProText = irealProText.replace(/,/g, ' , ').replace(/%/g, 'x ').replace(/♭/g, "b").replace(/♯/g, "#").replace(/\|$/,"Z");
 
   return irealProText;
 }
