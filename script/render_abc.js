@@ -409,10 +409,6 @@ function irealProFromAbc(song, chords) {
   var num = song.lines[0].staff[0].meter.value[0].num;
   var denom = song.lines[0].staff[0].meter.value[0].den;
 
-  var cols = 4;
-  if (chords.length > 4 * 4) {
-    cols = 8;
-  }
 
   var title = song.metaText.title;
   var composer = (song.metaText.composer !== undefined) ? song.metaText.composer : "Unknown";
@@ -432,7 +428,20 @@ function irealProFromAbc(song, chords) {
       irealProText += '|';
     }
 
-    irealProText += chords[i].text + "  ";
+    var cell = chords[i].text.toString().replace(/,/g, ' ,');
+    var spaceCount = ((cell || '').match(/\ /g) || []).length;
+    irealProText += cell;
+
+    switch(spaceCount) {
+      case 0:
+        irealProText += "   ";
+        break;
+      case 1:
+        irealProText += " ";
+        break;
+      default:
+        break;
+    }
 
     if (chords[i].rightRepeat !== undefined) {
       irealProText += '}';
@@ -445,12 +454,9 @@ function irealProFromAbc(song, chords) {
       irealProText += '|';
     }
 
-    if (i > 0 && i %cols == 0) {
-      irealProText += '\n';
-    }
   }
 
-  irealProText = irealProText.replace(/,/g, ' ,').replace(/% /g, 'x').replace(/♭/g, "b").replace(/♯/g, "#").replace(/\|$/,"Z");
+  irealProText = irealProText.replace(/% /g, 'x').replace(/♭/g, "b").replace(/♯/g, "#").replace(/\|$/,"Z");
 
   return irealProText;
 }
