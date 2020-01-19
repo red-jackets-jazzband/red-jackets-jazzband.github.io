@@ -90,6 +90,7 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
 
   if (add_link) {
     add_inspiration_link(song.metaText.url);
+    add_irealpro_link(song, chords);
   }
 
   var abcParams = {
@@ -110,7 +111,8 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
       tempofont: "MuseJazzText",
       wordfont: "MuseJazzText",
       footerfont: "MuseJazzText",
-      voicefont: "MuseJazzText"
+      voicefont: "MuseJazzText",
+      metafont: "MuseJazzText"
     }
   };
 
@@ -358,7 +360,7 @@ function add_inspiration_link(url) {
       link.href = url;
     } else {
       link = document.createElement("A");
-      link.innerHTML = "| inspiration";
+      link.innerHTML = " | inspiration";
       link.href = url;
       link.target = "_blank";
       link.id = "inspirationLink";
@@ -372,6 +374,78 @@ function add_inspiration_link(url) {
     }
   }
 }
+
+/*
+   Funcion: add_irealpro_link
+   Adds a link to the sheetmenu for devices that could have irealpro
+*/
+function add_irealpro_link(song, chords) {
+
+  var couldHaveIrealPro = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (!couldHaveIrealPro && (chords.length > 0)) {
+    var url = irealProFromAbc(song, chords);
+    var link = document.getElementById("iRealPro");
+    if (link !== null) {
+      link.href = url;
+    } else {
+      var link = document.createElement("A");
+      link.innerHTML = " | irealpro";
+      link.href = url
+      link.target = "_blank";
+      link.id = "iRealPro";
+      var menu = document.getElementById("sheetmenu");
+      menu.appendChild(link);
+    }
+  }
+}
+
+/*
+   Funcion: irealProFromAbc
+   Creates an irealpro compatible link from ABC
+*/
+function irealProFromAbc(song, chords) {
+
+  var key = song.lines[0].staff[0].key.root + song.lines[0].staff[0].key.acc;
+  var num = song.lines[0].staff[0].meter.value[0].num;
+  var denom = song.lines[0].staff[0].meter.value[0].den;
+
+  var title = song.metaText.title;
+  var composer = (song.metaText.composer !== undefined) ? song.metaText.composer : "Unknown";
+  var style = "Traditional";
+
+  var irealProText = 'irealbook://' + title + '=' + composer + '=' + style + '=' + key + '=n=T' + num + denom;
+  for (var i = 0; i < chords.length; i++) {
+
+    if (chords[i].leftRepeat !== undefined) {
+      irealProText += '{';
+    }
+    else if (chords[i].doubeThinBarLeft !== undefined) {
+      irealProText += '[';
+    }
+    else if (i == 0)
+    {
+      irealProText += '|';
+    }
+
+    irealProText += chords[i].text;
+
+    if (chords[i].rightRepeat !== undefined) {
+      irealProText += '}';
+    }
+    else if (chords[i].doubeThinBarRight !== undefined) {
+      irealProText += 'Z';
+    }
+    else
+    {
+      irealProText += '|';
+    }
+  }
+
+  irealProText = irealProText.replace(/%/g, 'x').replace(/♭/g, "b").replace(/♯/g, "#").replace(/\|$/,"Z");
+
+  return irealProText;
+}
+
 
 /*
    Funcion: parse_song_from_hash
