@@ -23,6 +23,7 @@ Glory Glory,lay_my_burden_down.abc
 Glory Halleluja,glory_halleluja.abc
 Gloryland,gloryland.abc
 Go to the Mardi Gras,go_to_the_mardi_gras.abc
+Grazing in the Grass,grazing_in_the_grass.abc
 Happy Birthday,happy_birthday.abc
 Home Sweet Home,home_sweet_home.abc
 I'll fly away,ill_fly_away.abc
