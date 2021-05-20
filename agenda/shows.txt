@@ -1,8 +1,10 @@
-2020/09/19,Jazz by the Sea,Domburg
-2020/06/20,ZeelandJazz 2020,Middelburg
-2020/06/13,Celler Streetparade,Celle (DE)
-2020/05/30,Brussels Jazz Weekend 2020,Brussel (BE)
-2020/05/22,Breda Jazzfestival,Breda
+2021/09/11,Celler Streetparade,Celle (DE)
+2021/05/29,JazzBoz 2021,Bergen op Zoom
+2020/09/19,Jazz by the Sea [CANCELLED],Domburg
+2020/06/20,ZeelandJazz 2020 [CANCELLED],Middelburg
+2020/06/13,Celler Streetparade [CANCELLED],Celle (DE)
+2020/05/30,Brussels Jazz Weekend 2020 [CANCELLED],Brussel (BE)
+2020/05/22,Breda Jazzfestival [CANCELLED],Breda
 2019/11/09,Cheers to 10 years! Red Jackets Jazzband,Bergen op Zoom
 2019/10/26,Jazz & So,Zutphen
 2019/09/21,Jazz by the Sea,Domburg

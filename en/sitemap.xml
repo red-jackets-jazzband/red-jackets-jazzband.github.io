@@ -1,18 +1,13 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
-  
   <url>
     <loc>https://www.redjackets.nl/songs/</loc>
     <lastmod>2019-03-16T16:26:50+01:00</lastmod>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://www.redjackets.nl/songbook/</loc>
     <lastmod>2019-03-16T16:26:50+01:00</lastmod>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://www.redjackets.nl/band/</loc>
     <lastmod>2019-03-16T10:25:31+01:00</lastmod>
     <xhtml:link
@@ -30,14 +25,10 @@
                 hreflang="en"
                 href="https://www.redjackets.nl/band/"
                 />
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://www.redjackets.nl/in-action/</loc>
     <lastmod>2019-03-16T10:25:31+01:00</lastmod>
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://www.redjackets.nl/</loc>
     <lastmod>2019-03-16T08:20:22+01:00</lastmod>
     <xhtml:link
@@ -55,11 +46,8 @@
                 hreflang="en"
                 href="https://www.redjackets.nl/"
                 />
-  </url>
-  
-  <url>
+  </url><url>
     <loc>https://www.redjackets.nl/agenda/</loc>
     <lastmod>2019-03-16T08:20:22+01:00</lastmod>
   </url>
-  
 </urlset>
