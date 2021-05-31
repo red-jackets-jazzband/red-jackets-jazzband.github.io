@@ -3,6 +3,7 @@ Ain't my fault,aint_my_fault.abc
 Amazing Grace,amazing_grace.abc
 Bei mir bist du Schon,bei_mir_bist_du_schon.abc
 Big Chief,big_chief.abc
+Bill Bailey,bill_bailey.abc
 Bourbon Street Parade,bourbon_street_parade.abc
 By and By,by_and_by.abc
 Caravan,caravan.abc
@@ -83,5 +84,6 @@ When My Dreamboat Comes Home,when_my_dreamboat.abc
 When you're Smiling,when_youre_smiling.abc
 Whoopin' Blues,whoopin_blues.abc
 Willie the Weeper,willie_the_weeper.abc
+Won't you come home Bill Bailey,bill_bailey.abc
 You are my Sunshine,you_are_my_sunshine.abc
 You Rascal You,you_rascal_you.abc
