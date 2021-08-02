@@ -25,11 +25,13 @@ Glory Glory,lay_my_burden_down.abc
 Glory Halleluja,glory_halleluja.abc
 Gloryland,gloryland.abc
 Go to the Mardi Gras,go_to_the_mardi_gras.abc
+Gotta woman,gotta_woman.abc
 Grazing in the Grass,grazing_in_the_grass.abc
 Happy Birthday,happy_birthday.abc
 Home Sweet Home,home_sweet_home.abc
 I'll fly away,ill_fly_away.abc
 I'm Walking,im_walking.abc
+I've got a woman,gotta_woman.abc
 I Wanna Be Like You,be_like_you.abc
 In the Sweet Bye and Bye,in_the_sweet_bye_and_bye.abc
 It ain't my fault,aint_my_fault.abc
