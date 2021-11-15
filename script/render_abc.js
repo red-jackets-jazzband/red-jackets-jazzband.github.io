@@ -3,7 +3,7 @@
 var current_song = null;
 var transpose_halfsteps = 0;
 
-/* Fix for IE that does not implement forEach 
+/* Fix for IE that does not implement forEach
    see https://tips.tutorialhorizon.com/2017/01/06/object-doesnt-support-property-or-method-foreach/
 */
 (function() {
@@ -195,7 +195,7 @@ function string_to_abc_tune(text, transpose_steps) {
        note - with the b and # replaced
 */
 function replace_accidental_with_utf8_char(note) {
-  return note.replace("b ", "♭").replace("#", "♯");
+  return note.replace("b ", "♭").replace("#", "♯").replace("dim", "Ø");
 }
 
 /*
