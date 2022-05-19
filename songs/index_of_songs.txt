@@ -51,6 +51,7 @@ Joe Avery Blues,second_line.abc
 John Casimir's Whoopin' Blues,whoopin_blues.abc
 Lady be good,lady_be_good.abc
 Lay my burden down,lay_my_burden_down.abc
+Let the light from the lighthouse,shine_on_me.abc
 Li'l Liza Jane,lil_liza_jane.abc
 Lilly of the Valley,lilly_of_the_valley.abc
 Limbo Rock,limbo_rock.abc
