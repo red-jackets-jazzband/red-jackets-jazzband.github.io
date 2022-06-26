@@ -112,7 +112,8 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
       wordfont: "MuseJazzText",
       footerfont: "MuseJazzText",
       voicefont: "MuseJazzText",
-      metafont: "MuseJazzText"
+      metafont: "MuseJazzText",
+      wordsfont: "MuseJazzText"
     }
   };
 
