@@ -20,6 +20,7 @@ Down in Honky Tonk Town,honky_tonk_town.abc
 Drop me off in New Orleans,drop_me_off_in_new_orleans.abc
 Exactly like you,exactly_like_you.abc
 Feel like Funkin' it up,feel_like_funkin_it_up.abc
+Four leaf clover,four_leaf_clover.abc
 Five Foot Two,five_foot_two.abc
 Gate Mouth,gatemouth.abc
 Gettysburg March,gettysburg_march.abc
@@ -35,6 +36,7 @@ Happy Birthday,happy_birthday.abc
 Home Sweet Home,home_sweet_home.abc
 I'll fly away,ill_fly_away.abc
 I'm Walking,im_walking.abc
+I'm looking over,four_leaf_clover.abc
 I've got a woman,gotta_woman.abc
 I Wanna Be Like You,be_like_you.abc
 In the Sweet Bye and Bye,in_the_sweet_bye_and_bye.abc
@@ -51,7 +53,6 @@ Joe Avery Blues,second_line.abc
 John Casimir's Whoopin' Blues,whoopin_blues.abc
 Lady be good,lady_be_good.abc
 Lay my burden down,lay_my_burden_down.abc
-Let the light from the lighthouse,shine_on_me.abc
 Li'l Liza Jane,lil_liza_jane.abc
 Lilly of the Valley,lilly_of_the_valley.abc
 Limbo Rock,limbo_rock.abc
