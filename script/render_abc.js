@@ -457,7 +457,7 @@ function irealProFromAbc(song, chords) {
 
   }
 
-  irealProText = irealProText.replace(/%/g, 'x ').replace(/♭/g, "b").replace(/♯/g, "#").replace(/\|$/,"Z");
+  irealProText = irealProText.replace(/Ø/g, 'h').replace(/m/g, '-').replace(/%/g, 'x ').replace(/♭/g, "b").replace(/♯/g, "#").replace(/\|$/,"Z");
 
   return irealProText;
 }
