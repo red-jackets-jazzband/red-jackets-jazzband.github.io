@@ -38,6 +38,7 @@ Happy Birthday,happy_birthday.abc
 Happy Feet Blues,happy_feet_blues.abc
 Home Sweet Home,home_sweet_home.abc
 Honky Tonk Town,honky_tonk_town.abc
+Honky Tonk Town (Riffs),honky_tonk_town_riffs.abc
 I Wanna Be Like You,be_like_you.abc
 I'll fly away,ill_fly_away.abc
 I'm looking over,four_leaf_clover.abc

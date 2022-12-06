@@ -1,0 +1,36 @@
+X:1
+M:4/4
+L:1/4
+T: Down in Honky Tonk Town (riff chords)
+C:Chris Smith & Charles R. McCarron (1918)
+R:Traditional
+F:https://www.youtube.com/watch?v=byrx_8X_L5s
+Q:100
+K:Bbmaj
+V:1 name="Root"
+V:2 name="Third"
+V:3 name="Fifth"
+V: 1
+"Bb" B/2 z/2 B/2 z/2 B/2 z/4 B/2 z3/4| z/2 B/2 G/4B/2 z/4 B/2 z/4 B/2 z3/4 | B4| B4 | "C7" c4| c4| c4| c4|
+V: 2
+d/2 z/2 d/2 z/2 d/2 z/4 d/2 z3/4| z/2 d/2 c/4d/2 z/4 d/2 z/4 d/2 z3/4 | d4| d4 | G4| G4| G4| G4|
+V: 3
+f/2 z/2 f/2 z/2 f/2 z/4 f/2 z3/4| z/2 f/2 e/4f/2 z/4 f/2 z/4 f/2 z3/4 | f4| f4 | e4| e4| e4| e4|
+V: 1
+"F" c4| c4| c4| c4| "C7" c4| c4| c4| "F7" c4|
+V: 2
+A4| A4| A4| A4| G4| G4| G4| A4|
+V: 3
+f4| f4| f4| f4| e4| e4| e4| f4|
+V: 1
+"Bb" d4| d4| d4| d4| "C7" c4| c4| c4| c4|
+V: 2
+B4| B4| B4| B4| G4| G4| G4| G4|
+V: 3
+f4| f4| f4| f4| e4| e4| e4| e4|
+V: 1
+"F" c4| c4| c4| c4|"C7"  c4| "F7" c4| "Bb" d4| d4|]
+V: 2
+A4| A4| A4| A4| G4| A4| B4| B4|]
+V: 3
+f4| f4| f4| f4| e4| f4| f4| f4|]
