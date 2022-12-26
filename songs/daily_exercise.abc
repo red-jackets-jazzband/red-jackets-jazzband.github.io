@@ -1,0 +1,20 @@
+X:1
+T:Daily Exercise
+C:Rick Campbell
+M:4/4
+L:1/4
+F:https://www.simplyearlyjazz.com/store/p316/Introduction_To_Playing_Early_Jazz_-_Ebook.html
+K:C
+"C" CEG z | "F" FAc z | "G" G Bd z | "C" c G E C ||
+w: I  |IV  | V | I
+"C" CDEF | GABc | cBAG | FEDC ||
+"Dm7" DFAc | "G7" G B d f | "C" C E1/2G1/2 A1/2G1/2 E| C2 z2 ||
+w: ii7 |V7  | I
+"Dm7" D/2E/2F/2G/2 A/2B/2c/2d/2 | "G7" G/2A/2B/2c/2 d/2e/2f/2g/2 | "C" C/2D/2E/2F/2 G/2A/2B/2c/2-|c4||
+w: Dorian | Mixolydian | Ionian
+"C" C_EF_G | G_B G_G|F_E C z ||
+w: 1 b3 4 b5 5 b7 5 b5 4 b3 1
+CDEG | AGED | Cz z2 ||
+w:1 2 3 5 6 5 3 2 1
+"C" [CEG]2 "Dm" [DFA]2 | "Em" [EGB]2 "F" [FAc]2 | "G" [GBd]2 "Am" [Ace]2 |"Bdim" [Bdf]2 "C" [ceg]2 ||
+w: I ii iii IV V vi viidim I

@@ -13,6 +13,7 @@ By and By,by_and_by.abc
 Caravan,caravan.abc
 Chinatown,chinatown.abc
 Corrine Corrina,corrine_corrina.abc
+Daily Exercise,daily_exercise.abc
 Dinah,dinah.abc
 Do Lord,do_lord.abc
 Do Watcha Wanna,do_watcha_wanna.abc
