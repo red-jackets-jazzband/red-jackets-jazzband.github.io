@@ -3,12 +3,16 @@ T:Happy Feet Blues (oh, but on the 3rd day)
 C:Wynton Marsalis
 M:4/4
 L:1/8
+P:(ABC)2-(AB)2-(ABC)2
 F:https://www.youtube.com/watch?v=yzusAy_7RCI
 R:traditional
 K:Bbmaj
+P:A
 |: "Bb" D4 E4 | F2 BF _A2 G2 | F4 z4 | "Bb7" z8| "Eb7" G4 F4 | E2 _D2 B,2 G,2 | "Bb" F,4 z4 | z8 |
 "F7" c4 _d4 | "Eb7" B_A F2 E2 _D2 | "Bb" B,4 z4 | z4 z3 F ||
+P:B
 "Bb" (B2 B)G _D2 D2| (B2 B)G _D2 D2 | _A2 z2 z4 | "Bb7"  z4 z3 F | "Eb7" (B2 B)G _D2 D2| (B2 B)G _D2 D2 | "Bb" _A2 z2 z4 | z4 z3 F |
 "F7" c4 _d4 | "Eb7" B_A F2 E2 _D2 | "Bb" B,4 z4 | z4 z3 B ||
-"Bb" ([F2_d2] ([F2d2]) ([F2d2]) ([F2d2])|([F2_d2]) ([F2d2]) [F2d2])[_D2B2]|[F2_d2] z2 z4 | "Bb7" z4 z3 B | "Eb7" [F_d]([Fd]([F2d2]) ([F2d2]) [Fd])[Fd]|([F2_d2] ([F2d2]) [F2d2])[A2=e2]|"Bb"[F2_d2] z2 z4 | z8 |
-"F7" c4 _d4 | "Eb7" B_A F2 E2 _D2 |[1 "Bb" B,2 z2 z4 | z8 :|[2 "Bb" BF1/2 E3/2_D B,2 z2 | "Bb7" [B,Bdf_a]8] |]
+P:C
+"Bb" "_Break rhythm" ([F2_d2] ([F2d2]) ([F2d2]) ([F2d2])|([F2_d2]) ([F2d2]) [F2d2])[_D2B2]|[F2_d2] z2 z4 | "Bb7" z4 z3 B | "Eb7" "_Break rhythm" [F_d]([Fd]([F2d2]) ([F2d2]) [Fd])[Fd]|([F2_d2] ([F2d2]) [F2d2])[A2=e2]|"Bb"[F2_d2] z2 z4 | z8 |
+"F7" c4 _d4 | "Eb7" B_A F2 E2 _D2 |[1 "Bb" B,2 z2 z4 | z8 :|[2 "Bb" "_Outro only" BF1/2 E3/2_D B,2 z2 | "Bb7" [B,Bdf_a]8] |]
