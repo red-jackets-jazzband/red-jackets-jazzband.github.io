@@ -94,6 +94,7 @@ Short Dressed Gal,short_dressed_gal.abc
 Sing On,sing_on.abc
 Some of these Days,some_of_these_days.abc
 South,south.abc
+Summertime,summertime.abc
 Sweet Bye and Bye,in_the_sweet_bye_and_bye.abc
 Sweet Georgia Brown,sweet_georgia_brown.abc
 Sweet Sue,sweet_sue.abc
