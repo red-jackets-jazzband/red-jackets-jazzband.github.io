@@ -15,6 +15,7 @@ Chinatown,chinatown.abc
 Corrine Corrina,corrine_corrina.abc
 Daily Exercise,daily_exercise.abc
 Dinah,dinah.abc
+Dippermouth Blues,dippermouth_blues.abc
 Do Lord,do_lord.abc
 Do Watcha Wanna,do_watcha_wanna.abc
 Doctor Jazz,doctor_jazz.abc
