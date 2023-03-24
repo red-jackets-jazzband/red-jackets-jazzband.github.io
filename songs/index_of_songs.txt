@@ -11,6 +11,7 @@ Blue Heaven,my_blue_heaven.abc
 Bourbon Street Parade,bourbon_street_parade.abc
 By and By,by_and_by.abc
 Caravan,caravan.abc
+Careless Love,careless_love.abc
 Chinatown,chinatown.abc
 Corrine Corrina,corrine_corrina.abc
 Daily Exercise,daily_exercise.abc
@@ -74,6 +75,7 @@ Margie,margie.abc
 Mercedes Benz,mercedes_benz.abc
 Milenburg Joys,milenburg_joys.abc
 My Blue Heaven,my_blue_heaven.abc
+My Bucket's got a Hole in it,buckets_got_a_hole.abc
 Need a little Sugar in my Bowl,need_a_little_sugar.abc
 New Orleans Parade,new_orleans_parade.abc
 No it ain't my fault,aint_my_fault.abc
