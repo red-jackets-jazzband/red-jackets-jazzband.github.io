@@ -109,7 +109,7 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
       historyfont: "MuseJazzText",
       infofont: "MuseJazzText",
       measurefont: "MuseJazzText",
-      partsfont: "MuseJazzText 10 italic",
+      partsfont: "MuseJazzText italic",
       repeatfont: "MuseJazzText",
       subtitlefont: "MuseJazzText",
       tabgracefont: "MuseJazzText",
