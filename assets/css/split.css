@@ -419,7 +419,7 @@ video.video {
   font-family: 'MuseJazzText';
   src: url('/fonts/MuseJazzText.woff') format('woff'), /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
    url('/fonts/MuseJazzText.ttf') format('truetype'); /* Chrome 4+, Firefox 3.5, Opera 10+, Safari 3—5 */
-}  
+}
 
 .chordtable{
     background-color:#ffffff;
@@ -446,7 +446,7 @@ video.video {
     position: relative;
     left: 50%;
     transform: translate(-50%, 0%);
-    table-layout: fixed; 
+    table-layout: fixed;
 }
 .chordtable > table {
     border-width: 1px;
@@ -479,7 +479,7 @@ video.video {
   -moz-filter: grayscale(100%);
     -o-filter: grayscale(100%);
    -ms-filter: grayscale(100%);
-       filter: grayscale(100%); 
+       filter: grayscale(100%);
 }
 
 .songPrintFooter {
@@ -487,10 +487,10 @@ video.video {
   color:#000000;
   position: fixed;
   bottom: 0;
-  left: 0; 
-  right: 0; 
-  margin-left: auto; 
-  margin-right: auto; 
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .chordCell {
@@ -612,7 +612,7 @@ video.video {
 @media print {
 
   @page { size: A4 portrait;
-          margin: 0mm;
+          /* margin: 0mm; */
   }
 
   .bookContent {
