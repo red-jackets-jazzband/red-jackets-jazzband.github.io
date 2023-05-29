@@ -1,15 +1,19 @@
 X:1
 T:Oh when the Saints
 M:4/4
-L:1/8
-Q:1/4=121
+L:1/4
+Q:1/4=160
 F:https://www.youtube.com/watch?v=LS4CER83DCE
 R:Traditional
 K:Fmaj
 V:1
-FAB||:"F" c5 FAB |c5 FAB |c2 A2 F2 A2 |
-w:Oh when the Saints Oh when the saints Oh when the Saints come march-ing
-"C7" G5 GAG |"F" F3 F"F7" A2 c2 |"Bb" c(B3 "Bbm" B)B AB |
-w:in Oh Lord I want to be in that num-_ber When the
-"F" c2 A2 "C7" F2 G2 |[1 "F" F5 FAB:|[2 "F" F8 |]
+FAB||:"F" c4 | z FAB |c4 | z FAB |
+w:Oh when the Saints Oh when the saints Oh when the
+w:|  sun re-fuse to shine, Oh when the
+"F" c2 A2 | F2 A2 | "C7" G4 | z GAG |
+w:Saints come march-ing in Oh Lord I
+w:sun re-fuse to shine. Oh Lord I
+"F" F3 F | "F7" A2 c2 |"Bb" c(B3 | "Bbm" B)B AB |
+w:want to be in that num-ber, Oh when the
+"F" c2 A2 | "C7" F2 G2 |[1 "F" F4 | z FAB:|[2 "F" F4 | z4 |]
 w:Saints come march-ing in. Oh when the in.
