@@ -1,0 +1,18 @@
+X:1
+T:Jazz me Blues
+M:4/4
+L:1/8
+Q:1/4=190
+C:Tom Delaney (1921)
+F:https://www.youtube.com/watch?v=wCROVyJN2UI
+R:Traditional
+K:Eb
+P:A
+[|:"Eb" g^fgb c'bge | ga2b-b4 | g^fga b=ab=b | "F7" c'f2f-"Bb7"f4
+"Eb" g^fgb c'bge | g2ab- b2c'b | "Cdim" e'2c'c' bb a2 | "Eb" gg "Bb7" f2 "Eb" E2 :|
+P:Bridge
+"Bb7" bb2b- bfb2 | "Gdim" bb2b- bfb2 | "Bb7" d'd'_d'd' "Gdim" c'c'_c'2 | "Bb7" b2b2 "G7"=b2b2||
+P:B
+"C7" c'4 g4-|g2c'=b c'bc'2 | "F7" c'4 f4 | f4-f3 f | "Bb7" bbc'g bbc'g | bc'2b- b2c'b |
+"Eb" e'f'c'c' bba2 | gf2e- eb =b | "C7" c'4 g4-|g2c'=b c'bc'2 | "F7" c'4 f4-|"F7"f4-"Bb7"f4-|"Eb" fgg^f g4-"G7"ggg^f g4 |
+"Cm" c'c'=bb c'c'bb | "C7" =d'd'2d' d' _bbb | "F7" c'c'd'2 c'2 d'2 | "Bb7" c'2d'2 c' b3| "Eb" e'8-|e'8 |]
