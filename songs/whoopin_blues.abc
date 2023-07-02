@@ -1,16 +1,18 @@
-X: 1
+X:1
 T:Whoopin' Blues
-M: 4/4
-L: 1/8
-R: Uptempo
-Q:164
+M:4/4
+L:1/8
+R:Uptempo
+Q:1/4=164
 F:https://youtu.be/XMA5CKmMuNU
-K: F
+K:Ebmaj
+P:Intro
+Bc2 | (_d8|B2) "_Hey!" z2 z Bc2 | (_d8 |B2) "_Hey!" z2 z2 z G |
 P:A
-cd2 ||: "F" f2 _ed cF z A | ccBc _A2 FF-|F8-|"F7" F4 z2 z A |
-"Bb7" c2 Bc _AF z2 | ccBc _A2 FF-|"F" F8-|F4 z2 z A |
-"C7" BABA Bc-c2 | ccBc_A2 FF-|"F" F8-|F4 z cd2 :||
+Bc2 ||: "Eb" e2 _dc BE z G | BBAB _G2 EE-|E8-|"Eb7" E4 z2 z G |
+"Ab7" B2 AB _GE z2 | BBAB _G2 EE-|"Eb" E8-|E4 z2 z G |
+"Bb7" AGAG AB-B2 | BBAB_G2 EE-|"Eb" E8-| E4 z Bc2 :||
 P:B
-"F7" _e8-|c2  "_Hey!" z2 z4 | _e8-|c2 "_Hey!" z2 z2 z A |
-"Bb7" c2 Bc _AF z2| ccBc _A2 FF-|"F" F8- | F4 z2 z A |
-"C7" BABA Bc-c2 | ccBc _A2 FF-|"F" F8-|F6 z2 |] 
+|:"Eb7" (_d8|B2) "_Hey!" z2 z4 | (_d8 |B2) "_Hey!" z2 z2 z G |
+"Ab7" B2 AB _GE z2| BBAB _G2 EE-|"Eb" E8- | E4 z2 z G |
+"Bb7" AGAG AB-B2 | BBAB _G2 EE-|"Eb" E8-| E6 z2 :|]
