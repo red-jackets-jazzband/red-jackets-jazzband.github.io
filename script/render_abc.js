@@ -301,6 +301,60 @@ function parse_chord_scheme(song) {
   return chords;
 }
 
+
+/*
+   Funcion: simplify_blues
+   Checks if it is a 12-bar blues scheme, if so, check if all chords are repeated, and just return the 12-bar blues.
+   Returns:
+       chords - A list of lists with the chords per measure
+*/
+function simplify_blues(chords) {
+  // Blues should be a 12 bar blues
+  if (chords.length % 12 != 0) {
+    return chords;
+  }
+
+  var repeats = chords.length / 12;
+
+  // Check each measure in the blues
+  for (var i = 0; i < 12; i++) {
+    var first = chords[i].text;
+
+    for (var r = 1; r < repeats; r++) {
+      var second = chords[i + 12 * r].text;
+
+      // Are there the same amount of chords in the measure?
+      if (first.length != second.length) {
+        return chords;
+      }
+
+      for (var c = 0; c < first.length; c++) {
+        if (first[c] !== second[c]) {
+          return chords;
+        }
+      }
+    }
+  }
+
+  // Its a 12-bar blues that repeats! Dump any bars or repeats
+  for (var c = 0; c < 12; c++) {
+    if (chords[c].leftRepeat !== undefined) {
+      delete chords[c].leftRepeat;
+    }
+    if (chords[c].rightRepeat !== undefined) {
+      delete chords[c].rightRepeat;
+    }
+    if (chords[c].doubeThinBarLeft !== undefined) {
+      delete chords[c].doubeThinBarLeft;
+    }
+    if (chords[c].doubeThinBarRight !== undefined) {
+      delete chords[c].doubeThinBarRight;
+    }
+  }
+
+  return chords.slice(0, 12);
+}
+
 /*
    Funcion: create_chord_table
    Create a table from a list of chords
@@ -310,6 +364,8 @@ function parse_chord_scheme(song) {
 function create_chord_table(chords, chordtable) {
   var table = document.createElement("TABLE");
   table.border = "1";
+
+  chords = simplify_blues(chords);
 
   var cols = 4;
   if (chords.length > 4 * 4) {
