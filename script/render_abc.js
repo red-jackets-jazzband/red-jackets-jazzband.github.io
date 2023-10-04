@@ -100,6 +100,7 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
     paddingTop: 0,
     paddingBottom: 0,
     add_classes: true,
+    jazzchords:true,
     format: {
       annotationfont: "MuseJazzText italic",
       composerfont: "MuseJazzText",
@@ -121,7 +122,7 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
       tripletfont: "MuseJazzText",
       vocalfont: "MuseJazzText",
       voicefont: "MuseJazzText",
-      wordsfont: "MuseJazzText"
+      wordsfont: "MuseJazzText",
     }
   };
 
