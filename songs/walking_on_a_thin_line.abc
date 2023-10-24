@@ -2,16 +2,21 @@ X: 1
 T: Walking on a Thin Line
 C: Top Dog Brass Band
 M: 4/4
-L: 1/8
+L: 1/4
 R: New Orleans
 F:https://www.youtube.com/watch?v=m6Jx6vi_0WA
+N:Outro repeat 3x "Join the line, let the party grow"
+Q:1/4=200
 K: Bb
-Q:1/4=100
 P:Intro
-A/2.EA/2 ^c/2.Ac/2 .e2  z2 | B/2.FB/2 d/2.Bd/2  f2 dc |
-w: _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ Look at
+A/2._FA/2 ^c/2.Ac/2 | .=e2  z2 | B/2.FB/2 d/2.Bd/2 | f2 dc |
+w: _ _ _ _ _ _ _ _ _ _ _ _ _ _ Look at
 P:Theme
-|: "Bb"  B2 z2 Bc B_A/2A/2 | "Eb" z G3 z2 Bc | "Bb" d4 z B df | "F7" c2 z3 z/2 .d/2.d.c |
-w: us. Wal-king on a thin line. Down the road, Is where we go. So come with
-"Bb" B2 z2 Bc B_A/2A/2 | "Eb" z G3 z2 Bc | "Bb" d4  "Cm" .d/2.d/2 cBA |1 "Bb" B4 "F7" z2 dc :|2 "Bb" B4 z4 ||
-w: us, lis-ten to the mu-sic. Join the line, and let the par-ty grow
+|: "Bb"  B2 z2 | Bc B_A/2A/2 | "Eb" z G3 | z2 Bc | "Bb" d4 |
+w: us. Wal-king on a thin line. Down the road,
+z B df | "F7" c2 z2 | z1 z/2 .d/2.d.c | "Bb" B2 z2 |
+w: Is where we go. So come with us,
+Bc B_A/2A/2 | "Eb" z G3 | z2 Bc | "Bb" d4  |
+w: lis-ten to the mu-sic. Join the line,
+ "Cm" c/4d3/4 cBA |1 "Bb" B4 | "F7" z2 dc :|2 "Bb" B4 | z4 ||
+w: and let the par-ty grow
