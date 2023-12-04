@@ -55,6 +55,7 @@ Indiana,indiana.abc
 It ain't my fault,aint_my_fault.abc
 Jambalaya,jambalaya.abc
 Jazz me Blues,jazz_me_blues.abc
+Jazzboz Blues,jazzboz_blues.abc
 Jesus on the Mainline,jesus_on_the_mainline.abc
 Joe Avery Blues,second_line.abc
 John Casimir's Whoopin' Blues,whoopin_blues.abc
