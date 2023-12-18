@@ -4,13 +4,21 @@ C:Countess Ada DeLachau(1916)
 M:4/4
 L:1/4
 F:https://www.youtube.com/watch?v=9P_ZVQCA5lI
-Q:1/4=180
+Q:1/4=200
 K:Fmaj
-"F" A/A/ F G F | A FGF|Ac2A| "C" c4|
-w:I've got a gal an' you got none | Li'l Liz-a Jane,
-"F" A/A/ F G F | A FG2|"C7"AA2G|"F"F3z|
-w:I'se got a gal an' you got none Li'l Liz-a Jane.
-"F" (f3 c)|"Bb"d2"F"c2|"F"Ac2A|"C"c2z2|
+P:A
+|: "F" z (A2F) | GFDF | z (A2F) | "C"GFDF |
+"F" z (A2F) | GFDF | "C7" A A3/2 F/G/ F/- | "F" F z z2 :|
+w:
+P:B
+|:"F" A/A/ F G F | A FG2|Ac2d| "C" c4|
+w:I got a girl from Bal-ti-more | Li'l Liz-a Jane,
+w:I got a girl from New Or-leans
+"F" A/A/ F G F | A/A/ FGF|"C7"AA2G|"F"F3z:|
+w:I said her ma-ma won't see her no more | Li'l Liz-a Jane.
+w:She's the pret-tiest girl I have ev-er seen
+P:C
+|:"F" (f3 c)|"Bb"d2"F"c2|"F"Ac2A|"C"c2z2|
 w:Oh lil' Liz-a Li'l Liz-a Jane.
-"F" (f3 c)|"Bb"d2"F"c2|"C7"AA2G|"F"F3z|
+"F" (f3 c)|"Bb"d2"F"c2|"C7"AA2G|"F"F3z:|]
 w:Oh lil' Liz-a Li'l Liz-a Jane.
