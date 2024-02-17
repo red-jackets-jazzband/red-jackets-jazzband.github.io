@@ -7,17 +7,37 @@ R:traditional
 Q:1/4=180
 K:Bbmaj
 P:A
-|:"Eb" "_Hits on after beat" uG z uc z | uB z  uG/G/B/G/- | "Bb" GF2 z| B,/B,/ D/D/ F _A- |
-"F7" _A F z2| z G/G/ B c | "Bb" _d B z2 | "Bb7" z4 :|
+V:1
+|:"Eb" "_Rhytm section hits on after beat" uG z uc z | uB z uG z        | "Bb" GF2 z| z2 G2 |
+V:2
+|:                           uG z uc z | uB z  G/G/B/G/- |      GF2 z| B,/B,/ D/D/ F _A |
+V:1
+"F7"   F2 z2| z E D C    | "Bb" B,2 z2  |1 "Bb7" z4 |2 "Bb7" z3 _d/B/ :|
+w:          |            |              |           |         All the
+V:2
+     _A F z2| z G/G/ B c |  _d B z2     |1       z4 |2  z4 :|
 P:B
-|:"Eb" "_Rhytm section hits on after beat"  uG z uc z | uB z uG z | "Bb" GF2 z| z2 G2 |
-"F7" F2 z2| z E D C | "Bb" B,2 z2 | "Bb7" z4 :|
-P:C
-_d/B/||"Eb" (_d3 B)  | (_d2 B) B/B/        | "Bb" _d/d/- d/B/ z B/B/ | _d/d/- d/B/ z G/F/ |
-w:All the girls go | cra-zy, 'bout the | way I _ walk ('bout the way I _ walk) 'bout the
-"F7" _A/A/- A/F/ z B/B/ | _d/d/- d/B/ z B/B/ | "Bb" _d/d/- d/B/ z B/B/ | "Bb7" _d/d/- d/B/ z d/B/ ||
-w: way I _ walk, ('bout the way I _ walk,) 'bout the way I _ talk, ('bout the way I _ walk.) All the
-"Eb" (_d3 B)  | (_d2 B) d/B/        | "Bb" _d/d/- d/B/ z d/B/ | _d/d/- d/B/ z G/F/ |
-w:girls go | cra-zy, 'bout the | way I _ walk ('bout the way I _ walk) 'bout the
+V:1
+||"Eb" (_d3 B)  | (_d2 B) B/B/      | "Bb" _d/d/- d/B/ z2  | z3 G/F/ |
+w:girls go      | cra-zy, 'bout the | way I _ walk         | 'bout the
+V:2
+||    z4        |          z4       |  z3 B/B/    | _d/d/- d/B/ z2 |
+w:              |                   |   'bout the | way I _ walk
+V:1
+"F7" _A/A/- A/F/ z2 |z3      B/B/    | "Bb" _d/d/- d/B/ z2 | "Bb7" z3 d/B/   ||
+w: way I _ walk,    |      'bout the | way I _ talk,       |          All the
+V:2
+            z3 B/B/ | _d/d/- d/B/ z2 | z3 B/B/   | _d/d/- d/B/ z2 ||
+w:        'bout the | way I _ walk,  | 'bout the | way I _ walk.
+V:1
+"Eb" (_d3 B)  | (_d2 B)   d/B/    | "Bb" _d/d/- d/B/ z2 | z3 G/F/ |
+w:girls go    | cra-zy, 'bout the |      way I _ walk   | 'bout the
+V:2
+||    z4        |          z4       |  z3 B/B/    | _d/d/- d/B/ z2 |
+w:              |                   |   'bout the | way I _ walk
+V:1
 "F7" _A/A/- A/F/ z2 | _d/B/ d d/B/- B/d/- | "Bb" _d B3 | "Bb7" z4 ||
 w: way I _ walk, All the girls cra-zy _ for | me
+V:2
+z4 | z4 | z4 |  z4 ||
+
