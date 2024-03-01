@@ -101,6 +101,7 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
     paddingBottom: 0,
     add_classes: true,
     jazzchords:true,
+    oneSvgPerLine:false,
     format: {
       annotationfont: "MuseJazzText italic",
       composerfont: "MuseJazzText",
@@ -311,19 +312,29 @@ function parse_chord_scheme(song) {
        chords - A list of lists with the chords per measure
 */
 function simplify_blues(chords) {
-  // Blues should be a 12 bar blues
-  if (chords.length % 12 != 0) {
+  return simplify_song(chords, 12)
+}
+
+/*
+   Funcion: simplify_song
+   Checks if it is a count-bar scheme, if so, check if all chords are repeated, and just return the 12-bar blues.
+   Returns:
+       chords - A list of lists with the chords per measure
+*/
+function simplify_song(chords, count) {
+
+  if (chords.length % count != 0) {
     return chords;
   }
 
-  var repeats = chords.length / 12;
+  var repeats = chords.length / count;
 
   // Check each measure in the blues
-  for (var i = 0; i < 12; i++) {
+  for (var i = 0; i < count; i++) {
     var first = chords[i].text;
 
     for (var r = 1; r < repeats; r++) {
-      var second = chords[i + 12 * r].text;
+      var second = chords[i + count * r].text;
 
       // Are there the same amount of chords in the measure?
       if (first.length != second.length) {
@@ -338,8 +349,8 @@ function simplify_blues(chords) {
     }
   }
 
-  // Its a 12-bar blues that repeats! Dump any bars or repeats
-  for (var c = 0; c < 12; c++) {
+  // Its a scheme that repeats! Dump any bars or repeats
+  for (var c = 0; c < count; c++) {
     if (chords[c].leftRepeat !== undefined) {
       delete chords[c].leftRepeat;
     }
@@ -354,7 +365,7 @@ function simplify_blues(chords) {
     }
   }
 
-  return chords.slice(0, 12);
+  return chords.slice(0, count);
 }
 
 /*
@@ -368,6 +379,7 @@ function create_chord_table(chords, chordtable) {
   table.border = "1";
 
   chords = simplify_blues(chords);
+  chords = simplify_song(chords, 8);
 
   var cols = 4;
   if (chords.length > 4 * 4) {
