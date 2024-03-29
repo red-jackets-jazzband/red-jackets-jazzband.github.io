@@ -284,7 +284,7 @@ function parse_chord_scheme(song) {
         }
 
         if (!in_alternative_ending) {
-          var validChord = /^[A-Ga-g]([#♯b♭Ø])?(maj|m|min|dim|aug|sus|add)?(\d)?(\/[A-Ga-g]([#b])?(\d)?)?$/;
+          var validChord = /^[A-Ga-g]([#♯b♭])?(maj|m|min|dim|aug|sus|add)?(Ø)?(\d)?([#♯b♭])?(\d)?(\/[A-Ga-g]([#♯b♭])?(\d)?)?$/;
 
           if (element.chord !== undefined && validChord.test(element.chord[0].name)) {
             var chord = replace_accidental_with_utf8_char(element.chord[0].name);
