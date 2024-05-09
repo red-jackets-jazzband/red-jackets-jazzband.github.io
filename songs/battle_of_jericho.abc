@@ -5,7 +5,9 @@ F:https://youtu.be/JTlwNwcUzpU?si=oHdTl-I97zzpw7LI
 M:4/4
 L:1/8
 K:Am
+P:A
 "Am" A^GAB cB(cd) | ec2 e-e4 | "E7" d B2 d-d4 | "Am"e c2 e-e4 |
 "Am" A^GAB cB(cd) | ec2 e-e2 cd | "Dm" e2 d2 "E7" c2B2 | "Am" A4 z2 aa ||
+P:B
 "Am" aeee e2 e2 | "E7" ee e4 aa | "Am" aeee e2 e2 | "E7" e4 z2 a2 |
 "Am" a2 e2 e e3 | "E7" ee e4 cd | "Dm" ee d2 "E7" c2 B2 | "Am" A6 z2 |]
