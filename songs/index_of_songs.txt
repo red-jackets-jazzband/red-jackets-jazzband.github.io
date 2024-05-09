@@ -5,6 +5,7 @@ All the girls go crazy,all_the_girls.abc
 Amazing Grace,amazing_grace.abc
 Back Home Again in Indiana,indiana.abc
 Basin Street Blues,basin_street.abc
+Battle of Jericho,battle_of_jericho.abc
 Bei mir bist du Schon,bei_mir_bist_du_schon.abc
 Bellamina,bellamina.abc
 Big Chief,big_chief.abc
@@ -60,6 +61,7 @@ Jazzboz Blues,jazzboz_blues.abc
 Jesus on the Mainline,jesus_on_the_mainline.abc
 Joe Avery Blues,second_line.abc
 John Casimir's Whoopin' Blues,whoopin_blues.abc
+Joshua fit the Battle of Jericho,battle_of_jericho.abc
 Just a closer walk with thee,closer_walk.abc
 Just a little talk with Jesus,little_talk.abc
 Just a little while,just_a_little_while.abc
