@@ -1,0 +1,30 @@
+X: 1
+T: It's All over Now
+M: 4/4
+L: 1/8
+Q:1/2=108
+C:Bobby Womack (1960)
+F:https://www.youtube.com/watch?v=acDWlBkuoFg
+R: Rebirth
+V:1 clef=treble transpose=0 name="Trumpet" " " +12 "
+V:2 clef=bass transpose=-24 name="Sousaphone" middle=d " " "
+K:Bbmaj
+[V:1] "Bb" z8 | z8 | z8 | z8 |
+[V:2] B,2 z2 D2 z2 | F2 z G- GFG2 | B,2 z2 D2 z2 | FF z G- GFG2 |
+[V:1] "Bb" z8 | z8 | z8 | z8 |
+[V:2] B,2 z2 D2 z2 | F2 z G- GFG2 | B,2 z2 D2 z2 | FF z G- GFG2 |
+[V:1] "Eb"z8 | z8 | z8 | z8 |
+[V:2] E2 z2 G2 z G | B2 z c- cBc2 | E2 z2 G2 z G | BB z c- cBc2 |
+[V:1] "Bb" z8 | z8 | z8 | z8 |
+[V:2]  B,2 z B, D2 z D | F2 z G- GFG2 | B,2 z B,D2 z D |FF z G- GFG2 |
+[V:1] "F" z8 | z8 |  "Eb" z8 | z8 |
+[V:2] F2 z2 A2 z A | cc zd- dc d2 | E2 z2 G2 z G | BB z c- cBc2 |
+[V:1] "Bb" z8 | z8 | "F" z8 | z8 |
+[V:2]  B,2 z B,D2 z2 | F2 z G- GF G2 | z2 F6-|F6 z2 |]
+W:Well, baby used to stay out all night long
+W:She made me cry, she done me wrong
+W:She hurt my eyes open, that's no lie
+W:Tables turn and now her turn to cry
+W:
+W:Because I used to love her, but it's all over now
+W:Because I used to love her, but it's all over now
