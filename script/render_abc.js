@@ -493,7 +493,8 @@ function irealProFromAbc(song, chords) {
   var composer = (song.metaText.composer !== undefined) ? song.metaText.composer : "Unknown";
   var style = "Second Line";
 
-  var irealProText = 'irealbook://' + title + '=' + composer + '=' + style + '=' + key + '=n=T' + num + denom;
+  var irealProHeader = 'irealbook://' + title + '=' + composer + '=' + style + '=' + key + '=n=T' + num + denom;
+  var irealProText = '';
   for (var i = 0; i < chords.length; i++) {
 
     if (chords[i].leftRepeat !== undefined) {
@@ -537,7 +538,7 @@ function irealProFromAbc(song, chords) {
 
   irealProText = irealProText.replace(/Ø/g, 'h').replace(/m/g, '-').replace(/%/g, 'x ').replace(/♭/g, "b").replace(/♯/g, "#").replace(/\|$/,"Z");
 
-  return irealProText;
+  return irealProHeader + irealProText;
 }
 
 
