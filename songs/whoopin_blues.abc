@@ -6,13 +6,20 @@ R:Uptempo
 Q:1/4=164
 F:https://youtu.be/XMA5CKmMuNU
 K:Ebmaj
+V:1
+V:2
 P:Intro
-Bc2 | (_d8|B2) "_Hey!" z2 z Bc2 | (_d8 |B2) "_Hey!" z2 z2 z G |
+[V:1]Bc2 | (_d8|B2) "_Hey!" z2 z Bc2 | (_d8 |B2) "_Hey!" z2 z2 z G |
+[V:2] z3 | z8|z8 | z8 | z8 |
 P:A
-Bc2 ||: "Eb" e2 _dc BE z G | BBAB _G2 EE-|E8-|"Eb7" E4 z2 z G |
-"Ab7" B2 AB _GE z2 | BBAB _G2 EE-|"Eb" E8-|E4 z2 z G |
-"Bb7" AGAG AB-B2 | BBAB_G2 EE-|"Eb" E8-| E4 z Bc2 :||
+[V:1]Bc2 ||: "Eb" e2 _dc BE z G | BBAB _G2 EE-|E8| "Eb7" z4 z2 z G |
+[V:2]z3  ||: z8 | z8 | z2 [_db]2 [ca] [Bg] z2 | [_db]2 [ca] [Bg] z4 |
+[V:1]"Ab7" B2 AB _GE z2 | BBAB _G2 EE-|"Eb" E8|z4 z2 z G |
+[V:2] z8 | z8 | z2 [_db]2 [ca] [Bg] z2 | [_db]2 [ca] [Bg] z4 |
+[V:1]"Bb7" AGAG AB-B2 | BBAB_G2 EE-|"Eb" E8| z4 z Bc2 :||
+[V:2] z8 | z8 | z2 [_db]2 [ca] [Bg] z2 | [_db]2 [ca] [Bg] z [F_d] [Ge]2  :||
 P:B
-|:"Eb7" (_d8|B2) "_Hey!" z2 z4 | (_d8 |B2) "_Hey!" z2 z2 z G |
-"Ab7" B2 AB _GE z2| BBAB _G2 EE-|"Eb" E8- | E4 z2 z G |
-"Bb7" AGAG AB-B2 | BBAB _G2 EE-|"Eb" E8-| E6 z2 :|]
+[V:1]|:"Eb7" (_d8|B2) "_Hey!" z2 z4 | (_d8 |B2) "_Hey!" z2 z2 z G |
+[V:2]|:  ([BF]8 | [G_D]2) z2 z4 | ([BF]8 | [G_D]2) z2 z4 |
+[V:1]"Ab7" B2 AB _GE z2| BBAB _G2 EE-|"Eb" E8 | z4 z2 z G |
+[V:1]"Bb7" AGAG AB-B2 | BBAB _G2 EE-|"Eb" E8| z8 :|]
