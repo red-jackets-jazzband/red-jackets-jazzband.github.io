@@ -5,14 +5,12 @@ L:1/8
 R:Uptempo
 Q:1/4=164
 F:https://youtu.be/XMA5CKmMuNU
+N:Intro: A & B, Solo's on A, outro A & B (end in 2nd break in B)
 K:Ebmaj
 V:1
 V:2
-P:Intro
-[V:1]Bc2 | (_d8|B2) "_Hey!" z2 z Bc2 | (_d8 |B2) "_Hey!" z2 z2 z G |
-[V:2] z3 | z8|z8 | z8 | z8 |
 P:A
-[V:1]Bc2 ||: "Eb" e2 _dc BE z G | BBAB _G2 EE-|E8| "Eb7" z4 z2 z G |
+[V:1]Bc2 ||: "Eb" "_2 measure rhytm break first time" e2 _dc BE z G | BBAB _G2 EE-|E8| "Eb7" z4 z2 z G |
 [V:2]z3  ||: z8 | z8 | z2 [_db]2 [ca] [Bg] z2 | [_db]2 [ca] [Bg] z4 |
 [V:1]"Ab7" B2 AB _GE z2 | BBAB _G2 EE-|"Eb" E8|z4 z2 z G |
 [V:2] z8 | z8 | z2 [_db]2 [ca] [Bg] z2 | [_db]2 [ca] [Bg] z4 |
@@ -22,4 +20,6 @@ P:B
 [V:1]|:"Eb7" (_d8|B2) "_Hey!" z2 z4 | (_d8 |B2) "_Hey!" z2 z2 z G |
 [V:2]|:  ([BF]8 | [G_D]2) z2 z4 | ([BF]8 | [G_D]2) z2 z4 |
 [V:1]"Ab7" B2 AB _GE z2| BBAB _G2 EE-|"Eb" E8 | z4 z2 z G |
+[V:2] z8 | z8 | z2 [_db]2 [ca] [Bg] z2 | [_db]2 [ca] [Bg] z4 |
 [V:1]"Bb7" AGAG AB-B2 | BBAB _G2 EE-|"Eb" E8| z8 :|]
+[V:2] z8 | z8 | z2 [_db]2 [ca] [Bg] z2 | [_db]2 [ca] [Bg] z [F_d] [Ge]2  :|]
