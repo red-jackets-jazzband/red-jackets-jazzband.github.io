@@ -79,7 +79,10 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
   var instrumentSelect = document.getElementById("instrument");
   document.getElementById("instrumentText").innerHTML = instrumentSelect.options[instrumentSelect.selectedIndex].text.toLowerCase();
 
-  if (text.search(/\[V:.*\]/g) == -1) {
+  // Check if there are voice definitions with instrument-related attributes
+  const hasInstrumentVoices = text.match(/^V:\d+.*(clef=|transpose=|name=)/gm);
+
+  if (!hasInstrumentVoices) {
     text = change_cleff_for_instrument(instrumentSelect.value, text);
     transpose_steps += offset_for_instrument(instrumentSelect.value);
   }
@@ -323,7 +326,7 @@ function simplify_blues(chords) {
 */
 function simplify_song(chords, count) {
 
-  if (chords.length % count != 0) {
+  if (chords.length === 0 || chords.length % count !== 0) {
     return chords;
   }
 
