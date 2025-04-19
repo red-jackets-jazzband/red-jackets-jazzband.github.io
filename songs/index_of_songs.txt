@@ -13,6 +13,7 @@ Bill Bailey,bill_bailey.abc
 Blue Heaven,my_blue_heaven.abc
 Bourbon Street Parade,bourbon_street_parade.abc
 By and By,by_and_by.abc
+Bucket's gotta hole,buckets_got_a_hole.abc
 Caravan,caravan.abc
 Careless Love,careless_love.abc
 Chinatown,chinatown.abc
