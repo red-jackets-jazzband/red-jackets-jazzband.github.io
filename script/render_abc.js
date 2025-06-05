@@ -473,7 +473,7 @@ function add_irealpro_link(song, chords) {
       var link = document.createElement("A");
       link.innerHTML = " | irealpro";
       link.href = url
-      link.target = "_blank";
+      /* link.target = "_blank"; */
       link.id = "iRealPro";
       var menu = document.getElementById("sheetmenu");
       menu.appendChild(link);
