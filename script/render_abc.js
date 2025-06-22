@@ -463,7 +463,7 @@ function add_inspiration_link(url) {
 */
 function add_irealpro_link(song, chords) {
 
-  var couldHaveIrealPro = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  var couldHaveIrealPro = /iPhone|iPad|iPod|Android|Macintosh/i.test(navigator.userAgent);
   if (couldHaveIrealPro && (chords.length > 0)) {
     var url = irealProFromAbc(song, chords);
     var link = document.getElementById("iRealPro");
