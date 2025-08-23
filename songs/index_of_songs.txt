@@ -12,8 +12,8 @@ Big Chief,big_chief.abc
 Bill Bailey,bill_bailey.abc
 Blue Heaven,my_blue_heaven.abc
 Bourbon Street Parade,bourbon_street_parade.abc
-By and By,by_and_by.abc
 Bucket's gotta hole,buckets_got_a_hole.abc
+By and By,by_and_by.abc
 Caravan,caravan.abc
 Careless Love,careless_love.abc
 Chinatown,chinatown.abc
@@ -55,6 +55,7 @@ I've got a woman,gotta_woman.abc
 Ice Cream,ice_cream.abc
 In the Sweet Bye and Bye,in_the_sweet_bye_and_bye.abc
 Indiana,indiana.abc
+Isle of Capri,isle_of_capri.abc
 It ain't my fault,aint_my_fault.abc
 Jada,jada.abc
 Jambalaya,jambalaya.abc
