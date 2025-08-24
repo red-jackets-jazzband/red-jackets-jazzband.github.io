@@ -186,7 +186,7 @@ function create_song_link_text(song) {
       song_title +
       '" onclick="renderSong(\'' +
       song_path +
-      '\'); this.closest(\'.dropdown-content\').style.display=\'none\'">' +
+      "')\" >" +
       song_name +
       "</a>"
     );
