@@ -118,6 +118,7 @@ Sweet Sue,sweet_sue.abc
 Take My Hand Precious Lord,take_my_hand.abc
 The way I ride,all_the_girls.abc
 This Little Light of Mine,little_light.abc
+Tin Roof Blues,tin_roof_blues.abc
 Walking on a Thin Line,walking_on_a_thin_line.abc
 We shall not be moved,we_shall_not_be_moved.abc
 We shall walk through the streets of our city,we_shall_walk_through_the_streets.abc
