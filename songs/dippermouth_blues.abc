@@ -6,7 +6,15 @@ L:1/8
 F:https://youtu.be/-wcAaXcC87w
 R:traditional
 K:Bbmaj
+P:Intro
 L_d4-dBG=E |LBG=E_D LGEDB, | LF2 z2 LG2 z2 | L_A2 z =A z FG2 |
-|: "Bb" B2G2D2F2 | "Eb" _dBc^F G B3 | "Bb" z2 B^C DFGB| "Bb7" d4 BFDB, | "Eb" _dBc^F G B3 |
-"Eb" _d2 d2 (3 d/2c/2_d/2 B GF | "Bb" B2 G^C DF D2 | "Bb" F2 z2 z ^c dc |
-"F7" dB=c2 B4 | z2 ^cd B =c2 B-|"Bb" B6 z2 | z2 BB BAGF :|
+P:A
+|: "Bb" B2G2D2F2 | "Eb7" _d2c2c B3 | "Bb" z BG^C DFG2| "Bb7" _A2 GF-F2 z2 | "Eb7" _d2c2 G B3 |
+_d2 cc- c B2 B- | "Bb" B4 G^C D2 | "G7" B G3 ^CDFG | "C7" _AFGF-F4 |
+"F7" z f z2 _dcBG |"Bb" B2 B2 "Eb7" B B2 B-| "Bb" B4 z B2 B :|
+P:B
+"Bb" d2 f2 df z2 | "Eb7" z4 efef | "Bb" dBGB-B4 | "Bb7" z4 (3 B2 B2 B2 | "Eb7" _d2 c2 GB z2 | _d2 cc- c2 BB-|"Bb"BGBG-G4 |
+"G7" z2 FG (3 B2 d2 d2 |"C7"e2 de (3 d2 e2 d2 |"F7" ef d2-d3 B-|"Bb"B B3 "Eb7" B2 BB-|"Bb"BB B2 B2 B2 |
+P:C
+[||:"Bb" [BF]2 [BF]2 [BF]2 z2 | "Eb7" [EG_d]2 [EG_d]2 [EG_d]2 z2 | "Bb" [BF]2 [BF]2 [BF]2 z2 | "Bb7" [F_Ad]2 [F_Ad]2 [F_Ad]2 z2 | "Eb7" [EG_d]2 [EG_d]2 [EG_d]2 z2 |
+[EG_d]2 [EG_d]2 [EG_d]2 z2 | "Bb" [BF]2 [BF]2 [BF]2 z2 | "G7" [G=B]2 [G=B]2 [G=B]2 z2 | "C7" [=EG]2 [=EG]2 [=EG]2 z2 | "F7" [FAc]2 [FAc]2 [FAc]2 z2 | "Bb" BBGC "Eb7" EG_G=G | "Bb" [B,FB]3 z z2 :|
