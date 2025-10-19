@@ -3,13 +3,17 @@ T:I've got a woman
 C:Ray Charles, Renald Richard
 M:4/4
 L:1/4
+Q:1/4=100
 R:Traditional
 F:https://www.youtube.com/watch?v=jU3zyf4V8fI
 K:Cmaj
-z2 c _e/2c/2|: "C" _e c z2|z2 _e c/2A/2|"G7"c-G z2|
-z G cc|"C" c-e z2|"F7"z z/2 g/2-g3/2 f/2-|"C"f/2_e/2 c2 z|
-"C7" z c _e f/2f/2 | "F7" f g z2 | z2 f f/2f/2 | f-g z2 |
-z c gg | "G7" g-e/2d/2-d z | z2 g-d | f-g z2 | z g c' b/2=c'/2- | "C7" c'c' z2 |
-z g c'_b/2c'/2- |c' _b/2g/2- g/4f/4_e/2 z |z c'2_b/2g/2 | "F7" f3/2 g/2-g z |
-z2 g _e | f-_e/2c/2-c z |z2 c _e/2c/2 | "C" _e c z2 | z2 _e c/2A/2 |
-"G7" c-A/2G/2-G z | z G cc | "C" c z z2 | "F7" z2 g3/2 f/2- | "C" f/2_e/2-c z2 | "G7" z Gc_B/2c/2- :|
+C C A, [|: "C" C E3 | z2 E C/A,/ | "G7" C G,3 | z C C C | "C" C4-|"F7"C2 G F/_E/ |
+w:I got a wo-man, way ov-er town_ | That's good to me_  oh ye-ah
+"C" C4 | "C7" z C E F/E/ || "F7" F G3 | z2 G F/_E/ | F G3 | z G G G | "G7" G4-|G2 G F/E/ |
+w: | Say I got a wo-man, way ov-er town_ | Thats good to me_  oh ye-ah
+F G3 | z c A G || "C7" c c3 | z c A G | c/_B/ E3 | z c c G | "F7" F2 F2 |
+w:__ She give me mo-ney when I'm in need_ | Yeah, she's a kind of 
+z2 G F | G C3 | z C C A, || "C" C E3 | z2 E C/A,/ | "G7" C G,3 | z C C A, | "C" C4-|
+w: friend in-deed _ | I got a wo-man, way ov-er town_| That's good to me
+"F7" C2 G F/_E/ |[1 "C" C4-| "G7"C C C A, :|][2 "C" C4-|"G7" C3 z |]
+w:_ oh ye-ah_
