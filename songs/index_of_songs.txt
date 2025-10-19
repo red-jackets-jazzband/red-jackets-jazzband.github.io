@@ -58,6 +58,7 @@ Indiana,indiana.abc
 Isle of Capri,isle_of_capri.abc
 It ain't my fault,aint_my_fault.abc
 It's Only a Paper Moon,paper_moon.abc
+I've Found a New Baby,found_a_new_baby.abc
 Jada,jada.abc
 Jambalaya,jambalaya.abc
 Jazz me Blues,jazz_me_blues.abc
