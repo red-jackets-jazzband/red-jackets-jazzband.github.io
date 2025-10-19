@@ -3,13 +3,18 @@ T:Isle of Capri
 C:Jimmy Kennedy & Will Crosz (1934)
 F:https://www.youtube.com/watch?v=R9JBAh8CRWs
 M:4/4
+Q:1/4=127
 K:Fmaj
 L:1/4
-C/2F/2A/2|| "F" c c/2d/2 c B/2A/2 | c c z/2 C/2F/2A/2 | c c/2d/2 c B/2A/2 | "C7" B2 z/2 C/2F/2A/2 |
-B B/2c/2 B A/2G/2 | BB z c/2B/2 | "F" A G/2F/2 "C7" G F/2E/2 | "F7" F2 z/2 C/2F/2A/2 |
-c c/2d/2 c B/2A/2 | cc z/2 C/2F/2A/2 | c c/2d/2c B/2A/2 | "C7" B2 z/2 C/2F/2A/2 |
-B B/2c/2 B A/2G/2 | B B z c/2B/2 | "F" A G/2F/2 "C7" G F/2E/2 | "F" F3 "F7" z |
-"Bb" D/2F/2F/2G/2 F3/2 D/2 | "F" C A2 z | "C7" C/2G/2G/2A/2 G3/2 F/2 | "F" A4 "F7" yy |
-"Bb" D/2F/2F/2G/2 F3/2 D/2 | "F" C A2 z |"Dm" F/2F/2F/2G/2 "G7" A G/2F/2 | "C7" G2 z/2 C/2F/2A/2 |
-"F" c c/2d/2 c B/2A/2 | c c z/2 C/2F/2A/2 | c c/2d/2 c B/2A/2 | "C7" B2 z/2 C/2F/2A/2 |
-B B/2c/2 B A/2G/2 | B B z c/2B/2 | "F" AG/2F/2 "C7" G F/2E/2 | "F" F3 z |]
+P:A
+C/F/A/|| "F" c c/d/ c B/A/ | c c z/ C/F/A/ | c c/d/ c B/A/ | "C7" B2 z/ C/F/A/ |
+B B/c/ B A/G/ | BB/ z/ z c/B/ | "F" A G/F/ "C7" G F/E/ | "F7" F2 z/ C/F/A/ ||
+P:A2
+"F" c c/d/ c B/A/ | cc z/ C/F/A/ | c c/d/c B/A/ | "C7" B2 z/ C/F/A/ | 
+B B/c/ B A/G/ | B B/ z/ z c/B/ | "F" A G/F/ "C7" G F/E/ | "F" F3 "F7" z ||
+P:B
+"Bb" D/F/F/G/ F3/ D/ | "F" C A-A2 | "C7" C/G/G/A/ G3/ F/ | "F" A4 "F7" yy |
+"Bb" D/F/F/G/ F3/ D/ | "F" C A2 z |"Dm" F/F/F/G/ "G7" A/G/ F | "C7" G2 z/ C/F/A/ ||
+P:A3
+"F" c c/d/ c B/A/ | c c z/ C/F/A/ | c c/d/ c B/A/ | "C7" B2 z/ C/F/A/ |
+B B/c/ B A/G/ | B B/ z/ z c/B/ | "F" AG/F/ "C7" G F/E/ | "F" F3 z |]
