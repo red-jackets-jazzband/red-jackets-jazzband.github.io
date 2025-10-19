@@ -57,6 +57,7 @@ In the Sweet Bye and Bye,in_the_sweet_bye_and_bye.abc
 Indiana,indiana.abc
 Isle of Capri,isle_of_capri.abc
 It ain't my fault,aint_my_fault.abc
+It's Only a Paper Moon,paper_moon.abc
 Jada,jada.abc
 Jambalaya,jambalaya.abc
 Jazz me Blues,jazz_me_blues.abc
@@ -95,6 +96,7 @@ Oh on the 3rd day,happy_feet_blues.abc
 Oh when the Saints,oh_when_the_saints.abc
 Old Kentucky Home,my_old_kentucky_home.abc
 Over in the Gloryland,gloryland.abc
+Paper Moon,paper_moon.abc
 Paul Barbarins Second Line,paul_barbarins_second_line.abc
 Precious Lord Take My Hand,take_my_hand.abc
 Saint James Infirmary,st_james_infirmary.abc
