@@ -688,3 +688,56 @@ video.video {
   background-color: #e29d0f;
   color: black;
 }
+
+/* ============================================================
+   Audio Player (inline in sheetmenu)
+   ============================================================ */
+.audio-btn-inline {
+  background: none;
+  border: none;
+  color: #e29d0f;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0 3px;
+  opacity: 0.75;
+  vertical-align: middle;
+}
+
+.audio-btn-inline:hover:not(:disabled) {
+  opacity: 1;
+}
+
+.audio-btn-inline:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.audio-loading {
+  color: #e29d0f;
+  font-size: 11px;
+  opacity: 0.5;
+  display: none;
+}
+
+.audio-loading.visible {
+  display: inline;
+}
+
+/* Current note highlight during playback */
+.abcjs-current-note path,
+.abcjs-current-note ellipse,
+.abcjs-current-note polygon,
+.abcjs-current-note rect {
+  fill: #e29d0f !important;
+}
+
+/* Make notes clickable */
+#notation svg g[class*="abcjs-note"],
+#notation svg g[class*="abcjs-bar"] {
+  cursor: pointer;
+}
+
+#notation svg g[class*="abcjs-note"]:hover path,
+#notation svg g[class*="abcjs-note"]:hover ellipse {
+  fill: #c88800 !important;
+}
