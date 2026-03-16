@@ -507,6 +507,11 @@ video.video {
   border-color: #000000;
 }
 
+.chordCell.chordCell-playing {
+  background-color: #e29d0f;
+  color: #222222;
+}
+
 .chordDiv {
   height: 40px;
   overflow: hidden;

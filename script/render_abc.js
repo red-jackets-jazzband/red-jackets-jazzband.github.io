@@ -94,6 +94,7 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
   var displayChords = (instrumentSelect.value === 'concert_+_roman')
     ? convertChordsToRoman(chords, song)
     : chords;
+  audioPlayer.chordOffset = computeChordOffset(song);
 
   if (add_link) {
     add_inspiration_link(song.metaText.url);
@@ -387,6 +388,35 @@ function simplify_song(chords, count) {
   }
 
   return chords.slice(0, count);
+}
+
+/*
+  computeChordOffset: count how many measures precede the first chord annotation.
+  Used to align _abcMeasureIdx (which counts from measure 0 including intros)
+  with chord table cell indices (which start at the first chord measure).
+*/
+function computeChordOffset(song) {
+  if (!song.lines) return 0;
+  var validChord = /^[A-Ga-g]([#♯b♭])?(maj|m|min|dim|aug|sus|add)?(Ø)?(\d)?([#♯b♭])?(\d)?(\/[A-Ga-g]([#♯b♭])?(\d)?)?$/;
+  var measureCount = 0;
+  var hasNotesInMeasure = false;
+  for (var i = 0; i < song.lines.length; i++) {
+    var line = song.lines[i];
+    if (!line.staff || !line.staff[0] || !line.staff[0].voices) continue;
+    var voice = line.staff[0].voices[0] || [];
+    for (var j = 0; j < voice.length; j++) {
+      var el = voice[j];
+      if (el.chord && el.chord.length > 0 && validChord.test(el.chord[0].name)) {
+        return measureCount;
+      }
+      if (el.el_type === 'note') hasNotesInMeasure = true;
+      if (el.el_type === 'bar') {
+        if (hasNotesInMeasure) measureCount++;
+        hasNotesInMeasure = false;
+      }
+    }
+  }
+  return 0;
 }
 
 // ============================================================
@@ -810,6 +840,7 @@ function currentAudioParams() {
 }
 
 var lastHighlighted = [];
+var lastHighlightedChordCell = null;
 
 // Cursor control callbacks for ABCJS SynthController
 var cursorControl = {
@@ -829,6 +860,20 @@ var cursorControl = {
       }
     }
     lastHighlighted = newHighlighted;
+
+    // Highlight the matching chord table cell
+    if (newHighlighted.length > 0 && newHighlighted[0]._abcMeasureIdx !== undefined) {
+      var measureIdx = newHighlighted[0]._abcMeasureIdx;
+      var offset = audioPlayer.chordOffset || 0;
+      if (measureIdx >= offset) {
+        var cells = document.querySelectorAll('#chordtable .chordCell');
+        if (cells.length > 0) {
+          var cellIdx = (measureIdx - offset) % cells.length;
+          cells[cellIdx].classList.add('chordCell-playing');
+          lastHighlightedChordCell = cells[cellIdx];
+        }
+      }
+    }
   },
   onFinished: function() {
     audioPlayer.isPlaying = false;
@@ -843,6 +888,10 @@ function clearNoteHighlight() {
     lastHighlighted[i].classList.remove("abcjs-current-note");
   }
   lastHighlighted = [];
+  if (lastHighlightedChordCell) {
+    lastHighlightedChordCell.classList.remove('chordCell-playing');
+    lastHighlightedChordCell = null;
+  }
 }
 
 function updatePlayButton() {
@@ -926,11 +975,13 @@ function stopAudio() {
   ctrl.setTune(audioPlayer.currentVisualObj, false, currentAudioParams())
     .then(function() {
       if (ctrl !== audioPlayer.synthController) return;
+      clearNoteHighlight();
       setPlayerButtonsDisabled(false);
     })
     .catch(function(err) {
       console.warn("Stop reset failed:", err);
       if (ctrl !== audioPlayer.synthController) return;
+      clearNoteHighlight();
       setPlayerButtonsDisabled(false);
     });
 }
@@ -999,13 +1050,18 @@ function buildTimingMap(visualObj) {
     });
     var timings = tc.noteTimings || [];
     var maxMs = 0;
+    var measureIdx = 0;
+    var seenFirstEvent = false;
     for (var i = 0; i < timings.length; i++) {
       var t = timings[i];
       if (t.type === "event" && t.elements && t.milliseconds !== undefined) {
+        if (t.measureStart && seenFirstEvent) measureIdx++;
+        seenFirstEvent = true;
         if (t.milliseconds > maxMs) maxMs = t.milliseconds;
         for (var v = 0; v < t.elements.length; v++) {
           for (var e = 0; e < t.elements[v].length; e++) {
             t.elements[v][e]._abcSeekMs = t.milliseconds;
+            t.elements[v][e]._abcMeasureIdx = measureIdx;
           }
         }
       }
