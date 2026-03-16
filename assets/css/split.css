@@ -733,6 +733,10 @@ video.video {
   background-color: #e29d0f;
 }
 
+.audio-btn-inline i {
+  font-style: normal;
+}
+
 .audio-btn-inline {
   background: none;
   border: 1px solid transparent;

@@ -724,11 +724,11 @@ function updatePlayButton() {
   var btn = document.getElementById("playPauseBtn");
   if (!btn) return;
   if (audioPlayer.isPlaying) {
-    btn.innerHTML = "&#9646;&#9646;";
+    btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
     btn.title = "Pause";
     btn.classList.add("playing");
   } else {
-    btn.innerHTML = "&#9654;";
+    btn.innerHTML = '<i class="fa-solid fa-play"></i>';
     btn.title = "Play";
     btn.classList.remove("playing");
   }
