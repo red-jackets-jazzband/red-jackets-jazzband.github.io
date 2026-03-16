@@ -486,11 +486,12 @@ function add_irealpro_link(song, chords) {
       link.href = url;
     } else {
       var link = document.createElement("A");
-      link.innerHTML = " | irealpro";
+      link.innerHTML = "irealpro";
       link.href = url
       /* link.target = "_blank"; */
       link.id = "iRealPro";
       var menu = document.getElementById("sheetmenu");
+      menu.appendChild(document.createTextNode(" | "));
       menu.appendChild(link);
     }
   }
