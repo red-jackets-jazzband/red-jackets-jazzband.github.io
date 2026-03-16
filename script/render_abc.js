@@ -192,13 +192,21 @@ function create_song_link_text(song) {
       song_title +
       '" onclick="renderSong(\'' +
       song_path +
-      "')\" >" +
+      "'); closeDropdowns()\" >" +
       song_name +
       "</a>"
     );
   }
 
   return "";
+}
+
+function closeDropdowns() {
+  var contents = document.querySelectorAll('.dropdown-content');
+  contents.forEach(function(el) { el.style.display = 'none'; });
+  setTimeout(function() {
+    contents.forEach(function(el) { el.style.display = ''; });
+  }, 300);
 }
 
 function string_to_abc_tune(text, transpose_steps) {
