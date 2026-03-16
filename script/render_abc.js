@@ -829,7 +829,7 @@ var audioPlayer = {
 };
 
 var audioParams = {
-  soundFontUrl: "https://gleitz.github.io/midi-js-soundfonts/MusyngKite/",
+  soundFontUrl: "https://gleitz.github.io/midi-js-soundfonts/FatBoy/",
   program: 56  // Trumpet (GM)
 };
 
