@@ -448,11 +448,12 @@ function add_inspiration_link(url) {
       link.href = url;
     } else {
       link = document.createElement("A");
-      link.innerHTML = " | inspiration";
+      link.innerHTML = "inspiration";
       link.href = url;
       link.target = "_blank";
       link.id = "inspirationLink";
       var menu = document.getElementById("sheetmenu");
+      menu.appendChild(document.createTextNode(" | "));
       menu.appendChild(link);
     }
   } else {

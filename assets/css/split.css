@@ -464,6 +464,14 @@ video.video {
 }
 #sheetmenu > a {
   color: #e29d0f;
+  padding: 2px 6px;
+
+  transition: background 0.15s, color 0.15s;
+}
+
+#sheetmenu > a:hover {
+  background: #e29d0f;
+  color: #222222;
 }
 .notation {
   background:#ffffff;
@@ -692,19 +700,61 @@ video.video {
 /* ============================================================
    Audio Player (inline in sheetmenu)
    ============================================================ */
+#sheetmenu input[type="number"] {
+  vertical-align: middle;
+  margin: 0 4px;
+  padding: 0 2px;
+  background: #3a3a3a;
+  color: #e29d0f;
+  border: 1px solid #555;
+  font: inherit;
+  font-size: 1em;
+  line-height: 1;
+  height: 1.6em;
+  box-sizing: border-box;
+  text-align: center;
+  width: 4em;
+  transition: background 0.15s, color 0.15s;
+}
+
+#sheetmenu input[type="number"]::-webkit-inner-spin-button,
+#sheetmenu input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+  background-color: #3a3a3a;
+}
+
+#sheetmenu input[type="number"]:hover {
+  background: #e29d0f;
+  color: #222222;
+}
+
+#sheetmenu input[type="number"]:hover::-webkit-inner-spin-button,
+#sheetmenu input[type="number"]:hover::-webkit-outer-spin-button {
+  background-color: #e29d0f;
+}
+
 .audio-btn-inline {
   background: none;
-  border: none;
+  border: 1px solid transparent;
+
   color: #e29d0f;
   cursor: pointer;
-  font-size: 11px;
-  padding: 0 3px;
-  opacity: 0.75;
+  font-size: 1.3em;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  opacity: 0.85;
   vertical-align: middle;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
 }
 
 .audio-btn-inline:hover:not(:disabled) {
   opacity: 1;
+  background: #e29d0f;
+  color: #222222;
+  border-color: #e29d0f;
 }
 
 .audio-btn-inline:disabled {
@@ -714,7 +764,7 @@ video.video {
 
 .audio-loading {
   color: #e29d0f;
-  font-size: 11px;
+  font-size: 1em;
   opacity: 0.5;
   display: none;
 }
