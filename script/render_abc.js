@@ -147,6 +147,7 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
 
   var chordtable = document.getElementById(chordTableElt);
   create_chord_table(displayChords, chordtable);
+  if (notationElt === "notation") updateRepeatBoundaries();
 
   /* Add own title, above chordTable */
   var songtitle = document.getElementById(songTitleElt);
@@ -816,6 +817,29 @@ function createLetterDropDown(letter, songs) {
   abc_menu.appendChild(div);
 }
 
+/*
+  updateRepeatBoundaries: reads chordCellLeftRepeat / chordCellRightRepeat CSS
+  classes from the rendered chord table and stores the first and last repeat
+  section indices in audioPlayer. Used by onEvent to wrap measure indices that
+  exceed the chord table size back into the repeated section rather than the
+  whole table.
+*/
+function updateRepeatBoundaries() {
+  var cells = document.querySelectorAll('#chordtable .chordCell');
+  var repeatStart, repeatEnd;
+  for (var i = 0; i < cells.length; i++) {
+    if (repeatStart === undefined && cells[i].classList.contains('chordCellLeftRepeat')) {
+      repeatStart = i;
+    }
+    if (cells[i].classList.contains('chordCellRightRepeat')) {
+      repeatEnd = i;
+    }
+  }
+  var valid = repeatStart !== undefined && repeatEnd !== undefined && repeatStart <= repeatEnd;
+  audioPlayer.repeatStart = valid ? repeatStart : undefined;
+  audioPlayer.repeatEnd   = valid ? repeatEnd   : undefined;
+}
+
 // ============================================================
 // Audio Playback
 // ============================================================
@@ -825,7 +849,9 @@ var audioPlayer = {
   isPlaying: false,
   totalMs: 0,
   currentVisualObj: null,
-  melodOff: false
+  melodOff: false,
+  repeatStart: undefined,
+  repeatEnd: undefined
 };
 
 var audioParams = {
@@ -868,9 +894,20 @@ var cursorControl = {
       if (measureIdx >= offset) {
         var cells = document.querySelectorAll('#chordtable .chordCell');
         if (cells.length > 0) {
-          var cellIdx = (measureIdx - offset) % cells.length;
-          cells[cellIdx].classList.add('chordCell-playing');
-          lastHighlightedChordCell = cells[cellIdx];
+          var cellIdx = measureIdx - offset;
+          if (cellIdx >= cells.length) {
+            var rs = audioPlayer.repeatStart;
+            var re = audioPlayer.repeatEnd;
+            if (rs !== undefined && re !== undefined) {
+              cellIdx = rs + (cellIdx - rs) % (re - rs + 1);
+            } else {
+              cellIdx = cellIdx % cells.length;
+            }
+          }
+          if (cellIdx >= 0 && cellIdx < cells.length) {
+            cells[cellIdx].classList.add('chordCell-playing');
+            lastHighlightedChordCell = cells[cellIdx];
+          }
         }
       }
     }
