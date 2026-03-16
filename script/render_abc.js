@@ -13,6 +13,7 @@ var transpose_halfsteps = 0;
 
 function renderSong(path) {
   document.getElementById("transpose").value = 0;
+  audioPlayer.melodOff = false;
   readFile(path, renderAbcFile);
 }
 
@@ -685,13 +686,20 @@ var audioPlayer = {
   synthController: null,
   isPlaying: false,
   totalMs: 0,
-  currentVisualObj: null
+  currentVisualObj: null,
+  melodOff: false
 };
 
 var audioParams = {
   soundFontUrl: "https://gleitz.github.io/midi-js-soundfonts/MusyngKite/",
   program: 56  // Trumpet (GM)
 };
+
+function currentAudioParams() {
+  var params = Object.assign({}, audioParams);
+  if (audioPlayer.melodOff) params.voicesOff = true;
+  return params;
+}
 
 var lastHighlighted = [];
 
@@ -746,8 +754,28 @@ function updatePlayButton() {
 function setPlayerButtonsDisabled(disabled) {
   var playBtn = document.getElementById("playPauseBtn");
   var stopBtn = document.getElementById("stopBtn");
+  var melodyBtn = document.getElementById("melodyOffBtn");
   if (playBtn) playBtn.disabled = disabled;
   if (stopBtn) stopBtn.disabled = disabled;
+  if (melodyBtn) melodyBtn.disabled = disabled;
+}
+
+function updateMelodyButton() {
+  var btn = document.getElementById("melodyOffBtn");
+  if (!btn) return;
+  if (audioPlayer.melodOff) {
+    btn.classList.add("active");
+    btn.title = "Unmute melody";
+  } else {
+    btn.classList.remove("active");
+    btn.title = "Mute melody";
+  }
+}
+
+function toggleMelody() {
+  audioPlayer.melodOff = !audioPlayer.melodOff;
+  updateMelodyButton();
+  rerenderFile();
 }
 
 function setAudioLoadingVisible(visible) {
@@ -787,7 +815,7 @@ function stopAudio() {
   // state (midiBuffer + timingCallbacks) back to position 0. The soundfont
   // buffers are already decoded in the AudioContext so this is fast.
   var ctrl = audioPlayer.synthController;
-  ctrl.setTune(audioPlayer.currentVisualObj, false, audioParams)
+  ctrl.setTune(audioPlayer.currentVisualObj, false, currentAudioParams())
     .then(function() {
       if (ctrl !== audioPlayer.synthController) return;
       setPlayerButtonsDisabled(false);
@@ -814,6 +842,7 @@ function initAudioForTune(visualObj) {
   audioPlayer.totalMs = 0;
   audioPlayer.currentVisualObj = visualObj;
   updatePlayButton();
+  updateMelodyButton();
   setPlayerButtonsDisabled(true);
   setAudioLoadingVisible(true);
 
@@ -835,7 +864,7 @@ function initAudioForTune(visualObj) {
   });
 
   var ctrl = audioPlayer.synthController;
-  ctrl.setTune(visualObj, false, audioParams)
+  ctrl.setTune(visualObj, false, currentAudioParams())
     .then(function() {
       if (ctrl !== audioPlayer.synthController) return;
       setAudioLoadingVisible(false);

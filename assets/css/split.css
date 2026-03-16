@@ -737,6 +737,14 @@ video.video {
   font-style: normal;
 }
 
+#melodyOffBtn .fa-stack {
+  font-size: inherit;
+  height: 1em;
+  line-height: 1;
+  width: 1.25em;
+  vertical-align: middle;
+}
+
 .audio-btn-inline {
   background: none;
   border: 1px solid transparent;
@@ -754,11 +762,22 @@ video.video {
   transition: background 0.15s, border-color 0.15s, opacity 0.15s;
 }
 
-.audio-btn-inline:hover:not(:disabled) {
+.audio-btn-inline:hover:not(:disabled):not(.active) {
   opacity: 1;
+  background: rgba(226, 157, 15, 0.15);
+  border-color: #e29d0f;
+}
+
+.audio-btn-inline.active {
   background: #e29d0f;
   color: #222222;
   border-color: #e29d0f;
+  opacity: 1;
+}
+
+.audio-btn-inline.active:hover:not(:disabled) {
+  background: #f0b030;
+  border-color: #f0b030;
 }
 
 .audio-btn-inline:disabled {
