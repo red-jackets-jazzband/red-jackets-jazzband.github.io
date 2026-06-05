@@ -91,6 +91,7 @@ My Blue Heaven,my_blue_heaven.abc
 My Bucket's got a Hole in it,buckets_got_a_hole.abc
 My Old Kentucky Home,my_old_kentucky_home.abc
 Need a little Sugar in my Bowl,need_a_little_sugar.abc
+New Orleans Aan de Schelde,new_orleans_aan_de_schelde.abc
 New Orleans Parade,new_orleans_parade.abc
 No it ain't my fault,aint_my_fault.abc
 Oh Didn't He Ramble,didnt_he_ramble.abc
