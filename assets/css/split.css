@@ -478,6 +478,11 @@ video.video {
   color: #000000;
 }
 
+.lyrics {
+  background: #ffffff;
+  color: #000000;
+}
+
 .printLogo {
   display: block;
   margin-left: auto;

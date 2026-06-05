@@ -109,7 +109,7 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
     paddingBottom: 0,
     add_classes: true,
     jazzchords:true,
-    oneSvgPerLine:false,
+    oneSvgPerLine:true,
     format: {
       annotationfont: "MuseJazzText italic",
       composerfont: "MuseJazzText",
@@ -157,6 +157,21 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
   if (notationElt === "notation" && visualObjs && visualObjs.length > 0) {
     initAudioForTune(visualObjs[0]);
     setupNotationClickHandler();
+  }
+
+  // Move W: lyric SVGs out of notation so the printer can paginate between them
+  var lyricsEl = document.getElementById('lyrics');
+  if (lyricsEl) {
+    lyricsEl.innerHTML = '';
+    var notEl = document.getElementById(notationElt);
+    var moved = false;
+    notEl.querySelectorAll('svg').forEach(function(svg) {
+      if (svg.querySelector('.abcjs-unaligned-words')) {
+        lyricsEl.appendChild(svg);
+        moved = true;
+      }
+    });
+    lyricsEl.style.display = moved ? '' : 'none';
   }
 }
 
