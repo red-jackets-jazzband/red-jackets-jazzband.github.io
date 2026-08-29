@@ -5,6 +5,7 @@ All the girls go crazy,all_the_girls.abc
 Auld Lang Syne,auld_lang_syne.abc
 Amazing Grace,amazing_grace.abc
 Back Home Again in Indiana,indiana.abc
+Bare Necessities,bare_necessities.abc
 Basin Street Blues,basin_street.abc
 Battle of Jericho,battle_of_jericho.abc
 Bei mir bist du Schon,bei_mir_bist_du_schon.abc
@@ -31,6 +32,7 @@ Drop me off in New Orleans,drop_me_off_in_new_orleans.abc
 Exactly like you,exactly_like_you.abc
 Feel like Funkin' it up,feel_like_funkin_it_up.abc
 Five Foot Two,five_foot_two.abc
+Fly Me to the Moon,fly_me_to_the_moon.abc
 Four leaf clover,four_leaf_clover.abc
 Gate Mouth,gatemouth.abc
 Gettysburg March,gettysburg_march.abc
