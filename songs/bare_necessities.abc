@@ -6,11 +6,14 @@ L:1/8
 Q:1/2=100
 R:Traditional
 K:Fmaj
-z2 C2 D2 F2 || "F7" z2 A4 _A2 | "F7" A2 G2 F2 F2 | "Bb" G2 F2 G2 F2 | "Bb7" G2 F2 D2 C2 |
-"F" F2 C2 F2 A2 | "D7" d2 c2 B2 A2 | "G7" G8 | "C7" z2 c2 d2 c2 |
+P:A
+z2 C2 D2 F2 || "F7" z2 A4 ^G2 | A2 G2 F2 F2 | "Bb" G2 F2 G2 F2 | "Bb7" G2 F2 D2 C2 |
+"F" F2 C2 F2 A2 | "D7" d2 c2 B2 A2 | "G7" G8 | "C7" z2 c2 "C7#5" d2 c2 ||
+P:B
 "F" z2 d4 c2 | "F7" d2 c2 A2 F2 | "Bb" G2 F2 G2 F2 | "Bb7" d2 F2 F2 G2 |
-"Am7" A2 c2 "D7" A2 c2 | "G7" A2 F2 "C7" D2 C2 | "F" F8 | z2 F2 EE D2 |
-"C7sus4" C4 C4 | "C7" z2 G2 GF E2 | "F" F8 | "F" z2 F2 EE D2 |
-"C7sus4" C4 G4 | "C7" z2 G2 F2 G2 | "F" A8 | "C7" _E2 A2 B2 c2 |
-"Gm7" d2 d2 d2 B2 | "F7" A2 G2 A2 B2 | "F" c2 d2 c2 A2 | "Dm7" G2 F2 A2 c2 |
-"Gm7" dd d2 z2 B2 | "C7" A2 G2 F2 E2 | "F" F8 |]
+"Am7" A2 c2 "D7" A2 c2 | "G7" A2 F2 "C7" D2 C2 | "F" F4- "Bb7" F4 | "F7" z2 F2 "N.C." EE D2 ||
+P:C
+"C7sus4" C4 C4 | "C7" z2 G2 GF E2 | "F" F8 | "N.C." z2 F2 EE D2 |"C7sus4" C4 G4 | "C7" z2 G2 F2 G2 | "F" A8 | "F7" z2 A2 B2 c2 ||
+"Bb" d2 d2 d2 B2 | "Eb9" A2 G2 A2 B2 | "F" c2 d2 "Dm7" c2 A2 | "G7" G6 z2 |
+"Dm7" A2 D2 DD D2  | "D7" A2 D2 D2 D2 | "Gm7" BB B2 "D7b9" z2 AA | "G7" G F2 E- "C7" E2 C2 | "F" F3 F A2 c2 | "D7" d8 |
+ "D7" z2 A2 B2 c2 | "Gm7" dd d4 B2 | "C7" A2 G2 F2 E2 | "F" F4- "Dm7" F4- | "Gm7" F2 E2 "C7" D2 E2 | "F" F4- "Eb9" F4- | "F" F2 z6 |]
