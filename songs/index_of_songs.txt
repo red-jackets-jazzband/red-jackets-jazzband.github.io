@@ -7,6 +7,7 @@ Amazing Grace,amazing_grace.abc
 Back Home Again in Indiana,indiana.abc
 Bare Necessities,bare_necessities.abc
 Basin Street Blues,basin_street.abc
+Battle Hymn of the Republic,glory_halleluja.abc
 Battle of Jericho,battle_of_jericho.abc
 Bei mir bist du Schon,bei_mir_bist_du_schon.abc
 Bellamina,bellamina.abc
