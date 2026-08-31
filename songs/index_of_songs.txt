@@ -129,6 +129,7 @@ The way I ride,all_the_girls.abc
 This Little Light of Mine,little_light.abc
 Tin Roof Blues,tin_roof_blues.abc
 Walking on a Thin Line,walking_on_a_thin_line.abc
+Washington and Lee Swing,washington_and_lee.abc
 We shall not be moved,we_shall_not_be_moved.abc
 We shall walk through the streets of our city,we_shall_walk_through_the_streets.abc
 We'll understand it better by and by,by_and_by.abc
