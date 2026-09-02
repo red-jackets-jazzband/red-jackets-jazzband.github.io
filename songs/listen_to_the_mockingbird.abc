@@ -1,21 +1,24 @@
 X:1
 T:Listen to the Mockingbird
 C:Richard Millburn (1855)
-M:4/4
-L:1/8
 F:https://youtu.be/2DmI0zSz5FM
 R:traditional
+M:4/4
+L:1/8
 Q:1/4=120
 K:Fmaj
-C2 || "C" C3 C E2 DC | "F" CF-F4 D3/2C/ | "C" CG-G4 DC | "F" CA-A4 C2 | "C" C3 C E2 DE |
-w: I'm dream-ing now of | Hal-lie_ swee-eet Hal-lie _ swee-eet Hal- lie_ Im| dream-ing now of
-"F" GF-F4 AA | "Bb" Bd dd "C" dc BG | "F" F6 C2 || "C" C3 C E2 DC | "F" CF-F4 DC|
-w:Hal-lie_ For the thought of her is one that ne-er dies, She is sleep-ing in the val-ley_ in the
-"C" CG-G4 DC |"F" CA-A4 C2 | "C" C3 C E2 DC | "F"GF-F4 AA |
-w:val-ley_ in the val-ley_ She is sleep-ing in the val-ley_ And the
-"Bb" Bd dd "C" dc BG | "F" F6 A/A/A/A/ || "C" AG G2 z2 G/G/G/G/ |
-w:mock-ing bird is sing-ing where she lies. Lis-ten to the mock-ing bird, Lis-ten to the
-"F" GF F2 z2 A/A/A/A/ | "C" AG GG G/B3/2 A^G | "F" A4 z2 A/A/A/A/ ||
-w: mock-ing bird, Lis-ten to the mock-ing bird, still sing-ing o'er her grave Lis-ten to the
-"C" AG G2 z2 G/G/G/G/ | "F" GF F2 z2 z A| "Bb" Bd dd "C" dc BG| "F" F6 z2 |]
-w:mock-ing bird, Lis-ten to the mock-ing bird, Still sing-ing where the weep-ing wil-lows wave.
+P:A
+A/A/A/A/ || "C" AG G2 z2 G/G/G/G/ | "F" GF F2 z4 | "C" GGGG GB A3/2 ^G/2 | "F" A4 z2 A/A/A/A/ |
+w: Lis-ten to the | mock-ing bird, lis-ten to the | mock-ing bird, | mock-ing birds are sing-ing on her | grave. Lis-ten to the
+"C" AG G2 z2 G/G/G/G/ | "F" GF F2 z3 A | "Bb" BAGF "C" ECAA | "F" F6 A2 |
+w: mock-ing bird, lis-ten to the | mock-ing bird, and | they're sing-ing where the weep-ing wil-lows | wave. Yeah,
+P:B
+"C" C2 EE E2 DE | "F" G F5 ED | "C" C E5 ED | "F" C F5 z2 |
+w: I'm dream-ing now of my | Hal-ly,  my sweet | Hal- ly,  my sweet | Hal- ly. 
+"C" C2 EE E2 DE | "F" G F5 z A | "Bb" BAGF "C" ECAA | "F" F6 A2 |
+w: I'm dream-ing now of my | Hal-ly, and |the  weep-ing wil- lows will nev-er |  die. Yeah,
+P:B2
+"C" C2 EE E2 DE | "F" G F5 ED | "C" C E5 FG | "F" A C5 z2 |
+w: she's sleep-ing now in the | val-ley,  in the | val- ley,  glo-ry val- ley. 
+"C" C2 EE E2 DE | "F" G F5 z A | "Bb" BAGF "C" ECAA | "F" F6 z2 |]
+w: she's sleep-ing now in the | val-ley,  and | the mock-ing birds are sing-ing where she | lies.

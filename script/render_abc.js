@@ -59,6 +59,35 @@ function offset_for_instrument(instrument) {
 }
 
 /*
+   Function: stylePartMarkers
+   Draw a small square outline around every part marker (P: field), keeping
+   the black letter as-is. Must run after each render since abcjs rebuilds
+   the SVG.
+*/
+function stylePartMarkers(containerId) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var padX = 3, padY = 1;
+  container.querySelectorAll("text.abcjs-part").forEach(function(txt) {
+    if (txt.previousSibling && txt.previousSibling.classList &&
+        txt.previousSibling.classList.contains("abcjs-part-bg")) return;
+    var bbox;
+    try { bbox = txt.getBBox(); } catch (e) { return; }
+    var rect = document.createElementNS(SVGNS, "rect");
+    rect.setAttribute("class", "abcjs-part-bg");
+    rect.setAttribute("x", bbox.x - padX);
+    rect.setAttribute("y", bbox.y - padY);
+    rect.setAttribute("width", bbox.width + 2 * padX);
+    rect.setAttribute("height", bbox.height + 2 * padY);
+    rect.setAttribute("fill", "none");
+    rect.setAttribute("stroke", "#000");
+    rect.setAttribute("stroke-width", "1");
+    txt.parentNode.insertBefore(rect, txt);
+  });
+}
+
+/*
    Funcion: renderAbcFile
    Render a song from a abc text
    Parameters:
@@ -144,6 +173,9 @@ function renderAbcFile(text, notationElt, chordTableElt, songTitleElt, titlePref
     .forEach(function(el) {
       el.setAttribute("display", "none");
     });
+
+  /* Part markers (P: fields): render as white letters on black squares */
+  stylePartMarkers(notationElt);
 
   var chordtable = document.getElementById(chordTableElt);
   create_chord_table(displayChords, chordtable);
