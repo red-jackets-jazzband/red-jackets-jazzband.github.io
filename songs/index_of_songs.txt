@@ -85,6 +85,7 @@ Listen to the Mockingbird,listen_to_the_mockingbird.abc
 Lord Lord Lord,lord_lord_lord.abc
 Louisiana Fairytale,louisiana_fairytale.abc
 Love Letters in the Sand,love_letters.abc
+Love Song of the Nile,love_song_of_the_nile.abc
 Making Runs,making_runs.abc
 Mama Don't 'Low,mama_dont_low.abc
 Mardi Gras in New Orleans,go_to_the_mardi_gras.abc
