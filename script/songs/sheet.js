@@ -3,7 +3,7 @@ import { offsetForInstrument, changeClefForInstrument } from "../lib/instruments
 import { parseChordScheme, computeChordOffset } from "../lib/chords.js";
 import { convertChordsToRoman } from "../lib/music-theory.js";
 import { buildCompingTune } from "../lib/comping.js";
-import { renderChordTable, scanRepeatBoundaries } from "./chord-table.js";
+import { renderChordTable, scanRepeatBoundaries, fitChordTable } from "./chord-table.js";
 import { stylePartMarkers, applyCompingColors } from "./sheet-decorations.js";
 import { updateIrealProLink } from "./irealpro-link.js";
 
@@ -46,6 +46,16 @@ function abcParams(visualTranspose) {
 
 function parseTune(text, visualTranspose) {
   return ABCJS.parseOnly(text, { visualTranspose })[0];
+}
+
+// Fit the live chord grid to its container now, and again once MuseJazzText
+// has loaded — the first render can measure the grid under a wider fallback
+// face, which inflates its natural width and over-shrinks the fit.
+function fitLiveChordGrid(chordId) {
+  fitChordTable(byId(chordId));
+  if (document.fonts && document.fonts.status !== "loaded") {
+    document.fonts.ready.then(() => fitChordTable(byId(chordId)));
+  }
 }
 
 /*
@@ -175,7 +185,10 @@ export function createSheet(ctx) {
 
     const chordEl = byId(chordId);
     renderChordTable(displayChords, chordEl);
-    if (!isBooklet) ctx.audio.setRepeatBoundaries(scanRepeatBoundaries(chordEl));
+    if (!isBooklet) {
+      fitLiveChordGrid(chordId);
+      ctx.audio.setRepeatBoundaries(scanRepeatBoundaries(chordEl));
+    }
 
     byId(titleId).innerHTML = titlePrefix + song.metaText.title;
 
@@ -211,6 +224,15 @@ export function createSheet(ctx) {
     ctx.audio.melodOff = false;
     engrave(text, { ...LIVE_TARGETS, addLink: true });
   }
+
+  // Rotating a phone (or any resize) changes the space the grid has; re-fit the
+  // live chord table so it scales back up when it now fits, or further down when
+  // it doesn't.
+  let refitTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(refitTimer);
+    refitTimer = setTimeout(() => fitChordTable(byId("chordtable")), 150);
+  });
 
   return {
     render,

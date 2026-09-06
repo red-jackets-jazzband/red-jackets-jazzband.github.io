@@ -470,14 +470,14 @@ video.video {
     box-sizing: border-box;
 }
 
-/* Reflow to fewer columns at narrow widths regardless of the desktop
-   4-vs-8 column count, so cells stay readable rather than shrinking to
-   near-illegible width. Cell order/count is unchanged — .chordCell is a
-   flat sequence read positionally by playback highlighting, only the
-   number of columns it wraps into changes. */
+/* Narrow screens keep the desktop 4-or-8 column count: when that grid is too
+   wide for the viewport, fitChordTable (songs/chord-table.js) measures it and
+   sets an inline transform: scale() so the whole grid and its text shrink to
+   fit, rather than reflowing to fewer columns or clipping cell text. A phone
+   rotation re-fits it. */
 @media (max-width: 480px) {
   .chordtable > .chordGrid {
-    grid-template-columns: repeat(2, 1fr);
+    width: 100%;
   }
 }
 #sheetmenu{
@@ -2622,6 +2622,40 @@ body:has(#rjLibrary) .split-bio {
   .sheet-status {
     flex-basis: 100%;
   }
+
+  /*
+    Narrow layout: the song list grows to its full height and the page (not
+    the list) scrolls. The A-Z rail is a flex sibling of that list, so left
+    alone it stretches to the same full height and its letters spread over
+    thousands of pixels with most off-screen — useless for its one job, a
+    quick jump to a letter. Pin it to the viewport instead (sticky, capped at
+    the viewport height) so every letter stays on screen while you scroll.
+    In a short landscape viewport the 26 letters can't all fit even at their
+    minimum tap height, so let the rail scroll (scrollbar hidden, like the
+    list) rather than clipping the bottom letters off; a tall viewport never
+    triggers it and the letters just spread to fill as before.
+  */
+  .rj-library-body {
+    overflow: visible;
+    align-items: flex-start;
+  }
+  .rj-library-rail {
+    position: sticky;
+    top: 12px;
+    align-self: flex-start;
+    max-height: calc(100dvh - 24px);
+    width: 26px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .rj-library-rail::-webkit-scrollbar {
+    display: none;
+  }
+  .rj-library-rail button {
+    font-size: 10px;
+    min-height: 16px;
+  }
 }
 
 .chordCell {
@@ -2928,8 +2962,13 @@ body:has(#rjLibrary) .split-bio {
 }
 
 @media print {
+  /* Drop any on-screen fit zoom (songs/chord-table.js) — the printed page has
+     its own width and the grid should engrave full size. */
   .chordtable > .chordGrid {
     font-size: xx-large;
+    zoom: 1 !important;
+    width: 90% !important;
+    margin: 10px auto !important;
   }
 }
 

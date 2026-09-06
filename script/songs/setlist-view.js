@@ -407,6 +407,7 @@ export function createSetlistView(ctx) {
   function openSetlistSong(song, index) {
     ctx.state.currentSongFile = song.file;
     ctx.state.currentSetlistSongIndex = index == null ? null : Number(index);
+    ctx.setSheetBackLabel("Setlist");
     highlightCurrent();
     const seq = (songLoadSeq += 1);
     ctx.readFile(`/songs/${song.file}`, (text) => {

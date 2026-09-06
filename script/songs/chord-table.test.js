@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountPage } from "../../../tests/helpers/dom.js";
-import { renderChordTable, scanRepeatBoundaries } from "./chord-table.js";
+import { renderChordTable, scanRepeatBoundaries, fitChordTable } from "./chord-table.js";
 
 function inDom(fn) {
   const page = mountPage({ html: "<div id='chordtable'></div>" });
@@ -77,5 +77,25 @@ test("scanRepeatBoundaries returns undefineds when there is no repeat span", () 
   inDom((container) => {
     renderChordTable([bar(["C"]), bar(["F"])], container);
     assert.deepEqual(scanRepeatBoundaries(container), { start: undefined, end: undefined });
+  });
+});
+
+test("fitChordTable clears a stale zoom and no-ops without layout", () => {
+  inDom((container) => {
+    renderChordTable([bar(["C"]), bar(["F"]), bar(["G"]), bar(["C"])], container);
+    const grid = container.querySelector(".chordGrid");
+    grid.style.zoom = "0.5";
+    grid.style.width = "999px";
+    fitChordTable(container);
+    // jsdom reports no width, so the fit resets the grid and bails.
+    assert.equal(grid.style.zoom, "");
+    assert.equal(grid.style.width, "");
+  });
+});
+
+test("fitChordTable tolerates a missing container or grid", () => {
+  assert.doesNotThrow(() => fitChordTable(null));
+  inDom((container) => {
+    assert.doesNotThrow(() => fitChordTable(container));
   });
 });

@@ -168,12 +168,15 @@ test("keyboard nudge on a drag handle persists the new order", () => {
 test("clicking a song title opens it in the sheet with the resolved transpose", () => {
   const { view, entry, ctx, rendered, cleanup } = setup({ songs: [{ file: "a.abc", key: "" }] });
   try {
+    const backLabels = [];
+    ctx.setSheetBackLabel = (label) => backLabels.push(label);
     ctx.readFile = (path, onLoad) => onLoad("X:1\nK:Bb\nB2|");
     view.renderOpen(entry.name, entry.songs, entry, "");
     document.querySelector(".setlist-song-title").dispatchEvent(new window.Event("click"));
     assert.equal(rendered.length, 1);
     assert.equal(ctx.state.currentSongFile, "a.abc");
     assert.equal(ctx.state.currentSetlistSongIndex, 0);
+    assert.deepEqual(backLabels, ["Setlist"], "mobile back button points at the setlist");
   } finally {
     cleanup();
   }

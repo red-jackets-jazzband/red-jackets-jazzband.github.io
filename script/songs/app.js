@@ -15,6 +15,7 @@ import { createSetlistHome } from "./setlist-home.js";
 import { createSetlistModal } from "./setlist-modal.js";
 import { createSetlistPrint } from "./setlist-print.js";
 import { createSetlistView } from "./setlist-view.js";
+import { createSwipeNav } from "./swipe-nav.js";
 
 /*
   Composition root for the songs page. Builds one shared `ctx` (mutable state +
@@ -49,10 +50,18 @@ function createApp() {
     return match ? match.name : humanizeSongFile(file);
   };
 
+  // The mobile "back" button leaves the sheet for whichever sidebar list you
+  // came from — the Library song list, or an open setlist's song list.
+  ctx.setSheetBackLabel = (label) => {
+    const btn = byId("sheetBackBtn");
+    if (btn) btn.textContent = `← ${label}`;
+  };
+
   ctx.openLibrarySong = (song) => {
     window.location.hash = `s=${songTitleSlug(song)}`;
     ctx.state.currentSongFile = song.file;
     ctx.state.currentSetlistSongIndex = null;
+    ctx.setSheetBackLabel("Songs");
     ctx.sheet.renderFromFile(song.file);
   };
 
@@ -87,14 +96,21 @@ function createApp() {
   ctx.setlistModal = createSetlistModal(ctx);
   ctx.setlistPrint = createSetlistPrint(ctx);
   ctx.setlistView = createSetlistView(ctx);
+  ctx.swipeNav = createSwipeNav(ctx);
 
   function initSheet() {
     createInstrumentDropdown(ctx);
     createCompingDropdown(ctx);
     initSheetControls(ctx);
     ctx.inspiration.init();
+    ctx.swipeNav.init();
     const file = window.location.hash ? songFileFromHash(window.location.hash) : null;
-    if (file) ctx.sheet.renderFromFile(file);
+    if (file) {
+      // Seed the current-song pointer so swipe / arrow navigation works on a
+      // deep link, before any sidebar row has been tapped.
+      ctx.state.currentSongFile = file;
+      ctx.sheet.renderFromFile(file);
+    }
   }
 
   function initSidebar() {

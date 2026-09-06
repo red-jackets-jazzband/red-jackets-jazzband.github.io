@@ -16,6 +16,7 @@ export function createLibraryTab(ctx) {
       class: "song-list-item",
       href: `#s=${slug}`,
       text: song.name,
+      dataset: { songFile: song.file },
       on: {
         click(e) {
           e.preventDefault();
@@ -35,9 +36,13 @@ export function createLibraryTab(ctx) {
         on: {
           click() {
             const target = byId(`letter-${group.letter}`);
-            const list = byId("songList");
             if (!target) return;
-            if (!list) {
+            const list = byId("songList");
+            // On narrow layouts the list isn't the scroll container (the page
+            // is), so scrolling its scrollTop does nothing — scroll the target
+            // into view instead.
+            const listScrolls = list && list.scrollHeight > list.clientHeight + 1;
+            if (!listScrolls) {
               target.scrollIntoView({ block: "start" });
               return;
             }
@@ -101,6 +106,21 @@ export function createLibraryTab(ctx) {
     }
   }
 
+  // Open the song before / after the current one in the rendered list — the
+  // touch swipe's counterpart to roving with the arrow keys. Clamps at both
+  // ends; a no-op when no library song is open or the list has moved on.
+  function stepLibrarySong(dir) {
+    if (!ctx.state.currentSongFile) return;
+    const rows = libraryRows();
+    if (!rows.length) return;
+    const current = rows.findIndex((r) => r.dataset.songFile === ctx.state.currentSongFile);
+    if (current < 0) return;
+    const next = current + dir;
+    if (next < 0 || next >= rows.length) return;
+    rows[next].click();
+    rows[next].scrollIntoView({ block: "nearest" });
+  }
+
   // Returns true when it opened a row (so the caller suppresses the default).
   function handleEnter(searchInput, rows) {
     const isSearching = searchInput.value.trim().length > 0;
@@ -156,5 +176,5 @@ export function createLibraryTab(ctx) {
     initKeyNav(searchInput);
   }
 
-  return { render, init };
+  return { render, init, stepLibrarySong };
 }

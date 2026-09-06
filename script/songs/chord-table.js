@@ -44,6 +44,45 @@ export function renderChordTable(chords, container) {
 }
 
 /*
+  Fit the chord grid to its container without dropping columns.
+
+  Desktop keeps its 4 or 8 equal columns at their normal width. On a narrow
+  phone those columns would clip their chord text (cells are overflow:hidden)
+  or push a horizontal scrollbar. Instead we lay the grid out at its natural
+  content width and, when that overflows, `zoom` the whole grid — cells, text
+  and all — down by exactly the overflow ratio so it fits. `zoom` (not
+  `transform: scale`) because it reflows: the grid's footprint shrinks with it,
+  so the sheet's paper/toolbar don't stay stretched to the pre-zoom width.
+  Rotating the phone widens the container and a resize re-fit zooms it back up.
+  Cell order/count is untouched, so playback highlighting still lines up.
+*/
+export function fitChordTable(container) {
+  const grid = container && container.querySelector(".chordGrid");
+  if (!grid) return;
+
+  // Start every fit (first render, resize, rotate) from an un-zoomed grid, and
+  // force the reset to settle before measuring — a stale zoom left on the
+  // element skews the width read otherwise (a re-fit after a rotation).
+  grid.style.zoom = "";
+  grid.style.width = "";
+  void grid.offsetWidth;
+
+  const available = container.clientWidth;
+  if (!available) return;
+
+  // Natural width: the grid laid out to its widest cell in each column.
+  grid.style.width = "max-content";
+  const natural = grid.scrollWidth;
+  grid.style.width = "";
+
+  if (natural <= available + 1) return;
+
+  // Pin that width, then zoom the whole grid down to the container.
+  grid.style.width = `${natural}px`;
+  grid.style.zoom = String(available / natural);
+}
+
+/*
   Read the repeat-section span from a rendered chord grid: the index of the
   first cell carrying `.chordCellLeftRepeat` and the last carrying
   `.chordCellRightRepeat`. Returns { start, end } (both may be undefined), used
