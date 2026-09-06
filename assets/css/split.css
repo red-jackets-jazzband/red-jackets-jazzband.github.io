@@ -8,6 +8,19 @@ Description: Split is a centrally-divided layout for a professional online prese
 /* -- CSS Reset -- */
 @import url("https://fonts.googleapis.com/css?family=Montserrat:400,600");
 @import url("https://fonts.googleapis.com/css?family=Lora");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap");
+
+/*
+  Design tokens: names for the colors already in use throughout this file
+  (no value changes here). New songs-page components introduced by the
+  redesign should reference these instead of repeating the hex values.
+*/
+:root {
+  --rj-ground: #1b1b1b;
+  --rj-gold: #e29d0f;
+  --rj-body: #848d96;
+  --rj-hover: #CA486d;
+}
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -87,7 +100,7 @@ body,
 p,
 a,
 a:hover {
-  color: #e29d0f;
+  color: var(--rj-gold);
 }
 
 a,
@@ -113,17 +126,17 @@ html {
 }
 
 body.page-template-page-fullsingle-split {
-  background-color: #1b1b1b;
+  background-color: var(--rj-ground);
   font-family: "Montserrat", sans-serif;
   font-weight: 400;
   font-size: 21px;
   line-height: 33px;
   letter-spacing: -0.2px;
-  color: #848d96;
+  color: var(--rj-body);
   animation: fadein 2s;
 }
 body.page-template-page-fullsingle-split p {
-  color: #848d96;
+  color: var(--rj-body);
 }
 
 .fs-split {
@@ -192,7 +205,7 @@ body.page-template-page-fullsingle-split p {
   line-height: 16px;
   margin-bottom: 40px;
   letter-spacing: 0.4px;
-  color: #e29d0f;
+  color: var(--rj-gold);
 }
 .split-intro .tagline {
   color: #CCCCCC;
@@ -213,19 +226,19 @@ body.page-template-page-fullsingle-split p {
   }
 }
 .split-bio p {
-  color: #848d96;
+  color: var(--rj-body);
   margin-bottom: 20px;
   line-height: inherit;
 }
 .split-bio a {
-  color: #848d96;
+  color: var(--rj-body);
   transition-duration: 0.5s;
-  border-bottom: 1px dotted #848d96;
+  border-bottom: 1px dotted var(--rj-body);
 }
 .split-bio a:hover {
-  color: #CA486d;
+  color: var(--rj-hover);
   transition-duration: 0.1s;
-  border-bottom: 1px dotted #CA486d;
+  border-bottom: 1px dotted var(--rj-hover);
 }
 .split-bio em,
 .split-bio i {
@@ -342,7 +355,7 @@ body.page-template-page-fullsingle-split p {
   font-size: 11px;
   line-height: 11px;
   margin-bottom: 31px;
-  color: #848d96;
+  color: var(--rj-body);
   letter-spacing: 2px;
   opacity: 0.5;
 }
@@ -352,11 +365,11 @@ body.page-template-page-fullsingle-split p {
   margin-bottom: 12px;
 }
 .split-lists .split-list ul li a {
-  color: #848d96;
+  color: var(--rj-body);
   transition-duration: 0.5s;
 }
 .split-lists .split-list ul li a:hover {
-  color: #CA486d;
+  color: var(--rj-hover);
   transition-duration: 0.1s;
 }
 
@@ -368,7 +381,7 @@ body.page-template-page-fullsingle-split p {
   line-height: 14px;
 }
 .split-credit p a {
-  color: #848d96;
+  color: var(--rj-body);
 }
 
 .split-video {
@@ -421,68 +434,1841 @@ video.video {
    url('/fonts/MuseJazzText.ttf') format('truetype'); /* Chrome 4+, Firefox 3.5, Opera 10+, Safari 3—5 */
 }
 
+/*
+  .rj-sheet-paper: the single white "sheet of paper" backing songtitle +
+  chordtable + notation + lyrics. Those four used to each carry their own
+  background-color:#fff, which left the dark page background showing through
+  as bands in the gaps between them — this rule is the fix, they now share
+  one continuous white surface.
+*/
+.rj-sheet-paper {
+  background-color: #ffffff;
+  color: #000000;
+  overflow: hidden;
+  padding: 16px 24px 24px;
+}
+
 .chordtable{
-    background-color:#ffffff;
-    color:#000000;
     font-family:'MuseJazzText';
     line-height: 40px;
     font-size: x-large;
 }
 
 .songtitle{
-    background-color:#ffffff;
-    color:#000000;
     font-family:'MuseJazzText';
     text-align: center;
     font-size: xx-large;
     padding: 20px;
 }
 
-.chordtable > table {
-    padding: 10px;
+.chordtable > .chordGrid {
+    display: grid;
+    grid-template-columns: repeat(var(--chord-cols, 4), 1fr);
     width: 90%;
+    margin: 10px auto;
     text-align: center;
-    margin: 10;
-    position: relative;
-    left: 50%;
-    transform: translate(-50%, 0%);
-    table-layout: fixed;
+    box-sizing: border-box;
 }
-.chordtable > table {
-    border-width: 1px;
-    border-style: solid;
-    border-color: #000000;
+
+/* Reflow to fewer columns at narrow widths regardless of the desktop
+   4-vs-8 column count, so cells stay readable rather than shrinking to
+   near-illegible width. Cell order/count is unchanged — .chordCell is a
+   flat sequence read positionally by playback highlighting, only the
+   number of columns it wraps into changes. */
+@media (max-width: 480px) {
+  .chordtable > .chordGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 #sheetmenu{
     font-family:"Montserrat", sans-serif;
-    text-align:center;
     background-color:#222222;
-    font-size: small;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: #e29d0f;
-}
-#sheetmenu > a {
-  color: #e29d0f;
-  padding: 2px 6px;
-
-  transition: background 0.15s, color 0.15s;
+    color: var(--rj-gold);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    row-gap: 8px;
+    padding: 12px 16px;
+    position: relative;
 }
 
-#sheetmenu > a:hover {
-  background: #e29d0f;
+/*
+  Hosts the instrument dropdown (mounted here by createInstrumentDropdown in
+  render_abc.js) — the left-hand slot in the button bar, previously a
+  read-only "current instrument" caption. Needs a real minimum width (long
+  names like "Tenor Saxophone" need room) rather than the old caption's
+  min-width:0/ellipsis — #sheetmenu's flex-wrap lets Key/Tempo/Play spill
+  onto their own line if the instrument name and every other control can't
+  all fit on one.
+*/
+.sheet-status {
+  flex: 1 1 150px;
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+}
+.sheet-status .dropdown {
+  flex: 1;
+  min-width: 0;
+}
+
+.sheet-play-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: var(--rj-gold);
+  border: none;
+  border-radius: 8px;
+  color: var(--rj-ground);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.sheet-play-btn:hover:not(:disabled) {
+  background: #f0b030;
+}
+.sheet-play-btn.playing {
+  background: #f0eee9;
+}
+.sheet-play-btn:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+/*
+  Play + Stop + Mute-melody travel together as one transport cluster, so
+  they wrap onto the next line as a group (like a stepper) rather than
+  splitting up when #sheetmenu runs out of width in the split-view sheet.
+  Styled as one bordered field (same shell as the Key/Tempo steppers) with
+  the three buttons as flush subfields divided by hairlines; overflow:hidden
+  clips the corners. Play sits flat like its siblings (just a gold glyph) and
+  only fills gold while it's actually playing.
+*/
+.sheet-transport {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  height: 44px;
+  background: #2f2f2f;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.sheet-transport .sheet-play-btn,
+.sheet-transport .sheet-icon-btn,
+#sheetmenu .sheet-transport .sheet-icon-btn {
+  box-sizing: border-box;
+  width: 42px;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+}
+#sheetmenu .sheet-transport > * + * {
+  border-left: 1px solid rgba(255,255,255,.1);
+}
+.sheet-transport .sheet-play-btn {
+  background: #2f2f2f;
+  color: var(--rj-gold);
+}
+.sheet-transport .sheet-play-btn:hover:not(:disabled),
+.sheet-transport .sheet-play-btn.playing {
+  background: var(--rj-gold);
   color: #222222;
 }
-.notation {
-  background:#ffffff;
-  color: #000000;
+.sheet-transport .sheet-play-btn:disabled {
+  opacity: .35;
 }
 
-.lyrics {
-  background: #ffffff;
-  color: #000000;
+/*
+  Stop / Mute-melody: the two remaining playback controls, promoted out of
+  "More" to sit right next to Play as icon-only 44px buttons (same footprint
+  as Play, secondary styling like the steppers). Mute-melody flips to .active
+  — gold fill — while the melody voice is silenced.
+*/
+.sheet-icon-btn {
+  flex: none;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: #2f2f2f;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 8px;
+  color: rgba(236,234,230,.72);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.sheet-icon-btn:hover:not(:disabled) {
+  background: var(--rj-gold);
+  color: #222222;
+  /*
+    Print / iRealPro are <a>s, and the theme's `a:hover { border: none }`
+    (specificity 0,1,1) otherwise beats `.sheet-icon-btn`'s 1px border on
+    hover only — the button loses its border and, being content-box, shrinks
+    2px, nudging the glyph. Re-declare the border here so geometry holds.
+  */
+  border: 1px solid rgba(255,255,255,.11);
+}
+.sheet-icon-btn.active {
+  background: var(--rj-gold);
+  color: #222222;
+}
+.sheet-icon-btn:disabled {
+  opacity: .35;
+  cursor: not-allowed;
 }
 
+/*
+  Key/Tempo steppers: the two things you touch while the music is on the
+  stand, so they stay always-visible next to Play rather than a tap deep
+  inside "More". Same visual pattern for both.
+*/
+.sheet-stepper {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  height: 44px;
+  background: #2f2f2f;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.sheet-stepper-btn {
+  flex: none;
+  width: 26px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: none;
+  color: rgba(236,234,230,.7);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.sheet-stepper-btn:hover {
+  background: var(--rj-gold);
+  color: #222222;
+}
+.sheet-stepper-value {
+  flex: none;
+  min-width: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border-left: 1px solid rgba(255,255,255,.1);
+  border-right: 1px solid rgba(255,255,255,.1);
+  padding: 0 6px;
+}
+.sheet-stepper-value #tempoValueLabel {
+  font: 600 13px/1 "Montserrat", sans-serif;
+  color: var(--rj-gold);
+}
+.sheet-stepper-label {
+  font: 600 7.5px/1 "Montserrat", sans-serif;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: rgba(236,234,230,.4);
+  white-space: nowrap;
+}
+#transpose {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--rj-gold);
+  font: 600 13px/1 "Montserrat", sans-serif;
+  text-align: center;
+  padding: 0;
+  -moz-appearance: textfield;
+}
+#transpose::-webkit-inner-spin-button,
+#transpose::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/*
+  Runtime mount point for the Inspiration button — a bare <div> (not a
+  <span>: a lone inline element on its own line in songs.md gets wrapped
+  in a <p> by Goldmark, and that <p>'s margin threw the button ~10px
+  above the sibling 44px controls). Centered flex so the mounted button
+  lines up with everything else in #sheetmenu.
+*/
+#inspirationSlot {
+  display: flex;
+  align-items: center;
+}
+
+.sheet-inspiration-link {
+  flex: none;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 14px;
+  background: #2f2f2f;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 8px;
+  color: var(--rj-gold) !important;
+  font: 600 12px/1 "Montserrat", sans-serif;
+  text-decoration: none !important;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.sheet-inspiration-link:hover {
+  background: var(--rj-gold);
+  color: #222222 !important;
+}
+
+/*
+  Print / Export / iRealPro: icon-only 44px buttons (same footprint and
+  secondary styling as Stop / Mute-melody), grouped so they wrap together
+  when #sheetmenu runs out of width. iRealPro is appended here at runtime
+  by add_irealpro_link. These replace the old "More" overflow menu.
+*/
+.sheet-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sheet-actions .sheet-icon-btn {
+  color: rgba(236,234,230,.72);
+  text-decoration: none;
+}
+.sheet-actions .sheet-icon-btn:hover {
+  color: #222222;
+}
+
+/*
+  #sheetmenu renders inside .split-bio, and `.split-bio a` (specificity 0,2,0)
+  otherwise beats the control classes above for the <a>-backed buttons
+  (Print / iRealPro / Inspiration): it paints a 1px dotted underline where
+  their solid border should be — throwing their height 1px past the <button>
+  siblings — and repaints their glyphs body-grey. Re-assert the intended
+  border and colour through #sheetmenu so <a> and <button> controls match.
+*/
+#sheetmenu .sheet-icon-btn,
+#sheetmenu .sheet-inspiration-link {
+  border: 1px solid rgba(255,255,255,.11);
+}
+#sheetmenu .sheet-actions .sheet-icon-btn {
+  color: rgba(236,234,230,.72);
+}
+#sheetmenu .sheet-actions .sheet-icon-btn:hover:not(:disabled) {
+  color: #222222;
+}
+#sheetmenu .sheet-inspiration-link {
+  color: var(--rj-gold);
+}
+
+/*
+  iRealPro button carries the brand's circular wordmark (white on transparent)
+  instead of a Font Awesome glyph. It's dimmed to match the sibling icon glyphs
+  at rest, and on the gold hover fill it flips to solid black for contrast.
+*/
+#iRealPro .irealpro-logo {
+  display: block;
+  width: 20px;
+  height: 20px;
+  opacity: .72;
+}
+#iRealPro:hover:not(:disabled) .irealpro-logo {
+  opacity: 1;
+  filter: brightness(0);
+}
+
+/* ============================================================
+   Inspiration picture-in-picture panel
+   ============================================================ */
+/*
+   #inspirationPanel.inspiration-panel (not just .inspiration-panel): this
+   element also carries .hideOnprint, whose `@media screen { display: block }`
+   rule has equal class-level specificity and sits later in the file, so the
+   id-qualified selector is required for this rule to win regardless of source
+   order once JS toggles the [hidden] attribute — see the #rjLibrary.rj-library
+   comment above for the full explanation.
+*/
+#inspirationPanel.inspiration-panel {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 15;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  display: flex;
+  flex-direction: column;
+  background: #141414;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px;
+  box-shadow: 0 18px 44px rgba(0,0,0,.6);
+  overflow: hidden;
+  transition: width 0.15s ease;
+}
+#inspirationPanel.inspiration-panel[hidden] {
+  display: none;
+}
+#inspirationPanel.inspiration-panel.dragging,
+#inspirationPanel.inspiration-panel.resizing {
+  user-select: none;
+  transition: none;
+}
+/* While the left edge is being dragged, keep the pointer stream off the
+   YouTube iframe so the drag isn't swallowed as it passes over the video. */
+#inspirationPanel.inspiration-panel.resizing .inspiration-panel-video {
+  pointer-events: none;
+}
+.inspiration-resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 11px;
+  z-index: 3;
+  cursor: ew-resize;
+  touch-action: none;
+}
+.inspiration-resize-handle::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  width: 3px;
+  height: 36px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: rgba(236,234,230,.16);
+  transition: background 0.15s;
+}
+.inspiration-resize-handle:hover::before,
+#inspirationPanel.inspiration-panel.resizing .inspiration-resize-handle::before {
+  background: var(--rj-gold);
+}
+.inspiration-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 8px 9px 12px;
+  background: #1d1d1d;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  cursor: grab;
+  touch-action: none;
+}
+.inspiration-panel-header:active {
+  cursor: grabbing;
+}
+.inspiration-panel-grip {
+  flex: none;
+  font-size: 11px;
+  color: rgba(236,234,230,.35);
+}
+.inspiration-panel-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 11px/1 "Montserrat", sans-serif;
+  color: rgba(236,234,230,.6);
+}
+.inspiration-panel-icon-btn {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: #262626;
+  color: rgba(236,234,230,.6) !important;
+  font-size: 12px;
+  text-decoration: none !important;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.inspiration-panel-icon-btn:hover {
+  background: var(--rj-gold);
+  color: #222222 !important;
+}
+.inspiration-panel-video {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000000;
+}
+.inspiration-panel-video iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* LoopTube toolbar (A/B loop + slowdown), docked under the video */
+.inspiration-loop {
+  display: flex;
+  flex-direction: column;
+  background: #1d1d1d;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.inspiration-loop[hidden] {
+  display: none;
+}
+.inspiration-loop-timeline {
+  position: relative;
+  height: 18px;
+  margin: 8px 12px 2px;
+  border-radius: 4px;
+  background: #2b2b2b;
+  cursor: pointer;
+  touch-action: none;
+}
+.inspiration-loop-range {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(212,175,74,.22);
+  border-left: 1px solid var(--rj-gold);
+  border-right: 1px solid var(--rj-gold);
+  pointer-events: none;
+}
+.inspiration-loop-played {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 3px;
+  width: 0;
+  transform: translateY(-50%);
+  background: rgba(236,234,230,.55);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.inspiration-loop-handle {
+  position: absolute;
+  top: -2px;
+  width: 12px;
+  height: 22px;
+  margin-left: -6px;
+  padding: 0;
+  border: 1px solid rgba(0,0,0,.35);
+  border-radius: 3px;
+  background: var(--rj-gold);
+  cursor: ew-resize;
+  touch-action: none;
+}
+.inspiration-loop-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 9px;
+}
+.inspiration-loop-btn {
+  flex: none;
+  box-sizing: border-box;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  display: inline-grid;
+  place-items: center;
+  border: none;
+  border-radius: 6px;
+  background: #262626;
+  color: rgba(236,234,230,.7) !important;
+  font: 600 11px/1 "Montserrat", sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.inspiration-loop-btn:hover {
+  background: var(--rj-gold);
+  color: #222222 !important;
+}
+.inspiration-loop-btn:disabled {
+  opacity: .38;
+  cursor: default;
+  background: #262626;
+  color: rgba(236,234,230,.7) !important;
+}
+.inspiration-loop-btn[aria-pressed="true"] {
+  background: var(--rj-gold);
+  color: #222222 !important;
+}
+.inspiration-loop-btn.armed {
+  box-shadow: inset 0 0 0 1px var(--rj-gold);
+  color: var(--rj-gold) !important;
+}
+.inspiration-loop-readout {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  font: 600 11px/1 "Montserrat", sans-serif;
+  color: rgba(236,234,230,.55);
+  white-space: nowrap;
+}
+.inspiration-loop-readout[hidden] {
+  display: none;
+}
+.inspiration-loop-speed {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.inspiration-loop-speed-value {
+  min-width: 30px;
+  text-align: center;
+  font: 600 11px/1 "Montserrat", sans-serif;
+  color: rgba(236,234,230,.7);
+}
+
+@media (max-width: 480px) {
+  #inspirationPanel.inspiration-panel {
+    right: 12px;
+    bottom: 12px;
+    width: 260px;
+  }
+  .inspiration-loop-readout {
+    flex-basis: 100%;
+    text-align: left;
+  }
+}
+
+/*
+  The setlist print booklet is built (and its songs engraved by abcjs) while
+  it sits off-screen, then revealed only for print. It must NOT be
+  display:none while abcjs renders into it — a display:none subtree reports
+  zero text metrics, so every staff line comes out zero-height and the staves
+  vanish from the printed songbook. Parking it off-screen with
+  visibility:hidden keeps it laid out and measurable but invisible and
+  inert. (The ID + !important beats the .hideOnScreen { display:none } it
+  also carries, which is what the other hideOnScreen elements still use.)
+*/
+@media screen {
+  #setlistPrintBooklet {
+    display: block !important;
+    position: fixed;
+    left: -10000px;
+    top: 0;
+    width: 718px;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+@media print {
+  /*
+    The three "Print …" buttons on an open setlist all feed
+    #setlistPrintBooklet; the currently-open single song in #rjSheet has no
+    print-hiding class of its own, so without this it would print alongside
+    the booklet too.
+  */
+  body.export-booklet-mode #rjSheet {
+    display: none !important;
+  }
+  /*
+    The booklet is only ever printed via one of the setlist "Print …"
+    buttons, which set body.export-booklet-mode. Any other print action (the
+    single-song Print icon on #rjSheet) must NOT drag the last-built booklet
+    onto the page, so it is hidden unless that mode is active — the
+    .hideOnScreen { display:block } print rule would otherwise reveal it.
+  */
+  body:not(.export-booklet-mode) #setlistPrintBooklet {
+    display: none !important;
+  }
+  body.export-booklet-mode #setlistPrintBooklet {
+    position: static;
+    left: auto;
+    top: auto;
+    width: auto;
+    visibility: visible;
+    /* The single-sheet print gets black ink from .rj-sheet-paper; the booklet
+       has no such ancestor, so without this it prints in the site's gold body
+       colour (abcjs staves included, via fill/stroke="currentColor"). */
+    color: #000;
+    background: #fff;
+  }
+
+  /*
+    "Print setlist" — the front-matter block (title, "Setlist", instrument,
+    date) followed by the stage list. Hide the stacked per-song charts (and
+    their "Set N" page headings, and any cover page), and the front matter's
+    numbered index — the stage list is that list.
+  */
+  body.export-mode-setlist #setlistPrintBooklet .setlist-booklet-song,
+  body.export-mode-setlist #setlistPrintBooklet .setlist-booklet-set-heading,
+  body.export-mode-setlist #setlistPrintBooklet .setlist-booklet-index,
+  body.export-mode-setlist #setlistPrintBooklet .setlist-cover {
+    display: none !important;
+  }
+  /* The stage list is only for "Print setlist"; the other two stack charts. */
+  body:not(.export-mode-setlist) #setlistPrintBooklet .setlist-stage-list {
+    display: none;
+  }
+  /* No page break after the front matter on a stage list — it's one flow. */
+  body.export-mode-setlist #setlistPrintBooklet .setlist-booklet-frontmatter {
+    page-break-after: auto;
+    break-after: auto;
+  }
+  /* "Print setlist" aims to land the whole list on one sheet, so its front
+     matter is tighter than the booklet forms' full title page. */
+  body.export-mode-setlist #setlistPrintBooklet .setlist-booklet-fm-title {
+    font-size: 24px;
+    margin: 0 0 2px;
+  }
+  body.export-mode-setlist #setlistPrintBooklet .setlist-booklet-fm-sub {
+    font-size: 13px;
+  }
+  body.export-mode-setlist #setlistPrintBooklet .setlist-booklet-fm-meta {
+    margin: 4px 0 12px;
+    font-size: 12px;
+  }
+  /* ...and its rows sit a touch tighter, to keep a long list on one sheet. */
+  body.export-mode-setlist #setlistPrintBooklet .setlist-stage-table tbody td {
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+
+  /* Every form opens with the front-matter block (title, which form it is, the
+     instrument it's transposed for, the date). It carries the title, so the
+     plain heading is always dropped. */
+  #setlistPrintBooklet .setlist-booklet-frontmatter {
+    color: #000;
+    page-break-after: always;
+    break-after: page;
+  }
+  /* When a desc cover page precedes the front matter (songbook of a band
+     setlist), end it so the front matter starts on its own page. The break
+     lives here, not on the front matter's `-before`, so the front matter can
+     still be the first printed page without a blank one ahead of it. */
+  body:not(.export-mode-setlist) #setlistPrintBooklet .setlist-cover {
+    page-break-after: always;
+  }
+  #setlistPrintBooklet .setlist-view-title {
+    display: none;
+  }
+  .setlist-booklet-fm-title {
+    font: 400 34px "MuseJazzText", "Georgia", serif;
+    text-align: center;
+    margin: 18px 0 4px;
+  }
+  .setlist-booklet-fm-sub {
+    font: 400 17px "MuseJazzText", "Georgia", serif;
+    letter-spacing: .12em;
+    text-align: center;
+    color: #333;
+  }
+  .setlist-booklet-fm-meta {
+    margin: 8px 0 20px;
+    text-align: center;
+    font: 400 15px/1.45 "MuseJazzText", "Georgia", serif;
+    color: #444;
+  }
+  .setlist-booklet-index {
+    max-width: 640px;
+    margin: 0 auto;
+    columns: 2;
+    column-gap: 44px;
+    font-family: "MuseJazzText", "Georgia", serif;
+  }
+  .setlist-booklet-index-heading {
+    font: 400 15px "MuseJazzText", "Georgia", serif;
+    letter-spacing: .08em;
+    margin: 0 0 4px;
+    break-after: avoid;
+  }
+  .setlist-booklet-index ol {
+    margin: 0 0 12px;
+    padding-left: 2em;
+    font: 400 15px/1.5 "MuseJazzText", "Georgia", serif;
+    list-style: decimal;
+  }
+  .setlist-booklet-index li {
+    list-style: decimal;
+    break-inside: avoid;
+  }
+  .setlist-booklet-index-name {
+    padding-left: 4px;
+  }
+  .setlist-booklet-index-key {
+    white-space: nowrap;
+  }
+  .setlist-booklet-index-key:not(:empty)::before {
+    content: " — ";
+  }
+
+  /* The cover blurb is a <p>, which the sitewide `p { color: gold }` catches. */
+  #setlistPrintBooklet p {
+    color: #000;
+  }
+
+  /* "Print chordbook" — same stacked DOM as the songbook, staves removed.
+     Without the staves each song is just a title + a chord grid, so the
+     chordbook prints landscape with four charts tiled 2×2 to a page. At
+     ~A5 each the cut pages fit a marching lyre / flip folder.
+
+     A named @page turns only this export landscape (the sitewide @page is
+     portrait). The booklet and its tiles are given explicit mm widths
+     rather than percentages: with a named page Chrome's initial containing
+     block can stay portrait-sized, so `width: 50%` would tile the charts
+     into the left ~65% of the sheet. 297×210 page, 9mm margins => a
+     279×192mm printable box, split 2×2. */
+  @page chordbook {
+    size: A4 landscape;
+    margin: 9mm;
+  }
+  body.export-mode-chordbook #setlistPrintBooklet {
+    page: chordbook;
+    display: flow-root; /* contain the tile floats without a clearfix */
+    width: 279mm;
+  }
+  /* The chordbook front matter is a full-width band (2× A5) floated at the top
+     of page 1, so two chart tiles pack in beneath it rather than it burning a
+     whole landscape sheet on a short index. The first "Set N" heading / song
+     after it must not then force its own page (see the `+` rules below). */
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-frontmatter {
+    float: left;
+    clear: both;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4mm 12mm 2mm;
+    page-break-after: auto;
+    break-after: auto;
+  }
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-frontmatter + .setlist-booklet-set-heading,
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-frontmatter + .setlist-booklet-song {
+    page-break-before: avoid;
+    break-before: avoid;
+  }
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-fm-title {
+    margin: 4px 0 2px;
+  }
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-fm-meta {
+    margin: 6px 0 12px;
+  }
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-index {
+    max-width: none;
+    columns: 3;
+    column-gap: 48px;
+  }
+  body.export-mode-chordbook #setlistPrintBooklet .notation {
+    display: none !important;
+  }
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-song {
+    page-break-before: auto;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    float: left;
+    box-sizing: border-box;
+    width: 139.5mm;
+    /* Every tile is exactly this tall, so two rows fill the page and the
+       floats tile 2-up without needing `clear`. */
+    height: 96mm;
+    overflow: hidden;
+    padding: 3mm 8mm;
+    /* Sit the chart in the middle of its quarter-page; `safe` keeps a chart
+       taller than the tile pinned to the top rather than clipped both ends. */
+    display: flex;
+    flex-direction: column;
+    justify-content: safe center;
+  }
+  /* "Set N" headings still open a fresh page; clear the tiled row before
+     them and let the tiles start flowing again straight after. */
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-set-heading {
+    clear: both;
+    page-break-after: avoid;
+  }
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-view-title,
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-cover {
+    display: none; /* the front-matter page stands in for the plain heading and the desc cover */
+  }
+  body.export-mode-chordbook #setlistPrintBooklet .songtitle {
+    font-size: x-large;
+    padding: 0 0 4px;
+  }
+  /* Taller cells than the on-screen 40px so the chart uses the full height
+     of its quarter-page rather than sitting as a small block of whitespace
+     (mirrors the standalone chordbook's roomier grid). Kept modest so the
+     common 4-row chart fills the tile while a rare 5–6 row one still fits. */
+  body.export-mode-chordbook #setlistPrintBooklet .chordtable > .chordGrid {
+    font-size: x-large;
+    width: 100%;
+    margin: 3mm auto 0;
+  }
+  body.export-mode-chordbook #setlistPrintBooklet .chordDiv {
+    height: 50px;
+    line-height: 50px; /* vertically centre the single line of chord text */
+  }
+
+  /* Keep the title, chord grid and each engraved staff line whole across a
+     page break rather than sliced through the middle. (A long song still
+     paginates — just between its lines, like the single-sheet print.) */
+  #setlistPrintBooklet .songtitle,
+  #setlistPrintBooklet .chordtable,
+  #setlistPrintBooklet .notation > *,
+  #setlistPrintBooklet .notation svg {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  /* Mirror the single-sheet print's header/chord-grid tightening (those
+     rules are keyed to #chordtable / #songtitle ids; the booklet uses the
+     same-named classes). */
+  #setlistPrintBooklet .songtitle {
+    padding: 4px 0 8px;
+  }
+  #setlistPrintBooklet .chordtable {
+    line-height: 1.2;
+  }
+  #setlistPrintBooklet .chordtable > .chordGrid {
+    width: 100%;
+    margin: 4px auto;
+  }
+  #setlistPrintBooklet .chordtable .chordDiv {
+    height: auto;
+    min-height: 0;
+  }
+  #setlistPrintBooklet .notation svg {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* ============================================================
+   Printing one song sheet (the Print icon on #rjSheet).
+
+   On screen this page is a fixed 100vh flex split: a 30% masthead
+   image, then a 70% content column that scrolls. On paper that
+   left the notation boxed into ~70% of the page width, and long
+   tunes (e.g. "Bei mir bist du schön") were clipped or sliced
+   through the middle of a staff at the page break. This unwraps
+   the whole split for print so the sheet gets the full page and
+   paginates between staff lines instead of across them.
+   ============================================================ */
+@media print {
+  .fs-split {
+    display: block;
+    width: auto;
+    height: auto;
+  }
+  .fs-split .split-image {
+    display: none;
+  }
+  .fs-split .split-content {
+    width: auto;
+    min-height: 0;
+    display: block;
+    overflow: visible;
+  }
+  body:has(#rjLibrary) .fs-split .split-content-vertically-center,
+  .fs-split .split-content .split-content-vertically-center {
+    display: block;
+    width: auto;
+    max-width: none;
+    height: auto;
+    margin: 0;
+    padding: 0;
+  }
+  .rj-songs-layout {
+    display: block;
+    height: auto;
+    gap: 0;
+  }
+  .rj-sheet {
+    width: 100%;
+    border: none;
+    border-radius: 0;
+  }
+  /*
+    Tighter than the browser's ~13mm default so a dense tune
+    ("Bei mir bist du schön") has the vertical room to land on a
+    single page.
+  */
+  @page {
+    margin: 8mm 10mm;
+  }
+  .rj-sheet-paper {
+    padding: 0;
+    border-radius: 0;
+    overflow: visible;
+    /*
+      Even unwrapped and full-width the longest tunes engrave a
+      hair past one page. A small uniform shrink of the printed
+      body closes that gap; `zoom` (unlike `transform: scale()`)
+      actually reduces the laid-out height, so pagination — and
+      the break-inside rules below — still work.
+    */
+    zoom: 0.9;
+  }
+  /* Reclaim the generous on-screen spacing around the header. */
+  #songtitle {
+    padding: 4px 0 8px;
+  }
+  #chordtable {
+    line-height: 1.2;
+  }
+  #chordtable > .chordGrid {
+    margin: 4px auto;
+  }
+  #chordtable .chordDiv {
+    height: auto;
+    min-height: 0;
+  }
+  /*
+    oneSvgPerLine makes each engraved line its own SVG (wrapped in
+    abcjs's responsive-resize <div>). Keep every line — and the
+    title/chord grid — whole rather than letting a page break run
+    through it.
+  */
+  #songtitle,
+  #chordtable,
+  #notation > *,
+  #notation svg,
+  #lyrics > *,
+  #lyrics svg {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+
+/* ============================================================
+   Shared library sidebar: Library / Setlists tabs
+   ============================================================ */
+.rj-library-tabs {
+  flex: none;
+  display: flex;
+  gap: 6px;
+  padding: 12px 16px 0;
+}
+.rj-library-tab {
+  flex: 1;
+  height: 32px;
+  background: none;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 7px;
+  color: rgba(230,228,224,.55);
+  font: 600 11px "Montserrat", sans-serif;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.rj-library-tab:hover {
+  color: #dedcd8;
+}
+.rj-library-tab.active {
+  background: var(--rj-gold);
+  border-color: var(--rj-gold);
+  color: #1b1b1b;
+}
+
+.rj-library-setlist-tools {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px 0;
+}
+/*
+  Breadcrumb "up" affordance for an open setlist. It's navigation, not an
+  action, so it deliberately does NOT look like the pill buttons below it:
+  a full-bleed strip (negative side margins cancel the toolbar's 16px pad)
+  pinned to the top of the tools column, set off from the Print/Export/Delete
+  controls by a hairline underline.
+*/
+.rj-setlist-crumb {
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: -2px -16px 4px;
+  padding: 4px 16px 12px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  color: rgba(230,228,224,.55);
+  font: 600 10.5px/1 "Montserrat", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.rj-setlist-crumb .fa-chevron-left {
+  font-size: 9px;
+}
+.rj-setlist-crumb:hover {
+  color: var(--rj-gold);
+}
+.rj-library-open-setlist,
+.rj-library-add-song {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+/*
+  [hidden] companions: these three toggle via the native hidden attribute
+  (song_library.js sets .hidden = true/false), but the plain-class rule
+  above sets `display` with the same specificity as the browser's own
+  [hidden] { display:none } UA rule — author beats user-agent at equal
+  specificity regardless of source order, so without this, hidden="true"
+  stops hiding them once display:flex is added. Same gotcha documented
+  elsewhere in this file for #rjLibrary.rj-library and #setlistEditor.
+*/
+#setlistTools[hidden],
+#openSetlistTools[hidden],
+#setlistsBackBtn[hidden],
+#setlistNameInput[hidden],
+#setlistRenameBtn[hidden],
+#setlistExportBtn[hidden] {
+  display: none;
+}
+.rj-library-add-song input[type="search"] {
+  flex: 1;
+  min-width: 110px;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  background: #262626;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 7px;
+  color: #dedcd8;
+  font: 500 12.5px "Montserrat", sans-serif;
+}
+/*
+  Open-setlist title: a plain heading (not a form field) with a pencil, plus
+  export as an icon button alongside — a double-click on the heading
+  or the pencil swaps in .rj-setlist-title-input. It's moved (in JS) to the
+  foot of the tools column, so it needs a little breathing room above the
+  song list that follows.
+*/
+.rj-setlist-title-row {
+  flex-basis: 100%;
+  min-width: 0; /* let the nowrap title shrink instead of overflowing the panel */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding-bottom: 10px;
+}
+.rj-setlist-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #eceae6;
+  font: 700 15px "Montserrat", sans-serif;
+  cursor: text;
+}
+.rj-setlist-title-input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  background: #262626;
+  border: 1px solid var(--rj-gold);
+  border-radius: 7px;
+  color: #eceae6;
+  font: 700 14px "Montserrat", sans-serif;
+}
+.rj-setlist-title-btn {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 7px;
+  color: rgba(230,228,224,.6);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.rj-setlist-title-btn:hover {
+  border-color: var(--rj-gold);
+  color: var(--rj-gold);
+}
+/*
+  The three "Print …" targets read as one control: a shared "Print" caption
+  on its own line (same small-caps look as the sheet steppers' labels), then
+  the three destinations butted together as an equal-width segmented row that
+  spans the toolbar — at 300px there isn't room for "Print" plus three words
+  on one line.
+*/
+.rj-library-print-group {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.rj-library-print-label {
+  color: #9a978f;
+  font: 700 10px "Montserrat", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.rj-library-print-seg {
+  display: flex;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.rj-library-print-btn {
+  flex: 1;
+  height: 34px;
+  padding: 0 6px;
+  background: #2f2f2f;
+  border: 0;
+  color: #dedcd8;
+  font: 600 11px "Montserrat", sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rj-library-print-btn + .rj-library-print-btn {
+  border-left: 1px solid rgba(255,255,255,.1);
+}
+.rj-library-print-btn:hover {
+  background: #383838;
+  color: var(--rj-gold);
+}
+/*
+  A single "New setlist" button at the foot of the Yours list, inside the
+  scrolling #songList — set off from the setlist rows above by a hairline
+  rule. It opens #setlistModal; the name and the "start from" choice are
+  settled there, not inline.
+*/
+.rj-library-list .rj-library-new-setlist-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 38px;
+  box-sizing: border-box;
+  margin-top: 6px;
+  padding: 12px 4px;
+  background: none;
+  border: 1px dashed rgba(255,255,255,.18);
+  border-radius: 7px;
+  color: rgba(230,228,224,.7);
+  font: 600 12px "Montserrat", sans-serif;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.rj-library-list .rj-library-new-setlist-btn > .fa-plus {
+  font-size: 10px;
+}
+.rj-library-list .rj-library-new-setlist-btn:hover {
+  border-color: var(--rj-gold);
+  color: var(--rj-gold);
+}
+
+/*
+  New-setlist modal (#setlistModal). A centred dialog over a dimmed backdrop;
+  clicking the backdrop or pressing Escape closes it (see initSetlistModal).
+*/
+.rj-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0,0,0,.62);
+}
+.rj-modal-overlay[hidden] {
+  display: none;
+}
+.rj-modal {
+  width: 340px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 20px;
+  background: #1b1b1b;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6);
+}
+.rj-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.rj-modal-title {
+  margin: 0;
+  color: #eceae6;
+  font: 700 16px "Montserrat", sans-serif;
+}
+.rj-modal-close {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  color: rgba(230,228,224,.55);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color .15s;
+}
+.rj-modal-close:hover {
+  color: var(--rj-gold);
+}
+.rj-modal-label {
+  display: block;
+  margin: 12px 0 5px;
+  color: rgba(230,228,224,.45);
+  font: 700 10px "Montserrat", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+}
+.rj-modal-label:first-of-type {
+  margin-top: 0;
+}
+.rj-modal-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 38px;
+  padding: 0 10px;
+  background: #262626;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 7px;
+  color: #dedcd8;
+  font: 500 12.5px "Montserrat", sans-serif;
+}
+.rj-modal-input:focus {
+  outline: none;
+  border-color: var(--rj-gold);
+}
+select.rj-modal-input {
+  cursor: pointer;
+}
+.rj-modal-choices {
+  display: flex;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.rj-modal-choice {
+  flex: 1;
+  height: 34px;
+  padding: 0 4px;
+  background: #2f2f2f;
+  border: 0;
+  color: rgba(230,228,224,.7);
+  font: 600 10.5px "Montserrat", sans-serif;
+  cursor: pointer;
+  transition: background-color .15s, color .15s;
+}
+.rj-modal-choice + .rj-modal-choice {
+  border-left: 1px solid rgba(255,255,255,.1);
+}
+.rj-modal-choice:hover {
+  color: var(--rj-gold);
+}
+.rj-modal-choice.active {
+  background: var(--rj-gold);
+  color: #1b1b1b;
+}
+.rj-modal-context {
+  margin-top: 10px;
+}
+.rj-modal-context[hidden] {
+  display: none;
+}
+.rj-modal-file {
+  width: 100%;
+  color: #dedcd8;
+  font: 500 12px "Montserrat", sans-serif;
+}
+.rj-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+.rj-modal-btn {
+  height: 36px;
+  padding: 0 16px;
+  background: #2f2f2f;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 7px;
+  color: #dedcd8;
+  font: 600 11.5px "Montserrat", sans-serif;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.rj-modal-btn:hover {
+  border-color: var(--rj-gold);
+  color: var(--rj-gold);
+}
+.rj-modal-btn-primary {
+  background: var(--rj-gold);
+  border-color: var(--rj-gold);
+  color: #1b1b1b;
+}
+.rj-modal-btn-primary:hover {
+  color: #1b1b1b;
+  filter: brightness(1.08);
+}
+/*
+  The "add to setlist" zone at the foot of an open personal setlist's song
+  list (inside the scrolling #songList, below the last row). It is framed
+  exactly like the "New setlist" row at the foot of the Yours list — a
+  hairline rule, then content at the same 4px inset the song rows use, so
+  its left edge lines up with the drag handles above it rather than starting
+  a new indent level. The shared `.rj-library-add-song` flex-row rule is
+  overridden to a plain block here.
+
+  Everything inside sits on a 2-column grid: a 34px icon gutter (the search
+  magnifier, each result's +, and the break button's + all centre in it)
+  and a text column that starts at 34px (the placeholder, every result
+  title, and the break label all share that left edge). Every slot is 36px
+  tall with a 7px radius; the vertical rhythm is an 8px base (label→field 8,
+  field→break 6, results 4).
+*/
+.rj-library-list .rj-library-add-song-inline {
+  display: block;
+  margin-top: 8px;
+  padding: 12px 4px 4px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.rj-library-add-label {
+  color: rgba(230,228,224,.45);
+  font: 700 10px "Montserrat", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  margin: 0 0 8px;
+}
+.rj-library-add-song-field {
+  display: block;
+}
+/* A leading magnifier, centred in the shared 34px icon gutter. */
+.rj-library-add-song-inputwrap {
+  position: relative;
+}
+.rj-library-add-song-inputwrap > .fa-magnifying-glass {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  color: rgba(230,228,224,.4);
+  pointer-events: none;
+}
+.rj-library-list .rj-library-add-song-inline input[type="search"] {
+  width: 100%;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0 12px 0 34px;
+  background: #262626;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 7px;
+  color: #dedcd8;
+  font: 500 12.5px "Montserrat", sans-serif;
+}
+.rj-library-list .rj-library-add-song-inline input[type="search"]:focus {
+  outline: none;
+  border-color: var(--rj-gold);
+}
+.rj-library-add-song-inline input[type="search"]::placeholder {
+  color: rgba(230,228,224,.4);
+}
+/*
+  Results open in normal flow between the field and the break button while
+  you type — the foot of the list can grow and #songList scrolls, which
+  keeps this clear of the scroll container's overflow clipping. The query
+  and its results survive each add (see song_library.js) so a run of songs
+  goes in with one search.
+*/
+.rj-library-add-song-results {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rj-library-add-song-results.is-open {
+  margin-top: 4px;
+}
+.rj-library-add-song-result {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 12px 0 0;
+  text-align: left;
+  background: #242424;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 6px;
+  color: #cbc9c4;
+  font: 500 12.5px "Montserrat", sans-serif;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.rj-library-add-song-result > .fa-plus {
+  flex: none;
+  width: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  color: rgba(230,228,224,.3);
+}
+.rj-library-add-song-result-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rj-library-add-song-result:hover {
+  border-color: var(--rj-gold);
+  color: var(--rj-gold);
+}
+.rj-library-add-song-result:hover > .fa-plus {
+  color: var(--rj-gold);
+}
+.rj-library-add-song-empty {
+  padding: 4px 0 0 34px;
+  font: 400 12px "Lora", serif;
+  font-style: italic;
+  color: rgba(230,228,224,.5);
+}
+/*
+  "Add a set break" — a peer slot to the search field (same height, radius
+  and 34px icon gutter, so the two line up), but a button, not a field:
+  transparent fill and it lifts to gold on hover.
+*/
+.rj-library-add-break {
+  width: 100%;
+  height: 36px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px 0 0;
+  background: none;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 7px;
+  color: rgba(230,228,224,.6);
+  font: 600 12px "Montserrat", sans-serif;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.rj-library-add-break > .fa-plus {
+  flex: none;
+  width: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+}
+.rj-library-add-break > .rj-library-add-break-label {
+  flex: 1;
+  text-align: left;
+}
+.rj-library-add-break:hover {
+  border-color: var(--rj-gold);
+  color: var(--rj-gold);
+}
+
+/*
+  Setlist rows in #songList (setlists-home) and setlist-song rows (an open
+  setlist) reuse .song-list-item's base look, layered with flex/grid for
+  their extra controls. Selectors below are .song-list-item-qualified (not
+  just .setlist-row / .setlist-song-row alone): both carry the plain
+  .song-list-item class too, and .song-list-item's own `display: block`
+  (defined later in this file) would otherwise win a same-specificity,
+  source-order tiebreak against a single-class selector here.
+*/
+.song-list-item.setlist-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.setlist-row-main {
+  flex: 1;
+  text-align: left;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 10px 4px;
+}
+.setlist-row:hover .setlist-row-main {
+  color: var(--rj-hover);
+}
+.setlist-row-meta {
+  flex: none;
+  align-self: center;
+  padding: 0 10px;
+  color: rgba(236,234,230,.4);
+  font: 600 10.5px "Montserrat", sans-serif;
+}
+/* Trash icon on a personal setlist's overview row — muted until row hover. */
+.setlist-row-delete {
+  flex: none;
+  align-self: stretch;
+  width: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-left: 1px solid rgba(255,255,255,.06);
+  color: rgba(236,234,230,.25);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color .15s, background-color .15s;
+}
+.setlist-row:hover .setlist-row-delete {
+  color: rgba(236,234,230,.5);
+}
+.setlist-row-delete:hover {
+  color: #ca486d;
+  background: rgba(202,72,109,.1);
+}
+.song-list-item.setlist-song-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+}
+.setlist-song-number {
+  flex: none;
+  width: 16px;
+  font: 600 11px "JetBrains Mono", monospace;
+  color: var(--rj-gold);
+}
+.setlist-song-title {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #dedcd8;
+  font: 500 13px "Montserrat", sans-serif;
+  cursor: pointer;
+}
+.setlist-song-title:hover {
+  color: var(--rj-hover);
+}
+.setlist-song-key-badge {
+  flex: none;
+  font: 600 11px "JetBrains Mono", monospace;
+  color: rgba(230,228,224,.4);
+}
+/* The setlist song currently open in the sheet — "you are here" in the set. */
+.song-list-item.setlist-song-row.is-current-song {
+  background: rgba(226,157,15,.14);
+  box-shadow: inset 3px 0 0 var(--rj-gold);
+  border-radius: 0 6px 6px 0;
+}
+.setlist-song-row.is-current-song .setlist-song-title {
+  color: #fff;
+  font-weight: 600;
+}
+/* Per-song transpose, in semitones (personal setlists). A bare number field
+   — the spinners are hidden to keep it narrow; type or paste a signed int. */
+.setlist-song-semitones {
+  flex: none;
+  width: 42px;
+  height: 26px;
+  box-sizing: border-box;
+  padding: 0 2px 0 4px;
+  background: #1f1f1f;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 6px;
+  color: var(--rj-gold);
+  font: 600 11px "JetBrains Mono", monospace;
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.setlist-song-semitones::-webkit-outer-spin-button,
+.setlist-song-semitones::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* Drag handle for reordering rows in an open personal setlist. Drag it, or
+   focus it and press the up/down arrows. */
+.setlist-drag-handle {
+  flex: none;
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: rgba(236,234,230,.35);
+  font-size: 11px;
+  cursor: grab;
+  touch-action: none;
+}
+.setlist-drag-handle:hover {
+  color: var(--rj-gold);
+}
+.setlist-drag-handle:focus-visible {
+  outline: none;
+  color: var(--rj-gold);
+  box-shadow: 0 0 0 1px var(--rj-gold);
+}
+/* The row follows the pointer live (it's relocated in the DOM as you drag),
+   so it just needs to read as "picked up" while it moves. */
+.setlist-row-dragging {
+  opacity: .5;
+  background: rgba(226,157,15,.08);
+  box-shadow: inset 0 0 0 1px rgba(226,157,15,.35);
+  border-radius: 6px;
+}
+body.setlist-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+.setlist-song-btn {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  background: #1f1f1f;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 5px;
+  color: rgba(236,234,230,.7);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+}
+.setlist-song-btn:hover {
+  border-color: var(--rj-gold);
+  color: var(--rj-gold);
+}
+.setlist-song-remove:hover {
+  border-color: #a8442f !important;
+  color: #ca486d !important;
+}
+.setlist-view-title {
+  font: 700 22px/1.2 "Montserrat", sans-serif;
+  color: #eceae6;
+  margin-bottom: 18px;
+}
+/* Set dividers ("break") inside an open setlist. A read-only band setlist
+   shows a plain "Set N" heading (reusing .song-list-letter); a personal one
+   shows an editable label plus the same drag/remove controls as a song. */
+.setlist-set-heading {
+  border-top: 1px solid rgba(255,255,255,.08);
+  margin-top: 6px;
+}
+.song-list-item.setlist-divider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.setlist-divider-input {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  background: #1f1f1f;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 6px;
+  color: var(--rj-gold);
+  font: 700 10.5px "Montserrat", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+}
+/* "Set N" heading between song blocks in the printed booklet. */
+.setlist-booklet-set-heading {
+  font: 400 24px "MuseJazzText", "Georgia", serif;
+  color: #000;
+  text-align: center;
+  margin: 0 0 12px;
+  padding-top: 8px;
+}
+/* "Print setlist" — the glanceable stage list: a table of song titles with a
+   "Concert" key column and, when the export is for a transposing instrument, a
+   second column of that instrument's keys (headed by its name), plus tempo. */
+.setlist-stage-list {
+  color: #000;
+  font-family: "MuseJazzText", "Georgia", serif;
+}
+.setlist-stage-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: 400 20px/1.4 "MuseJazzText", "Georgia", serif;
+  color: #000;
+}
+.setlist-stage-table thead th {
+  font: 400 12px/1 "MuseJazzText", "Georgia", serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #555;
+  text-align: right;
+  padding: 0 0 5px 34px;
+  border-bottom: 1.5px solid #333;
+  white-space: nowrap;
+}
+.setlist-stage-table thead th.stage-c-num,
+.setlist-stage-table thead th.stage-c-song {
+  text-align: left;
+}
+.setlist-stage-table tbody td {
+  padding: 4px 0 4px 34px;
+  vertical-align: baseline;
+  border-bottom: 1px dotted #cfcfcf;
+}
+.setlist-stage-table td.stage-c-num {
+  padding-left: 0;
+  padding-right: 8px;
+  text-align: right;
+  color: #555;
+  white-space: nowrap;
+}
+.setlist-stage-table td.stage-c-song {
+  width: 100%;
+  padding-left: 0;
+}
+.setlist-stage-table td.stage-c-concert,
+.setlist-stage-table td.stage-c-instr,
+.setlist-stage-table td.stage-c-tempo {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.setlist-stage-table td.stage-c-tempo {
+  color: #555;
+}
+.setlist-stage-table .setlist-stage-set-row th {
+  text-align: left;
+  font: 400 22px "MuseJazzText", "Georgia", serif;
+  color: #000;
+  padding: 18px 0 5px;
+  border-bottom: 1.5px solid #333;
+}
+.setlist-stage-table tbody tr.setlist-stage-set-row:first-child th {
+  padding-top: 2px;
+}
 .printLogo {
   display: block;
   margin-left: auto;
@@ -506,14 +2292,348 @@ video.video {
   margin-right: auto;
 }
 
+/* ============================================================
+   Songs page: library sidebar + sheet
+   ============================================================ */
+
+/*
+  The theme's own article column caps out at 800px (.split-content-vertically-center),
+  which is far too narrow for a library sidebar sitting next to a lead sheet.
+  Widen it for the songs page only, scoped via :has() so no template
+  override is needed. The sitewide 30% masthead image column is untouched.
+
+  The theme's default vertical-centering (margin-top/bottom: auto on this
+  element, inside a .split-content that's exactly 100vh tall) has no way to
+  tell the sidebar below how much room is actually left once the page's own
+  heading has been laid out — #rjLibrary previously guessed with a flat
+  `max-height: calc(100vh - 64px)`, which undercounted the real heading
+  height and pushed the last few pixels of the sidebar (the instrument
+  picker) below the visible area with no way to reach it. Turning this into
+  a flex column that fills .split-content's real, definite 100vh instead
+  removes the guess entirely: .split-bio (flex: 1) always gets exactly
+  "100vh minus however tall the heading actually rendered," and
+  #rjLibrary/.rj-songs-layout can just ask for 100% of that.
+*/
+body:has(#rjLibrary) .fs-split .split-content-vertically-center {
+  max-width: none;
+  width: 100%;
+  height: 100%;
+  padding: 24px 32px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+/* Compact heading — this page is a practice tool, not an article; the
+   sitewide 64px hero tagline is decorative weight the sidebar can't spare. */
+body:has(#rjLibrary) .split-intro {
+  flex: none;
+  font-size: 26px;
+  line-height: 1.2;
+}
+body:has(#rjLibrary) .split-intro h1 {
+  margin-bottom: 8px;
+}
+/* Sitewide footer credit line: pure decoration, not worth the vertical
+   budget on a page whose whole point is fitting a working tool on screen. */
+body:has(#rjLibrary) .split-credit {
+  display: none;
+}
+body:has(#rjLibrary) .split-bio {
+  flex: 1;
+  min-height: 0;
+  padding: 16px 0 0;
+}
+
+.rj-songs-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+  #rjLibrary.rj-library (not just .rj-library): this element also carries
+  .hideOnprint, whose `@media screen { display: block }` rule has equal
+  class-level specificity and sits later in the file — without the id
+  qualifier here it silently wins and collapses this back to a plain block,
+  losing the flex layout. Same reasoning applies to #sheetBackBtn below.
+*/
+#rjLibrary.rj-library {
+  width: 300px;
+  flex: none;
+  background: var(--rj-ground);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: "Montserrat", sans-serif;
+}
+
+.rj-library-search {
+  padding: 14px 16px 10px;
+  flex: none;
+  position: relative;
+}
+.rj-library-search input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 30px 0 12px;
+  background: #262626;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px;
+  color: #dedcd8;
+  font: 500 13px "Montserrat", sans-serif;
+  /* native "clear" button defaults to the UA accent (blue) in Firefox */
+  accent-color: #9a978f;
+}
+.rj-library-search input::placeholder {
+  color: rgba(230,228,224,.42);
+}
+/* native "clear" button — recolour it grey/gold and line it up with where
+   the "/" hint sits (padding-right pushes it left, so pull it back right) */
+.rj-library-search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-right: -19px;
+  cursor: pointer;
+  background-color: rgba(230,228,224,.5);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.rj-library-search input::-webkit-search-cancel-button:hover {
+  background-color: #f0b030;
+}
+.rj-search-hint {
+  position: absolute;
+  top: 50%;
+  right: 24px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 4px;
+  color: rgba(230,228,224,.5);
+  font: 600 11px "Montserrat", sans-serif;
+  pointer-events: none;
+}
+.rj-library-search input:focus ~ .rj-search-hint,
+.rj-library-search input:not(:placeholder-shown) ~ .rj-search-hint {
+  display: none;
+}
+
+.rj-library-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  padding-bottom: 12px;
+}
+.rj-library-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 16px;
+  /* offset parent for the rail's jump-to-letter math (see renderRail) —
+     the letter headings are position: sticky, so scrollIntoView / rect
+     reads report their stuck position and can't scroll back up to a
+     letter that's currently pinned at the top; offsetTop stays honest. */
+  position: relative;
+  /* Hide the scrollbar — the A-Z rail sits right against this edge and a
+     native scrollbar wedged between them reads as a stray slider. Still
+     scrolls by wheel/drag/touch and via the rail. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.rj-library-list::-webkit-scrollbar {
+  display: none;
+}
+.song-list-letter {
+  font: 700 11px/1 "Montserrat", sans-serif;
+  color: var(--rj-gold);
+  letter-spacing: .14em;
+  padding: 14px 0 6px;
+  position: sticky;
+  top: 0;
+  background: var(--rj-ground);
+}
+.song-list-item {
+  display: block;
+  padding: 10px 4px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  font: 500 13px/1.3 "Montserrat", sans-serif;
+  color: #dedcd8;
+  text-decoration: none;
+}
+.song-list-item:hover {
+  color: var(--rj-hover);
+}
+/* keyboard (up/down arrow) selection in the song list */
+.song-list-item.kbd-active {
+  color: var(--rj-hover);
+  background: rgba(255,255,255,.06);
+  border-radius: 6px;
+}
+.song-list-empty {
+  padding: 20px 4px;
+  font: 400 12px "Lora", serif;
+  font-style: italic;
+  color: rgba(230,228,224,.5);
+}
+/*
+  iOS-contacts-style index: letters spread evenly across whatever height is
+  available (justify-content: space-between) instead of stacking at a fixed
+  size and relying on overflow-y:auto — at ordinary laptop window heights
+  the stacked version needed more room than the sidebar had and grew its own
+  scrollbar, which read as a stray slider wedged between the letters and the
+  sheet. Spreading them out means there's never anything to scroll.
+*/
+/* display:flex below beats the UA [hidden] rule, so the Setlists tab's
+   `railEl.hidden = true` never took effect — spell the hidden case out. */
+.rj-library-rail[hidden] {
+  display: none;
+}
+.rj-library-rail {
+  flex: none;
+  width: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  padding: 4px 0;
+}
+/*
+  Each letter is a flex:1 slice of the full rail height, so the whole rail
+  is a gapless column of hit targets — the earlier `justify-content:
+  space-between` spread the letters out with dead space between them, and a
+  22px-wide rail already gives a ~6px-wide glyph almost nothing to aim at,
+  so most clicks landed on nothing and the rail felt inert.
+*/
+.rj-library-rail button {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: rgba(230,228,224,.4);
+  font: 600 9px/1 "Montserrat", sans-serif;
+  cursor: pointer;
+  padding: 0;
+}
+.rj-library-rail button:hover {
+  color: var(--rj-gold);
+}
+
+/*
+  The sheet is one card — dark toolbar header + white paper body — mirroring
+  the library card next to it (same hairline border + 10px radius). The
+  rounded corners on #sheetmenu and .rj-sheet-paper come from this clip, so
+  neither needs its own outer radius.
+*/
+.rj-sheet {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#sheetBackBtn.rj-sheet-back {
+  display: none;
+}
+
+/*
+  Narrow layout: the library and the sheet become two full-width screens —
+  list first, tap a song to see the sheet, tap back to return — instead of
+  a cramped side-by-side split. body.rj-sheet-active (set whenever a song
+  actually renders, from any entry point: list click, hash deep-link, or
+  reload) is what switches which of the two is showing.
+
+  The switch fires at 1024px, not the sitewide 800px: the three columns
+  (300px list + 22px A-Z rail + the sheet) leave the sheet too little room
+  for a chord grid / staff well before 800px, so we stack sooner.
+
+  Every selector here that toggles `display` on #rjLibrary/#rjSheet/
+  #sheetBackBtn is id-qualified to match the specificity of their base
+  rules above (see the #rjLibrary.rj-library comment) — otherwise these
+  overrides would lose to the base rule instead of the intended cascade.
+*/
+@media (max-width: 1024px) {
+  body:has(#rjLibrary) .fs-split .split-content-vertically-center {
+    height: auto;
+  }
+  .rj-songs-layout {
+    flex-direction: column;
+    gap: 0;
+    height: auto;
+  }
+  #rjLibrary.rj-library {
+    width: 100%;
+    height: auto;
+  }
+  #rjSheet.rj-sheet {
+    display: none;
+  }
+  body.rj-sheet-active #rjLibrary.rj-library {
+    display: none;
+  }
+  body.rj-sheet-active #rjSheet.rj-sheet {
+    display: block;
+  }
+  #sheetBackBtn.rj-sheet-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 12px 0 0 16px;
+    padding: 8px 4px;
+    background: none;
+    border: none;
+    color: var(--rj-gold);
+    font: 600 12px/1 "Montserrat", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    cursor: pointer;
+  }
+
+  /*
+    Key + Tempo steppers plus Play/Inspiration/Print don't fit on one line at
+    phone widths — wrapping #sheetmenu (rather than shrinking every control
+    to the point of being unreadable) keeps every control thumb-sized. The
+    instrument caption takes its own first line since it's the widest,
+    least-interactive item.
+  */
+  #sheetmenu {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .sheet-status {
+    flex-basis: 100%;
+  }
+}
+
 .chordCell {
   border-width: 1px;
   border-style: solid;
   border-color: #000000;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .chordCell.chordCell-playing {
-  background-color: #e29d0f;
+  background-color: var(--rj-gold);
   color: #222222;
 }
 
@@ -554,21 +2674,261 @@ video.video {
   padding-left:1px
 }
 
-.upcomingShow {
+.split-bio li strong {
+  color: var(--rj-gold);
+}
+
+/* ------------------------------------------------------------------
+   Agenda  (/agenda/ + /nl/, /de/ — content/agenda.*.md + agenda-page.js)
+   Upcoming shows loud, with a gold accent; the archive quiet, grouped
+   by year under a big tally. Rows are a three-column line: date, name,
+   then the location in Lora italic — the site's own idiom.
+   ------------------------------------------------------------------ */
+.rj-agenda {
+  font-family: "Montserrat", sans-serif;
+}
+.split-bio .rj-agenda-lead {
+  font-family: "Lora", serif;
+  font-style: italic;
+  font-size: 1.15em;
   color: #cccccc;
+  margin-bottom: 34px;
+}
+.rj-agenda-upcoming:not([hidden]) {
+  display: block;
+  margin-bottom: 30px;
+  border-left: 2px solid var(--rj-gold);
+}
+.rj-show {
+  display: flex;
+  align-items: baseline;
+  gap: 22px;
+}
+.rj-show-date {
+  flex: none;
+  width: 130px;
+  white-space: nowrap;
+}
+.rj-show-name {
+  flex: 1;
+  text-wrap: pretty;
+}
+.rj-show-loc {
+  flex: none;
+  font-family: "Lora", serif;
+  font-style: italic;
+}
+.rj-show--next {
+  padding: 16px 0 16px 22px;
+  border-bottom: 1px solid rgba(132, 141, 150, 0.18);
+  font-weight: 700;
+  font-size: 19px;
+  line-height: 1.3;
+  color: #ffffff;
+}
+.rj-show--next:last-child {
+  border-bottom: 0;
+}
+.rj-show--next .rj-show-date {
+  color: var(--rj-gold);
+}
+.rj-show--next .rj-show-loc {
+  font-weight: 400;
+  color: var(--rj-body);
+}
+.split-bio .rj-agenda-note {
+  font-family: "Lora", serif;
+  color: var(--rj-body);
+  margin: 0 0 48px;
+}
+.rj-agenda-tally {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--rj-body);
+  border-top: 1px solid rgba(132, 141, 150, 0.2);
+  padding-top: 22px;
+  margin-bottom: 22px;
+}
+.rj-agenda-tally span {
+  display: block;
+  font-size: 44px;
+  letter-spacing: -1.4px;
+  line-height: 1;
+  color: var(--rj-gold);
+  margin-bottom: 8px;
+}
+.rj-agenda-year {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: #cccccc;
+  padding: 18px 0 8px;
+  border-bottom: 1px solid rgba(132, 141, 150, 0.28);
+  margin-bottom: 2px;
+}
+.rj-agenda-year:first-child {
+  padding-top: 0;
+}
+.rj-show--past {
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(132, 141, 150, 0.12);
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--rj-body);
+}
+.rj-show--past .rj-show-date {
+  font-weight: 700;
+  width: 108px;
+}
+.rj-show--past .rj-show-loc {
+  color: rgba(132, 141, 150, 0.75);
 }
 
-.dateCell {
-  font-weight: bold;
-  padding-right: 5px;
+@media (max-width: 600px) {
+  .rj-show {
+    flex-wrap: wrap;
+    gap: 2px 14px;
+  }
+  .rj-show-date {
+    width: auto;
+    order: -1;
+  }
+  .rj-show-name {
+    flex-basis: 100%;
+  }
 }
 
-.nameCell {
-  font-weight: bold;
+/* ------------------------------------------------------------------
+   In action  (/in-action/, content/in-action.md)
+   A photo mosaic, a row of films, and the SoundCloud playlist framed
+   as "On record".
+   ------------------------------------------------------------------ */
+.rj-action {
+  font-family: "Montserrat", sans-serif;
+}
+.split-bio .rj-action-lead {
+  font-family: "Lora", serif;
+  font-style: italic;
+  color: var(--rj-body);
+  margin-bottom: 32px;
+}
+.rj-action-mosaic {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+.rj-action-mosaic--hero {
+  grid-template-columns: 2fr 1fr;
+}
+.rj-action-mosaic--hero .rj-action-photo--lead {
+  grid-row: span 2;
+}
+.rj-action-mosaic--tail {
+  grid-template-columns: repeat(3, 1fr);
+}
+.rj-action-photo {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 10px;
+}
+.rj-action-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.rj-action-mosaic--hero .rj-action-photo {
+  min-height: 174px;
+}
+.rj-action-mosaic--hero .rj-action-photo--lead {
+  min-height: 360px;
+}
+/* Only the lead photo carries a visible caption; the rest lean on alt text. */
+.rj-action-photo figcaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  padding: 12px 16px 34px;
+  background: linear-gradient(to bottom, rgba(12, 12, 12, 0.9), transparent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: #f2f2f2;
+  text-wrap: pretty;
+}
+.rj-action-photo:not(.rj-action-photo--lead) figcaption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.rj-action-head {
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--rj-body);
+  opacity: 0.5;
+  margin-bottom: 16px;
+}
+.rj-action-videos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 40px;
+}
+.rj-action-videos > div {
+  margin: 0 !important;
+}
+.rj-action-record {
+  border-top: 1px solid rgba(132, 141, 150, 0.2);
+  padding-top: 22px;
+  margin-bottom: 40px;
+}
+.rj-action-record-head {
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--rj-body);
+  opacity: 0.5;
+  margin-bottom: 10px;
+}
+.split-bio .rj-action-record p {
+  font-family: "Lora", serif;
+  font-style: italic;
+  color: var(--rj-body);
+  margin-bottom: 16px;
+}
+.rj-action-soundcloud {
+  display: block;
+  border-radius: 10px;
+}
+
+@media (max-width: 700px) {
+  .rj-action-mosaic--hero,
+  .rj-action-mosaic--tail {
+    grid-template-columns: 1fr 1fr;
+  }
+  .rj-action-mosaic--hero .rj-action-photo--lead {
+    grid-column: span 2;
+    grid-row: auto;
+    min-height: 200px;
+  }
+  .rj-action-videos {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media print {
-  .chordtable > table {
+  .chordtable > .chordGrid {
     font-size: xx-large;
   }
 }
@@ -633,6 +2993,21 @@ video.video {
           /* margin: 0mm; */
   }
 
+  /* Re-declared here, AFTER the unnamed `@page { size: A4 portrait }` above:
+     Chromium resolves conflicting @page size by source order rather than page-
+     selector specificity, so the landscape size must come last to win for the
+     chordbook's named pages. Paired with `body.export-mode-chordbook { page:
+     chordbook }` this puts the WHOLE chordbook print on landscape sheets — the
+     empty page wrappers around the booklet included — so there's no page-
+     context switch spawning a blank portrait sheet before and after it. */
+  @page chordbook {
+    size: A4 landscape;
+    margin: 9mm;
+  }
+  body.export-mode-chordbook {
+    page: chordbook;
+  }
+
   .bookContent {
     margin: 2mm 10mm;
     padding: 20px;
@@ -661,15 +3036,16 @@ video.video {
 
 .dropbtn {
   background-color: #222222;
-  color: #e29d0f;
+  color: var(--rj-gold);
   padding: 16px;
   font-size: 16px;
   border: 1px !important;
-  border-color:  #e29d0f;
+  border-color:  var(--rj-gold);
   cursor: pointer;
 }
 
-#instrument {
+#instrument,
+#comping {
   padding: 0px;
   font: inherit;
   font-size: inherit;
@@ -680,123 +3056,186 @@ video.video {
   display: inline-block;
 }
 
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: #f9f9f9;
-  min-width: 300px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1;
-}
-
-.dropdown-content a {
-  color: black;
-  padding: 12px 16px;
-  text-decoration: none;
-  display: block;
-}
-
-.dropdown-content a:hover {background-color: #f1f1f1}
-
-.dropdown:hover .dropdown-content {
-  display: block;
-}
-
 .dropdown:hover .dropbtn {
-  background-color: #e29d0f;
+  background-color: var(--rj-gold);
   color: black;
+}
+
+/*
+  #sheetStatus #instrument (not just .sheet-status .dropbtn): the select
+  also carries the plain #instrument rule (padding/font reset), whose
+  id-selector specificity would otherwise beat this class-based one
+  regardless of source order — id-qualifying here restores the intended
+  cascade. Same gotcha as the rest of this file's [hidden] companions.
+*/
+.sheet-status .dropbtn,
+#sheetStatus #instrument,
+.sheet-comping .dropbtn,
+#compingSlot #comping {
+  width: 100%;
+  height: 44px;
+  box-sizing: border-box;
+  background: #2f2f2f;
+  border: 1px solid rgba(255,255,255,.11) !important;
+  border-radius: 8px;
+  color: var(--rj-gold);
+  font: 600 12px "Montserrat", sans-serif;
+  padding: 0 14px;
+  /* Render the popup's own chrome (scrollbar, fallback highlight) dark so it
+     doesn't flash a white OS list on open. */
+  color-scheme: dark;
+}
+.sheet-status .dropdown:hover .dropbtn,
+.sheet-comping .dropdown:hover .dropbtn {
+  background: var(--rj-gold);
+  color: #222222;
+}
+
+/* ------------------------------------------------------------------
+   Open option list for the Instrument / Comping dropdowns.
+   The closed control is styled above; the menu that drops down is a
+   separate surface. Firefox (Linux/GTK) paints it from the <select>'s
+   own colours and honours per-<option> padding and :checked, so spell
+   those out — otherwise the rows are cramped and the selected row gets
+   an OS-blue bar that clashes with the gold-on-charcoal sheet. Chromium
+   ignores all of this until the control opts into the customisable form
+   element (appearance: base-select), handled in the @supports block. */
+#instrument option,
+#comping option {
+  background-color: #262626;
+  color: var(--rj-gold);
+  padding: 9px 14px;
+  font: 600 12px "Montserrat", sans-serif;
+}
+#instrument optgroup,
+#comping optgroup {
+  background-color: #1f1f1f;
+  color: rgba(236,234,230,.55);
+  font: 700 10px "Montserrat", sans-serif;
+  letter-spacing: .08em;
+}
+#instrument option:checked,
+#comping option:checked {
+  background-color: var(--rj-gold);
+  color: #1b1b1b;
+}
+
+@supports (appearance: base-select) {
+  .sheet-status .dropbtn,
+  #sheetStatus #instrument,
+  .sheet-comping .dropbtn,
+  #compingSlot #comping,
+  #instrument::picker(select),
+  #comping::picker(select) {
+    appearance: base-select;
+  }
+  /* base-select turns the button into a flex box whose default cross-axis
+     alignment leaves the label riding at the top of the 44px control — pin it
+     to a single centred row with the picker icon pushed to the end. */
+  .sheet-status .dropbtn,
+  #sheetStatus #instrument,
+  .sheet-comping .dropbtn,
+  #compingSlot #comping {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  #instrument::selectedcontent,
+  #comping::selectedcontent {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  #instrument::picker(select),
+  #comping::picker(select) {
+    background: #222222;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 10px;
+    padding: 6px;
+    margin-top: 6px;
+    box-shadow: 0 14px 34px rgba(0,0,0,.5);
+  }
+  #instrument option,
+  #comping option {
+    border-radius: 6px;
+    padding: 8px 12px;
+    transition: background-color .12s ease, color .12s ease;
+  }
+  #instrument option:hover,
+  #comping option:hover,
+  #instrument option:focus,
+  #comping option:focus {
+    background-color: rgba(226,157,15,.16);
+    color: var(--rj-gold);
+  }
+  #instrument option:checked,
+  #comping option:checked {
+    background-color: var(--rj-gold);
+    color: #1b1b1b;
+  }
+  /* The gold fill is the selection cue; drop the native tick column. */
+  #instrument option::checkmark,
+  #comping option::checkmark {
+    display: none;
+  }
+  #instrument::picker-icon,
+  #comping::picker-icon {
+    color: var(--rj-gold);
+    transition: transform .15s ease;
+  }
+  #instrument:open::picker-icon,
+  #comping:open::picker-icon {
+    transform: rotate(180deg);
+  }
+}
+
+/* Comping staff: one voice of block chords below the melody, one black stem
+   per hit, each chord's noteheads colour-keyed by chord-tone function — root
+   #222, third --rj-gold, fifth --rj-hover. The colouring is done in JS
+   (render_abc.js applyCompingColors), not here: voice-leading can invert a
+   chord, so a notehead's vertical position (ABCjs's .abcjs-chord-pos-N) isn't
+   its function, and only buildCompingTune knows the mapping. Kept as inline
+   fills that survive abcjs's resize (it rescales, doesn't re-render). */
+
+/* ============================================================
+   Advanced controls toggle (double chevron in the sheet menu)
+   ============================================================
+   The chevron button is the last control on the top row and is always
+   visible; "advanced" items (currently just the comping dropdown, more
+   later) sit on their own second row and stay hidden until it's expanded.
+   State lives on #sheetmenu.show-advanced, set/persisted by
+   initAdvancedToggle. */
+#sheetmenu:not(.show-advanced) .sheet-adv-item {
+  display: none;
+}
+/* Advanced items break onto their own row under the top toolbar and left-
+   align with the instrument dropdown above. */
+.sheet-adv-item {
+  flex: 0 0 100%;
+  order: 1;
+}
+#compingSlot .dropdown {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+}
+/* Same 44px box as Stop / Mute / Print so it aligns on the top row. */
+.sheet-advanced-toggle {
+  order: 1;
+}
+.sheet-advanced-toggle .fa-angles-right {
+  transition: transform 0.15s ease;
+}
+#sheetmenu.show-advanced .sheet-advanced-toggle .fa-angles-right {
+  transform: rotate(90deg);
 }
 
 /* ============================================================
    Audio Player (inline in sheetmenu)
    ============================================================ */
-#sheetmenu input[type="number"] {
-  vertical-align: middle;
-  margin: 0 4px;
-  padding: 0 2px;
-  background: #3a3a3a;
-  color: #e29d0f;
-  border: 1px solid #555;
-  font: inherit;
-  font-size: 1em;
-  line-height: 1;
-  height: 1.6em;
-  box-sizing: border-box;
-  text-align: center;
-  width: 4em;
-  transition: background 0.15s, color 0.15s;
-}
-
-#sheetmenu input[type="number"]::-webkit-inner-spin-button,
-#sheetmenu input[type="number"]::-webkit-outer-spin-button {
-  opacity: 1;
-  background-color: #3a3a3a;
-}
-
-#sheetmenu input[type="number"]:hover {
-  background: #e29d0f;
-  color: #222222;
-}
-
-#sheetmenu input[type="number"]:hover::-webkit-inner-spin-button,
-#sheetmenu input[type="number"]:hover::-webkit-outer-spin-button {
-  background-color: #e29d0f;
-}
-
-.audio-btn-inline i {
-  font-style: normal;
-}
-
-#melodyOffBtn .fa-stack {
-  font-size: inherit;
-  height: 1em;
-  line-height: 1;
-  width: 1.25em;
-  vertical-align: middle;
-}
-
-.audio-btn-inline {
-  background: none;
-  border: 1px solid transparent;
-
-  color: #e29d0f;
-  cursor: pointer;
-  font-size: 1.3em;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-  opacity: 0.85;
-  vertical-align: middle;
-  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
-}
-
-.audio-btn-inline:hover:not(:disabled):not(.active) {
-  opacity: 1;
-  background: rgba(226, 157, 15, 0.15);
-  border-color: #e29d0f;
-}
-
-.audio-btn-inline.active {
-  background: #e29d0f;
-  color: #222222;
-  border-color: #e29d0f;
-  opacity: 1;
-}
-
-.audio-btn-inline.active:hover:not(:disabled) {
-  background: #f0b030;
-  border-color: #f0b030;
-}
-
-.audio-btn-inline:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
 .audio-loading {
-  color: #e29d0f;
+  color: var(--rj-gold);
   font-size: 1em;
   opacity: 0.5;
   display: none;
@@ -811,7 +3250,7 @@ video.video {
 .abcjs-current-note ellipse,
 .abcjs-current-note polygon,
 .abcjs-current-note rect {
-  fill: #e29d0f !important;
+  fill: var(--rj-gold) !important;
 }
 
 /* Make notes clickable */

@@ -69,35 +69,151 @@
         
           
           <div class="split-bio">
-  <script src="/script/abcjs_midi_6.6.3-min.js" type="text/javascript"></script>
+  <script src="/script/abcjs_midi_6.6.4-min.js" type="text/javascript"></script>
 <script src="/script/tonal.4.6.9-min.js" type="text/javascript"></script>
-<script src="/script/render_abc.js" type="text/javascript"></script>
-<script type="text/javascript">
-    window[addEventListener ? "addEventListener" : "attachEvent"](
-    addEventListener ? "load" : "onload",
-    loadSongs
-    );
-</script>
-<!-- <img src="/images/redjackets_logo.png" id="printLogo" class="printLogo hideOnScreen" /> -->
-<div id="abc_menu" class="hideOnprint"></div>
+<script type="module" src="/script/songs-page.js"></script>
+<div class="rj-songs-layout" data-default-tab="library">
+<div id="rjLibrary" class="rj-library hideOnprint">
+  <div class="rj-library-tabs" id="libraryTabs">
+    <button type="button" class="rj-library-tab" data-tab="library">Songs</button>
+    <button type="button" class="rj-library-tab" data-tab="setlists">Setlists</button>
+  </div>
+  <div class="rj-library-search" id="librarySearchRow">
+    <input type="search" id="songSearch" placeholder="Search lead sheets" autocomplete="off" aria-label="Search lead sheets" />
+    <kbd class="rj-search-hint" aria-hidden="true">/</kbd>
+  </div>
+  <div class="rj-library-setlist-tools" id="setlistTools" hidden>
+    <button type="button" class="rj-setlist-crumb" id="setlistsBackBtn" hidden><span class="fa-solid fa-chevron-left" aria-hidden="true"></span><span>All setlists</span></button>
+    <div class="rj-library-open-setlist" id="openSetlistTools" hidden>
+      <div class="rj-setlist-title-row" id="setlistTitleRow">
+        <div class="rj-setlist-title" id="setlistTitleText" title="Double-click to rename"></div>
+        <input type="text" id="setlistNameInput" class="rj-setlist-title-input" aria-label="Setlist name" hidden>
+        <button type="button" id="setlistRenameBtn" class="rj-setlist-title-btn" title="Rename" aria-label="Rename setlist" hidden><span class="fa-solid fa-pencil" aria-hidden="true"></span></button>
+        <button type="button" id="setlistExportBtn" class="rj-setlist-title-btn" title="Export as a .txt file" aria-label="Export setlist as a .txt file" hidden><span class="fa-solid fa-file-arrow-down" aria-hidden="true"></span></button>
+      </div>
+      <div class="rj-library-print-group" role="group" aria-labelledby="rjPrintLabel">
+        <span class="rj-library-print-label" id="rjPrintLabel">Print</span>
+        <div class="rj-library-print-seg">
+          <button type="button" id="printSetlistBtn" class="rj-library-print-btn">Setlist</button>
+          <button type="button" id="printChordbookBtn" class="rj-library-print-btn">Chordbook</button>
+          <button type="button" id="printSongbookBtn" class="rj-library-print-btn">Songbook</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="rj-library-body">
+    <div class="rj-library-list" id="songList"></div>
+    <div class="rj-library-rail" id="songRail"></div>
+  </div>
+</div>
+<div id="rjSheet" class="rj-sheet">
+<button id="sheetBackBtn" class="rj-sheet-back hideOnprint" type="button">&larr; Songs</button>
 <div id="sheetmenu" class="hideOnprint">
-<a id="printLink" title="Print this page" href="#" onclick="window.print();return false;">Print</a> |
-Transpose
-<input type="number" id="transpose" name="quantity" value="0" min="-12" max="12" oninput="rerenderFile()">
-<span id="audioControls" style="display:none;">|
-<button id="playPauseBtn" class="audio-btn-inline" disabled onclick="playPause()" title="Play"><i class="fa-solid fa-play"></i></button>
-<button id="stopBtn" class="audio-btn-inline" disabled onclick="stopAudio()" title="Stop"><i class="fa-solid fa-stop"></i></button>
-<button id="melodyOffBtn" class="audio-btn-inline" disabled onclick="toggleMelody()" title="Mute melody"><span class="fa-stack"><i class="fa-solid fa-music fa-stack-1x"></i><i class="fa-solid fa-slash fa-stack-1x"></i></span></button>
-<span class="audio-loading" id="audioLoadingLabel">...</span>
-</span> | 
+  <div id="sheetStatus" class="sheet-status"></div>
+  <div class="sheet-stepper" id="keyStepper" title="Key">
+    <button type="button" id="keyDownBtn" class="sheet-stepper-btn" aria-label="Lower key">&minus;</button>
+    <div class="sheet-stepper-value">
+      <input type="number" id="transpose" name="quantity" value="0" min="-12" max="12" aria-label="Key, in semitones from concert pitch">
+      <span class="sheet-stepper-label">semitones</span>
+    </div>
+    <button type="button" id="keyUpBtn" class="sheet-stepper-btn" aria-label="Raise key">&plus;</button>
+  </div>
+  <div class="sheet-stepper" id="tempoStepper" title="Tempo">
+    <button type="button" id="tempoDownBtn" class="sheet-stepper-btn" aria-label="Slower">&minus;</button>
+    <div class="sheet-stepper-value">
+      <span id="tempoValueLabel">120</span>
+      <span class="sheet-stepper-label">bpm</span>
+    </div>
+    <button type="button" id="tempoUpBtn" class="sheet-stepper-btn" aria-label="Faster">&plus;</button>
+  </div>
+  <div class="sheet-transport">
+    <button id="playPauseBtn" class="sheet-play-btn" disabled title="Play" aria-label="Play"><span class="fa-solid fa-play" aria-hidden="true"></span></button>
+    <button id="stopBtn" class="sheet-icon-btn" type="button" disabled title="Stop and reset to the start" aria-label="Stop and reset to the start"><span class="fa-solid fa-stop" aria-hidden="true"></span></button>
+    <button id="melodyOffBtn" class="sheet-icon-btn" type="button" disabled title="Mute melody" aria-label="Mute melody"><span class="fa-solid fa-microphone-lines" aria-hidden="true"></span></button>
+  </div>
+  <div id="inspirationSlot"></div>
+  <div class="sheet-actions" id="sheetActions">
+    <a id="printLink" class="sheet-icon-btn" href="#" title="Print this page" aria-label="Print this page"><span class="fa-solid fa-print" aria-hidden="true"></span></a>
+  </div>
+  <span class="audio-loading" id="audioLoadingLabel">...</span>
+  <!-- Keep the next two on the same HTML block (no blank lines): a lone <button>
+       on its own line gets wrapped in a <p> by Goldmark, and that <p> becomes
+       the flex child instead of the button — knocking it out of the top-row
+       alignment (same gotcha as #inspirationSlot). -->
+  <button id="advancedToggleBtn" class="sheet-icon-btn sheet-advanced-toggle" type="button" title="More controls" aria-label="Show more controls" aria-expanded="false"><span class="fa-solid fa-angles-right" aria-hidden="true"></span></button>
+  <div id="compingSlot" class="sheet-comping sheet-adv-item"></div>
 </div>
 <div id="abc-player-container" style="display:none;"></div>
+<div class="rj-sheet-paper">
 <div id="songtitle" class="songtitle"></div>
 <div id="chordtable" class="chordtable"></div>
 <div id="notation" class="notation"></div>
 <div id="lyrics" class="lyrics"></div>
+</div>
 <div id="songPrintFooter" class="songPrintFooter hideOnScreen">
 Retrieved from www.redjackets.nl - <span id="instrumentText"></span>
+</div>
+</div>
+</div>
+<div id="setlistPrintBooklet" class="hideOnScreen"></div>
+<div id="setlistModal" class="rj-modal-overlay" hidden>
+  <div class="rj-modal" role="dialog" aria-modal="true" aria-labelledby="setlistModalTitle">
+    <div class="rj-modal-head">
+      <h2 class="rj-modal-title" id="setlistModalTitle">New setlist</h2>
+      <button type="button" id="setlistModalClose" class="rj-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <label class="rj-modal-label" for="setlistModalName">Name</label>
+    <input type="text" id="setlistModalName" class="rj-modal-input" placeholder="New setlist name" autocomplete="off">
+    <div class="rj-modal-label" id="setlistModalStartLabel">Start from</div>
+    <div class="rj-modal-choices" id="setlistModalChoices" role="radiogroup" aria-labelledby="setlistModalStartLabel">
+      <button type="button" class="rj-modal-choice active" data-choice="empty" role="radio" aria-checked="true">Empty</button>
+      <button type="button" class="rj-modal-choice" data-choice="remix" role="radio" aria-checked="false">Remix a setlist</button>
+      <button type="button" class="rj-modal-choice" data-choice="upload" role="radio" aria-checked="false">Upload a .txt</button>
+    </div>
+    <div class="rj-modal-context" id="setlistModalRemix" hidden>
+      <select id="setlistModalSource" class="rj-modal-input" aria-label="Setlist to remix"></select>
+    </div>
+    <div class="rj-modal-context" id="setlistModalUpload" hidden>
+      <input type="file" id="setlistModalFile" class="rj-modal-file" accept=".txt" aria-label="Setlist .txt file">
+    </div>
+    <div class="rj-modal-actions">
+      <button type="button" id="setlistModalCancel" class="rj-modal-btn">Cancel</button>
+      <button type="button" id="setlistModalCreate" class="rj-modal-btn rj-modal-btn-primary">Create</button>
+    </div>
+  </div>
+</div>
+<div id="inspirationPanel" class="inspiration-panel hideOnprint" hidden>
+  <div class="inspiration-resize-handle" id="inspirationResizeHandle" aria-hidden="true" title="Drag to resize"></div>
+  <div class="inspiration-panel-header" id="inspirationPanelHeader">
+    <span class="fa-solid fa-grip-lines inspiration-panel-grip" aria-hidden="true"></span>
+    <span class="inspiration-panel-title" id="inspirationPanelTitle">Inspiration</span>
+    <a id="inspirationExpandBtn" class="inspiration-panel-icon-btn" href="#" target="_blank" rel="noopener" title="Open on YouTube" aria-label="Open on YouTube"><span class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></span></a>
+    <button type="button" id="inspirationSizeBtn" class="inspiration-panel-icon-btn" title="Resize panel" aria-label="Resize panel"><span class="fa-solid fa-up-right-and-down-left-from-center" aria-hidden="true"></span></button>
+    <button type="button" id="inspirationCloseBtn" class="inspiration-panel-icon-btn" aria-label="Close">&times;</button>
+  </div>
+  <div class="inspiration-panel-video">
+    <iframe id="inspirationVideoFrame" src="" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Inspiration video" loading="lazy"></iframe>
+  </div>
+  <div class="inspiration-loop" id="inspirationLoopBar" hidden>
+    <div class="inspiration-loop-timeline" id="inspirationLoopTrack" title="Click to seek">
+      <div class="inspiration-loop-range" id="inspirationLoopRange" hidden></div>
+      <div class="inspiration-loop-played" id="inspirationLoopPlayed"></div>
+      <button type="button" class="inspiration-loop-handle" id="inspirationLoopHandleA" aria-label="Loop start (A)" hidden></button>
+      <button type="button" class="inspiration-loop-handle" id="inspirationLoopHandleB" aria-label="Loop end (B)" hidden></button>
+    </div>
+    <div class="inspiration-loop-controls">
+      <button type="button" class="inspiration-loop-btn" id="inspirationSetA" title="Set loop start (A) at the current point" aria-label="Set loop start">A</button>
+      <button type="button" class="inspiration-loop-btn" id="inspirationSetB" title="Set loop end (B) at the current point" aria-label="Set loop end">B</button>
+      <button type="button" class="inspiration-loop-btn" id="inspirationLoopToggle" title="Loop between A and B" aria-label="Loop between A and B" aria-pressed="false"><span class="fa-solid fa-repeat" aria-hidden="true"></span></button>
+      <button type="button" class="inspiration-loop-btn" id="inspirationLoopClear" title="Clear A and B" aria-label="Clear loop markers"><span class="fa-solid fa-xmark" aria-hidden="true"></span></button>
+      <span class="inspiration-loop-readout" id="inspirationLoopReadout" hidden></span>
+      <span class="inspiration-loop-speed" id="inspirationLoopSpeed" title="Playback speed">
+        <button type="button" class="inspiration-loop-btn" id="inspirationSpeedDown" aria-label="Slower">&minus;</button>
+        <span class="inspiration-loop-speed-value" id="inspirationSpeedValue">1&times;</span>
+        <button type="button" class="inspiration-loop-btn" id="inspirationSpeedUp" aria-label="Faster">&plus;</button>
+      </span>
+    </div>
+  </div>
 </div>
 
 </div>

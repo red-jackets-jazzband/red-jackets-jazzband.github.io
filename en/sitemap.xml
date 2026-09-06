@@ -5,9 +5,6 @@
     <loc>https://www.redjackets.nl/songs/</loc>
     <lastmod>2019-03-16T16:26:50+01:00</lastmod>
   </url><url>
-    <loc>https://www.redjackets.nl/songbook/</loc>
-    <lastmod>2019-03-16T16:26:50+01:00</lastmod>
-  </url><url>
     <loc>https://www.redjackets.nl/band/</loc>
     <lastmod>2019-03-16T10:25:31+01:00</lastmod>
     <xhtml:link
@@ -28,6 +25,21 @@
   </url><url>
     <loc>https://www.redjackets.nl/in-action/</loc>
     <lastmod>2019-03-16T10:25:31+01:00</lastmod>
+    <xhtml:link
+                rel="alternate"
+                hreflang="en-us"
+                href="https://www.redjackets.nl/in-action/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="nl"
+                href="https://www.redjackets.nl/nl/in-action/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="de"
+                href="https://www.redjackets.nl/de/in-action/"
+                />
   </url><url>
     <loc>https://www.redjackets.nl/</loc>
     <lastmod>2019-03-16T08:20:22+01:00</lastmod>
@@ -49,5 +61,20 @@
   </url><url>
     <loc>https://www.redjackets.nl/agenda/</loc>
     <lastmod>2019-03-16T08:20:22+01:00</lastmod>
+    <xhtml:link
+                rel="alternate"
+                hreflang="en-us"
+                href="https://www.redjackets.nl/agenda/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="nl"
+                href="https://www.redjackets.nl/nl/agenda/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="de"
+                href="https://www.redjackets.nl/de/agenda/"
+                />
   </url>
 </urlset>
