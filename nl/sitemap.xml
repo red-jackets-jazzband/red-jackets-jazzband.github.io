@@ -11,13 +11,13 @@
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="de"
-                href="https://www.redjackets.nl/de/band/"
+                hreflang="nl"
+                href="https://www.redjackets.nl/nl/band/"
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="nl"
-                href="https://www.redjackets.nl/nl/band/"
+                hreflang="de"
+                href="https://www.redjackets.nl/de/band/"
                 />
   </url><url>
     <loc>https://www.redjackets.nl/nl/</loc>
@@ -29,13 +29,13 @@
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="de"
-                href="https://www.redjackets.nl/de/"
+                hreflang="nl"
+                href="https://www.redjackets.nl/nl/"
                 />
     <xhtml:link
                 rel="alternate"
-                hreflang="nl"
-                href="https://www.redjackets.nl/nl/"
+                hreflang="de"
+                href="https://www.redjackets.nl/de/"
                 />
   </url>
 </urlset>
