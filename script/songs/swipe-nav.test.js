@@ -19,9 +19,9 @@ function fireTouch(target, type, point) {
   target.dispatchEvent(evt);
 }
 
-function swipe(target, from, to) {
+function swipe(target, from, to, endTarget = target) {
   fireTouch(target, "touchstart", from);
-  fireTouch(target, "touchend", to);
+  fireTouch(endTarget, "touchend", to);
 }
 
 function setup(overrides = {}) {
@@ -91,6 +91,36 @@ test("a swipe that begins on the control bar is left to the controls", () => {
   });
   try {
     swipe(document.getElementById("sheetmenu"), { x: 240, y: 100 }, { x: 120, y: 108 });
+    assert.deepEqual(stepped, []);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a thumb-roll across the Key stepper never steps the song", () => {
+  const { stepped, cleanup } = setup({
+    state: { activeTab: "setlists", setlistsView: "open" },
+  });
+  try {
+    // touchstart on the − / + button, but by touchend the browser has retargeted
+    // the event onto the sheet (or the tap's own re-render moved the DOM).
+    const plus = document.getElementById("keyUpBtn");
+    const notation = document.getElementById("notation");
+    swipe(plus, { x: 190, y: 90 }, { x: 120, y: 96 }, notation);
+    assert.deepEqual(stepped, []);
+  } finally {
+    cleanup();
+  }
+});
+
+test("iOS Safari handing us the button's text node still counts as the control bar", () => {
+  const { stepped, cleanup } = setup({
+    state: { activeTab: "setlists", setlistsView: "open" },
+  });
+  try {
+    const textNode = document.getElementById("keyUpBtn").firstChild;
+    assert.equal(textNode.nodeType, 3);
+    swipe(textNode, { x: 190, y: 90 }, { x: 110, y: 95 }, document.getElementById("notation"));
     assert.deepEqual(stepped, []);
   } finally {
     cleanup();

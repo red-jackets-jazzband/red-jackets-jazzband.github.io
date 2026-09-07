@@ -1476,33 +1476,34 @@ video.video {
 }
 /*
   Breadcrumb "up" affordance for an open setlist. It's navigation, not an
-  action, so it deliberately does NOT look like the pill buttons below it:
-  a full-bleed strip (negative side margins cancel the toolbar's 16px pad)
-  pinned to the top of the tools column, set off from the Print/Export/Delete
-  controls by a hairline underline.
+  action, so it doesn't look like the pill buttons below it: a full-bleed
+  strip (negative side margins cancel the toolbar's 16px pad) pinned to the
+  top of the tools column, set off from the Print/Export/Delete controls by
+  a hairline underline. Same gold "← back" treatment as the sheet's
+  #sheetBackBtn ("← Songs" / "← Setlist"), so every back step reads alike.
 */
 .rj-setlist-crumb {
   align-self: stretch;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   margin: -2px -16px 4px;
   padding: 4px 16px 12px;
   background: none;
   border: none;
   border-bottom: 1px solid rgba(255,255,255,.07);
-  color: rgba(230,228,224,.55);
-  font: 600 10.5px/1 "Montserrat", sans-serif;
+  color: var(--rj-gold);
+  font: 600 12px/1 "Montserrat", sans-serif;
   text-transform: uppercase;
-  letter-spacing: .07em;
+  letter-spacing: .06em;
   cursor: pointer;
   transition: color 0.15s;
 }
 .rj-setlist-crumb .fa-chevron-left {
-  font-size: 9px;
+  font-size: 10px;
 }
 .rj-setlist-crumb:hover {
-  color: var(--rj-gold);
+  color: var(--rj-hover);
 }
 .rj-library-open-setlist,
 .rj-library-add-song {
@@ -2606,6 +2607,10 @@ body:has(#rjLibrary) .split-bio {
     text-transform: uppercase;
     letter-spacing: .06em;
     cursor: pointer;
+    transition: color 0.15s;
+  }
+  #sheetBackBtn.rj-sheet-back:hover {
+    color: var(--rj-hover);
   }
 
   /*

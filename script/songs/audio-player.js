@@ -104,6 +104,13 @@ export function createAudioPlayer(ctx) {
 
   function highlightEvent(ev) {
     if (!ev || !ev.elements) return;
+    // ABCjs fires an event callback from the internal seek(0) at the tail of
+    // every SynthController.setWarp() — so a Tempo nudge on a sheet that was
+    // never played would otherwise light up the first chord cell. Only paint
+    // the play cursor while the synth is actually running; a seek while paused
+    // keeps whatever highlight it already had.
+    const ctrl = state.synthController;
+    if (!ctrl || !ctrl.isStarted) return;
     clearHighlight();
     const next = [];
     ev.elements.forEach((group) => group.forEach((node) => {

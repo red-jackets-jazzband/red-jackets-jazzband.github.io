@@ -17,6 +17,18 @@ export function createSwipeNav(ctx) {
     ctx.library.stepLibrarySong(dir);
   }
 
+  // A touch that begins on the toolbar (Key / Tempo steppers, transport,
+  // dropdowns) or the "back to list" button belongs to that control, never to
+  // us — even a thumb-roll across the narrow − / + buttons drifts far enough
+  // sideways to read as a flick. Checked at touchstart, where the target is
+  // reliable: by touchend it can be wherever the finger lifted, or gone with
+  // the re-render a stepper tap kicks off. iOS Safari can hand us the button's
+  // text node ("−" / "+") as the target, so climb to its element first.
+  function startedOnControl(target) {
+    const el = target && target.nodeType === 3 ? target.parentElement : target;
+    return Boolean(el && el.closest && el.closest("#sheetmenu, #sheetBackBtn"));
+  }
+
   function init() {
     const sheet = byId("rjSheet");
     if (!sheet) return;
@@ -25,16 +37,14 @@ export function createSwipeNav(ctx) {
     sheet.addEventListener("touchstart", (e) => {
       if (e.touches.length !== 1) { start = null; return; }
       const t = e.touches[0];
-      start = { x: t.clientX, y: t.clientY, t: Date.now() };
+      start = { x: t.clientX, y: t.clientY, t: Date.now(), onControl: startedOnControl(e.target) };
     }, { passive: true });
 
     sheet.addEventListener("touchend", (e) => {
       const from = start;
       start = null;
       if (!from || e.changedTouches.length !== 1) return;
-      // A flick that begins on the control bar belongs to the steppers /
-      // transport / dropdowns there, not to us.
-      if (e.target.closest && e.target.closest("#sheetmenu")) return;
+      if (from.onControl) return;
       const t = e.changedTouches[0];
       const dir = classifySwipe(from, { x: t.clientX, y: t.clientY, t: Date.now() });
       if (dir === "left") step(1);

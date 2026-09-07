@@ -123,6 +123,41 @@ test("initForTune is inert when the browser can't play audio (stub: false)", () 
   }
 });
 
+test("a Tempo nudge on a never-played sheet doesn't light up a chord cell", async () => {
+  const { ctx, audio, cleanup } = setup();
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: { tempo: { bpm: 120 } } }));
+    await flush();
+
+    // Stand in for the DOM ABCjs would report back through its seek(0) event.
+    document.getElementById("chordtable").innerHTML = '<span class="chordCell">C</span>';
+    const note = document.createElement("span");
+    note._abcMeasureIdx = 0;
+    abcjs._warpEventElements = [[note]];
+
+    withAbcjs(abcjs, () => audio.stepTempo(4));
+    await flush();
+
+    assert.equal(note.classList.contains("abcjs-current-note"), false);
+    assert.equal(
+      document.querySelector("#chordtable .chordCell").classList.contains("chordCell-playing"),
+      false,
+    );
+
+    // While it's actually playing, the same event still moves the cursor.
+    withAbcjs(abcjs, () => audio.playPause());
+    await flush();
+    withAbcjs(abcjs, () => audio.stepTempo(4));
+    await flush();
+    assert.equal(note.classList.contains("abcjs-current-note"), true);
+    assert.ok(document.querySelector("#chordtable .chordCell").classList.contains("chordCell-playing"));
+    assert.equal(ctx.state.tempoOverrideBpm, 128);
+  } finally {
+    cleanup();
+  }
+});
+
 test("setRepeatBoundaries is accepted (shape from scanRepeatBoundaries)", () => {
   const { audio, cleanup } = setup();
   try {
