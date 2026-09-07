@@ -1,7 +1,8 @@
 import { byId, qsa } from "../lib/dom.js";
 import { safeStorage } from "../lib/preferences.js";
-import { parseSongIndex, songTitleSlug } from "../lib/song-index.js";
-import { songFileFromHash } from "../lib/song-hash.js";
+import { parseSongIndex } from "../lib/song-index.js";
+import { parseSongsParams, buildSongsHash } from "../lib/song-hash.js";
+import { getPersonalSetlist } from "../lib/setlists-store.js";
 import { humanizeSongFile } from "../lib/filename.js";
 import { readFile } from "./read-file.js";
 import { createAudioPlayer } from "./audio-player.js";
@@ -32,6 +33,7 @@ function createApp() {
       activeTab: "library", // "library" | "setlists"
       setlistsView: "home", // "home" | "open"
       currentPersonalId: null,
+      currentSetlistId: null, // the `sl=` hash value for the open setlist
       currentOpenSongs: null,
       currentOpenSetlistName: "",
       currentOpenSetlistDesc: "",
@@ -57,10 +59,46 @@ function createApp() {
     if (btn) btn.textContent = `← ${label}`;
   };
 
+  // The `.abc` filename -> its slug (basename), used in the `s=` hash param.
+  const songSlug = (file) => (file ? String(file).replace(/\.abc$/, "") : null);
+
+  // Rewrite the location hash to mirror the current song / open setlist, so a
+  // plain reload or a copied URL lands back in the same place. Loop markers
+  // (`a`/`b`) are never written here — they only ride the Inspiration "copy
+  // link" button (see ctx.shareUrl).
+  ctx.syncHash = () => {
+    const hash = buildSongsHash({
+      song: songSlug(ctx.state.currentSongFile),
+      setlist: ctx.state.currentSetlistId,
+    });
+    const current = window.location.hash.replace(/^#/, "");
+    if (current === hash) return;
+    if (window.history && window.history.replaceState) {
+      const { pathname, search } = window.location;
+      window.history.replaceState(null, "", hash ? `#${hash}` : pathname + search);
+    } else if (hash) {
+      window.location.hash = hash;
+    }
+  };
+
+  // The URL the Inspiration panel's "copy link" button hands out: the current
+  // song (optionally within its open setlist) plus the given loop markers, so
+  // the recipient lands on the sheet with the video open and the phrase set.
+  ctx.shareUrl = ({ a = null, b = null } = {}) => {
+    const song = songSlug(ctx.state.currentSongFile);
+    if (!song) return "";
+    const hash = buildSongsHash({
+      song, setlist: ctx.state.currentSetlistId, a, b, inspiration: true,
+    });
+    const { origin, pathname } = window.location;
+    return `${origin}${pathname}#${hash}`;
+  };
+
   ctx.openLibrarySong = (song) => {
-    window.location.hash = `s=${songTitleSlug(song)}`;
     ctx.state.currentSongFile = song.file;
+    ctx.state.currentSetlistId = null;
     ctx.state.currentSetlistSongIndex = null;
+    ctx.syncHash();
     ctx.setSheetBackLabel("Songs");
     ctx.sheet.renderFromFile(song.file);
   };
@@ -79,8 +117,10 @@ function createApp() {
     if (rail) rail.hidden = !isLibrary;
 
     if (isLibrary) {
+      ctx.state.currentSetlistId = null;
       const search = byId("songSearch");
       ctx.library.render(search ? search.value : "");
+      ctx.syncHash();
     } else {
       ctx.state.setlistsView = "home";
       ctx.setlistHome.show();
@@ -89,7 +129,7 @@ function createApp() {
 
   ctx.audio = createAudioPlayer(ctx);
   ctx.sheet = createSheet(ctx);
-  ctx.inspiration = createInspiration();
+  ctx.inspiration = createInspiration(ctx);
   ctx.library = createLibraryTab(ctx);
   ctx.setlistData = createSetlistData(ctx);
   ctx.setlistHome = createSetlistHome(ctx);
@@ -98,19 +138,72 @@ function createApp() {
   ctx.setlistView = createSetlistView(ctx);
   ctx.swipeNav = createSwipeNav(ctx);
 
+  // A `sl=` band setlist can be deep-linked before its index has loaded; the
+  // bootstrap parks the "open it" step here for the index fetch to run.
+  let pendingBandBootstrap = null;
+
   function initSheet() {
     createInstrumentDropdown(ctx);
     createCompingDropdown(ctx);
     initSheetControls(ctx);
     ctx.inspiration.init();
     ctx.swipeNav.init();
-    const file = window.location.hash ? songFileFromHash(window.location.hash) : null;
-    if (file) {
-      // Seed the current-song pointer so swipe / arrow navigation works on a
-      // deep link, before any sidebar row has been tapped.
-      ctx.state.currentSongFile = file;
-      ctx.sheet.renderFromFile(file);
+  }
+
+  // Open the setlist named by a `sl=` hash value — a personal one by id (from
+  // this device's storage), else a band one by file basename — and call `then`
+  // once its song list is on screen, or `onMissing` when nothing resolves (a
+  // personal `sl=` from another device, say).
+  function openSetlistById(id, then, onMissing) {
+    if (getPersonalSetlist(ctx.storage(), id)) {
+      ctx.setlistView.openPersonal(id, then);
+      return;
     }
+    const openBand = () => {
+      const entry = ctx.state.setlistIndex.find(
+        (e) => e.file === id || String(e.file).replace(/\.txt$/, "") === id,
+      );
+      if (entry) ctx.setlistView.openBand(entry.file, entry.name, then);
+      else if (onMissing) onMissing();
+    };
+    if (ctx.state.setlistIndex.length) openBand();
+    else pendingBandBootstrap = openBand;
+  }
+
+  // Open a Library song by its slug and mirror it into the hash. Seeds the
+  // current-song pointer so swipe / arrow navigation works before any sidebar
+  // row has been tapped.
+  function openSongDeepLink(slug) {
+    const file = `${slug}.abc`;
+    ctx.state.currentSongFile = file;
+    ctx.state.currentSetlistId = null;
+    if (ctx.state.activeTab !== "library") ctx.switchTab("library");
+    ctx.syncHash();
+    ctx.sheet.renderFromFile(file);
+  }
+
+  // Act on the load-time hash: open a setlist (and, with `s=`, its song at the
+  // right position), or a Library song; then arm the Inspiration panel if the
+  // link carried a loop. `params` is captured before initSidebar, which can
+  // rewrite the hash as it settles the default tab.
+  function bootstrap(params) {
+    if (params.inspiration) {
+      ctx.inspiration.applyShareState({ a: params.a, b: params.b });
+    }
+    if (params.setlist) {
+      ctx.switchTab("setlists");
+      openSetlistById(
+        params.setlist,
+        () => {
+          if (params.song) ctx.setlistView.openSongInOpenSetlist(params.song);
+        },
+        () => {
+          if (params.song) openSongDeepLink(params.song);
+        },
+      );
+      return;
+    }
+    if (params.song) openSongDeepLink(params.song);
   }
 
   function initSidebar() {
@@ -126,7 +219,11 @@ function createApp() {
 
     ctx.readFile("/setlists/index_of_setlists.txt", (data) => {
       ctx.state.setlistIndex = parseSongIndex(data);
-      if (ctx.state.activeTab === "setlists" && ctx.state.setlistsView === "home") {
+      if (pendingBandBootstrap) {
+        const open = pendingBandBootstrap;
+        pendingBandBootstrap = null;
+        open();
+      } else if (ctx.state.activeTab === "setlists" && ctx.state.setlistsView === "home") {
         ctx.setlistHome.render();
       }
     });
@@ -144,8 +241,10 @@ function createApp() {
 
   return {
     start() {
+      const params = parseSongsParams(window.location.hash);
       initSheet();
       initSidebar();
+      bootstrap(params);
     },
   };
 }

@@ -68,20 +68,38 @@ export function createSetlistView(ctx) {
 
   // ---- opening -----------------------------------------------------
 
-  function openBand(file, fallbackName) {
+  // Opening a *different* setlist drops the pointer to whatever song was last
+  // on the sheet — otherwise a stale currentSongFile / currentSetlistSongIndex
+  // gets serialised into the hash and can spuriously highlight a row in the
+  // new list. A caller that means to open a specific song sets them again
+  // right after (via its afterRender hook).
+  function clearOpenSongPointer() {
+    ctx.state.currentSongFile = null;
+    ctx.state.currentSetlistSongIndex = null;
+  }
+
+  function openBand(file, fallbackName, afterRender) {
     ctx.setlistData.loadBand(file, (setlist) => {
       ctx.state.currentPersonalId = null;
+      ctx.state.currentSetlistId = String(file).replace(/\.txt$/, "");
+      clearOpenSongPointer();
       renderOpen(setlist.name || fallbackName, setlist.songs, null, setlist.desc);
+      if (afterRender) afterRender();
     }, (status) => {
       console.warn(`Could not load setlist ${file} (status ${status})`);
     });
   }
 
-  function openPersonal(id) {
+  function openPersonal(id, afterRender) {
     const entry = getPersonalSetlist(ctx.storage(), id);
     if (!entry) return;
     ctx.state.currentPersonalId = id;
-    const open = () => renderOpen(entry.name, entry.songs, entry, entry.desc);
+    ctx.state.currentSetlistId = id;
+    clearOpenSongPointer();
+    const open = () => {
+      renderOpen(entry.name, entry.songs, entry, entry.desc);
+      if (afterRender) afterRender();
+    };
     ctx.setlistData.ensureSongsLoaded(open, (status) => {
       // Index fetch failed: still open the setlist so it isn't a dead click —
       // song titles just fall back to their filenames.
@@ -273,6 +291,7 @@ export function createSetlistView(ctx) {
 
     ctx.setlistPrint.buildBooklet(name, songs, desc);
     highlightCurrent();
+    if (ctx.syncHash) ctx.syncHash();
   }
 
   function restoreFocusAfterRender(listEl) {
@@ -408,6 +427,7 @@ export function createSetlistView(ctx) {
     ctx.state.currentSongFile = song.file;
     ctx.state.currentSetlistSongIndex = index == null ? null : Number(index);
     ctx.setSheetBackLabel("Setlist");
+    if (ctx.syncHash) ctx.syncHash();
     highlightCurrent();
     const seq = (songLoadSeq += 1);
     ctx.readFile(`/songs/${song.file}`, (text) => {
@@ -419,6 +439,25 @@ export function createSetlistView(ctx) {
     }, (status) => {
       console.warn(`Setlist references a missing song file: ${song.file} (status ${status})`);
     });
+  }
+
+  // Open the setlist song whose file matches `slug` (`s=` hash value), used
+  // when a shared `sl=…&s=…` link lands on an open setlist. Returns whether a
+  // matching row was found.
+  function openSongInOpenSetlist(slug) {
+    const songs = ctx.state.currentOpenSongs;
+    if (!songs || !slug) return false;
+    const target = `${slug}.abc`;
+    let idx = -1;
+    songs.forEach((item, i) => {
+      if (idx === -1 && !isSetlistDivider(item) && item.file === target) idx = i;
+    });
+    if (idx === -1) return false;
+    openSetlistSong(songs[idx], idx);
+    const row = byId("songList")
+      && byId("songList").querySelector(`.setlist-song-row[data-setlist-index="${idx}"]`);
+    if (row) row.scrollIntoView({ block: "nearest" });
+    return true;
   }
 
   // Open the previous / next song of the open setlist, skipping break dividers
@@ -676,6 +715,6 @@ export function createSetlistView(ctx) {
 
   return {
     openBand, openPersonal, refreshOpenPersonal, renderOpen,
-    highlightCurrent, stepSong, initControls,
+    highlightCurrent, stepSong, openSongInOpenSetlist, initControls,
   };
 }

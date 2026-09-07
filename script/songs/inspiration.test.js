@@ -145,6 +145,103 @@ test("dragging the left edge resizes the panel and persists the new width", () =
   });
 });
 
+test("a shared A/B link opens the video with the loop already set", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    let fireReady = null;
+    let fireState = null;
+    const seeks = [];
+    window.YT = {
+      Player: function FakePlayer(_el, opts) {
+        fireReady = opts.events.onReady;
+        fireState = opts.events.onStateChange;
+        this.loadVideoById = () => {};
+        this.stopVideo = () => {};
+        this.getCurrentTime = () => 0;
+        this.getDuration = () => 200;
+        this.getPlaybackRate = () => 1;
+        this.getAvailablePlaybackRates = () => [0.5, 1, 2];
+        this.setPlaybackRate = () => {};
+        this.seekTo = (t) => seeks.push(t);
+      },
+      PlayerState: { PLAYING: 1 },
+    };
+    const insp = createInspiration();
+    insp.init();
+    insp.applyShareState({ a: 12, b: 30 });
+    insp.updateLink("https://youtu.be/abcdefghijk", "X");
+
+    assert.equal(document.getElementById("inspirationPanel").hidden, false);
+    assert.equal(
+      document.getElementById("inspirationLoopToggle").getAttribute("aria-pressed"), "true",
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fireReady();
+    // The shared start point (loop A) lands only once the video is playing,
+    // not on onReady — a replacement video wouldn't have re-fired onReady.
+    assert.deepEqual(seeks, []);
+    fireState({ data: 1 });
+
+    assert.deepEqual(seeks, [12]);
+    assert.equal(document.getElementById("inspirationLoopHandleA").style.left, "6%");
+    assert.equal(document.getElementById("inspirationLoopHandleB").style.left, "15%");
+  } finally {
+    delete window.YT;
+    page.cleanup();
+  }
+});
+
+test("the share button copies the link ctx.shareUrl builds from the markers", () => {
+  inDom(({ window }) => {
+    const copied = [];
+    Object.defineProperty(window.navigator, "clipboard", {
+      value: { writeText: (t) => { copied.push(t); return Promise.resolve(); } },
+      configurable: true,
+    });
+    const seen = [];
+    const ctx = {
+      shareUrl: (markers) => {
+        seen.push(markers);
+        return "https://red-jackets.example/songs/#s=basin_street&i=1";
+      },
+    };
+    const insp = createInspiration(ctx);
+    insp.init();
+
+    document.getElementById("inspirationShareBtn").dispatchEvent(new window.Event("click"));
+
+    assert.deepEqual(seen, [{ a: null, b: null }]);
+    assert.deepEqual(copied, ["https://red-jackets.example/songs/#s=basin_street&i=1"]);
+  });
+});
+
+test("a rejected clipboard write falls back to a prompt and shows no success tick", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    Object.defineProperty(window.navigator, "clipboard", {
+      value: { writeText: () => Promise.reject(new Error("denied")) },
+      configurable: true,
+    });
+    let prompted = null;
+    window.prompt = (_label, value) => { prompted = value; return value; };
+    const insp = createInspiration({ shareUrl: () => "https://x/songs/#s=y&i=1" });
+    insp.init();
+
+    window.document.getElementById("inspirationShareBtn").dispatchEvent(new window.Event("click"));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.equal(prompted, "https://x/songs/#s=y&i=1");
+    assert.equal(
+      window.document.getElementById("inspirationShareBtn").classList.contains("copied"), false,
+    );
+  } finally {
+    page.cleanup();
+  }
+});
+
 test("edge resize floors the panel at MIN_PANEL_WIDTH", () => {
   inDom(({ window }) => {
     window.localStorage.clear();

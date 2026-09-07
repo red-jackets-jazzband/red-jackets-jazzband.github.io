@@ -205,6 +205,30 @@ test("a slow earlier song load can't overwrite the sheet the user moved on to", 
   }
 });
 
+test("openSongInOpenSetlist opens the matching song at its list position", () => {
+  const { view, ctx, entry, cleanup } = setup({
+    songs: [{ file: "a.abc" }, { divider: "Set 2" }, { file: "b.abc" }, { file: "c.abc" }],
+  });
+  try {
+    const loads = [];
+    ctx.readFile = (path, onLoad) => loads.push({ path, onLoad });
+    view.renderOpen(entry.name, entry.songs, entry, "");
+    ctx.state.currentOpenSongs = entry.songs;
+
+    assert.equal(view.openSongInOpenSetlist("b"), true);
+    assert.equal(ctx.state.currentSongFile, "b.abc");
+    assert.equal(ctx.state.currentSetlistSongIndex, 2);
+    assert.equal(loads[0].path, "/songs/b.abc");
+    assert.ok(
+      document.querySelector('.setlist-song-row[data-setlist-index="2"]').classList.contains("is-current-song"),
+    );
+
+    assert.equal(view.openSongInOpenSetlist("nope"), false);
+  } finally {
+    cleanup();
+  }
+});
+
 test("renderOpen feeds the print booklet builder the same songs", () => {
   const { view, entry, booklets, cleanup } = setup({ songs: [{ file: "a.abc" }] });
   try {

@@ -903,6 +903,10 @@ video.video {
   background: var(--rj-gold);
   color: #222222 !important;
 }
+.inspiration-panel-icon-btn.copied {
+  background: var(--rj-gold);
+  color: #222222 !important;
+}
 .inspiration-panel-video {
   position: relative;
   width: 100%;
