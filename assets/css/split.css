@@ -1648,6 +1648,15 @@ video.video {
   color: var(--rj-gold);
 }
 /*
+  Progress line shown while a "Print …" click waits for every song's .abc to
+  load and engrave — a multi-song songbook can take a few seconds.
+*/
+.rj-library-print-status {
+  margin: 0;
+  color: var(--rj-gold);
+  font: 600 11px "Montserrat", sans-serif;
+}
+/*
   A single "New setlist" button at the foot of the Yours list, inside the
   scrolling #songList — set off from the setlist rows above by a hairline
   rule. It opens #setlistModal; the name and the "start from" choice are

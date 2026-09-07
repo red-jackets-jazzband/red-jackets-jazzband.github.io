@@ -162,6 +162,29 @@ test("print() waits for the booklet's song reads before opening the dialog", () 
   }
 });
 
+test("a held print() shows a song-by-song progress line, then clears it", () => {
+  const { print, reads, cleanup } = manualSetup();
+  try {
+    window.print = () => {};
+    const status = document.getElementById("setlistPrintStatus");
+    withAbcjs(createAbcjsStub(), () => {
+      print.buildBooklet("Gig", SONGS, "");
+      print.print("songbook");
+      assert.equal(status.hidden, false);
+      assert.match(status.textContent, /Preparing the songbook — 0 of 3 songs/);
+
+      reads[0].onLoad(ABC[reads[0].file]);
+      assert.match(status.textContent, /1 of 3 songs/);
+
+      reads.slice(1).forEach((r) => r.onLoad(ABC[r.file]));
+    });
+    assert.equal(status.hidden, true);
+    assert.equal(status.textContent, "");
+  } finally {
+    cleanup();
+  }
+});
+
 test("a personal-setlist desc adds a cover page", async () => {
   const { print, settle, cleanup } = setup();
   try {

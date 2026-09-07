@@ -30,15 +30,38 @@ export function createSetlistPrint(ctx) {
   // every read for the current build has landed.
   let bookletSeq = 0;
   let pendingReads = 0;
+  let totalReads = 0;
   let onBookletReady = null;
+  let waitingMode = null;
+
+  // While a "Print …" click is held waiting for the booklet's song reads to
+  // land, a small line under the buttons counts them in so the wait doesn't
+  // look like a dead click.
+  function setPrintProgress(mode) {
+    const node = byId("setlistPrintStatus");
+    if (!node) return;
+    if (mode === null || totalReads === 0) {
+      node.hidden = true;
+      node.textContent = "";
+      return;
+    }
+    const done = totalReads - pendingReads;
+    const label = (PRINT_MODE_LABELS[mode] || "Songbook").toLowerCase();
+    node.textContent = `Preparing the ${label} — ${done} of ${totalReads} songs ready…`;
+    node.hidden = false;
+  }
 
   function readSettled(seq) {
     if (seq !== bookletSeq) return;
     pendingReads -= 1;
-    if (pendingReads === 0 && onBookletReady) {
-      const ready = onBookletReady;
-      onBookletReady = null;
-      ready();
+    if (onBookletReady) {
+      if (pendingReads === 0) {
+        const ready = onBookletReady;
+        onBookletReady = null;
+        ready();
+      } else {
+        setPrintProgress(waitingMode);
+      }
     }
   }
 
@@ -201,19 +224,36 @@ export function createSetlistPrint(ctx) {
       if (entry.kind === "set-heading") container.append(bookletSetHeading(entry.label));
       else container.append(songBlock(entry, seq));
     });
+    totalReads = pendingReads;
 
     // Appended after the (hidden-in-setlist-mode) chart stack: for "Print
     // setlist" the stack collapses and this lands right under the front matter.
     appendStageList(container, songs);
+
+    // A rebuild (e.g. instrument change) with a print still queued: keep
+    // counting against the fresh read total, or release the print now if the
+    // rebuilt booklet has nothing to load.
+    if (onBookletReady && pendingReads === 0) {
+      const ready = onBookletReady;
+      onBookletReady = null;
+      ready();
+    } else if (onBookletReady) {
+      setPrintProgress(waitingMode);
+    }
   }
 
   function print(mode) {
     // The booklet's charts/keys/tempos are filled by async .abc reads; hold
-    // the print dialog until they've all landed or it prints half-empty pages.
+    // the print dialog until they've all landed or it prints half-empty pages,
+    // showing a "3 of 12 songs ready" line under the buttons while we wait.
     if (pendingReads > 0) {
+      waitingMode = mode;
       onBookletReady = () => print(mode);
+      setPrintProgress(mode);
       return;
     }
+    setPrintProgress(null);
+    waitingMode = null;
     clearBookletPrintState();
     const sub = byId("setlistBookletFmSub");
     if (sub) sub.textContent = PRINT_MODE_LABELS[mode] || "Songbook";
