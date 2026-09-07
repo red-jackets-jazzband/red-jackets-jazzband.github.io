@@ -162,15 +162,19 @@ export function createLibraryTab(ctx) {
 
     searchInput.addEventListener("input", () => render(searchInput.value));
 
-    // "/" focuses the search box, unless the caret is already in a field.
+    // "/" focuses the search box, unless the caret is already in a field. On
+    // the Setlists tab it drives that tab's add-song search when one is open.
     document.addEventListener("keydown", (e) => {
       if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
       const t = e.target;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-      if (ctx.state.activeTab !== "library") ctx.switchTab("library");
+      const addSong = ctx.state.activeTab === "setlists"
+        && document.getElementById("setlistAddSongSearch");
+      const field = addSong || searchInput;
+      if (!addSong && ctx.state.activeTab !== "library") ctx.switchTab("library");
       e.preventDefault();
-      searchInput.focus();
-      searchInput.select();
+      field.focus();
+      field.select();
     });
 
     initKeyNav(searchInput);

@@ -514,6 +514,20 @@ export function createSetlistView(ctx) {
     }));
   }
 
+  // Top matches for an add-song query (empty query -> no matches).
+  function addSongMatches(query) {
+    return query ? filterSongsByQuery(ctx.state.allSongs, query).slice(0, 8) : [];
+  }
+
+  // Append one song to the open personal setlist and keep the search focused.
+  function addSongByFile(file) {
+    if (!ctx.state.currentPersonalId) return false;
+    addSongToPersonalSetlist(ctx.storage(), ctx.state.currentPersonalId, { file, key: "" });
+    focusAddSongAfterRender = true;
+    refreshOpenPersonal();
+    return true;
+  }
+
   function renderAddSongResults(query) {
     const resultsEl = byId("setlistAddSongResults");
     if (!resultsEl) return;
@@ -521,7 +535,7 @@ export function createSetlistView(ctx) {
     resultsEl.classList.toggle("is-open", Boolean(query));
     if (!query) return;
 
-    const matches = filterSongsByQuery(ctx.state.allSongs, query).slice(0, 8);
+    const matches = addSongMatches(query);
     if (matches.length === 0) {
       resultsEl.append(el("div", {
         class: "rj-library-add-song-empty",
@@ -534,17 +548,19 @@ export function createSetlistView(ctx) {
         type: "button",
         class: "rj-library-add-song-result",
         html: '<span class="fa-solid fa-plus" aria-hidden="true"></span>',
-        on: {
-          click: () => {
-            addSongToPersonalSetlist(ctx.storage(), ctx.state.currentPersonalId, {
-              file: song.file, key: "",
-            });
-            focusAddSongAfterRender = true;
-            refreshOpenPersonal();
-          },
-        },
+        on: { click: () => addSongByFile(song.file) },
       }, el("span", { class: "rj-library-add-song-result-name", text: song.name })));
     });
+  }
+
+  // Enter mirrors the library search: add the lone match, then clear the
+  // field. Always clears, match or not.
+  function submitAddSong(inputEl) {
+    const matches = addSongMatches(addSongQuery);
+    addSongQuery = "";
+    inputEl.value = "";
+    renderAddSongResults("");
+    if (matches.length === 1) addSongByFile(matches[0].file);
   }
 
   function buildAddSongRow() {
@@ -560,6 +576,12 @@ export function createSetlistView(ctx) {
             () => renderAddSongResults(addSongQuery), showAddSongError,
           );
         },
+        keydown: (e) => {
+          if (e.key !== "Enter") return;
+          e.preventDefault();
+          const submit = () => submitAddSong(e.target);
+          ctx.setlistData.ensureSongsLoaded(submit, submit);
+        },
       },
     });
 
@@ -568,6 +590,9 @@ export function createSetlistView(ctx) {
       html: '<span class="fa-solid fa-magnifying-glass" aria-hidden="true"></span>',
     });
     inputWrap.append(search);
+    inputWrap.append(el("kbd", {
+      class: "rj-search-hint", text: "/", attrs: { "aria-hidden": "true" },
+    }));
 
     const results = el("div", {
       id: "setlistAddSongResults",

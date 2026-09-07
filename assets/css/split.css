@@ -1905,12 +1905,14 @@ select.rj-modal-input {
   width: 100%;
   height: 36px;
   box-sizing: border-box;
-  padding: 0 12px 0 34px;
+  padding: 0 30px 0 34px;
   background: #262626;
   border: 1px solid rgba(255,255,255,.1);
   border-radius: 7px;
   color: #dedcd8;
   font: 500 12.5px "Montserrat", sans-serif;
+  /* native "clear" button defaults to the UA accent (blue) in Firefox */
+  accent-color: #9a978f;
 }
 .rj-library-list .rj-library-add-song-inline input[type="search"]:focus {
   outline: none;
@@ -1918,6 +1920,29 @@ select.rj-modal-input {
 }
 .rj-library-add-song-inline input[type="search"]::placeholder {
   color: rgba(230,228,224,.4);
+}
+/* native "clear" button — recolour it grey/gold, matching the library search */
+.rj-library-add-song-inline input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-right: -19px;
+  cursor: pointer;
+  background-color: rgba(230,228,224,.5);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.rj-library-add-song-inline input[type="search"]::-webkit-search-cancel-button:hover {
+  background-color: #f0b030;
+}
+/* "/" hint badge, hidden once the field is focused or has text */
+.rj-library-add-song-inputwrap .rj-search-hint {
+  right: 10px;
+}
+.rj-library-add-song-inputwrap input:focus ~ .rj-search-hint,
+.rj-library-add-song-inputwrap input:not(:placeholder-shown) ~ .rj-search-hint {
+  display: none;
 }
 /*
   Results open in normal flow between the field and the break button while
@@ -2603,6 +2628,23 @@ body:has(#rjLibrary) .split-bio {
   overrides would lose to the base rule instead of the intended cascade.
 */
 @media (max-width: 1024px) {
+  /*
+    The songs page stacks at 1024px, but the theme's generic `.split-content`
+    only stops being a ~100vh internal scroll container at 800px. Between those
+    widths (portrait tablets) `.split-content` keeps `overflow: auto` while
+    `align-items: center` vertically centres the stacked layout — so once the
+    song list outgrows the viewport its overflow is split evenly above and
+    below the centre line and the top half (roughly A–H) can't be scrolled
+    back to. Mirror the 800px relaxation here, scoped to the songs page, so
+    the window scrolls instead. (The `.split-content-vertically-center` child
+    is already handled just below.)
+  */
+  body:has(#rjLibrary) .fs-split .split-content {
+    display: block;
+    min-height: 0;
+    height: auto;
+    overflow: visible;
+  }
   body:has(#rjLibrary) .fs-split .split-content-vertically-center {
     height: auto;
   }
@@ -3113,6 +3155,21 @@ body:has(#rjLibrary) .split-bio {
       width: auto;
       height: auto;
       min-height: 82mm;
+    }
+  }
+
+  /* Touch devices (Android tablets/phones) only. Chrome for Android ignores the
+     `size: landscape` orientation and always opens its print sheet portrait, so
+     the tiled chordbook came out portrait unless the user flipped it by hand.
+     `page-orientation` (Chrome 128+) keeps the landscape *layout* — the 2×2
+     tiling above is untouched — but tells the UA to rotate each finished sheet a
+     quarter turn onto the portrait paper Android insists on feeding, which is
+     physically what landscape printing is. Gated on `pointer: coarse` so desktop
+     Chromium, which already prints true landscape paper, never double-rotates.
+     Firefox ignores `page-orientation` and keeps its portrait fallback above. */
+  @media (pointer: coarse) {
+    @page chordbook {
+      page-orientation: rotate-left;
     }
   }
 
