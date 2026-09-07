@@ -173,6 +173,12 @@ body.page-template-page-fullsingle-split p {
   .fs-split .split-content {
     width: 100%;
     height: auto;
+    /* height:auto means this pane no longer scrolls internally — the window
+       does. Drop the base `overflow: auto` too: left in place it still counts
+       as a scroll container and anchors any descendant `position: sticky`
+       (the songs A-Z rail) to a box that never scrolls, so the rail would
+       drift off screen instead of staying pinned. */
+    overflow: visible;
   }
 }
 .fs-split .split-content .split-content-vertically-center {
@@ -2584,6 +2590,12 @@ body:has(#rjLibrary) .split-bio {
   #rjLibrary.rj-library {
     width: 100%;
     height: auto;
+    /* The desktop card clips its rounded corners with overflow:hidden, but
+       that also turns this element into a scroll container and kills the
+       A-Z rail's position:sticky (the rail would scroll away the moment you
+       jump to a letter). Full-width here with no corners to clip, so let it
+       through. */
+    overflow: visible;
   }
   #rjSheet.rj-sheet {
     display: none;
@@ -2635,10 +2647,13 @@ body:has(#rjLibrary) .split-bio {
     thousands of pixels with most off-screen — useless for its one job, a
     quick jump to a letter. Pin it to the viewport instead (sticky, capped at
     the viewport height) so every letter stays on screen while you scroll.
-    In a short landscape viewport the 26 letters can't all fit even at their
-    minimum tap height, so let the rail scroll (scrollbar hidden, like the
-    list) rather than clipping the bottom letters off; a tall viewport never
-    triggers it and the letters just spread to fill as before.
+    Give it an explicit height — a comfortable 30rem, but with 72px to spare
+    against the viewport so it still clears top and bottom when sticky bottoms
+    out at the end of a short last letter-group — and let the 26 flex:1
+    letters divide that height between them (min-height:0, so they shrink
+    rather than overflow). All 26 stay visible at every viewport height: jump
+    to Z and A is still right there to jump back to, with no internal rail
+    scroll left behind.
   */
   .rj-library-body {
     overflow: visible;
@@ -2648,18 +2663,12 @@ body:has(#rjLibrary) .split-bio {
     position: sticky;
     top: 12px;
     align-self: flex-start;
-    max-height: calc(100dvh - 24px);
+    height: min(30rem, calc(100dvh - 72px));
     width: 26px;
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .rj-library-rail::-webkit-scrollbar {
-    display: none;
   }
   .rj-library-rail button {
     font-size: 10px;
-    min-height: 16px;
+    min-height: 0;
   }
 }
 
