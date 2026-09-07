@@ -71,6 +71,44 @@ test("applyCompingColors fills noteheads by chord-tone function", () => {
   });
 });
 
+test("applyCompingColors tints the tie arcs to match their noteheads", () => {
+  inDom((container) => {
+    // one held chord (m2, n0): three tie arcs, no position class, ranked by y.
+    container.innerHTML = `
+      <g class="abcjs-note abcjs-v1 abcjs-l0 abcjs-m2 abcjs-n0">
+        <path class="abcjs-notehead abcjs-chord-pos-1"></path>
+        <path class="abcjs-notehead abcjs-chord-pos-2"></path>
+        <path class="abcjs-notehead abcjs-chord-pos-3"></path>
+      </g>
+      <path class="abcjs-start-m2-n0 abcjs-end-m2-n1 abcjs-slur abcjs-tie abcjs-l0 abcjs-v1"
+            fill="currentColor" d="M 10 200 C 1 1 1 1 1 1"></path>
+      <path class="abcjs-start-m2-n0 abcjs-end-m2-n1 abcjs-slur abcjs-tie abcjs-l0 abcjs-v1"
+            fill="currentColor" d="M 10 184 C 1 1 1 1 1 1"></path>
+      <path class="abcjs-start-m2-n0 abcjs-end-m2-n1 abcjs-slur abcjs-tie abcjs-l0 abcjs-v1"
+            fill="none" stroke="currentColor" d="M 10 192 C 1 1 1 1 1 1"></path>`;
+    applyCompingColors(container, [["5", "R", "3"]]);
+    const heads = [...container.querySelectorAll('[class*="abcjs-chord-pos-"]')];
+    const ties = [...container.querySelectorAll("path.abcjs-tie")];
+    // bottom notehead (pos-1 == "5") and the bottom-most arc (y=200) share a fill
+    assert.equal(ties[0].style.fill, heads[0].style.fill);
+    // top notehead (pos-3 == "3") matches the top arc (y=184)
+    assert.equal(ties[1].style.fill, heads[2].style.fill);
+    // the dotted arc (y=192, middle == "R") is stroked, not filled
+    assert.equal(ties[2].style.fill, "");
+    assert.equal(ties[2].style.stroke, heads[1].style.fill);
+  });
+});
+
+test("applyCompingColors leaves ties alone when the note groups carry no coords", () => {
+  inDom((container) => {
+    container.innerHTML = `
+      <g class="abcjs-note abcjs-v1"><path class="abcjs-chord-pos-1"></path></g>
+      <path class="abcjs-start-m0-n0 abcjs-tie abcjs-v1" fill="currentColor" d="M 1 1 C 1 1 1 1 1 1"></path>`;
+    applyCompingColors(container, [["R", "3", "5"]]);
+    assert.equal(container.querySelector("path.abcjs-tie").style.fill, "");
+  });
+});
+
 test("applyCompingColors advances the palette only past chord groups", () => {
   inDom((container) => {
     container.innerHTML = `

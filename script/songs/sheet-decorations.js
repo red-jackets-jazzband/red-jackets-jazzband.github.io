@@ -42,6 +42,57 @@ export const COMPING_FN_FILL = {
   5: "var(--rj-hover)",
 };
 
+// "l{line}-m{measure}-n{note}" locating one chord onset. ABCjs numbers measures
+// and notes *per staff line*, so the line class is part of the key. A note
+// group carries `abcjs-l3 abcjs-m2 … abcjs-n0`; a tie carries its line as
+// `abcjs-l3` and its start onset as `abcjs-start-m2-n0`.
+function onsetKey(cls) {
+  const l = /(?:^|\s)abcjs-l(\d+)(?:\s|$)/.exec(cls || "");
+  const m = /(?:^|\s)abcjs-m(\d+)(?:\s|$)/.exec(cls || "");
+  const n = /(?:^|\s)abcjs-n(\d+)(?:\s|$)/.exec(cls || "");
+  return l && m && n ? `l${l[1]}-m${m[1]}-n${n[1]}` : null;
+}
+
+// The y of a tie/slur path's first point ("M x y C …") — bigger y sits lower.
+function tieAnchorY(el) {
+  const m = /^M\s*[-\d.]+\s+([-\d.]+)/.exec(el.getAttribute("d") || "");
+  return m ? Number.parseFloat(m[1]) : null;
+}
+
+/*
+  Colour the tie arcs to match their noteheads. A held comping chord draws one
+  tie per chord tone, all sharing an `abcjs-start-m{M}-n{N}` class (the onset
+  they leave) with no position class of their own — so we group the ties by
+  that onset and, within a group, sort by the arc's y (top voice first) to line
+  them up against the palette entry (bottom-to-top, so reversed). Normal ties
+  are a filled crescent; a dotted tie is a stroked open path — colour whichever
+  the arc uses.
+*/
+function colorCompingTies(container, orderByOnset) {
+  const groups = new Map();
+  container.querySelectorAll("path.abcjs-tie.abcjs-v1").forEach((tie) => {
+    const cls = tie.getAttribute("class") || "";
+    const start = /abcjs-start-m(\d+)-n(\d+)/.exec(cls);
+    const line = /(?:^|\s)abcjs-l(\d+)(?:\s|$)/.exec(cls);
+    if (!start || !line) return;
+    const key = `l${line[1]}-m${start[1]}-n${start[2]}`;
+    const order = orderByOnset.get(key);
+    const y = tieAnchorY(tie);
+    if (!order || y == null) return;
+    if (!groups.has(key)) groups.set(key, { order, arcs: [] });
+    groups.get(key).arcs.push({ tie, y });
+  });
+  groups.forEach(({ order, arcs }) => {
+    const topDown = order.slice().reverse();
+    arcs.sort((a, b) => a.y - b.y).forEach(({ tie }, i) => {
+      const color = COMPING_FN_FILL[topDown[i]];
+      if (!color) return;
+      if (tie.getAttribute("fill") === "none") tie.style.stroke = color;
+      else tie.style.fill = color;
+    });
+  });
+}
+
 /*
   Colour the comping voice's chord noteheads by chord-tone function. `palette`
   (from buildCompingTune) has one ["R","3","5"] entry per chord onset in the
@@ -50,11 +101,12 @@ export const COMPING_FN_FILL = {
   position != function, so we zip the rendered onsets against the palette
   instead of using CSS. Inline fills survive ABCjs's resize handler (it rescales
   the viewBox, it doesn't re-render) and are re-applied on every full re-render.
-  The stacked "R / 3 / 5" voice label is tinted to match.
+  The tie arcs and the stacked "R / 3 / 5" voice label are tinted to match.
 */
 export function applyCompingColors(container, palette) {
   if (!container || !palette || !palette.length) return;
   const groups = container.querySelectorAll("g.abcjs-note.abcjs-v1");
+  const orderByOnset = new Map();
   let index = 0;
   groups.forEach((group) => {
     const marks = group.querySelectorAll('[class*="abcjs-chord-pos-"]');
@@ -68,7 +120,11 @@ export function applyCompingColors(container, palette) {
       const fn = order[parseInt(match[1], 10) - 1];
       if (fn && COMPING_FN_FILL[fn]) mark.style.fill = COMPING_FN_FILL[fn];
     });
+    const key = onsetKey(group.getAttribute("class"));
+    if (key) orderByOnset.set(key, order);
   });
+
+  colorCompingTies(container, orderByOnset);
 
   const label = container.querySelector("text.abcjs-voice-name.abcjs-v1");
   if (label) {
