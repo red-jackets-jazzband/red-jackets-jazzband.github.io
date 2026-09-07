@@ -1150,6 +1150,16 @@ video.video {
     page-break-after: always;
     break-after: page;
   }
+  /* The front matter already ends its page; the first "Set N" heading / song
+     must not ALSO force its own break, or the two combine into a blank sheet
+     between the index and the first song (Firefox honours both; Chromium
+     collapses them). The chordbook has the same rule scoped to its float
+     layout further down. */
+  #setlistPrintBooklet .setlist-booklet-frontmatter + .setlist-booklet-set-heading,
+  #setlistPrintBooklet .setlist-booklet-frontmatter + .setlist-booklet-song {
+    page-break-before: avoid;
+    break-before: avoid;
+  }
   /* When a desc cover page precedes the front matter (songbook of a band
      setlist), end it so the front matter starts on its own page. The break
      lives here, not on the front matter's `-before`, so the front matter can
@@ -1237,8 +1247,9 @@ video.video {
   }
   /* The chordbook front matter is a full-width band (2× A5) floated at the top
      of page 1, so two chart tiles pack in beneath it rather than it burning a
-     whole landscape sheet on a short index. The first "Set N" heading / song
-     after it must not then force its own page (see the `+` rules below). */
+     whole landscape sheet on a short index. (The shared `.setlist-booklet-frontmatter
+     + …` rule above already stops the first "Set N" heading / song forcing
+     its own page.) */
   body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-frontmatter {
     float: left;
     clear: both;
@@ -1247,11 +1258,6 @@ video.video {
     padding: 4mm 12mm 2mm;
     page-break-after: auto;
     break-after: auto;
-  }
-  body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-frontmatter + .setlist-booklet-set-heading,
-  body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-frontmatter + .setlist-booklet-song {
-    page-break-before: avoid;
-    break-before: avoid;
   }
   body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-fm-title {
     margin: 4px 0 2px;
@@ -1374,7 +1380,12 @@ video.video {
   }
   body:has(#rjLibrary) .fs-split .split-content-vertically-center,
   .fs-split .split-content .split-content-vertically-center {
-    display: block;
+    /* !important: the on-screen songs-page rule that turns this into a
+       flex column (`body:has(#rjLibrary) .fs-split .split-content-vertically-center`)
+       ties this selector on specificity but wins on source order. A flex
+       ancestor swallows the booklet's forced page breaks in Firefox — the
+       front-matter page then runs straight into the first song. */
+    display: block !important;
     width: auto;
     max-width: none;
     height: auto;
@@ -1382,7 +1393,7 @@ video.video {
     padding: 0;
   }
   .rj-songs-layout {
-    display: block;
+    display: block !important;
     height: auto;
     gap: 0;
   }
@@ -3066,8 +3077,39 @@ body:has(#rjLibrary) .split-bio {
     size: A4 landscape;
     margin: 9mm;
   }
-  body.export-mode-chordbook {
+  body.export-mode-chordbook,
+  body.export-mode-chordbook #setlistPrintBooklet,
+  body.export-mode-chordbook #setlistPrintBooklet > * {
+    /* Firefox picks each sheet's size from the `page` value of the box that
+       starts it and does NOT inherit `page` onto the mid-booklet tiles /
+       "Set N" headings — so naming only <body> left those pages falling back
+       to the portrait @page (the "first two landscape, rest portrait" bug).
+       Name every block that can begin a page. */
     page: chordbook;
+  }
+
+  /* Firefox only. It never flows the floated chordbook tiles side by side, so
+     the 2×2 landscape layout would leave each sheet carrying just two charts
+     stacked down the left half. Give Firefox a plain portrait stack instead —
+     one column, ~four charts a page, one consistent orientation. Chromium
+     (which does tile) keeps the landscape @page above. */
+  @supports (-moz-appearance: none) {
+    @page chordbook {
+      size: A4 portrait;
+      margin: 8mm 10mm;
+    }
+    body.export-mode-chordbook #setlistPrintBooklet {
+      width: auto;
+    }
+    body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-frontmatter {
+      float: none;
+    }
+    body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-song {
+      float: none;
+      width: auto;
+      height: auto;
+      min-height: 82mm;
+    }
   }
 
   .bookContent {

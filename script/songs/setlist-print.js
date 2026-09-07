@@ -4,7 +4,7 @@ import { extractKeyFromAbc, setlistTransposeSteps, formatSetlistKeyLabel } from 
 import {
   instrumentTransposes, instrumentLabel, exportInstrumentLine, resolvedExportSongMeta,
 } from "../lib/export-meta.js";
-import { clearBookletPrintState } from "./sheet-controls.js";
+import { clearBookletPrintState, printWithTitle } from "./sheet-controls.js";
 
 const PRINT_MODES = ["setlist", "chordbook", "songbook"];
 const PRINT_MODE_LABELS = { setlist: "Setlist", chordbook: "Chordbook", songbook: "Songbook" };
@@ -264,7 +264,10 @@ export function createSetlistPrint(ctx) {
       PRINT_MODES.forEach((m) => document.body.classList.remove(`export-mode-${m}`));
       window.removeEventListener("afterprint", restore);
     });
-    window.print();
+    // Name the print for its "Save as PDF" filename / page header, e.g.
+    // "Setlist 2026 — Chordbook".
+    const name = ctx.state.currentOpenSetlistName;
+    printWithTitle([name, PRINT_MODE_LABELS[mode]].filter(Boolean).join(" — "));
   }
 
   return { buildBooklet, print, PRINT_MODES };

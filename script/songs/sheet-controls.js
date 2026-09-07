@@ -16,6 +16,31 @@ export function clearBookletPrintState() {
     .forEach((cls) => classList.remove(cls));
 }
 
+// Today's date as YYYYMMDD (local time), the prefix on every print's title.
+function printDateStamp(date = new Date()) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`;
+}
+
+/*
+  Print with `document.title` briefly set to `<YYYYMMDD>-<title>`, so the
+  browser's print header and the "Save as PDF" default filename read as the
+  song / setlist name (dated, so a saved PDF's filename shows which day's
+  version it is) instead of the page's generic <title>. Restored on
+  "afterprint" (the dialog is modal in desktop browsers, so the title is back
+  before the user sees the page again); a browser that skips the event just
+  keeps the nicer title until the next print, which is harmless.
+*/
+export function printWithTitle(title) {
+  const original = document.title;
+  if (title) document.title = `${printDateStamp()}-${title}`;
+  window.addEventListener("afterprint", function restore() {
+    document.title = original;
+    window.removeEventListener("afterprint", restore);
+  });
+  window.print();
+}
+
 // Nudge the Key stepper's underlying #transpose value by one semitone and
 // dispatch an "input" event, reusing the listeners that re-render the chart
 // (and, for a personal setlist, write the offset back into the setlist row).
@@ -55,7 +80,8 @@ function initPrintLink() {
   on("printLink", "click", (e) => {
     e.preventDefault();
     clearBookletPrintState();
-    window.print();
+    const title = byId("songtitle");
+    printWithTitle(title ? title.textContent.trim() : "");
   });
 }
 
