@@ -38,6 +38,7 @@ time, mark, audio, video {
   padding: 0;
   border: 0;
   font-size: 100%;
+  /* stylelint-disable-next-line declaration-block-no-shorthand-property-overrides -- classic reset idiom: font-size is a pre-`font: inherit`-support fallback */
   font: inherit;
   vertical-align: baseline;
 }
@@ -49,6 +50,8 @@ footer, header, hgroup, menu, nav, section {
 
 body {
   line-height: 1;
+  background-color: #FFFFFF;
+  border-style: none;
 }
 
 ol, ul {
@@ -89,11 +92,6 @@ img.aligncenter {
   display: block;
   margin-right: auto;
   margin-left: auto;
-}
-
-body {
-  background-color: #FFFFFF;
-  border-style: none;
 }
 
 body,
@@ -455,13 +453,13 @@ video.video {
 }
 
 .chordtable{
-    font-family:'MuseJazzText';
+    font-family:'MuseJazzText', serif;
     line-height: 40px;
     font-size: x-large;
 }
 
 .songtitle{
-    font-family:'MuseJazzText';
+    font-family:'MuseJazzText', serif;
     text-align: center;
     font-size: xx-large;
     padding: 20px;
@@ -553,6 +551,7 @@ video.video {
   clips the corners. Play sits flat like its siblings (just a gold glyph) and
   only fills gold while it's actually playing.
 */
+/* Shares its shell (height, border, radius) with .sheet-stepper below. */
 .sheet-transport {
   flex: none;
   display: flex;
@@ -2333,7 +2332,6 @@ body.setlist-dragging {
   -webkit-filter: grayscale(100%);
   -moz-filter: grayscale(100%);
     -o-filter: grayscale(100%);
-   -ms-filter: grayscale(100%);
        filter: grayscale(100%);
 }
 
@@ -2938,6 +2936,7 @@ body:has(#rjLibrary) .split-bio {
 }
 .rj-action-mosaic--hero .rj-action-photo--lead {
   grid-row: span 2;
+  min-height: 360px;
 }
 .rj-action-mosaic--tail {
   grid-template-columns: repeat(3, 1fr);
@@ -2956,9 +2955,6 @@ body:has(#rjLibrary) .split-bio {
 }
 .rj-action-mosaic--hero .rj-action-photo {
   min-height: 174px;
-}
-.rj-action-mosaic--hero .rj-action-photo--lead {
-  min-height: 360px;
 }
 /* Only the lead photo carries a visible caption; the rest lean on alt text. */
 .rj-action-photo figcaption {
@@ -2980,7 +2976,7 @@ body:has(#rjLibrary) .split-bio {
   height: 1px;
   padding: 0;
   overflow: hidden;
-  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   white-space: nowrap;
 }
 .rj-action-head {
@@ -3075,7 +3071,7 @@ body:has(#rjLibrary) .split-bio {
   color: white !important;
   padding-left: 20px;
   padding-right: 20px;
-  font-family:'MuseJazzText';
+  font-family:'MuseJazzText', serif;
   font-size: xx-large;
   -webkit-print-color-adjust: exact;
 }
@@ -3084,7 +3080,7 @@ body:has(#rjLibrary) .split-bio {
   background-color:#ffffff;
   color:#000000;
   padding: 20px;
-  font-family:'MuseJazzText';
+  font-family:'MuseJazzText', serif;
   text-align: center;
   font-size: medium;
   line-height: 20px;

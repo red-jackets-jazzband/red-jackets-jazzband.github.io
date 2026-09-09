@@ -1,6 +1,6 @@
 // True for a setlist item that is a set divider ("break") rather than a song.
 export function isSetlistDivider(item) {
-  return !!item && item.divider !== undefined && item.file === undefined;
+  return Boolean(item) && item.divider !== undefined && item.file === undefined;
 }
 
 // Parses a setlist file: optional leading "# name,<Display Name>" and

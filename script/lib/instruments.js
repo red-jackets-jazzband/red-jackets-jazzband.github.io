@@ -31,11 +31,28 @@ export function offsetForInstrument(instrumentValue) {
 // render_abc.js, which bypasses this entirely). It also strips any clef it
 // stamped before re-adding one, so repeated calls are idempotent — sheet.js
 // hands back its own already-transformed ABC on every rerender.
+// Removes every "clef=bass middle=D" (and any whitespace right before it)
+// from `line` — a plain indexOf scan rather than a `\s*literal` regex, which
+// backtracks over every position with no match the same way a bare
+// `[^x]*literal` pattern does.
+function stripBassClefStamp(line) {
+  const marker = "clef=bass middle=D";
+  let result = line;
+  let idx = result.indexOf(marker);
+  while (idx !== -1) {
+    let start = idx;
+    while (start > 0 && (result[start - 1] === " " || result[start - 1] === "\t")) start -= 1;
+    result = result.slice(0, start) + result.slice(idx + marker.length);
+    idx = result.indexOf(marker);
+  }
+  return result;
+}
+
 export function changeClefForInstrument(instrumentValue, text) {
   const entry = findInstrument(instrumentValue);
   const clef = entry ? entry.clef : "treble";
   return text.replace(/^K:(.*)$/m, (_match, keyLine) => {
-    const bare = keyLine.replace(/\s*clef=bass middle=D/g, "");
+    const bare = stripBassClefStamp(keyLine);
     return `K:${bare}${clef === "bass" ? " clef=bass middle=D" : ""}`;
   });
 }

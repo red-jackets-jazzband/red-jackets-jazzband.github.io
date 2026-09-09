@@ -10,84 +10,7 @@ import {
   buildCompingTune,
   measureBarSlots,
 } from "./comping.js";
-
-// ---------------------------------------------------------------------------
-// A small but arithmetically real Tonal stub — enough for buildCompingTune to
-// run over a diatonic progression without pulling the 200 KB browser bundle.
-// ---------------------------------------------------------------------------
-const SHARP_PC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-
-function pcChroma(pc) {
-  const m = String(pc).match(/^([A-G])([#b]*)/);
-  const base = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]];
-  let acc = 0;
-  for (const c of m[2]) acc += c === "#" ? 1 : -1;
-  return ((base + acc) % 12 + 12) % 12;
-}
-function pcAdd(pc, semis) {
-  return SHARP_PC[(pcChroma(pc) + semis % 12 + 12) % 12];
-}
-function nameToMidi(name) {
-  const m = String(name).match(/^([A-G])([#b]*)(-?\d+)$/);
-  if (!m) return null;
-  return (parseInt(m[3], 10) + 1) * 12 + pcChroma(m[1] + m[2]);
-}
-
-const TonalStub = {
-  Scale: {
-    get(name) {
-      const m = name.match(/^([A-G][#b]*)\s+(\w+)$/);
-      if (!m) return { notes: [] };
-      const steps = m[2] === "minor" ? [0, 2, 3, 5, 7, 8, 10] : [0, 2, 4, 5, 7, 9, 11];
-      return { notes: steps.map((s) => pcAdd(m[1], s)) };
-    },
-  },
-  Chord: {
-    get(name) {
-      const m = String(name).match(/^([A-G][#b]*)(.*)$/);
-      if (!m) return { notes: [] };
-      const q = m[2];
-      const third = /^(m|min|-|dim|°|o)/.test(q) ? 3 : 4;
-      const fifth = /^(dim|°|o)/.test(q) ? 6 : /^(aug|\+)/.test(q) ? 8 : 7;
-      return { notes: [m[1], pcAdd(m[1], third), pcAdd(m[1], fifth)] };
-    },
-  },
-  Note: { midi: nameToMidi },
-  Interval: {
-    distance: (a, b) => ({ a, b }),
-    semitones: (d) => ((pcChroma(d.b) - pcChroma(d.a)) % 12 + 12) % 12,
-  },
-  AbcNotation: {
-    scientificToAbcNotation(sci) {
-      const m = sci.match(/^([A-G])([#b]*)(-?\d+)$/);
-      const acc = m[2].replace(/#/g, "^").replace(/b/g, "_");
-      const oct = parseInt(m[3], 10);
-      const body =
-        oct >= 5
-          ? m[1].toLowerCase() + "'".repeat(oct - 5)
-          : m[1] + ",".repeat(Math.max(0, 4 - oct));
-      return acc + body;
-    },
-    abcToScientificNotation(abc) {
-      const m = abc.match(/^([_^=]*)([A-Ga-g])([,']*)$/);
-      if (!m) return null;
-      const acc = m[1].replace(/\^/g, "#").replace(/_/g, "b").replace(/=/g, "");
-      let oct = m[2] === m[2].toLowerCase() ? 5 : 4;
-      for (const c of m[3]) oct += c === "'" ? 1 : -1;
-      return m[2].toUpperCase() + acc + oct;
-    },
-  },
-};
-
-function withTonal(fn) {
-  const real = globalThis.Tonal;
-  globalThis.Tonal = TonalStub;
-  try {
-    return fn();
-  } finally {
-    globalThis.Tonal = real;
-  }
-}
+import { tonalStub as TonalStub, withTonal, nameToMidi } from "../../../tests/helpers/stubs.js";
 
 // ---------------------------------------------------------------------------
 // Pure helpers
@@ -333,6 +256,7 @@ test("buildCompingTune returns null when it cannot apply", () => {
 
 // The comping's K: line as an ABC key signature { letter: "^"|"_"|"" }.
 function keySigOf(abc) {
+  // eslint-disable-next-line regexp/no-misleading-capturing-group -- verified: [#b]? is greedy and always claims a real accidental first (K:Bb -> "Bb", never "B" + "b" spilling into the \w+ group)
   const m = abc.match(/^K:\s*([A-G][#b]?)\s*(\w+)?/m);
   const tonic = m ? m[1] : "C";
   const mode = m && /^m(in)?$/i.test(m[2] || "") ? "minor" : "major";
@@ -348,6 +272,28 @@ function keySigOf(abc) {
 // reading each notehead at its true sounding pitch: bare noteheads follow the
 // K: signature and accidentals propagate per letter+octave within a bar, the
 // same way ABCjs resolves them.
+// Splits a "[CEG]" chord's insides into its individual accidentals+letter+
+// octave-marks notes ("C", "^E,", ...) — a manual scan, not a
+// `[_^=]*[A-Ga-g][,']*` regex, since a star quantifier ahead of a single
+// required letter is exactly the shape sonarjs's regex-DoS check flags.
+function splitChordNotes(str) {
+  const notes = [];
+  let i = 0;
+  while (i < str.length) {
+    let j = i;
+    while (str[j] === "_" || str[j] === "^" || str[j] === "=") j += 1;
+    if (!/[A-Ga-g]/.test(str[j] || "")) {
+      i += 1;
+      continue;
+    }
+    j += 1;
+    while (str[j] === "," || str[j] === "'") j += 1;
+    notes.push(str.slice(i, j));
+    i = j;
+  }
+  return notes;
+}
+
 function compingChordMidis(abc) {
   const v2 = abc.split("\nV:2\n").pop();
   const sig = keySigOf(abc);
@@ -355,7 +301,7 @@ function compingChordMidis(abc) {
   for (const bar of v2.split(/\|+/)) {
     const barAcc = new Map();
     for (const tok of bar.match(/\[(?:[_^=]*[A-Ga-g][,']*)+\]/g) || []) {
-      const notes = tok.slice(1, -1).match(/[_^=]*[A-Ga-g][,']*/g) || [];
+      const notes = splitChordNotes(tok.slice(1, -1));
       out.push(
         notes.map((n) => {
           const nm = n.match(/^([_^=]*)([A-Ga-g])([,']*)$/);

@@ -2,16 +2,28 @@ import { parseSetlistFile, serializeSetlistFile, isSetlistDivider } from "./setl
 
 const STORAGE_KEY = "rj.setlists.v1";
 
+function safeGetItem(storage, key) {
+  try {
+    return storage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function parseStoredList(raw) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 function readStorage(storage) {
   if (!storage) return [];
-  try {
-    const raw = storage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (_e) {
-    return [];
-  }
+  const raw = safeGetItem(storage, STORAGE_KEY);
+  if (!raw) return [];
+  const parsed = parseStoredList(raw);
+  return Array.isArray(parsed) ? parsed : [];
 }
 
 function writeStorage(storage, list) {

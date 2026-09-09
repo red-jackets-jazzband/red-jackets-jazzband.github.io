@@ -84,7 +84,10 @@ export function createSheet(ctx) {
   // Voices that carry their own clef/transpose/name are left untouched — the
   // instrument's clef and offset must not be applied on top.
   function hasInstrumentVoices(text) {
-    return Boolean(text.match(/^V:\d+.*(clef=|transpose=|name=)/gm));
+    return text.split("\n").some((line) => {
+      if (!/^V:\d+/.test(line)) return false;
+      return line.includes("clef=") || line.includes("transpose=") || line.includes("name=");
+    });
   }
 
   function buildComping(abcText, compingValue) {

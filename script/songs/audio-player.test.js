@@ -5,7 +5,7 @@ import { makeCtx } from "../../../tests/helpers/ctx.js";
 import { createAbcjsStub, withAbcjs } from "../../../tests/helpers/stubs.js";
 import { createAudioPlayer } from "./audio-player.js";
 
-const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+const flush = () => new Promise((resolve) => { setTimeout(resolve, 0); });
 
 function setup(stateOverrides = {}) {
   const page = mountPage();

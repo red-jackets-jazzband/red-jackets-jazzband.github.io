@@ -16,6 +16,8 @@ import {
   importPersonalSetlistText,
 } from "./setlists-store.js";
 
+const BASIN_STREET = "basin_street.abc";
+
 function makeStorage() {
   const data = {};
   return {
@@ -41,7 +43,7 @@ test("createPersonalSetlist + listPersonalSetlists round-trip", () => {
 test("addSongToPersonalSetlist and removeSongFromPersonalSetlist", () => {
   const storage = makeStorage();
   const entry = createPersonalSetlist(storage, "My List");
-  addSongToPersonalSetlist(storage, entry.id, { file: "basin_street.abc", key: "" });
+  addSongToPersonalSetlist(storage, entry.id, { file: BASIN_STREET, key: "" });
   addSongToPersonalSetlist(storage, entry.id, { file: "tiger_rag.abc", key: "Bb" });
   assert.equal(listPersonalSetlists(storage)[0].songs.length, 2);
 
@@ -52,7 +54,7 @@ test("addSongToPersonalSetlist and removeSongFromPersonalSetlist", () => {
 test("updateSongKeyInPersonalSetlist changes just that song's key override", () => {
   const storage = makeStorage();
   const entry = createPersonalSetlist(storage, "My List");
-  addSongToPersonalSetlist(storage, entry.id, { file: "basin_street.abc", key: "" });
+  addSongToPersonalSetlist(storage, entry.id, { file: BASIN_STREET, key: "" });
   updateSongKeyInPersonalSetlist(storage, entry.id, 0, "C");
   assert.equal(listPersonalSetlists(storage)[0].songs[0].key, "C");
 });
@@ -137,7 +139,7 @@ test("deletePersonalSetlist removes only the targeted list", () => {
 
 test("copyBandSetlistToPersonal clones songs into an independent new entry", () => {
   const storage = makeStorage();
-  const bandSetlist = { name: "Zeeland Jazz 2026", desc: "text", songs: [{ file: "basin_street.abc", key: "C" }] };
+  const bandSetlist = { name: "Zeeland Jazz 2026", desc: "text", songs: [{ file: BASIN_STREET, key: "C" }] };
   const copy = copyBandSetlistToPersonal(storage, bandSetlist);
   assert.equal(copy.name, "Zeeland Jazz 2026");
   assert.deepEqual(copy.songs, bandSetlist.songs);
@@ -149,7 +151,7 @@ test("copyBandSetlistToPersonal clones songs into an independent new entry", () 
 test("exportPersonalSetlistText / importPersonalSetlistText round-trip across two devices", () => {
   const deviceA = makeStorage();
   const entry = createPersonalSetlist(deviceA, "Export Me");
-  addSongToPersonalSetlist(deviceA, entry.id, { file: "basin_street.abc", key: "Bb" });
+  addSongToPersonalSetlist(deviceA, entry.id, { file: BASIN_STREET, key: "Bb" });
 
   const text = exportPersonalSetlistText(deviceA, entry.id);
   assert.match(text, /# name,Export Me/);
@@ -158,7 +160,7 @@ test("exportPersonalSetlistText / importPersonalSetlistText round-trip across tw
   const deviceB = makeStorage(); // a different browser/device
   const imported = importPersonalSetlistText(deviceB, text, "fallback");
   assert.equal(imported.name, "Export Me");
-  assert.deepEqual(imported.songs, [{ file: "basin_street.abc", key: "Bb" }]);
+  assert.deepEqual(imported.songs, [{ file: BASIN_STREET, key: "Bb" }]);
 });
 
 test("importPersonalSetlistText falls back to a given name when the file has none", () => {

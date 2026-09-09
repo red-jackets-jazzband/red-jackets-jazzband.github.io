@@ -79,7 +79,7 @@ test("closePanel drops a pending video id so a late onReady can't play into a hi
     // Open once: no player yet, so the frame src is set and the player is
     // attached on the next microtask — but onReady hasn't fired.
     btn.dispatchEvent(new window.Event("click"));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
 
     // Switch to another video while the player is still not ready: its id is
     // parked in pendingVideoId.
@@ -177,7 +177,7 @@ test("a shared A/B link opens the video with the loop already set", async () => 
       document.getElementById("inspirationLoopToggle").getAttribute("aria-pressed"), "true",
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
     fireReady();
     // The shared start point (loop A) lands only once the video is playing,
     // not on onReady — a replacement video wouldn't have re-fired onReady.
@@ -231,7 +231,7 @@ test("a rejected clipboard write falls back to a prompt and shows no success tic
     insp.init();
 
     window.document.getElementById("inspirationShareBtn").dispatchEvent(new window.Event("click"));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
 
     assert.equal(prompted, "https://x/songs/#s=y&i=1");
     assert.equal(

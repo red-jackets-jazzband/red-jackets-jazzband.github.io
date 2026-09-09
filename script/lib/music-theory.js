@@ -1,3 +1,13 @@
+// Tolerates Tonal.Note.get throwing on unparseable input by reporting no
+// chroma — the caller falls back to the manual table below either way.
+function tonalChroma(normalized) {
+  try {
+    return Tonal.Note.get(normalized).chroma;
+  } catch {
+    return undefined;
+  }
+}
+
 // Pitch class (0-11) of a note name. Prefers Tonal.js (loaded as a global
 // classic script alongside this module in the browser) for full enharmonic
 // handling, falling back to a small manual table so this still works in
@@ -5,17 +15,13 @@
 export function noteChroma(noteName) {
   const normalized = noteName.replace(/♭/g, "b").replace(/♯/g, "#");
   if (typeof Tonal !== "undefined" && Tonal.Note) {
-    try {
-      const n = Tonal.Note.get(normalized);
-      // Tonal represents an unparseable note (e.g. "Am" — a chord, not a
-      // plain note name — passed in when a setlist key override carries a
-      // mode suffix) as chroma: NaN, not undefined. typeof NaN is still
-      // "number", so this must be excluded explicitly or it gets returned
-      // as-is instead of falling through to the manual table below.
-      if (typeof n.chroma === "number" && !Number.isNaN(n.chroma)) return n.chroma;
-    } catch (_e) {
-      // fall through to the manual table below
-    }
+    const chroma = tonalChroma(normalized);
+    // Tonal represents an unparseable note (e.g. "Am" — a chord, not a
+    // plain note name — passed in when a setlist key override carries a
+    // mode suffix) as chroma: NaN, not undefined. typeof NaN is still
+    // "number", so this must be excluded explicitly or it gets returned
+    // as-is instead of falling through to the manual table below.
+    if (typeof chroma === "number" && !Number.isNaN(chroma)) return chroma;
   }
   const CHROMAS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
   const letter = normalized[0].toUpperCase();
@@ -54,7 +60,7 @@ export function chordToRomanNumeral(chordStr, keyRoot, keyMode) {
   const accidental = entry[1];
 
   const isMinorChord = /^(m|min|-)(?!aj)/i.test(suffix);
-  const isHalfDim = /^(Ø|ø|m7[b♭]5)/i.test(suffix);
+  const isHalfDim = /^(Ø|m7[b♭]5)/i.test(suffix);
   const isDim = /^(°|dim)/i.test(suffix);
   const isAug = /^(\+|aug)/i.test(suffix);
   const isMaj7 = /maj7|Δ/.test(suffix);
@@ -109,7 +115,7 @@ export function convertChordsToRoman(chords, song) {
     const romanText = measure.text.map((chordStr) => {
       return chordToRomanNumeral(chordStr, keyRoot, keyMode);
     });
-    return Object.assign({}, measure, { text: romanText });
+    return { ...measure, text: romanText };
   });
 }
 
@@ -129,15 +135,20 @@ export function extractKeyFromAbc(text) {
    Returns null when there's no Q: field or no number to read.
 */
 export function tempoBpmFromAbc(text) {
-  const line = String(text || "").match(/^Q:\s*(.+?)\s*$/m);
+  // The surrounding whitespace this used to trim off within the regex
+  // itself (`\s*(.+?)\s*$`) is trimmed below instead — that pattern let the
+  // lazy `.+?` and the trailing `\s*` disagree over which of them owned a
+  // run of whitespace, which is exactly the ambiguity that makes a regex
+  // engine backtrack superlinearly.
+  const line = /^Q:(.*)$/m.exec(String(text || ""));
   if (!line) return null;
   const body = line[1].replace(/"[^"]*"/g, " ").trim();
-  const afterEquals = body.match(/=\s*(\d+(?:\.\d+)?)/);
-  if (afterEquals) return Math.round(parseFloat(afterEquals[1]));
+  const afterEquals = /=\s*(\d+(?:\.\d+)?)/.exec(body);
+  if (afterEquals) return Math.round(Number.parseFloat(afterEquals[1]));
   // No "=": a bare "Q:120" or "Q:1/4 120" — take a number that isn't the
   // denominator of a note-length fraction.
-  const bare = body.match(/(?:^|\s)(\d+(?:\.\d+)?)(?!\s*\/)/);
-  return bare ? Math.round(parseFloat(bare[1])) : null;
+  const bare = /(?:^|\s)(\d+(?:\.\d+)?)(?!\s*\/)/.exec(body);
+  return bare ? Math.round(Number.parseFloat(bare[1])) : null;
 }
 
 // Shortest signed semitone distance to transpose `fromKeyStr` to
@@ -168,7 +179,7 @@ export function setlistTransposeSteps(rawOverride, nativeKey) {
   const trimmed = String(rawOverride == null ? "" : rawOverride).trim();
   if (!trimmed) return 0;
   if (isSemitoneOffset(trimmed)) {
-    const n = parseInt(trimmed, 10);
+    const n = Number.parseInt(trimmed, 10);
     return Number.isFinite(n) ? n : 0;
   }
   return semitonesBetweenKeys(nativeKey || "C", trimmed);
@@ -199,7 +210,7 @@ export function formatSetlistKeyLabel(rawOverride) {
   const trimmed = String(rawOverride == null ? "" : rawOverride).trim();
   if (!trimmed) return "";
   if (isSemitoneOffset(trimmed)) {
-    const n = parseInt(trimmed, 10);
+    const n = Number.parseInt(trimmed, 10);
     if (!Number.isFinite(n) || n === 0) return "";
     return (n > 0 ? "+" : "−") + Math.abs(n);
   }

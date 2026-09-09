@@ -83,7 +83,7 @@ function pad(n) {
 }
 
 function clamp01(n) {
-  if (!(n > 0)) return 0;
+  if (Number.isNaN(n) || n <= 0) return 0;
   if (n > 1) return 1;
   return n;
 }

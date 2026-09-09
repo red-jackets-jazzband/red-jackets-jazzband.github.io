@@ -1,6 +1,13 @@
 import { el, clear } from "../lib/dom.js";
 import { simplifyBlues, simplifySong } from "../lib/chords.js";
 
+// Reading offsetWidth is what forces a layout reflow; returning it (rather
+// than discarding it inline with `void` or an unused variable) is what
+// keeps the read from looking like a pointless no-op statement.
+function forceReflow(element) {
+  return element.offsetWidth;
+}
+
 /*
   Render the chord grid above the staff from a per-measure chord array (the
   same array shape parseChordScheme produces, optionally already converted to
@@ -65,7 +72,7 @@ export function fitChordTable(container) {
   // element skews the width read otherwise (a re-fit after a rotation).
   grid.style.zoom = "";
   grid.style.width = "";
-  void grid.offsetWidth;
+  forceReflow(grid);
 
   const available = container.clientWidth;
   if (!available) return;

@@ -113,23 +113,27 @@ const PATTERNS = {
   },
 };
 
+const GROUP_BASE = "Base patterns";
+const GROUP_STEP_DOWN = "Step down";
+const GROUP_STEP_UP_DOWN = "Step up & down";
+
 // Ordered list for the sheet's <select>, grouped like the prototype's optgroups.
 export const COMPING_PATTERNS = [
-  { value: "on_2_and_4", label: "On 2 and 4", group: "Base patterns" },
-  { value: "hold_over", label: "Hold over", group: "Base patterns" },
-  { value: "hit_and_hold", label: "Hit and hold", group: "Base patterns" },
-  { value: "double_hit", label: "Double hit", group: "Base patterns" },
-  { value: "whole_note", label: "Whole note", group: "Base patterns" },
-  { value: "walk_down_a", label: "Walk down A", group: "Step down" },
-  { value: "walk_down_b", label: "Walk down B", group: "Step down" },
-  { value: "whole_then_step", label: "Whole then step", group: "Step down" },
-  { value: "walk_eighths", label: "Walk eighths", group: "Step down" },
-  { value: "cross_step", label: "Cross step", group: "Step up & down" },
-  { value: "step_approach", label: "Step approach", group: "Step up & down" },
-  { value: "double_then_step", label: "Double then step", group: "Step up & down" },
-  { value: "full_walk", label: "Full walk", group: "Step up & down" },
-  { value: "third_approach", label: "Third approach", group: "Step up & down" },
-  { value: "step_neighbor", label: "Step neighbor", group: "Step up & down" },
+  { value: "on_2_and_4", label: "On 2 and 4", group: GROUP_BASE },
+  { value: "hold_over", label: "Hold over", group: GROUP_BASE },
+  { value: "hit_and_hold", label: "Hit and hold", group: GROUP_BASE },
+  { value: "double_hit", label: "Double hit", group: GROUP_BASE },
+  { value: "whole_note", label: "Whole note", group: GROUP_BASE },
+  { value: "walk_down_a", label: "Walk down A", group: GROUP_STEP_DOWN },
+  { value: "walk_down_b", label: "Walk down B", group: GROUP_STEP_DOWN },
+  { value: "whole_then_step", label: "Whole then step", group: GROUP_STEP_DOWN },
+  { value: "walk_eighths", label: "Walk eighths", group: GROUP_STEP_DOWN },
+  { value: "cross_step", label: "Cross step", group: GROUP_STEP_UP_DOWN },
+  { value: "step_approach", label: "Step approach", group: GROUP_STEP_UP_DOWN },
+  { value: "double_then_step", label: "Double then step", group: GROUP_STEP_UP_DOWN },
+  { value: "full_walk", label: "Full walk", group: GROUP_STEP_UP_DOWN },
+  { value: "third_approach", label: "Third approach", group: GROUP_STEP_UP_DOWN },
+  { value: "step_neighbor", label: "Step neighbor", group: GROUP_STEP_UP_DOWN },
 ];
 
 const PATTERN_LABEL = COMPING_PATTERNS.reduce((acc, p) => {
@@ -177,53 +181,189 @@ export function formatDuration(slots, lnum, lden) {
    fixed whole-bar rest there pushes the first barline out and the melody and
    comping staves stop lining up.
 */
-export function measureBarSlots(segment, lnum, lden) {
-  const unitSlots = (8 * lnum) / lden;
-  const s = String(segment)
-    .replace(/"[^"]*"/g, "")
-    .replace(/![^!]*!/g, "")
-    .replace(/\[[A-Za-z]:[^\]]*\]/g, "")
-    .replace(/\{[^}]*\}/g, "")
-    .replace(/\[[^\]]*\]/g, "Y");
-  const re = /(?:Y|[_^=]*[A-Ga-gxzZ])[,']*(\d+)?(\/+)?(\d*)/g;
-  let total = 0;
-  let matched = false;
-  let m;
-  while ((m = re.exec(s)) !== null) {
-    if (m.index === re.lastIndex) {
-      re.lastIndex++;
+// Removes every `open...close` run from `str` (replacing it with
+// `replacement`), scanning once left to right with plain string search
+// instead of a `open...*...close` regex — avoids the quadratic worst case a
+// star-quantified regex hits when scanned across a string with no closing
+// delimiter.
+function stripDelimited(str, open, close, replacement) {
+  let result = "";
+  let i = 0;
+  while (i < str.length) {
+    if (str[i] !== open) {
+      result += str[i];
+      i += 1;
       continue;
     }
-    matched = true;
-    let mult = m[1] ? parseInt(m[1], 10) : 1;
-    if (m[2]) {
-      const denom = m[3] ? parseInt(m[3], 10) : Math.pow(2, m[2].length);
-      mult /= denom;
+    const end = str.indexOf(close, i + 1);
+    if (end === -1) {
+      result += str.slice(i);
+      break;
     }
-    total += unitSlots * mult;
+    result += replacement;
+    i = end + 1;
+  }
+  return result;
+}
+
+// Removes every ABC inline field (`[K:C]`, `[Q:1/4=120]`, ...) from `str`:
+// a "[", a single letter, ":", then anything up to the next "]".
+function stripInlineFields(str) {
+  let result = "";
+  let i = 0;
+  while (i < str.length) {
+    const isField = str[i] === "[" && /[A-Za-z]/.test(str[i + 1] ?? "") && str[i + 2] === ":";
+    if (!isField) {
+      result += str[i];
+      i += 1;
+      continue;
+    }
+    const end = str.indexOf("]", i + 3);
+    if (end === -1) {
+      result += str.slice(i);
+      break;
+    }
+    i = end + 1;
+  }
+  return result;
+}
+
+const CHORD_NOTE_LETTERS = "ABCDEFGabcdefg";
+const NOTE_LETTERS = CHORD_NOTE_LETTERS + "xz";
+const PITCH_LETTERS = NOTE_LETTERS + "Z";
+
+function scanRun(str, i, isMember) {
+  let j = i;
+  while (j < str.length && isMember(str[j])) j += 1;
+  return j;
+}
+const isAccidental = (c) => c === "_" || c === "^" || c === "=";
+const isOctaveMark = (c) => c === "'" || c === ",";
+const isDigit = (c) => c >= "0" && c <= "9";
+const isSlash = (c) => c === "/";
+
+// Scans one accidentals*-letter-octaves* note (the letter drawn from
+// `letters`), returning the index just past it, or -1 if there's no letter
+// from that set once the accidentals are skipped.
+function scanNoteLetter(str, i, letters) {
+  const afterAccidentals = scanRun(str, i, isAccidental);
+  if (afterAccidentals >= str.length || !letters.includes(str[afterAccidentals])) return -1;
+  return scanRun(str, afterAccidentals + 1, isOctaveMark);
+}
+
+// Scans an optional duration suffix — digits, then an optional run of "/"s
+// with their own optional digits (e.g. "2", "/2", "3/2", "/") — returning
+// both the index just past it and the numerator/denominator it spelled out.
+function scanDurationMultiplier(str, i) {
+  const numEnd = scanRun(str, i, isDigit);
+  const numerator = str.slice(i, numEnd);
+  const mult = numerator ? Number.parseInt(numerator, 10) : 1;
+  if (str[numEnd] !== "/") return { end: numEnd, mult };
+  const slashEnd = scanRun(str, numEnd, isSlash);
+  const denomEnd = scanRun(str, slashEnd, isDigit);
+  const denominator = str.slice(slashEnd, denomEnd);
+  const denom = denominator ? Number.parseInt(denominator, 10) : 2 ** (slashEnd - numEnd);
+  return { end: denomEnd, mult: mult / denom };
+}
+
+export function measureBarSlots(segment, lnum, lden) {
+  const unitSlots = (8 * lnum) / lden;
+  let s = String(segment);
+  s = stripDelimited(s, '"', '"', "");
+  s = stripDelimited(s, "!", "!", "");
+  s = stripInlineFields(s);
+  s = stripDelimited(s, "{", "}", "");
+  s = stripDelimited(s, "[", "]", "Y");
+
+  let total = 0;
+  let matched = false;
+  let i = 0;
+  while (i < s.length) {
+    let end = s[i] === "Y" ? i + 1 : scanNoteLetter(s, i, PITCH_LETTERS);
+    if (end === -1) {
+      i += 1;
+      continue;
+    }
+    end = scanRun(s, end, isOctaveMark);
+    const duration = scanDurationMultiplier(s, end);
+    matched = true;
+    total += unitSlots * duration.mult;
+    i = duration.end;
   }
   return matched ? total : 0;
 }
 
+// Returns the run of ASCII digits `str` ends with, or "" if it doesn't end
+// in one — a plain scan in place of a `(\d+)$` regex, which a JS engine can
+// only reject by retrying every string position when there's no match.
+function trailingDigits(str) {
+  let i = str.length;
+  while (i > 0 && str[i - 1] >= "0" && str[i - 1] <= "9") i -= 1;
+  return str.slice(i);
+}
+
+// Scans an optional duration suffix, returning just the index past it (see
+// scanDurationMultiplier for the numerator/denominator breakdown).
+function scanDuration(str, i) {
+  return scanDurationMultiplier(str, i).end;
+}
+
+// Scans a "[note note ...]" chord bracket, returning the index just past
+// the "]", or -1 if `i` isn't the start of a well-formed one.
+function scanChordBracket(str, i) {
+  let j = i + 1;
+  let sawNote = false;
+  let noteEnd = scanNoteLetter(str, j, CHORD_NOTE_LETTERS);
+  while (noteEnd !== -1) {
+    j = noteEnd;
+    sawNote = true;
+    noteEnd = scanNoteLetter(str, j, CHORD_NOTE_LETTERS);
+  }
+  return sawNote && str[j] === "]" ? j + 1 : -1;
+}
+
+function pushNoteToken(tokens, t) {
+  const tie = t.slice(-1) === "-";
+  const body = tie ? t.slice(0, -1) : t;
+  const digits = trailingDigits(body);
+  const dur = digits ? Number.parseInt(digits, 10) : 1;
+  const pitch = digits ? body.slice(0, -digits.length) : body;
+  const head = pitch[0] === "[" ? "[" : pitch.replace(/^[_^=]+/, "")[0];
+  tokens.push({ pitch, dur, tie, rest: head === "z" || head === "x" });
+}
+
 // Split an ABC bar fragment into note / chord / rest / annotation tokens.
+// A manual scan rather than one combined regex: it's the same "try each
+// token kind at this position, else step forward one character" behaviour
+// an unanchored `alt1|alt2|alt3` regex would have, without the quadratic
+// worst case that kind of pattern can hit when scanned across a long
+// non-matching run.
 export function tokenizeBar(str) {
   const tokens = [];
-  const re =
-    /"[^"]*"|\[(?:[_^=]*[A-Ga-g][',]*)+\]\d*\/?\d*-?|[_^=]*[A-Ga-gxz][',]*\d*\/?\d*-?/g;
-  let m;
-  while ((m = re.exec(str)) !== null) {
-    const t = m[0];
-    if (t[0] === '"') {
-      tokens.push({ annotation: t });
+  let i = 0;
+  while (i < str.length) {
+    if (str[i] === '"') {
+      const end = str.indexOf('"', i + 1);
+      if (end === -1) {
+        i += 1;
+        continue;
+      }
+      tokens.push({ annotation: str.slice(i, end + 1) });
+      i = end + 1;
       continue;
     }
-    const tie = t.slice(-1) === "-";
-    const body = tie ? t.slice(0, -1) : t;
-    const dm = body.match(/(\d+)$/);
-    const dur = dm ? parseInt(dm[1], 10) : 1;
-    const pitch = dm ? body.slice(0, -dm[1].length) : body;
-    const head = pitch[0] === "[" ? "[" : pitch.replace(/^[_^=]+/, "")[0];
-    tokens.push({ pitch, dur, tie, rest: head === "z" || head === "x" });
+
+    const tokenStart = i;
+    let end = str[i] === "[" ? scanChordBracket(str, i) : -1;
+    if (end === -1) end = scanNoteLetter(str, i, NOTE_LETTERS);
+    if (end === -1) {
+      i += 1;
+      continue;
+    }
+    end = scanDuration(str, end);
+    if (str[end] === "-") end += 1;
+    pushNoteToken(tokens, str.slice(tokenStart, end));
+    i = end;
   }
   return tokens;
 }
@@ -327,7 +467,7 @@ function readMeter(text) {
 
 function readUnit(text) {
   const m = text.match(/^L:\s*(\d+)\s*\/\s*(\d+)/m);
-  if (m) return [parseInt(m[1], 10), parseInt(m[2], 10)];
+  if (m) return [Number.parseInt(m[1], 10), Number.parseInt(m[2], 10)];
   return [1, 8];
 }
 
@@ -907,7 +1047,7 @@ export function buildCompingTune(text, chords, song, pattern) {
   headerOut.push('V:2 name="R\\n3\\n5"' + clefSuffix);
   headerOut.push(split.kLine);
 
-  const melodyBody = split.body.replace(/\s+$/, "");
+  const melodyBody = split.body.trimEnd();
   const abc =
     headerOut.join("\n") +
     "\nV:1\n" + melodyBody +

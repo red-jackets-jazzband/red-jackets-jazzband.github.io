@@ -117,7 +117,7 @@ export function applyCompingColors(container, palette) {
     marks.forEach((mark) => {
       const match = /abcjs-chord-pos-(\d+)/.exec(mark.getAttribute("class"));
       if (!match) return;
-      const fn = order[parseInt(match[1], 10) - 1];
+      const fn = order[Number.parseInt(match[1], 10) - 1];
       if (fn && COMPING_FN_FILL[fn]) mark.style.fill = COMPING_FN_FILL[fn];
     });
     const key = onsetKey(group.getAttribute("class"));

@@ -1,5 +1,14 @@
-const VALID_CHORD =
-  /^[A-Ga-g]([#♯b♭])?(maj|m|min|dim|aug|sus|add)?(Ø)?(\d)?([#♯b♭])?(\d)?(\/[A-Ga-g]([#♯b♭])?(\d)?)?$/;
+// Split into a base-chord pattern and a bass-note pattern (tested separately
+// around any "/" bass annotation) rather than one combined regex — same
+// grammar, but keeps each pattern's branching complexity in check.
+const VALID_CHORD_BASE = /^[A-Ga-g]([#♯b♭])?(maj|m|min|dim|aug|sus|add)?(Ø)?(\d)?([#♯b♭])?(\d)?$/;
+const VALID_CHORD_BASS = /^[A-Ga-g]([#♯b♭])?(\d)?$/;
+
+function isValidChordName(name) {
+  const slash = name.indexOf("/");
+  if (slash === -1) return VALID_CHORD_BASE.test(name);
+  return VALID_CHORD_BASE.test(name.slice(0, slash)) && VALID_CHORD_BASS.test(name.slice(slash + 1));
+}
 
 // Replaces the sharp and flat signs with the official unicode chars.
 export function replaceAccidentalWithUtf8Char(note) {
@@ -68,7 +77,7 @@ export function parseChordScheme(song) {
         }
 
         if (!inAlternativeEnding) {
-          if (element.chord !== undefined && VALID_CHORD.test(element.chord[0].name)) {
+          if (element.chord !== undefined && isValidChordName(element.chord[0].name)) {
             const chord = replaceAccidentalWithUtf8Char(element.chord[0].name);
             currentMeasure.text.push(chord);
             didNotParseChordInThisMeasure = false;
@@ -153,7 +162,7 @@ export function computeChordOffset(song) {
     const voice = line.staff[0].voices[0] || [];
     for (let j = 0; j < voice.length; j++) {
       const el = voice[j];
-      if (el.chord && el.chord.length > 0 && VALID_CHORD.test(el.chord[0].name)) {
+      if (el.chord && el.chord.length > 0 && isValidChordName(el.chord[0].name)) {
         return measureCount;
       }
       if (el.el_type === "note") hasNotesInMeasure = true;

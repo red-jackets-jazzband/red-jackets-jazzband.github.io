@@ -212,7 +212,8 @@ export function createSetlistPrint(ctx) {
   function buildBooklet(name, songs, desc) {
     const container = byId("setlistPrintBooklet");
     if (!container) return;
-    const seq = (bookletSeq += 1);
+    bookletSeq += 1;
+    const seq = bookletSeq;
     pendingReads = 0;
     clear(container);
 
