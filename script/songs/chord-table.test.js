@@ -60,6 +60,18 @@ test("renderChordTable collapses an exactly-repeating 8-bar scheme", () => {
   });
 });
 
+test("renderChordTable collapses an exactly-repeating 16-bar scheme", () => {
+  inDom((container) => {
+    const sixteen = Array.from({ length: 16 }, (_, i) => bar([`C${i}`]));
+    const song = sixteen.concat(
+      sixteen.map((m) => bar(m.text.slice())),
+      sixteen.map((m) => bar(m.text.slice())),
+    );
+    renderChordTable(song, container);
+    assert.equal(container.querySelectorAll(".chordCell").length, 16);
+  });
+});
+
 test("scanRepeatBoundaries reads the first/last repeat cell indices", () => {
   inDom((container) => {
     renderChordTable([

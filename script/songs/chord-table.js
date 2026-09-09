@@ -20,7 +20,11 @@ function forceReflow(element) {
 */
 export function renderChordTable(chords, container) {
   if (!container) return;
-  const measures = simplifySong(simplifyBlues(chords), 8);
+  // Try each common form in turn; simplifySong is a no-op when the count
+  // doesn't evenly divide the scheme or the repeats aren't identical, so
+  // chaining is safe (e.g. an 8-bar collapse leaves nothing left for the
+  // 16-bar check to match against).
+  const measures = simplifySong(simplifySong(simplifyBlues(chords), 8), 16);
   const cols = measures.length > 4 * 4 ? 8 : 4;
 
   const grid = el("div", { class: "chordGrid", style: { "--chord-cols": String(cols) } });
