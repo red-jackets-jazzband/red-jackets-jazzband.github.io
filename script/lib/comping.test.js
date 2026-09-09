@@ -132,6 +132,27 @@ test("buildVoiceBody ignores a stray F: link line above the first bar", () => {
   assert.equal(out.replace(/\s+/g, " ").trim(), "x ||: B1 | B2 :|");
 });
 
+test("buildVoiceBody ignores a stray L: field left above the pickup", () => {
+  // Isle of Capri / All of Me / Jada order their header K: before L:, so
+  // splitHeaderBody (which cuts on the last K:) drops the L: field into the
+  // body, right above the pickup. Its newline must not read as a mid-measure
+  // line break — that wrapped the comping's first bar onto the melody's second
+  // system instead of sitting under the first full bar of line 1.
+  const melody = 'L:1/4\nC/F/A/|| "F" c c/d/ c B/A/ | c c z/ C/F/A/ |';
+  const out = buildVoiceBody(melody, ["B1", "B2"], 1, "x", 1, 4);
+  assert.equal(out.trim(), "x3/2 || B1 | B2 |");
+});
+
+test("buildVoiceBody keeps a genuine mid-tune M: field, not just header leakage", () => {
+  // A real meter change partway through, on its own line between barlines,
+  // must reach the comping voice exactly like the melody voice keeps it —
+  // only the header leak right after K: (the case above) gets dropped, not
+  // every M:/L:/Q: field anywhere in the body.
+  const melody = '"C" c8 |\nM:3/4\n| "C" c4 c4 c4 |';
+  const out = buildVoiceBody(melody, ["B1", "B2"], 0, "x8");
+  assert.equal(out.trim(), "B1 |\nM:3/4\n| B2 |");
+});
+
 test("measureBarSlots sums a bar segment in eighth slots", () => {
   // L:1/8 — one slot per unit
   assert.equal(measureBarSlots("c c c c", 1, 8), 4);

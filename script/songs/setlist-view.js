@@ -61,6 +61,7 @@ function downloadText(filename, text) {
 */
 export function createSetlistView(ctx) {
   let addSongQuery = "";
+  let addSongActiveIndex = -1; // keyboard-highlighted add-song result, -1 = none
   let focusAddSongAfterRender = false;
   let focusHandleAfterRender = null; // draggable-row index to re-focus after a keyboard nudge
   let rowDrag = null;
@@ -120,7 +121,7 @@ export function createSetlistView(ctx) {
 
   // ---- row controls (personal) ----------------------------------
 
-  function appendRowControls(row, index, personalEntry) {
+  function appendRowControls(row, personalEntry) {
     const handle = el("button", {
       type: "button",
       class: "setlist-drag-handle",
@@ -130,6 +131,11 @@ export function createSetlistView(ctx) {
       on: {
         pointerdown: (e) => beginRowDrag(e, handle, row, personalEntry.id),
         keydown: (e) => {
+          if (e.key === "Delete" || e.key === "Backspace") {
+            e.preventDefault();
+            removeRow(row, personalEntry.id);
+            return;
+          }
           let step = 0;
           if (e.key === "ArrowUp") step = -1;
           else if (e.key === "ArrowDown") step = 1;
@@ -148,10 +154,7 @@ export function createSetlistView(ctx) {
       title: "Remove",
       attrs: { "aria-label": "Remove" },
       on: {
-        click: () => {
-          removeSongFromPersonalSetlist(ctx.storage(), personalEntry.id, index);
-          refreshOpenPersonal();
-        },
+        click: () => removeRow(row, personalEntry.id),
       },
     }));
   }
@@ -179,7 +182,7 @@ export function createSetlistView(ctx) {
         },
       },
     }));
-    appendRowControls(row, index, personalEntry);
+    appendRowControls(row, personalEntry);
     return row;
   }
 
@@ -220,7 +223,7 @@ export function createSetlistView(ctx) {
 
     if (personalEntry) {
       row.append(semitoneField(song, index, personalEntry));
-      appendRowControls(row, index, personalEntry);
+      appendRowControls(row, personalEntry);
     } else {
       const badge = formatSetlistKeyLabel(song.key);
       if (badge) row.append(el("span", { class: "setlist-song-key-badge", text: badge }));
@@ -356,6 +359,23 @@ export function createSetlistView(ctx) {
 
   function persistOrder(personalId, orderIndices) {
     setPersonalSetlistOrder(ctx.storage(), personalId, orderIndices);
+    refreshOpenPersonal();
+  }
+
+  // Drop a song / divider row from the open personal setlist, reading its
+  // live position out of the DOM so it stays correct after a drag. Keyboard
+  // focus lands on the handle that slides into the freed slot (or the last).
+  function removeRow(row, personalId) {
+    const rows = draggableRows();
+    const pos = rows.indexOf(row);
+    removeSongFromPersonalSetlist(ctx.storage(), personalId, Number(row.dataset.setlistIndex));
+    if (pos !== -1) {
+      if (rows.length > 1) {
+        focusHandleAfterRender = Math.min(pos, rows.length - 2);
+      } else {
+        focusAddSongAfterRender = true;
+      }
+    }
     refreshOpenPersonal();
   }
 
@@ -522,18 +542,46 @@ export function createSetlistView(ctx) {
     return query ? filterSongsByQuery(ctx.state.allSongs, query).slice(0, 8) : [];
   }
 
-  // Append one song to the open personal setlist and keep the search focused.
+  // Append one song to the open personal setlist, then clear the search and
+  // keep it focused so the next title can be typed straight away.
   function addSongByFile(file) {
     if (!ctx.state.currentPersonalId) return false;
     addSongToPersonalSetlist(ctx.storage(), ctx.state.currentPersonalId, { file, key: "" });
+    addSongQuery = "";
     focusAddSongAfterRender = true;
     refreshOpenPersonal();
     return true;
   }
 
+  function addSongResultButtons() {
+    const resultsEl = byId("setlistAddSongResults");
+    return resultsEl
+      ? Array.from(resultsEl.querySelectorAll(".rj-library-add-song-result"))
+      : [];
+  }
+
+  // Paint the keyboard highlight on the active result and scroll it into view.
+  function highlightAddSongActive() {
+    const buttons = addSongResultButtons();
+    buttons.forEach((btn, i) => btn.classList.toggle("is-active", i === addSongActiveIndex));
+    const active = buttons[addSongActiveIndex];
+    if (active) active.scrollIntoView({ block: "nearest" });
+  }
+
+  // Step the highlight through the results with the Up/Down arrows, wrapping
+  // at both ends; the first press from "nothing selected" lands on an end.
+  function moveAddSongActive(dir) {
+    const count = addSongResultButtons().length;
+    if (!count) return;
+    if (addSongActiveIndex === -1) addSongActiveIndex = dir > 0 ? 0 : count - 1;
+    else addSongActiveIndex = (addSongActiveIndex + dir + count) % count;
+    highlightAddSongActive();
+  }
+
   function renderAddSongResults(query) {
     const resultsEl = byId("setlistAddSongResults");
     if (!resultsEl) return;
+    addSongActiveIndex = -1;
     clear(resultsEl);
     resultsEl.classList.toggle("is-open", Boolean(query));
     if (!query) return;
@@ -556,17 +604,46 @@ export function createSetlistView(ctx) {
     });
   }
 
-  // Enter mirrors the library search: add the lone match, then clear the
+  // Enter adds the arrow-highlighted result, or — mirroring the library
+  // search — the lone match when nothing is highlighted, then clears the
   // field. Always clears, match or not.
   function submitAddSong(inputEl) {
     const matches = addSongMatches(addSongQuery);
+    let chosen = null;
+    if (addSongActiveIndex >= 0) chosen = matches[addSongActiveIndex];
+    else if (matches.length === 1) chosen = matches[0];
     addSongQuery = "";
     inputEl.value = "";
     renderAddSongResults("");
-    if (matches.length === 1) addSongByFile(matches[0].file);
+    if (chosen) addSongByFile(chosen.file);
   }
 
   function buildAddSongRow() {
+    // With the field empty there are no results to walk, so the arrows leave
+    // the tray: Up jumps back into the setlist (its last row), Down drops
+    // onto the "Add a set break" button.
+    function focusAdjacentOnEmptyArrow(key) {
+      if (key === "ArrowDown") {
+        breakBtn.focus();
+        return;
+      }
+      const handles = byId("songList")
+        ? byId("songList").querySelectorAll(".setlist-drag-handle")
+        : [];
+      const last = handles[handles.length - 1];
+      if (last) last.focus();
+    }
+
+    function handleAddSongArrowKey(e) {
+      e.preventDefault();
+      if (!e.target.value.trim()) {
+        focusAdjacentOnEmptyArrow(e.key);
+        return;
+      }
+      const move = () => moveAddSongActive(e.key === "ArrowDown" ? 1 : -1);
+      ctx.setlistData.ensureSongsLoaded(move, move);
+    }
+
     const search = el("input", {
       type: "search",
       id: "setlistAddSongSearch",
@@ -580,6 +657,10 @@ export function createSetlistView(ctx) {
           );
         },
         keydown: (e) => {
+          if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            handleAddSongArrowKey(e);
+            return;
+          }
           if (e.key !== "Enter") return;
           e.preventDefault();
           const submit = () => submitAddSong(e.target);

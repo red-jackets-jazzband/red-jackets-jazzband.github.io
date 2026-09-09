@@ -498,10 +498,29 @@ function splitHeaderBody(text) {
 // followed by an `F:` YouTube link (shake_that_thing, shame_shame_shame)
 // leaves that URL sitting in the body, and its letters parse as a phantom
 // leading bar that shoves the whole comping voice down a system.
+const ALWAYS_STRIP = /^\s*(w:|W:|s:|P:|N:|O:|F:|I:|r:|%)/;
+
+// `splitHeaderBody` splits on the *last* K: line, so a tune that orders its
+// header `K:` before `L:`/`M:`/`Q:` (all_of_me, isle_of_capri, jada order K:
+// before L:) drops that field into the body. It carries no note letters on
+// its own, but joined to the pickup segment below it (`L:1/4\nC/F/A/`) its
+// newline reads as a mid-measure line break and wraps the comping's first
+// bar onto the next system — so it must go. But `L:`/`M:`/`Q:` are also
+// legitimate *mid-tune* fields (a real meter or unit-length change): once
+// real music has started, the melody voice keeps such a field verbatim, and
+// the comping voice must too, or its later bars fall out of step. Only strip
+// them from the contiguous run of header leakage right after K:, never once
+// music has begun.
+const HEADER_LEAK = /^\s*(L:|M:|Q:)/;
+
 function stripNonMusicLines(body) {
-  return body
-    .split("\n")
-    .filter((line) => !/^\s*(w:|W:|s:|P:|N:|O:|F:|I:|r:|%)/.test(line))
+  const lines = body.split("\n");
+  let leadEnd = 0;
+  while (leadEnd < lines.length && (ALWAYS_STRIP.test(lines[leadEnd]) || HEADER_LEAK.test(lines[leadEnd]))) {
+    leadEnd++;
+  }
+  return lines
+    .filter((line, i) => i >= leadEnd && !ALWAYS_STRIP.test(line))
     .join("\n");
 }
 

@@ -8,6 +8,10 @@ import {
 } from "../lib/setlists-store.js";
 import { createSetlistView } from "./setlist-view.js";
 
+const DRAG_HANDLE_SELECTOR = ".setlist-song-row .setlist-drag-handle";
+const BASIN_STREET_FILE = "basin_street.abc";
+const BASIN_STREET_NAME = "Basin Street Blues";
+
 function setup({ songs = [], personal = true } = {}) {
   const page = mountPage();
   const storage = memoryStorage();
@@ -53,7 +57,7 @@ test("renderOpen numbers a flat personal setlist 1..n with drag handles + remove
   try {
     view.renderOpen(entry.name, entry.songs, entry, "");
     assert.deepEqual(rowNumbers(), ["1", "2", "3"]);
-    assert.equal(document.querySelectorAll(".setlist-song-row .setlist-drag-handle").length, 3);
+    assert.equal(document.querySelectorAll(DRAG_HANDLE_SELECTOR).length, 3);
     assert.equal(document.querySelectorAll(".setlist-song-remove").length, 3);
     assert.ok(document.getElementById("setlistAddSongSearch"), "add-song tray present");
   } finally {
@@ -83,20 +87,135 @@ function enterAddSong(allSongs, query) {
 
 test("Enter in the add-song search adds a lone match and clears the field", () => {
   const result = enterAddSong([
-    { file: "basin_street.abc", name: "Basin Street Blues" },
+    { file: BASIN_STREET_FILE, name: BASIN_STREET_NAME },
     { file: "muskrat.abc", name: "Muskrat Ramble" },
   ], "basin");
-  assert.deepEqual(result.files, ["a.abc", "basin_street.abc"]);
+  assert.deepEqual(result.files, ["a.abc", BASIN_STREET_FILE]);
   assert.equal(result.value, "");
 });
 
 test("Enter with no single match just clears the add-song field", () => {
   const result = enterAddSong([
-    { file: "basin_street.abc", name: "Basin Street Blues" },
+    { file: BASIN_STREET_FILE, name: BASIN_STREET_NAME },
     { file: "basin_two.abc", name: "Basin Two" },
   ], "basin");
   assert.deepEqual(result.files, ["a.abc"]);
   assert.equal(result.value, "");
+});
+
+// Open a personal setlist (one song, "a.abc") with the add-song search
+// pre-filled with `query` against a library of `allSongs`. Shared by the
+// result-click/arrow-key/highlight tests below.
+function openAddSongSearch(allSongs, query) {
+  const result = setup({ songs: [{ file: "a.abc" }] });
+  const { view, ctx, entry } = result;
+  ctx.state.allSongs = allSongs;
+  view.renderOpen(entry.name, entry.songs, entry, "");
+  const search = document.getElementById("setlistAddSongSearch");
+  search.value = query;
+  search.dispatchEvent(new window.Event("input"));
+  return { ...result, search };
+}
+
+test("clicking an add-song result adds the song and clears the search field", () => {
+  const { entry, storage, cleanup } = openAddSongSearch([
+    { file: BASIN_STREET_FILE, name: BASIN_STREET_NAME },
+    { file: "muskrat.abc", name: "Muskrat Ramble" },
+  ], "basin");
+  try {
+    document.querySelector(".rj-library-add-song-result").dispatchEvent(new window.Event("click"));
+
+    assert.deepEqual(
+      getPersonalSetlist(storage, entry.id).songs.map((s) => s.file),
+      ["a.abc", BASIN_STREET_FILE],
+    );
+    assert.equal(document.getElementById("setlistAddSongSearch").value, "");
+    assert.equal(document.querySelectorAll(".rj-library-add-song-result").length, 0);
+  } finally {
+    cleanup();
+  }
+});
+
+test("Arrow keys move the add-song highlight and Enter adds the highlighted result", () => {
+  const { entry, storage, search, cleanup } = openAddSongSearch([
+    { file: BASIN_STREET_FILE, name: BASIN_STREET_NAME },
+    { file: "basin_two.abc", name: "Basin Two" },
+    { file: "basin_three.abc", name: "Basin Three" },
+  ], "basin");
+  try {
+    const arrow = (key) => search.dispatchEvent(
+      new window.KeyboardEvent("keydown", { key, bubbles: true }),
+    );
+    arrow("ArrowDown"); // -> first
+    arrow("ArrowDown"); // -> second
+    assert.equal(
+      document.querySelectorAll(".rj-library-add-song-result")[1].classList.contains("is-active"),
+      true,
+    );
+    arrow("ArrowUp"); // -> first
+    search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+
+    assert.deepEqual(
+      getPersonalSetlist(storage, entry.id).songs.map((s) => s.file),
+      ["a.abc", BASIN_STREET_FILE],
+    );
+    assert.equal(search.value, "");
+  } finally {
+    cleanup();
+  }
+});
+
+test("ArrowUp from no selection highlights the last add-song result and wraps", () => {
+  const { search, cleanup } = openAddSongSearch([
+    { file: BASIN_STREET_FILE, name: BASIN_STREET_NAME },
+    { file: "basin_two.abc", name: "Basin Two" },
+  ], "basin");
+  try {
+    search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+
+    const results = document.querySelectorAll(".rj-library-add-song-result");
+    assert.equal(results[results.length - 1].classList.contains("is-active"), true);
+
+    search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    assert.equal(results[0].classList.contains("is-active"), true);
+  } finally {
+    cleanup();
+  }
+});
+
+test("with the add-song field empty, ArrowUp jumps to the setlist and ArrowDown to the break button", () => {
+  const { view, ctx, entry, cleanup } = setup({ songs: [{ file: "a.abc" }, { file: "b.abc" }] });
+  try {
+    ctx.state.allSongs = [{ file: "a.abc", name: "A" }, { file: "b.abc", name: "B" }];
+    view.renderOpen(entry.name, entry.songs, entry, "");
+    const search = document.getElementById("setlistAddSongSearch");
+
+    search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+    const handles = document.querySelectorAll(DRAG_HANDLE_SELECTOR);
+    assert.equal(document.activeElement, handles[handles.length - 1]);
+
+    search.focus();
+    search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    assert.equal(document.activeElement, document.querySelector(".rj-library-add-break"));
+  } finally {
+    cleanup();
+  }
+});
+
+test("typing again resets the add-song highlight", () => {
+  const { search, cleanup } = openAddSongSearch([
+    { file: BASIN_STREET_FILE, name: BASIN_STREET_NAME },
+    { file: "basin_two.abc", name: "Basin Two" },
+  ], "basin");
+  try {
+    search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    search.value = "basin ";
+    search.dispatchEvent(new window.Event("input"));
+
+    assert.equal(document.querySelectorAll(".rj-library-add-song-result.is-active").length, 0);
+  } finally {
+    cleanup();
+  }
 });
 
 test("renderOpen restarts numbering per set and shows headings", () => {
@@ -192,7 +311,7 @@ test("keyboard nudge on a drag handle persists the new order", () => {
   });
   try {
     view.renderOpen(entry.name, entry.songs, entry, "");
-    const firstHandle = document.querySelector(".setlist-song-row .setlist-drag-handle");
+    const firstHandle = document.querySelector(DRAG_HANDLE_SELECTOR);
     firstHandle.dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
     assert.deepEqual(
       getPersonalSetlist(storage, entry.id).songs.map((s) => s.file),
@@ -201,6 +320,68 @@ test("keyboard nudge on a drag handle persists the new order", () => {
   } finally {
     cleanup();
   }
+});
+
+// Open a personal setlist of three songs (a/b/c), already rendered.
+function openThreeSongSetlist() {
+  const result = setup({
+    songs: [{ file: "a.abc" }, { file: "b.abc" }, { file: "c.abc" }],
+  });
+  const { view, entry } = result;
+  view.renderOpen(entry.name, entry.songs, entry, "");
+  return result;
+}
+
+// Open a three-song personal setlist, run `trigger` against it, and assert
+// the surviving song files. Shared by the remove-row tests below.
+function assertRemoval(trigger, expectedFiles) {
+  const { entry, storage, cleanup } = openThreeSongSetlist();
+  try {
+    trigger();
+    assert.deepEqual(
+      getPersonalSetlist(storage, entry.id).songs.map((s) => s.file),
+      expectedFiles,
+    );
+  } finally {
+    cleanup();
+  }
+}
+
+test("the remove button drops the song from the personal setlist", () => {
+  assertRemoval(
+    () => document.querySelectorAll(".setlist-song-remove")[1]
+      .dispatchEvent(new window.Event("click")),
+    ["a.abc", "c.abc"],
+  );
+});
+
+test("Delete on a focused drag handle removes that row", () => {
+  assertRemoval(
+    () => document.querySelectorAll(DRAG_HANDLE_SELECTOR)[0]
+      .dispatchEvent(new window.KeyboardEvent("keydown", { key: "Delete", bubbles: true })),
+    ["b.abc", "c.abc"],
+  );
+});
+
+test("Delete on the only row's drag handle moves focus to the add-song field", () => {
+  const { view, entry, cleanup } = setup({ songs: [{ file: "a.abc" }] });
+  try {
+    view.renderOpen(entry.name, entry.songs, entry, "");
+    document.querySelector(DRAG_HANDLE_SELECTOR)
+      .dispatchEvent(new window.KeyboardEvent("keydown", { key: "Delete", bubbles: true }));
+    assert.equal(document.activeElement, document.getElementById("setlistAddSongSearch"));
+  } finally {
+    cleanup();
+  }
+});
+
+test("remove reads the row's live position so it survives a reorder", () => {
+  assertRemoval(() => {
+    // Nudge the first song down, then remove what is now the first row (b.abc).
+    document.querySelector(DRAG_HANDLE_SELECTOR)
+      .dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    document.querySelector(".setlist-song-remove").dispatchEvent(new window.Event("click"));
+  }, ["a.abc", "c.abc"]);
 });
 
 test("clicking a song title opens it in the sheet with the resolved transpose", () => {

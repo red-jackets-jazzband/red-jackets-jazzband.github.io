@@ -1987,11 +1987,13 @@ select.rj-modal-input {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.rj-library-add-song-result:hover {
+.rj-library-add-song-result:hover,
+.rj-library-add-song-result.is-active {
   border-color: var(--rj-gold);
   color: var(--rj-gold);
 }
-.rj-library-add-song-result:hover > .fa-plus {
+.rj-library-add-song-result:hover > .fa-plus,
+.rj-library-add-song-result.is-active > .fa-plus {
   color: var(--rj-gold);
 }
 .rj-library-add-song-empty {
