@@ -967,6 +967,13 @@ function countChords(fragment) {
      song   - the ABCjs parseOnly tune (concert pitch).
      pattern- a COMPING_PATTERNS value.
 
+   The sheet's Mixer panel depends on melody staying V:1 and comping V:2
+   below, two different ways: lib/audio-mix.js's computeVoicesOff mutes by
+   ABCjs voice index (SynthController's own `voicesOff` option), and its
+   injectMixerAudio stamps each voice's %%MIDI program (Voice picker) right
+   after the body's exact "...\nV:1\n<melody>\nV:2\n<comping>\n" markers —
+   a reordered voice split would mute, or re-voice, the wrong one.
+
    Returns { abc, palette }, or null when comping can't apply (no chords, an
    unsupported meter, an already multi-voiced tune, no K: line):
      abc     - the augmented ABC (melody as V:1, one block-chord comping voice

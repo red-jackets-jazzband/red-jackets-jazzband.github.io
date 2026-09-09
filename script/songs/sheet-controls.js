@@ -119,7 +119,7 @@ export function initSheetControls(ctx) {
   on("tempoDownBtn", "click", () => ctx.audio.stepTempo(-TEMPO_STEP));
   on("playPauseBtn", "click", () => ctx.audio.playPause());
   on("stopBtn", "click", () => ctx.audio.stop());
-  on("melodyOffBtn", "click", () => ctx.audio.toggleMelody());
+  on("mixerBtn", "click", () => ctx.mixer.toggle());
   on("sheetBackBtn", "click", () => document.body.classList.remove("rj-sheet-active"));
 
   initAdvancedToggle(ctx);

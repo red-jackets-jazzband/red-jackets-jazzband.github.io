@@ -20,7 +20,6 @@ function setup() {
       stepTempo: () => {},
       playPause: () => {},
       stop: () => {},
-      toggleMelody: () => {},
     },
   });
   // #instrument is built at runtime by selects.js — add the option the tests need.
@@ -82,6 +81,28 @@ test("the instrument offset shifts the notation but not the audio transpose", ()
     assert.equal(audioCalls.transpose.at(-1), 1);
     // notation gets stepper + instrument offset
     assert.equal(abcjs.calls.renderAbc.at(-1).params.visualTranspose, 3);
+  } finally {
+    cleanup();
+  }
+});
+
+// resolveRenderText's injectMixerAudio call is unit-tested directly and
+// thoroughly in lib/audio-mix.test.js; here the ABCjs stub always parses to
+// an empty-voices tune, so chords.length is always 0 and Bass/Chords
+// injection is a no-op regardless of what's asserted through this harness.
+// What *is* worth checking here is the booklet early-return guard itself.
+test("a booklet render's ABC text is untouched by the mixer (isBooklet skips injection)", () => {
+  const { ctx, abcjs, sheet, cleanup } = setup();
+  try {
+    ctx.state.mixer.bassVolume = 50;
+    document.getElementById("notation").insertAdjacentHTML(
+      "afterend",
+      "<div id='bk-n2'></div><div id='bk-c2'></div><div id='bk-t2'></div>",
+    );
+    withAbcjs(abcjs, () => sheet.renderIntoBooklet(TUNE, {
+      notationId: "bk-n2", chordId: "bk-c2", titleId: "bk-t2",
+    }));
+    assert.equal(abcjs.calls.renderAbc.at(-1).abc, TUNE);
   } finally {
     cleanup();
   }

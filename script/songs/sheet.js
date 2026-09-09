@@ -3,6 +3,7 @@ import { offsetForInstrument, changeClefForInstrument } from "../lib/instruments
 import { parseChordScheme, computeChordOffset } from "../lib/chords.js";
 import { convertChordsToRoman } from "../lib/music-theory.js";
 import { buildCompingTune } from "../lib/comping.js";
+import { injectMixerAudio } from "../lib/audio-mix.js";
 import { renderChordTable, scanRepeatBoundaries, fitChordTable } from "./chord-table.js";
 import { stylePartMarkers, applyCompingColors } from "./sheet-decorations.js";
 import { updateIrealProLink } from "./irealpro-link.js";
@@ -62,9 +63,9 @@ function fitLiveChordGrid(chordId) {
   The sheet: the on-screen lead-sheet reader, and the same engraving pipeline
   reused to fill each song block of a print booklet.
 
-  render(text, { transposeSemitones })   open a song fresh (resets tempo + the
-                                         mute-melody toggle, seeds the Key
-                                         stepper)
+  render(text, { transposeSemitones })   open a song fresh (resets tempo,
+                                         seeds the Key stepper — the mixer's
+                                         levels are sticky across songs)
   rerender()                             re-engrave the current song in place
                                          (instrument / key / tempo / comping
                                          change) — reads the Key stepper live
@@ -139,6 +140,41 @@ export function createSheet(ctx) {
     return { renderText: abcText, palette: null, active: false };
   }
 
+  // A muted Bass/Chords channel is just its fader forced to 0 — see
+  // lib/audio-mix.js. (Melody/Comping mute goes through computeVoicesOff in
+  // audio-player.js instead — see lib/audio-mix.js's own doc comment for why
+  // the two channel groups aren't handled the same way.)
+  function effectiveMixerPercent(channel) {
+    const m = ctx.state.mixer;
+    return m[`${channel}Muted`] ? 0 : m[`${channel}Volume`];
+  }
+
+  // null (the Voice picker left on "Default") has to become undefined, not
+  // pass through as null — injectMixerAudio's own default parameters only
+  // kick in for undefined, so a stored null would otherwise reach ABCjs as
+  // a literal "%%MIDI program null".
+  function mixerProgram(channel) {
+    const value = ctx.state.mixer[`${channel}Program`];
+    return value === null ? undefined : value;
+  }
+
+  // Live sheet only: stamp the mixer's Bass/Chords levels + all four
+  // channels' voices into the ABC text before it's parsed, so the one
+  // visualObj that gets rendered is exactly what plays — see lib/audio-mix.js.
+  function resolveRenderText(comping, hasChords, isBooklet) {
+    if (isBooklet) return comping.renderText;
+    return injectMixerAudio(comping.renderText, {
+      compingActive: comping.active,
+      hasChords,
+      melodyProgram: mixerProgram("melody"),
+      compingProgram: mixerProgram("comping"),
+      bassPercent: effectiveMixerPercent("bass"),
+      bassProgram: mixerProgram("bass"),
+      chordsPercent: effectiveMixerPercent("chords"),
+      chordsProgram: mixerProgram("chords"),
+    });
+  }
+
   function engrave(text, opts) {
     const {
       notationId, chordId, titleId,
@@ -164,6 +200,8 @@ export function createSheet(ctx) {
     const comping = applyComping(abcText, chords, isBooklet);
     ctx.state.compingActive = comping.active;
 
+    const renderText = resolveRenderText(comping, chords.length > 0, isBooklet);
+
     if (addLink) {
       ctx.inspiration.updateLink(song.metaText.url, song.metaText.title);
       updateIrealProLink(song, chords);
@@ -177,7 +215,7 @@ export function createSheet(ctx) {
     const notationEl = byId(notationId);
     notationEl.classList.toggle("comping-active", comping.active);
 
-    const visualObjs = ABCJS.renderAbc(notationId, comping.renderText, abcParams(visual));
+    const visualObjs = ABCJS.renderAbc(notationId, renderText, abcParams(visual));
 
     if (comping.active) applyCompingColors(notationEl, comping.palette);
 
@@ -191,6 +229,8 @@ export function createSheet(ctx) {
     if (!isBooklet) {
       fitLiveChordGrid(chordId);
       ctx.audio.setRepeatBoundaries(scanRepeatBoundaries(chordEl));
+      ctx.state.hasChords = chords.length > 0;
+      ctx.mixer.refresh();
     }
 
     byId(titleId).innerHTML = titlePrefix + song.metaText.title;
@@ -224,7 +264,6 @@ export function createSheet(ctx) {
     const stepper = byId("transpose");
     if (stepper) stepper.value = transposeSemitones || 0;
     ctx.state.tempoOverrideBpm = null;
-    ctx.audio.melodOff = false;
     engrave(text, { ...LIVE_TARGETS, addLink: true });
   }
 

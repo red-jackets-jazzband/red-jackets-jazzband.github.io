@@ -58,17 +58,35 @@ test("stepTempo with no native tempo steps from the default bpm", () => {
   }
 });
 
-test("toggleMelody flips the flag, updates the button and re-renders", () => {
-  const { audio, rerenders, cleanup } = setup();
+test("initForTune's setTune passes voicesOff computed from the mixer's Melody/Comping mute state", async () => {
+  const { ctx, audio, cleanup } = setup({ compingActive: true, mixer: { melodyMuted: true, compingMuted: false } });
+  const abcjs = createAbcjsStub({ audioSupported: true });
   try {
-    assert.equal(audio.melodOff, false);
-    audio.toggleMelody();
-    assert.equal(audio.melodOff, true);
-    const btn = document.getElementById("melodyOffBtn");
-    assert.ok(btn.classList.contains("active"));
-    assert.match(btn.innerHTML, /microphone-lines-slash/);
-    assert.equal(btn.getAttribute("aria-label"), "Unmute melody");
-    assert.equal(rerenders.length, 1);
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+    assert.deepEqual(abcjs.calls.setTune.at(-1).params.voicesOff, [0]);
+
+    ctx.state.mixer = { melodyMuted: false, compingMuted: true };
+    withAbcjs(abcjs, () => audio.stop()); // re-primes via setTune with fresh synthParams
+    await flush();
+    assert.deepEqual(abcjs.calls.setTune.at(-1).params.voicesOff, [1]);
+
+    ctx.state.mixer = { melodyMuted: false, compingMuted: false };
+    withAbcjs(abcjs, () => audio.stop());
+    await flush();
+    assert.equal("voicesOff" in abcjs.calls.setTune.at(-1).params, false);
+  } finally {
+    cleanup();
+  }
+});
+
+test("initForTune's setTune fully mutes when melody is off and there's no comping voice", async () => {
+  const { audio, cleanup } = setup({ compingActive: false, mixer: { melodyMuted: true, compingMuted: false } });
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+    assert.equal(abcjs.calls.setTune.at(-1).params.voicesOff, true);
   } finally {
     cleanup();
   }

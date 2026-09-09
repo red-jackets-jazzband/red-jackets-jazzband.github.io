@@ -6,7 +6,7 @@ import { initSheetControls, clearBookletPrintState } from "./sheet-controls.js";
 
 function setup(overrides = {}) {
   const page = mountPage();
-  const calls = { rerender: 0, tempo: [], playPause: 0 };
+  const calls = { rerender: 0, tempo: [], playPause: 0, mixerToggle: 0 };
   const ctx = makeCtx({
     sheet: { rerender: () => { calls.rerender += 1; } },
     audio: {
@@ -19,8 +19,8 @@ function setup(overrides = {}) {
       stepTempo: (d) => calls.tempo.push(d),
       playPause: () => { calls.playPause += 1; },
       stop: () => {},
-      toggleMelody: () => {},
     },
+    mixer: { init: () => {}, refresh: () => {}, toggle: () => { calls.mixerToggle += 1; } },
     ...overrides,
   });
   initSheetControls(ctx);
@@ -56,6 +56,16 @@ test("the Tempo buttons step the audio player by ±TEMPO_STEP", () => {
     document.getElementById("tempoUpBtn").dispatchEvent(new window.Event("click"));
     document.getElementById("tempoDownBtn").dispatchEvent(new window.Event("click"));
     assert.deepEqual(calls.tempo, [4, -4]);
+  } finally {
+    cleanup();
+  }
+});
+
+test("the Mixer button toggles the mixer panel", () => {
+  const { calls, cleanup } = setup();
+  try {
+    document.getElementById("mixerBtn").dispatchEvent(new window.Event("click"));
+    assert.equal(calls.mixerToggle, 1);
   } finally {
     cleanup();
   }

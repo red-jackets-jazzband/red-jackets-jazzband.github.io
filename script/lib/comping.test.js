@@ -11,6 +11,7 @@ import {
   measureBarSlots,
 } from "./comping.js";
 import { tonalStub as TonalStub, withTonal, nameToMidi } from "../../../tests/helpers/stubs.js";
+import { injectMixerAudio } from "./audio-mix.js";
 
 // ---------------------------------------------------------------------------
 // Pure helpers
@@ -238,6 +239,22 @@ test("buildCompingTune adds a bracketed one-voice block-chord comping staff", ()
   assert.match(v2, /^\|:/);
   assert.match(v2, /:\|$/);
   assert.match(v2, /\[[A-Ga-g][A-Ga-g][A-Ga-g]\]/);
+});
+
+// Mixer integration check: lib/audio-mix.js's injectMixerAudio depends on
+// this function's exact "...\nV:1\n<melody>\nV:2\n<comping>\n" body shape
+// (see its own doc comment above) to stamp each voice's %%MIDI program
+// (Voice picker) after its own marker — this exercises that dependency
+// against the real output rather than a hand-typed guess at the shape.
+test("buildCompingTune's output accepts lib/audio-mix.js's injectMixerAudio", () => {
+  const out = withTonal(() => buildCompingTune(TUNE, CHORDS, fakeSong(), "whole_note"));
+  const stamped = injectMixerAudio(out.abc, {
+    compingActive: true, hasChords: true, melodyProgram: 71, compingProgram: 0, bassPercent: 0, chordsPercent: 0,
+  });
+  assert.match(stamped, /\nV:1\n%%MIDI program 71\n/);
+  assert.match(stamped, /\nV:2\n%%MIDI program 0\n/);
+  // the voice declaration line is still there exactly once, untouched
+  assert.equal((stamped.match(/V:2 name="R\\n3\\n5"/g) || []).length, 1);
 });
 
 test("buildCompingTune returns a colour palette, one entry per drawn chord onset", () => {

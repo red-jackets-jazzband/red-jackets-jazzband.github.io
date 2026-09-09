@@ -7,6 +7,7 @@ import { humanizeSongFile } from "../lib/filename.js";
 import { readFile } from "./read-file.js";
 import { createAudioPlayer } from "./audio-player.js";
 import { createSheet } from "./sheet.js";
+import { createMixer, loadMixerState } from "./mixer.js";
 import { createInspiration } from "./inspiration.js";
 import { initSheetControls } from "./sheet-controls.js";
 import { createInstrumentDropdown, createCompingDropdown } from "./selects.js";
@@ -42,6 +43,7 @@ function createApp() {
       currentSongText: undefined, // clef-adjusted ABC currently on the sheet
       compingActive: false,
       tempoOverrideBpm: null,
+      mixer: loadMixerState(),
     },
     readFile,
     storage: safeStorage,
@@ -129,6 +131,7 @@ function createApp() {
 
   ctx.audio = createAudioPlayer(ctx);
   ctx.sheet = createSheet(ctx);
+  ctx.mixer = createMixer(ctx);
   ctx.inspiration = createInspiration(ctx);
   ctx.library = createLibraryTab(ctx);
   ctx.setlistData = createSetlistData(ctx);
@@ -146,6 +149,7 @@ function createApp() {
     createInstrumentDropdown(ctx);
     createCompingDropdown(ctx);
     initSheetControls(ctx);
+    ctx.mixer.init();
     ctx.inspiration.init();
     ctx.swipeNav.init();
   }

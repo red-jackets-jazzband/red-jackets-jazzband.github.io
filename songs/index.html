@@ -130,7 +130,7 @@
   <div class="sheet-transport">
     <button id="playPauseBtn" class="sheet-play-btn" disabled title="Play" aria-label="Play"><span class="fa-solid fa-play" aria-hidden="true"></span></button>
     <button id="stopBtn" class="sheet-icon-btn" type="button" disabled title="Stop and reset to the start" aria-label="Stop and reset to the start"><span class="fa-solid fa-stop" aria-hidden="true"></span></button>
-    <button id="melodyOffBtn" class="sheet-icon-btn" type="button" disabled title="Mute melody" aria-label="Mute melody"><span class="fa-solid fa-microphone-lines" aria-hidden="true"></span></button>
+    <button id="mixerBtn" class="sheet-icon-btn" type="button" disabled title="Mixer" aria-label="Mixer" aria-haspopup="dialog" aria-expanded="false"><span class="fa-solid fa-sliders" aria-hidden="true"></span></button>
   </div>
   <div id="inspirationSlot"></div>
   <div class="sheet-actions" id="sheetActions">
@@ -143,6 +143,59 @@
        alignment (same gotcha as #inspirationSlot). -->
   <button id="advancedToggleBtn" class="sheet-icon-btn sheet-advanced-toggle" type="button" title="More controls" aria-label="Show more controls" aria-expanded="false"><span class="fa-solid fa-angles-right" aria-hidden="true"></span></button>
   <div id="compingSlot" class="sheet-comping sheet-adv-item"></div>
+  <dialog id="mixerPanel" class="mixer-panel" aria-label="Mixer">
+    <div class="mixer-head">
+      <h3 class="mixer-head-title">Mixer</h3>
+      <button type="button" id="mixerCloseBtn" class="mixer-close" aria-label="Close mixer"><span class="fa-solid fa-xmark" aria-hidden="true"></span></button>
+    </div>
+    <div class="mixer-strip mixer-strip--volume-locked" id="mixerStripMelody">
+      <span class="mixer-swatch mixer-swatch--melody" aria-hidden="true"></span>
+      <span class="mixer-strip-label">Melody</span>
+      <div class="mixer-fader-track">
+        <div class="mixer-fader-fill" id="mixerMelodyFill"></div>
+        <input type="range" id="mixerMelodyRange" min="0" max="100" value="100" aria-label="Melody volume" disabled title="Volume control isn't available for this channel yet — use Mute">
+      </div>
+      <span class="mixer-readout" id="mixerMelodyReadout">—</span>
+      <button type="button" id="mixerMelodyMuteBtn" class="mixer-mute-btn" aria-pressed="false" title="Mute melody" aria-label="Mute melody"><span class="fa-solid fa-volume-high" aria-hidden="true"></span></button>
+      <select id="mixerMelodyVoiceSelect" class="mixer-voice-select" aria-label="Melody voice"></select>
+    </div>
+    <div class="mixer-strip" id="mixerStripBass">
+      <span class="mixer-swatch mixer-swatch--bass" aria-hidden="true"></span>
+      <span class="mixer-strip-label">Bass</span>
+      <div class="mixer-fader-track">
+        <div class="mixer-fader-fill" id="mixerBassFill"></div>
+        <input type="range" id="mixerBassRange" min="0" max="100" value="100" aria-label="Bass volume">
+      </div>
+      <span class="mixer-readout" id="mixerBassReadout">100%</span>
+      <button type="button" id="mixerBassMuteBtn" class="mixer-mute-btn" aria-pressed="false" title="Mute bass" aria-label="Mute bass"><span class="fa-solid fa-volume-high" aria-hidden="true"></span></button>
+      <select id="mixerBassVoiceSelect" class="mixer-voice-select" aria-label="Bass voice"></select>
+      <p class="mixer-strip-note">This tune has no chord symbols to build an accompaniment from.</p>
+    </div>
+    <div class="mixer-strip" id="mixerStripChords">
+      <span class="mixer-swatch mixer-swatch--chords" aria-hidden="true"></span>
+      <span class="mixer-strip-label">Chords</span>
+      <div class="mixer-fader-track">
+        <div class="mixer-fader-fill" id="mixerChordsFill"></div>
+        <input type="range" id="mixerChordsRange" min="0" max="100" value="100" aria-label="Chords volume">
+      </div>
+      <span class="mixer-readout" id="mixerChordsReadout">100%</span>
+      <button type="button" id="mixerChordsMuteBtn" class="mixer-mute-btn" aria-pressed="false" title="Mute chords" aria-label="Mute chords"><span class="fa-solid fa-volume-high" aria-hidden="true"></span></button>
+      <select id="mixerChordsVoiceSelect" class="mixer-voice-select" aria-label="Chords voice"></select>
+      <p class="mixer-strip-note">This tune has no chord symbols to build an accompaniment from.</p>
+    </div>
+    <div class="mixer-strip mixer-strip--volume-locked mixer-strip--comping" id="mixerStripComping">
+      <span class="mixer-swatch mixer-swatch--comping" aria-hidden="true"></span>
+      <span class="mixer-strip-label">Comping</span>
+      <div class="mixer-fader-track">
+        <div class="mixer-fader-fill" id="mixerCompingFill"></div>
+        <input type="range" id="mixerCompingRange" min="0" max="100" value="100" aria-label="Comping volume" disabled title="Volume control isn't available for this channel yet — use Mute">
+      </div>
+      <span class="mixer-readout" id="mixerCompingReadout">—</span>
+      <button type="button" id="mixerCompingMuteBtn" class="mixer-mute-btn" aria-pressed="false" title="Mute comping" aria-label="Mute comping"><span class="fa-solid fa-volume-high" aria-hidden="true"></span></button>
+      <select id="mixerCompingVoiceSelect" class="mixer-voice-select" aria-label="Comping voice"></select>
+    </div>
+  </dialog>
+  <div id="mixerBackdrop" class="mixer-backdrop" hidden></div>
 </div>
 <div id="abc-player-container" style="display:none;"></div>
 <div class="rj-sheet-paper">

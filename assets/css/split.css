@@ -753,6 +753,264 @@ video.video {
 }
 
 /*
+  Mixer panel (#mixerPanel): the Melody / Bass / Chords / Comping channel
+  strips that pop up from the transport cluster's Mixer button. It's a native
+  <dialog> (for real dialog accessibility semantics) toggled via its own
+  `open` attribute (songs/mixer.js's setOpen), never shown modally (no
+  showModal()/::backdrop — this is a plain popover, not a modal), so `inset:
+  auto` and `margin: 0` below undo the two UA defaults
+  (`dialog { inset: 0; margin: auto; }`) that would otherwise fight the
+  `position: fixed` + top/right placement this file and songs/mixer.js
+  together compute; `border`/`padding`/`background` are already overridden by
+  this rule's own higher-specificity class selector, so those UA defaults
+  need no explicit reset. `position: fixed`, not absolute — #rj-sheet clips
+  overflow (its rounded-card corners), so an absolutely-positioned popover
+  nested in #sheetmenu would be cut off wherever it overflowed that card;
+  fixed escapes that entirely, same as #inspirationPanel above. songs/mixer.js
+  sets `top`/`right` from the button's own rect on open; the sub-1024px media
+  query below overrides those inline coordinates (with !important, since
+  inline style otherwise always wins over a stylesheet) to dock it as a
+  bottom sheet instead.
+*/
+.mixer-panel {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  z-index: 20;
+  width: 300px;
+  max-width: calc(100vw - 24px);
+  background: #222222;
+  color: #ece6e6;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px;
+  box-shadow: 0 18px 44px rgba(0,0,0,.6);
+  padding: 14px 16px 16px;
+  font-family: "Montserrat", sans-serif;
+}
+.mixer-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.mixer-head-title {
+  flex: 1;
+  font: 700 13px/1 "Montserrat", sans-serif;
+  color: #ece6e6;
+  margin: 0;
+}
+.mixer-close {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: none;
+  border: none;
+  color: rgba(236,234,230,.5);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 11px;
+}
+.mixer-close:hover {
+  background: #2f2f2f;
+  color: #ece6e6;
+}
+.mixer-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mixer-strip + .mixer-strip {
+  margin-top: 10px;
+}
+.mixer-swatch {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.35) inset;
+}
+.mixer-swatch--melody {
+  background: #f0eee9;
+}
+.mixer-swatch--bass {
+  background: #8a6244;
+}
+.mixer-swatch--chords {
+  background: var(--rj-body);
+}
+.mixer-swatch--comping {
+  background: var(--rj-hover);
+}
+.mixer-strip-label {
+  flex: 0 0 46px;
+  font: 600 11px/1.2 "Montserrat", sans-serif;
+  color: #ece6e6;
+}
+.mixer-fader-track {
+  position: relative;
+  flex: 1 1 90px;
+  height: 6px;
+  border-radius: 3px;
+  background: #2f2f2f;
+}
+.mixer-fader-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 100%;
+  border-radius: 3px;
+  background: var(--rj-gold);
+  pointer-events: none;
+}
+.mixer-fader-track input[type="range"] {
+  position: absolute;
+  inset: -9px 0;
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.mixer-fader-track input[type="range"]::-webkit-slider-runnable-track {
+  background: transparent;
+}
+.mixer-fader-track input[type="range"]::-moz-range-track {
+  background: transparent;
+}
+.mixer-fader-track input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #ece6e6;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.5);
+}
+.mixer-fader-track input[type="range"]::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border: none;
+  border-radius: 50%;
+  background: #ece6e6;
+}
+.mixer-readout {
+  flex: none;
+  min-width: 38px;
+  text-align: right;
+  font: 700 11px/1 "Montserrat", sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: rgba(236,234,230,.6);
+}
+.mixer-mute-btn {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: #2f2f2f;
+  border: 1px solid rgba(255,255,255,.11);
+  color: rgba(236,234,230,.55);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 11px;
+}
+.mixer-mute-btn:hover {
+  color: #ece6e6;
+}
+.mixer-mute-btn.is-muted {
+  background: var(--rj-hover);
+  border-color: var(--rj-hover);
+  color: #fff;
+}
+/* The per-channel GM-instrument picker (populated from lib/gm-voices.js by
+   songs/mixer.js's buildVoiceOptions) — its own row under the fader, indented
+   to align with the label above it. */
+.mixer-voice-select {
+  flex: 0 0 100%;
+  margin-left: 54px;
+  max-width: calc(100% - 54px);
+  font: 600 9px/1.6 "Montserrat", sans-serif;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: rgba(236,234,230,.7);
+  background: #2f2f2f;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 5px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.mixer-voice-select:hover,
+.mixer-voice-select:focus {
+  border-color: var(--rj-gold);
+  color: #ece6e6;
+}
+/* Melody/Comping: Mute and Voice are real; volume isn't (see
+   lib/audio-mix.js's doc comment for why) — their fader is permanently
+   dimmed (and `disabled` in the markup) rather than left interactive with
+   no audible effect. */
+.mixer-strip--volume-locked .mixer-fader-track {
+  opacity: .4;
+}
+.mixer-strip-note {
+  display: none;
+  flex: 0 0 100%;
+  margin: 4px 0 0;
+  font: 400 11.5px/1.5 "Lora", serif;
+  font-style: italic;
+  color: rgba(236,234,230,.45);
+}
+/* Bass/Chords need chord symbols to build an accompaniment from — a gated
+   channel with nothing to mix is dimmed out of interaction and swaps in an
+   explainer, rather than left clickable with no audible effect (see
+   songs/mixer.js's updateGate). */
+.mixer-strip.is-inactive .mixer-fader-track,
+.mixer-strip.is-inactive .mixer-mute-btn,
+.mixer-strip.is-inactive .mixer-voice-select {
+  opacity: .4;
+  pointer-events: none;
+}
+.mixer-strip.is-inactive .mixer-strip-note {
+  display: block;
+}
+/* Comping needs its own pattern turned on; with no comping voice at all
+   there's nothing in its row worth even dimming — hide the whole strip
+   (swatch, label, fader, mute, Voice, readout), not just its controls. */
+.mixer-strip--comping.is-inactive {
+  display: none;
+}
+.mixer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  background: rgba(0,0,0,.5);
+}
+.mixer-backdrop[hidden] {
+  display: none;
+}
+/* The backdrop only dims anything once the panel docks as a bottom sheet
+   below; on desktop the popover never gets one, hidden or not. */
+@media (min-width: 1025px) {
+  .mixer-backdrop {
+    display: none !important;
+  }
+}
+@media (max-width: 1024px) {
+  .mixer-panel {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    width: auto !important;
+    max-width: none !important;
+    border-radius: 16px 16px 0 0;
+    padding-bottom: 22px;
+  }
+}
+
+/*
   #sheetmenu renders inside .split-bio, and `.split-bio a` (specificity 0,2,0)
   otherwise beats the control classes above for the <a>-backed buttons
   (Print / iRealPro / Inspiration): it paints a 1px dotted underline where
