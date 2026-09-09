@@ -587,7 +587,20 @@ export function buildVoiceBody(rawBody, barStrings, leadingRestBars, restToken, 
     };
     let content;
     let contentIsRest = false;
-    if (seen >= leadingRestBars && patternIdx < barStrings.length) {
+    const stubSlots =
+      seen >= leadingRestBars && lnum && lden ? measureBarSlots(p.s, lnum, lden) : 0;
+    if (stubSlots > 0 && stubSlots < 8) {
+      // A sub-bar measure mid-tune — the `D2` anacrusis at the top of Bei Mir's
+      // chorus, or any half-bar lead-in after a `||`. parseChordScheme still
+      // emits a (continuation) chord measure for it, so step past that pattern
+      // bar, but draw only an invisible rest of the melody's own length here so
+      // the following barline stays aligned between the two staves. (A leading
+      // pickup, `seen < leadingRestBars`, has no such phantom measure and is
+      // handled by measuredRest below.)
+      if (patternIdx < barStrings.length) patternIdx++;
+      content = "x" + formatDuration(stubSlots, lnum, lden);
+      contentIsRest = true;
+    } else if (seen >= leadingRestBars && patternIdx < barStrings.length) {
       content = barStrings[patternIdx++];
     } else {
       content = measuredRest(p.s);

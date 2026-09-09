@@ -172,6 +172,17 @@ test("buildVoiceBody matches a short pickup's length when given L", () => {
   assert.equal(out.trim(), "x || P1 | P2 |");
 });
 
+test("buildVoiceBody rests a mid-tune anacrusis and skips its phantom pattern", () => {
+  // Bei Mir: the chorus opens `D2 ||` — a quarter-note lead-in partway through
+  // the tune. parseChordScheme emits a continuation chord measure for it, so
+  // barStrings has an entry there; the comping voice must spend it on a
+  // measured rest, not a full pattern bar, or every barline from the chorus on
+  // drifts out of step with the melody.
+  const melody = '"C" c8 | "G7" d8 | D2 || "C" c8 | "G7" d8 |';
+  const out = buildVoiceBody(melody, ["B1", "B2", "SKIP", "B3", "B4"], 0, "x8", 1, 8);
+  assert.equal(out.trim(), "B1 | B2 | x2 || B3 | B4 |");
+});
+
 // ---------------------------------------------------------------------------
 // Pattern table
 // ---------------------------------------------------------------------------
