@@ -8,6 +8,7 @@ import { readFile } from "./read-file.js";
 import { createAudioPlayer } from "./audio-player.js";
 import { createSheet } from "./sheet.js";
 import { createMixer, loadMixerState } from "./mixer.js";
+import { createMetronome, loadMetronomeState } from "./metronome.js";
 import { createInspiration } from "./inspiration.js";
 import { initSheetControls } from "./sheet-controls.js";
 import { createInstrumentDropdown, createCompingDropdown } from "./selects.js";
@@ -50,6 +51,7 @@ function createApp() {
       compingActive: false,
       tempoOverrideBpm: null,
       mixer: loadMixerState(),
+      metronomeEnabled: loadMetronomeState(),
     },
     readFile,
     storage: safeStorage,
@@ -133,6 +135,7 @@ function createApp() {
   };
 
   ctx.audio = createAudioPlayer(ctx);
+  ctx.metronome = createMetronome(ctx);
   ctx.sheet = createSheet(ctx);
   ctx.mixer = createMixer(ctx);
   ctx.inspiration = createInspiration(ctx);
@@ -153,6 +156,7 @@ function createApp() {
     createCompingDropdown(ctx);
     initSheetControls(ctx);
     ctx.mixer.init();
+    ctx.metronome.init();
     ctx.inspiration.init();
     ctx.swipeNav.init();
   }

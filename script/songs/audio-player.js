@@ -3,6 +3,7 @@ import {
   DEFAULT_BPM, TEMPO_MIN_BPM, TEMPO_MAX_BPM, clampBpm, resolveBpm, bpmToWarpPercent,
 } from "../lib/tempo.js";
 import { computeVoicesOff } from "../lib/audio-mix.js";
+import { beatsPerMeasure } from "../lib/metronome.js";
 
 const SYNTH_PARAMS = {
   soundFontUrl: "https://gleitz.github.io/midi-js-soundfonts/FatBoy/",
@@ -29,6 +30,14 @@ function tagElements(groups, milliseconds, measureIdx) {
     node._abcSeekMs = milliseconds;
     node._abcMeasureIdx = measureIdx;
   }));
+}
+
+// abcjs's own tune-object shape for the M: field — see lib/irealpro.js for
+// the same access pattern. Optional-chained here (unlike irealpro.js) since
+// this feeds a background timer (songs/metronome.js's scheduler): a missing
+// staff/meter should fall back quietly, not throw out of a setInterval tick.
+function meterValueOf(visualObj) {
+  return visualObj?.lines?.[0]?.staff?.[0]?.meter?.value;
 }
 
 /*
@@ -82,6 +91,17 @@ export function createAudioPlayer(ctx) {
     btn.innerHTML = state.isPlaying ? PAUSE_ICON : PLAY_ICON;
     btn.title = state.isPlaying ? "Pause" : "Play";
     btn.classList.toggle("playing", state.isPlaying);
+  }
+
+  // Every place playback starts/stops/pauses funnels through here — one spot
+  // to keep the play button and the Metronome (songs/metronome.js, which only
+  // ticks while the sheet is actually playing) both in step with it, instead
+  // of each of the 5 call sites repeating "set the flag, then update the
+  // button" and risking a new one that forgets the metronome notification.
+  function setIsPlaying(playing) {
+    state.isPlaying = playing;
+    updatePlayButton();
+    ctx.metronome.onPlaybackChange(playing);
   }
 
   // ---- highlighting -----------------------------------------------------
@@ -139,8 +159,7 @@ export function createAudioPlayer(ctx) {
     onStart: clearHighlight,
     onEvent: highlightEvent,
     onFinished() {
-      state.isPlaying = false;
-      updatePlayButton();
+      setIsPlaying(false);
       clearHighlight();
     },
     onBeat() {},
@@ -233,8 +252,7 @@ export function createAudioPlayer(ctx) {
     Promise.resolve(ctrl.setWarp(bpmToWarpPercent(ctx.state.tempoOverrideBpm, state.nativeQpm)))
       .then(() => {
         if (ctrl !== state.synthController) return;
-        state.isPlaying = Boolean(ctrl.isStarted);
-        updatePlayButton();
+        setIsPlaying(Boolean(ctrl.isStarted));
       })
       .catch((err) => console.warn("Tempo change failed:", err));
   }
@@ -267,8 +285,7 @@ export function createAudioPlayer(ctx) {
     Promise.resolve(sc.play())
       .then(() => {
         if (sc !== state.synthController) return;
-        state.isPlaying = Boolean(sc.isStarted);
-        updatePlayButton();
+        setIsPlaying(Boolean(sc.isStarted));
       })
       .catch((err) => console.warn("Play/pause failed:", err));
   }
@@ -280,8 +297,7 @@ export function createAudioPlayer(ctx) {
     } catch {
       // pause on an already-stopped controller can throw — nothing to do.
     }
-    state.isPlaying = false;
-    updatePlayButton();
+    setIsPlaying(false);
     clearHighlight();
     setButtonsDisabled(true);
 
@@ -315,11 +331,10 @@ export function createAudioPlayer(ctx) {
       }
       state.synthController = null;
     }
-    state.isPlaying = false;
+    setIsPlaying(false);
     state.totalMs = 0;
     state.currentVisualObj = visualObj;
     state.nativeQpm = (visualObj.metaText && visualObj.metaText.tempo && visualObj.metaText.tempo.bpm) || null;
-    updatePlayButton();
     setButtonsDisabled(true);
     setLoadingVisible(true);
 
@@ -368,6 +383,16 @@ export function createAudioPlayer(ctx) {
     },
     get isPlaying() {
       return state.isPlaying;
+    },
+    // The two things songs/metronome.js needs to keep its click in step with
+    // the loaded tune: its own Q: tempo (resolveBpm falls back to this when
+    // the Tempo stepper hasn't been touched) and its time signature, read the
+    // same way lib/irealpro.js reads it off the same visualObj.
+    get nativeQpm() {
+      return state.nativeQpm;
+    },
+    get beatsPerMeasure() {
+      return beatsPerMeasure(meterValueOf(state.currentVisualObj));
     },
     setRepeatBoundaries({ start, end }) {
       state.repeatStart = start;

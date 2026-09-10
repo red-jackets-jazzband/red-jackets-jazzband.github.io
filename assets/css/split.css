@@ -1024,6 +1024,20 @@ video.video {
 .mixer-strip--comping.is-inactive {
   display: none;
 }
+/*
+  Metronome: not a channel like the four above it — no volume fader, no
+  Voice picker, nothing to gate on the current tune (see songs/mixer.js's
+  CHANNELS / GATE_STATE_KEY, neither of which lists it) — just a toggle
+  button, real on/off, wired by songs/metronome.js.
+*/
+.mixer-swatch--metronome {
+  background: rgba(236,234,230,.5);
+}
+.mixer-metronome-toggle.is-active {
+  background: var(--rj-gold);
+  border-color: var(--rj-gold);
+  color: #222222;
+}
 .mixer-backdrop {
   position: fixed;
   inset: 0;
