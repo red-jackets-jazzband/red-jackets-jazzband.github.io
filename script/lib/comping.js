@@ -418,9 +418,14 @@ export function rebeamBar(str, lnum, lden) {
    (ABCjs's default), and a comping fragment is exactly one measure, so nothing
    resets mid-fragment.
 */
+// Tonal never writes `=`; treat a bare accidental the same as an explicit
+// natural so the two compare equal.
+function normAccidental(a) {
+  return a === "" ? "nat" : a;
+}
+
 export function respellBar(fragment, keySig) {
   const barAcc = new Map();
-  const norm = (a) => (a === "" ? "nat" : a);
   return String(fragment).replaceAll(/\[[_^=A-Ga-g,']+\]/g, (chord) => {
     const rebuilt = [];
     for (const [, acc, letterRaw, oct] of chord
@@ -433,7 +438,7 @@ export function respellBar(fragment, keySig) {
       const current = barAcc.has(letterOct)
         ? barAcc.get(letterOct)
         : keySig[letter] || "";
-      if (norm(want) === norm(current)) {
+      if (normAccidental(want) === normAccidental(current)) {
         rebuilt.push(letterOct);
         continue;
       }

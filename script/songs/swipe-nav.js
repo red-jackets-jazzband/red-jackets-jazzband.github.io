@@ -8,6 +8,18 @@ import { classifySwipe } from "../lib/swipe.js";
   through the sidebar's library list (Library tab). Swipe left for the next
   song, right for the previous.
 */
+// A touch that begins on the toolbar (Key / Tempo steppers, transport,
+// dropdowns) or the "back to list" button belongs to that control, never to
+// us — even a thumb-roll across the narrow − / + buttons drifts far enough
+// sideways to read as a flick. Checked at touchstart, where the target is
+// reliable: by touchend it can be wherever the finger lifted, or gone with
+// the re-render a stepper tap kicks off. iOS Safari can hand us the button's
+// text node ("−" / "+") as the target, so climb to its element first.
+function startedOnControl(target) {
+  const el = target && target.nodeType === 3 ? target.parentElement : target;
+  return Boolean(el && el.closest && el.closest("#sheetmenu, #sheetBackBtn"));
+}
+
 export function createSwipeNav(ctx) {
   function step(dir) {
     if (ctx.state.activeTab === "setlists") {
@@ -15,18 +27,6 @@ export function createSwipeNav(ctx) {
       return;
     }
     ctx.library.stepLibrarySong(dir);
-  }
-
-  // A touch that begins on the toolbar (Key / Tempo steppers, transport,
-  // dropdowns) or the "back to list" button belongs to that control, never to
-  // us — even a thumb-roll across the narrow − / + buttons drifts far enough
-  // sideways to read as a flick. Checked at touchstart, where the target is
-  // reliable: by touchend it can be wherever the finger lifted, or gone with
-  // the re-render a stepper tap kicks off. iOS Safari can hand us the button's
-  // text node ("−" / "+") as the target, so climb to its element first.
-  function startedOnControl(target) {
-    const el = target && target.nodeType === 3 ? target.parentElement : target;
-    return Boolean(el && el.closest && el.closest("#sheetmenu, #sheetBackBtn"));
   }
 
   function init() {

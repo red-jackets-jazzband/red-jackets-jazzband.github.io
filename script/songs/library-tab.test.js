@@ -4,11 +4,13 @@ import { mountPage } from "../../../tests/helpers/dom.js";
 import { makeCtx } from "../../../tests/helpers/ctx.js";
 import { createLibraryTab } from "./library-tab.js";
 
+const CORRINE_FILE = "corrine.abc";
+
 const SONGS = [
   { name: "All of Me", file: "all_of_me.abc" },
   { name: "Basin Street Blues", file: "basin_street.abc" },
   { name: "Bill Bailey", file: "bill_bailey.abc" },
-  { name: "Corrine Corrina", file: "corrine.abc" },
+  { name: "Corrine Corrina", file: CORRINE_FILE },
 ];
 
 function setup(overrides = {}) {
@@ -121,10 +123,40 @@ test("Enter opens the sole search result and clears the query", () => {
     search.dispatchEvent(new window.Event("input"));
     search.focus();
     search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
-    assert.equal(opened.at(-1).file, "corrine.abc");
+    assert.equal(opened.at(-1).file, CORRINE_FILE);
     assert.equal(search.value, "");
     // Focus leaves the field so Spacebar plays the song immediately.
     assert.notEqual(document.activeElement, search);
+  } finally {
+    cleanup();
+  }
+});
+
+test("stepLibrarySong advances past a song file that appears twice in the index", () => {
+  // "Corrine Corrina" is aliased twice under the same file, as several real
+  // songs in index_of_songs.txt are (an alternate title pointing at the same
+  // .abc). Swiping forward from the second occurrence must land on the next
+  // row in the rendered list, not resolve back to the first occurrence's
+  // neighbor.
+  const DUPES = [
+    { name: "All of Me", file: "all_of_me.abc" },
+    { name: "Corrine Corrina", file: CORRINE_FILE },
+    { name: "Corrine (alt title)", file: CORRINE_FILE },
+    { name: "Deep River Blues", file: "deep_river.abc" },
+  ];
+  const { tab, ctx, opened, cleanup } = setup({ state: { allSongs: DUPES, activeTab: "library" } });
+  try {
+    tab.render("");
+    const rows = [...document.querySelectorAll("a.song-list-item")];
+    // Rows render alphabetically: All of Me, Corrine Corrina, Corrine (alt
+    // title), Deep River Blues. Click the *second* row for CORRINE_FILE
+    // directly, as a user would.
+    rows[2].dispatchEvent(new window.Event("click", { cancelable: true, bubbles: true }));
+    assert.equal(ctx.state.currentLibraryIndex, 2);
+
+    ctx.state.currentSongFile = CORRINE_FILE;
+    tab.stepLibrarySong(1);
+    assert.equal(opened.at(-1).file, "deep_river.abc");
   } finally {
     cleanup();
   }

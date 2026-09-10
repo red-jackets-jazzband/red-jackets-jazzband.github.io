@@ -523,19 +523,30 @@ video.video {
   height: 44px;
   display: grid;
   place-items: center;
-  background: var(--rj-gold);
+  background: #2f2f2f;
   border: none;
   border-radius: 8px;
-  color: var(--rj-ground);
+  color: rgba(236,234,230,.72);
   font-size: 15px;
   cursor: pointer;
   transition: background 0.15s, opacity 0.15s;
 }
-.sheet-play-btn:hover:not(:disabled) {
-  background: #f0b030;
+/*
+  Hover fills below are gated on `(hover: hover)` so tapping on a
+  touchscreen doesn't leave the button stuck in its hover state — touch UAs
+  apply :hover on tap and only clear it on the next tap elsewhere, with no
+  real "pointer left the button" event to end it. Genuine held state
+  (.active, .playing, .copied, [aria-pressed], .armed) isn't hover-driven
+  and stays outside this guard.
+*/
+@media (hover: hover) {
+  .sheet-play-btn:hover:not(:disabled) {
+    background: var(--rj-gold);
+    color: #222222;
+  }
 }
 .sheet-play-btn.playing {
-  background: #f0eee9;
+  background: var(--rj-gold);
 }
 .sheet-play-btn:disabled {
   opacity: .35;
@@ -548,8 +559,9 @@ video.video {
   splitting up when #sheetmenu runs out of width in the split-view sheet.
   Styled as one bordered field (same shell as the Key/Tempo steppers) with
   the three buttons as flush subfields divided by hairlines; overflow:hidden
-  clips the corners. Play sits flat like its siblings (just a gold glyph) and
-  only fills gold while it's actually playing.
+  clips the corners. Play sits flat like its siblings (just a dim glyph —
+  gold is reserved for editable fields at rest) and only fills gold while
+  it's actually playing.
 */
 /* Shares its shell (height, border, radius) with .sheet-stepper below. */
 .sheet-transport {
@@ -576,22 +588,29 @@ video.video {
 }
 .sheet-transport .sheet-play-btn {
   background: #2f2f2f;
-  color: var(--rj-gold);
+  color: rgba(236,234,230,.72);
 }
-.sheet-transport .sheet-play-btn:hover:not(:disabled),
 .sheet-transport .sheet-play-btn.playing {
   background: var(--rj-gold);
   color: #222222;
+}
+@media (hover: hover) {
+  .sheet-transport .sheet-play-btn:hover:not(:disabled) {
+    background: var(--rj-gold);
+    color: #222222;
+  }
 }
 .sheet-transport .sheet-play-btn:disabled {
   opacity: .35;
 }
 
 /*
-  Stop / Mute-melody: the two remaining playback controls, promoted out of
-  "More" to sit right next to Play as icon-only 44px buttons (same footprint
-  as Play, secondary styling like the steppers). Mute-melody flips to .active
-  — gold fill — while the melody voice is silenced.
+  Stop / Mixer / Print / iRealPro / advanced-toggle: icon-only 44px
+  controls (same footprint as Play, secondary styling like the steppers).
+  At rest they're a dim glyph, same as Play — gold is reserved for
+  editable fields (Key/Tempo steppers, the Instrument/Comping dropdowns)
+  at rest — but hover and a toggled-on state (e.g. the Mixer button while
+  its panel is open) still fill gold, same as everywhere else in this menu.
 */
 .sheet-icon-btn {
   flex: none;
@@ -608,16 +627,18 @@ video.video {
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.sheet-icon-btn:hover:not(:disabled) {
-  background: var(--rj-gold);
-  color: #222222;
-  /*
-    Print / iRealPro are <a>s, and the theme's `a:hover { border: none }`
-    (specificity 0,1,1) otherwise beats `.sheet-icon-btn`'s 1px border on
-    hover only — the button loses its border and, being content-box, shrinks
-    2px, nudging the glyph. Re-declare the border here so geometry holds.
-  */
-  border: 1px solid rgba(255,255,255,.11);
+@media (hover: hover) {
+  .sheet-icon-btn:hover:not(:disabled) {
+    background: var(--rj-gold);
+    color: #222222;
+    /*
+      Print / iRealPro are <a>s, and the theme's `a:hover { border: none }`
+      (specificity 0,1,1) otherwise beats `.sheet-icon-btn`'s 1px border on
+      hover only — the button loses its border and, being content-box, shrinks
+      2px, nudging the glyph. Re-declare the border here so geometry holds.
+    */
+    border: 1px solid rgba(255,255,255,.11);
+  }
 }
 .sheet-icon-btn.active {
   background: var(--rj-gold);
@@ -626,6 +647,18 @@ video.video {
 .sheet-icon-btn:disabled {
   opacity: .35;
   cursor: not-allowed;
+}
+
+/*
+  Purely a grouping node — wraps Key+Tempo, and separately Play+Inspiration,
+  so each pair's row can be aligned independently of #sheetmenu's own
+  justify-content (see the mobile override below). `display: contents`
+  erases it from the box tree here, so on desktop/tablet its children
+  remain #sheetmenu's own flex children, unchanged from before this
+  wrapper existed.
+*/
+.sheet-adjust {
+  display: contents;
 }
 
 /*
@@ -655,9 +688,11 @@ video.video {
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.sheet-stepper-btn:hover {
-  background: var(--rj-gold);
-  color: #222222;
+@media (hover: hover) {
+  .sheet-stepper-btn:hover {
+    background: var(--rj-gold);
+    color: #222222;
+  }
 }
 .sheet-stepper-value {
   flex: none;
@@ -720,14 +755,20 @@ video.video {
   background: #2f2f2f;
   border: 1px solid rgba(255,255,255,.11);
   border-radius: 8px;
-  color: var(--rj-gold) !important;
+  color: rgba(236,234,230,.72) !important;
   font: 600 12px/1 "Montserrat", sans-serif;
   text-decoration: none !important;
   white-space: nowrap;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.sheet-inspiration-link:hover {
+@media (hover: hover) {
+  .sheet-inspiration-link:hover {
+    background: var(--rj-gold);
+    color: #222222 !important;
+  }
+}
+.sheet-inspiration-link.active {
   background: var(--rj-gold);
   color: #222222 !important;
 }
@@ -748,8 +789,10 @@ video.video {
   color: rgba(236,234,230,.72);
   text-decoration: none;
 }
-.sheet-actions .sheet-icon-btn:hover {
-  color: #222222;
+@media (hover: hover) {
+  .sheet-actions .sheet-icon-btn:hover {
+    color: #222222;
+  }
 }
 
 /*
@@ -1025,8 +1068,10 @@ video.video {
 #sheetmenu .sheet-actions .sheet-icon-btn {
   color: rgba(236,234,230,.72);
 }
-#sheetmenu .sheet-actions .sheet-icon-btn:hover:not(:disabled) {
-  color: #222222;
+@media (hover: hover) {
+  #sheetmenu .sheet-actions .sheet-icon-btn:hover:not(:disabled) {
+    color: #222222;
+  }
 }
 #sheetmenu .sheet-inspiration-link {
   color: var(--rj-gold);
@@ -1043,9 +1088,11 @@ video.video {
   height: 20px;
   opacity: .72;
 }
-#iRealPro:hover:not(:disabled) .irealpro-logo {
-  opacity: 1;
-  filter: brightness(0);
+@media (hover: hover) {
+  #iRealPro:hover:not(:disabled) .irealpro-logo {
+    opacity: 1;
+    filter: brightness(0);
+  }
 }
 
 /* ============================================================
@@ -1156,9 +1203,11 @@ video.video {
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.inspiration-panel-icon-btn:hover {
-  background: var(--rj-gold);
-  color: #222222 !important;
+@media (hover: hover) {
+  .inspiration-panel-icon-btn:hover {
+    background: var(--rj-gold);
+    color: #222222 !important;
+  }
 }
 .inspiration-panel-icon-btn.copied {
   background: var(--rj-gold);
@@ -1254,9 +1303,11 @@ video.video {
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.inspiration-loop-btn:hover {
-  background: var(--rj-gold);
-  color: #222222 !important;
+@media (hover: hover) {
+  .inspiration-loop-btn:hover {
+    background: var(--rj-gold);
+    color: #222222 !important;
+  }
 }
 .inspiration-loop-btn:disabled {
   opacity: .38;
@@ -1757,8 +1808,8 @@ video.video {
   action, so it doesn't look like the pill buttons below it: a full-bleed
   strip (negative side margins cancel the toolbar's 16px pad) pinned to the
   top of the tools column, set off from the Print/Export/Delete controls by
-  a hairline underline. Same gold "← back" treatment as the sheet's
-  #sheetBackBtn ("← Songs" / "← Setlist"), so every back step reads alike.
+  a hairline underline. Same gold chevron-and-label treatment as the sheet's
+  #sheetBackBtn ("‹ Songs" / "‹ Setlist"), so every back step reads alike.
 */
 .rj-setlist-crumb {
   align-self: stretch;
@@ -2945,8 +2996,13 @@ body:has(#rjLibrary) .split-bio {
     cursor: pointer;
     transition: color 0.15s;
   }
-  #sheetBackBtn.rj-sheet-back:hover {
-    color: var(--rj-hover);
+  #sheetBackBtn.rj-sheet-back .fa-chevron-left {
+    font-size: 10px;
+  }
+  @media (hover: hover) {
+    #sheetBackBtn.rj-sheet-back:hover {
+      color: var(--rj-hover);
+    }
   }
 
   /*
@@ -2956,12 +3012,81 @@ body:has(#rjLibrary) .split-bio {
     instrument caption takes its own first line since it's the widest,
     least-interactive item.
   */
+  /*
+    Each wrapped line was left-packed by default: content-sized items just
+    piled up at the start of their own line with whatever was left over
+    sitting empty after them, so consecutive lines landed at visibly
+    different widths and felt randomly sized next to each other.
+    justify-content stretches that leftover gap between a line's own items
+    instead, so every line reaches both edges the same way the full-width
+    instrument dropdown above them already does. Only the icon actions
+    (Print/iRealPro/advanced-toggle) are left to this — Key+Tempo and
+    Play+Inspiration are each pulled out of #sheetmenu's own flex flow into
+    their own centered .sheet-adjust row below, since space-between would
+    otherwise shove each pair to opposite edges instead of keeping them
+    together.
+  */
   #sheetmenu {
     flex-wrap: wrap;
     row-gap: 8px;
+    justify-content: space-between;
   }
   .sheet-status {
     flex-basis: 100%;
+  }
+  /*
+    Turn each .sheet-adjust wrapper into a real flex row of its own —
+    escaping #sheetmenu's space-between above, which would otherwise shove
+    a wrapper's two children to opposite edges — so Key+Tempo, and
+    separately Play+Inspiration, each center as a pair on their own line
+    instead of sitting flush left (or apart).
+  */
+  .sheet-adjust {
+    display: flex;
+    flex-basis: 100%;
+    justify-content: center;
+    gap: 10px;
+  }
+  /*
+    Key/Tempo used to grow to fill their whole line, which read as two
+    arbitrarily wide bars rather than controls that belong with
+    Play/Stop/Mixer. Pin them instead to .sheet-transport's own rendered
+    width (its three 42px buttons + 2px border, no padding) so all three
+    pills read as one family of same-sized controls. Play+Inspiration need
+    no such pinning — they already share .sheet-adjust's centering and are
+    left at their own natural (different) sizes.
+  */
+  #keyStepper,
+  #tempoStepper {
+    flex: none;
+    box-sizing: border-box;
+    width: 128px;
+  }
+  /*
+    #keyStepper/#tempoStepper's three children (−, value, +) are all
+    flex:none — left them as-is, the two buttons and the value would hug
+    the left edge under the default justify-content:flex-start, dumping
+    the fixed width as dead space after the + button instead of around the
+    value like on desktop. Grow the value instead so the buttons stay
+    pinned to the pill's own edges and the number stays centered between
+    them.
+  */
+  .sheet-stepper-value {
+    flex: 1;
+  }
+
+  /*
+    .songtitle's xx-large/20px padding is sized for the desktop sheet, where
+    the staff renders close to its natural width and the chordtable is at
+    (or near) its natural 4/8-column size. On the mobile stacked sheet the
+    staff scales down through ABCjs's own responsive resize and
+    fitChordTable (chord-table.js) zooms the chord grid to fit — but the
+    title has no matching scale-down, so next to the now-shrunk staff and
+    chordtable it reads oversized. Shrink it here to match.
+  */
+  .songtitle {
+    font-size: x-large;
+    padding: 12px 16px;
   }
 
   /*
@@ -3522,21 +3647,24 @@ body:has(#rjLibrary) .split-bio {
    ignores all of this until the control opts into the customisable form
    element (appearance: base-select), handled in the @supports block. */
 #instrument option,
-#comping option {
+#comping option,
+.mixer-voice-select option {
   background-color: #262626;
   color: var(--rj-gold);
   padding: 9px 14px;
   font: 600 12px "Montserrat", sans-serif;
 }
 #instrument optgroup,
-#comping optgroup {
+#comping optgroup,
+.mixer-voice-select optgroup {
   background-color: #1f1f1f;
   color: rgba(236,234,230,.55);
   font: 700 10px "Montserrat", sans-serif;
   letter-spacing: .08em;
 }
 #instrument option:checked,
-#comping option:checked {
+#comping option:checked,
+.mixer-voice-select option:checked {
   background-color: var(--rj-gold);
   color: #1b1b1b;
 }
@@ -3546,8 +3674,10 @@ body:has(#rjLibrary) .split-bio {
   #sheetStatus #instrument,
   .sheet-comping .dropbtn,
   #compingSlot #comping,
+  .mixer-voice-select,
   #instrument::picker(select),
-  #comping::picker(select) {
+  #comping::picker(select),
+  .mixer-voice-select::picker(select) {
     appearance: base-select;
   }
   /* base-select turns the button into a flex box whose default cross-axis
@@ -3569,7 +3699,8 @@ body:has(#rjLibrary) .split-bio {
     text-overflow: ellipsis;
   }
   #instrument::picker(select),
-  #comping::picker(select) {
+  #comping::picker(select),
+  .mixer-voice-select::picker(select) {
     background: #222222;
     border: 1px solid rgba(255,255,255,.14);
     border-radius: 10px;
@@ -3578,7 +3709,8 @@ body:has(#rjLibrary) .split-bio {
     box-shadow: 0 14px 34px rgba(0,0,0,.5);
   }
   #instrument option,
-  #comping option {
+  #comping option,
+  .mixer-voice-select option {
     border-radius: 6px;
     padding: 8px 12px;
     transition: background-color .12s ease, color .12s ease;
@@ -3586,27 +3718,33 @@ body:has(#rjLibrary) .split-bio {
   #instrument option:hover,
   #comping option:hover,
   #instrument option:focus,
-  #comping option:focus {
+  #comping option:focus,
+  .mixer-voice-select option:hover,
+  .mixer-voice-select option:focus {
     background-color: rgba(226,157,15,.16);
     color: var(--rj-gold);
   }
   #instrument option:checked,
-  #comping option:checked {
+  #comping option:checked,
+  .mixer-voice-select option:checked {
     background-color: var(--rj-gold);
     color: #1b1b1b;
   }
   /* The gold fill is the selection cue; drop the native tick column. */
   #instrument option::checkmark,
-  #comping option::checkmark {
+  #comping option::checkmark,
+  .mixer-voice-select option::checkmark {
     display: none;
   }
   #instrument::picker-icon,
-  #comping::picker-icon {
+  #comping::picker-icon,
+  .mixer-voice-select::picker-icon {
     color: var(--rj-gold);
     transition: transform .15s ease;
   }
   #instrument:open::picker-icon,
-  #comping:open::picker-icon {
+  #comping:open::picker-icon,
+  .mixer-voice-select:open::picker-icon {
     transform: rotate(180deg);
   }
 }

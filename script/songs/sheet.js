@@ -59,6 +59,88 @@ function fitLiveChordGrid(chordId) {
   }
 }
 
+function updateInstrumentFooter() {
+  const select = byId("instrument");
+  const footer = byId("instrumentText");
+  if (select && footer) {
+    footer.innerHTML = select.options[select.selectedIndex].text.toLowerCase();
+  }
+}
+
+// Voices that carry their own clef/transpose/name are left untouched — the
+// instrument's clef and offset must not be applied on top.
+function hasInstrumentVoices(text) {
+  return text.split("\n").some((line) => {
+    if (!/^V:\d+/.test(line)) return false;
+    return line.includes("clef=") || line.includes("transpose=") || line.includes("name=");
+  });
+}
+
+function buildComping(abcText, compingValue) {
+  const concertSong = parseTune(abcText, 0);
+  const concertChords = parseChordScheme(concertSong);
+  return buildCompingTune(abcText, concertChords, concertSong, compingValue);
+}
+
+function compingRequest(isBooklet, chords) {
+  if (isBooklet || chords.length === 0) return "off";
+  const menu = byId("sheetmenu");
+  if (!menu || !menu.classList.contains("show-advanced")) return "off";
+  const select = byId("comping");
+  return select ? select.value : "off";
+}
+
+/*
+  Resolve the transposition. `visual` shifts both the printed notation and
+  (folded with the instrument's own offset) is what ABCjs engraves; `audio`
+  is the pre-instrument value handed to the synth as midiTranspose so every
+  instrument's part still sounds at the same concert pitch. Also stamps the
+  K: line's clef for a bass-clef instrument. A booklet render ignores the
+  Key stepper — its transposition comes only from the setlist's own override.
+*/
+function resolveTranspose(text, instrumentValue, extraTransposeSteps, isBooklet) {
+  const stepper = byId("transpose");
+  const stepperSteps = !isBooklet && stepper !== null ? Number(stepper.value) : 0;
+  const audio = stepperSteps + extraTransposeSteps;
+  if (hasInstrumentVoices(text)) return { abcText: text, visual: audio, audio };
+  return {
+    abcText: changeClefForInstrument(instrumentValue, text),
+    visual: audio + offsetForInstrument(instrumentValue),
+    audio,
+  };
+}
+
+/*
+  Live sheet only: when a comping pattern is picked, generate a second
+  block-chord staff from the tune in concert pitch and inject it, so the one
+  visualTranspose below moves melody + comping together. Returns the (maybe
+  augmented) ABC, the notehead colour palette and whether it took.
+*/
+function applyComping(abcText, chords, isBooklet) {
+  const compingValue = compingRequest(isBooklet, chords);
+  if (compingValue !== "off") {
+    const comping = buildComping(abcText, compingValue);
+    if (comping) return { renderText: comping.abc, palette: comping.palette, active: true };
+  }
+  return { renderText: abcText, palette: null, active: false };
+}
+
+// Move W: lyric SVGs out of the notation container so the printer can
+// paginate between them.
+function extractLyrics(notationEl) {
+  const lyricsEl = byId("lyrics");
+  if (!lyricsEl) return;
+  lyricsEl.innerHTML = "";
+  let moved = false;
+  notationEl.querySelectorAll("svg").forEach((svg) => {
+    if (svg.querySelector(".abcjs-unaligned-words")) {
+      lyricsEl.appendChild(svg);
+      moved = true;
+    }
+  });
+  lyricsEl.style.display = moved ? "" : "none";
+}
+
 /*
   The sheet: the on-screen lead-sheet reader, and the same engraving pipeline
   reused to fill each song block of a print booklet.
@@ -74,72 +156,6 @@ function fitLiveChordGrid(chordId) {
                                          (fixed width, no audio, no links)
 */
 export function createSheet(ctx) {
-  function updateInstrumentFooter() {
-    const select = byId("instrument");
-    const footer = byId("instrumentText");
-    if (select && footer) {
-      footer.innerHTML = select.options[select.selectedIndex].text.toLowerCase();
-    }
-  }
-
-  // Voices that carry their own clef/transpose/name are left untouched — the
-  // instrument's clef and offset must not be applied on top.
-  function hasInstrumentVoices(text) {
-    return text.split("\n").some((line) => {
-      if (!/^V:\d+/.test(line)) return false;
-      return line.includes("clef=") || line.includes("transpose=") || line.includes("name=");
-    });
-  }
-
-  function buildComping(abcText, compingValue) {
-    const concertSong = parseTune(abcText, 0);
-    const concertChords = parseChordScheme(concertSong);
-    return buildCompingTune(abcText, concertChords, concertSong, compingValue);
-  }
-
-  function compingRequest(isBooklet, chords) {
-    if (isBooklet || chords.length === 0) return "off";
-    const menu = byId("sheetmenu");
-    if (!menu || !menu.classList.contains("show-advanced")) return "off";
-    const select = byId("comping");
-    return select ? select.value : "off";
-  }
-
-  /*
-    Resolve the transposition. `visual` shifts both the printed notation and
-    (folded with the instrument's own offset) is what ABCjs engraves; `audio`
-    is the pre-instrument value handed to the synth as midiTranspose so every
-    instrument's part still sounds at the same concert pitch. Also stamps the
-    K: line's clef for a bass-clef instrument. A booklet render ignores the
-    Key stepper — its transposition comes only from the setlist's own override.
-  */
-  function resolveTranspose(text, instrumentValue, extraTransposeSteps, isBooklet) {
-    const stepper = byId("transpose");
-    const stepperSteps = !isBooklet && stepper !== null ? Number(stepper.value) : 0;
-    const audio = stepperSteps + extraTransposeSteps;
-    if (hasInstrumentVoices(text)) return { abcText: text, visual: audio, audio };
-    return {
-      abcText: changeClefForInstrument(instrumentValue, text),
-      visual: audio + offsetForInstrument(instrumentValue),
-      audio,
-    };
-  }
-
-  /*
-    Live sheet only: when a comping pattern is picked, generate a second
-    block-chord staff from the tune in concert pitch and inject it, so the one
-    visualTranspose below moves melody + comping together. Returns the (maybe
-    augmented) ABC, the notehead colour palette and whether it took.
-  */
-  function applyComping(abcText, chords, isBooklet) {
-    const compingValue = compingRequest(isBooklet, chords);
-    if (compingValue !== "off") {
-      const comping = buildComping(abcText, compingValue);
-      if (comping) return { renderText: comping.abc, palette: comping.palette, active: true };
-    }
-    return { renderText: abcText, palette: null, active: false };
-  }
-
   // A muted Bass/Chords channel is just its fader forced to 0 — see
   // lib/audio-mix.js. (Melody/Comping mute goes through computeVoicesOff in
   // audio-player.js instead — see lib/audio-mix.js's own doc comment for why
@@ -242,22 +258,6 @@ export function createSheet(ctx) {
     }
 
     extractLyrics(notationEl);
-  }
-
-  // Move W: lyric SVGs out of the notation container so the printer can
-  // paginate between them.
-  function extractLyrics(notationEl) {
-    const lyricsEl = byId("lyrics");
-    if (!lyricsEl) return;
-    lyricsEl.innerHTML = "";
-    let moved = false;
-    notationEl.querySelectorAll("svg").forEach((svg) => {
-      if (svg.querySelector(".abcjs-unaligned-words")) {
-        lyricsEl.appendChild(svg);
-        moved = true;
-      }
-    });
-    lyricsEl.style.display = moved ? "" : "none";
   }
 
   function render(text, { transposeSemitones = 0 } = {}) {

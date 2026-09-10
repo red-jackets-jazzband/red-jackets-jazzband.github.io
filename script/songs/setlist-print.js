@@ -12,6 +12,32 @@ const PRINT_MODE_LABELS = { setlist: "Setlist", chordbook: "Chordbook", songbook
 const bookletSetHeading = (text) =>
   el("div", { class: "setlist-booklet-set-heading pageBreakBefore", text });
 
+const instrument = () => (byId("instrument") ? byId("instrument").value : "concert_pitch");
+
+function setTextContent(id, value) {
+  const node = byId(id);
+  if (node) node.textContent = value || "";
+}
+
+// ---- per-song meta, filled once each .abc has loaded --------------
+
+function fillSongMeta(n, meta) {
+  setTextContent(`setlistStageConcert-${n}`, meta.concert);
+  setTextContent(`setlistStageInstr-${n}`, meta.instrument);
+  setTextContent(`setlistStageTempo-${n}`, meta.bpm ? String(meta.bpm) : "");
+  setTextContent(`setlistIndexKey-${n}`, meta.instrument);
+}
+
+// ---- the cover page (personal setlist `desc`) --------------------
+
+function coverPage(name, desc) {
+  return el("div", { class: "bookContent hideOnScreen setlist-cover" }, [
+    el("h1", { text: name }),
+    el("p", { text: desc }),
+    el("img", { src: "/images/songbook_qr.png", height: 100, width: 100 }),
+  ]);
+}
+
 /*
   Printing an open setlist. One hidden container (#setlistPrintBooklet) holds
   everything; a <body> class picks which of the three printed forms shows:
@@ -21,8 +47,6 @@ const bookletSetHeading = (text) =>
   Chordbook and songbook share the exact same stacked DOM.
 */
 export function createSetlistPrint(ctx) {
-  const instrument = () => (byId("instrument") ? byId("instrument").value : "concert_pitch");
-
   // Each buildBooklet() clears #setlistPrintBooklet and recreates its per-song
   // ids, while the .abc reads that fill them are async. `bookletSeq` lets a
   // callback from a superseded build bail instead of writing stale content
@@ -150,29 +174,6 @@ export function createSetlistPrint(ctx) {
         el("div", { text: when }),
       ]),
       index,
-    ]);
-  }
-
-  // ---- per-song meta, filled once each .abc has loaded --------------
-
-  function fillSongMeta(n, meta) {
-    const set = (id, value) => {
-      const node = byId(id);
-      if (node) node.textContent = value || "";
-    };
-    set(`setlistStageConcert-${n}`, meta.concert);
-    set(`setlistStageInstr-${n}`, meta.instrument);
-    set(`setlistStageTempo-${n}`, meta.bpm ? String(meta.bpm) : "");
-    set(`setlistIndexKey-${n}`, meta.instrument);
-  }
-
-  // ---- the cover page (personal setlist `desc`) --------------------
-
-  function coverPage(name, desc) {
-    return el("div", { class: "bookContent hideOnScreen setlist-cover" }, [
-      el("h1", { text: name }),
-      el("p", { text: desc }),
-      el("img", { src: "/images/songbook_qr.png", height: 100, width: 100 }),
     ]);
   }
 

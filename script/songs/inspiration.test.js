@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { mountPage } from "../../../tests/helpers/dom.js";
 import { createInspiration } from "./inspiration.js";
 
+const SAMPLE_URL = "https://youtu.be/abcdefghijk";
+
 function inDom(fn) {
   const page = mountPage();
   try {
@@ -15,11 +17,11 @@ function inDom(fn) {
 test("updateLink creates the Inspiration button for a tune with a reference", () => {
   inDom(() => {
     const insp = createInspiration();
-    insp.updateLink("https://youtu.be/abcdefghijk", "Louis Armstrong");
+    insp.updateLink(SAMPLE_URL, "Louis Armstrong");
     const btn = document.getElementById("inspirationLink");
     assert.ok(btn);
     assert.equal(btn.textContent, "Inspiration");
-    assert.equal(btn.dataset.url, "https://youtu.be/abcdefghijk");
+    assert.equal(btn.dataset.url, SAMPLE_URL);
     assert.equal(btn.dataset.title, "Louis Armstrong");
     assert.ok(document.getElementById("inspirationSlot").contains(btn));
   });
@@ -38,9 +40,43 @@ test("updateLink updates the existing button in place, without duplicating it", 
 test("updateLink(undefined) removes the button for a tune without a reference", () => {
   inDom(() => {
     const insp = createInspiration();
-    insp.updateLink("https://youtu.be/abcdefghijk", "X");
+    insp.updateLink(SAMPLE_URL, "X");
     insp.updateLink(undefined);
     assert.equal(document.getElementById("inspirationLink"), null);
+  });
+});
+
+test("opening the panel marks the Inspiration button active, closing it clears that", () => {
+  inDom(() => {
+    const insp = createInspiration();
+    insp.init();
+    insp.updateLink(SAMPLE_URL, "X");
+    const btn = document.getElementById("inspirationLink");
+
+    btn.dispatchEvent(new window.Event("click"));
+    assert.equal(btn.classList.contains("active"), true);
+    assert.equal(btn.getAttribute("aria-expanded"), "true");
+
+    document.getElementById("inspirationCloseBtn").dispatchEvent(new window.Event("click"));
+    assert.equal(btn.classList.contains("active"), false);
+    assert.equal(btn.getAttribute("aria-expanded"), "false");
+  });
+});
+
+test("updateLink recreating the button while the panel is already open marks it active immediately", () => {
+  inDom(() => {
+    const insp = createInspiration();
+    insp.init();
+    insp.updateLink(SAMPLE_URL, "X");
+    document.getElementById("inspirationLink").dispatchEvent(new window.Event("click"));
+
+    // Simulate navigating to a song without a reference (button removed)
+    // while the panel keeps playing, then back to one that has one.
+    insp.updateLink(undefined);
+    insp.updateLink("https://youtu.be/zyxwvutsrqp", "Y");
+
+    const btn = document.getElementById("inspirationLink");
+    assert.equal(btn.classList.contains("active"), true);
   });
 });
 
@@ -170,7 +206,7 @@ test("a shared A/B link opens the video with the loop already set", async () => 
     const insp = createInspiration();
     insp.init();
     insp.applyShareState({ a: 12, b: 30 });
-    insp.updateLink("https://youtu.be/abcdefghijk", "X");
+    insp.updateLink(SAMPLE_URL, "X");
 
     assert.equal(document.getElementById("inspirationPanel").hidden, false);
     assert.equal(

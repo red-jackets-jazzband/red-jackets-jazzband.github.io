@@ -13,6 +13,11 @@ import {
 import { tonalStub as TonalStub, withTonal, nameToMidi } from "../../../tests/helpers/stubs.js";
 import { injectMixerAudio } from "./audio-mix.js";
 
+// The midpoint (in semitones) between a chord triple's bottom and top voice.
+function centre(triple) {
+  return (triple[0] + triple[2]) / 2;
+}
+
 // ---------------------------------------------------------------------------
 // Pure helpers
 // ---------------------------------------------------------------------------
@@ -492,7 +497,6 @@ test("buildCompingTune homes the comping instead of letting it climb an octave",
   );
   const bars = compingChordMidis(out.abc);
   assert.equal(bars.length, names.length);
-  const centre = (t) => (t[0] + t[2]) / 2;
   const start = centre(bars[0]);
   for (const triple of bars) {
     assert.ok(triple[0] < triple[1] && triple[1] < triple[2], `ascending: ${triple}`);

@@ -10,6 +10,18 @@ import {
   .txt export. Created setlists are always personal and always editable, and a
   created one opens straight away in the sheet.
 */
+function sourceOption(value, label) {
+  const opt = document.createElement("option");
+  opt.value = value;
+  opt.textContent = label;
+  return opt;
+}
+
+function closeModal() {
+  const overlay = byId("setlistModal");
+  if (overlay) overlay.hidden = true;
+}
+
 export function createSetlistModal(ctx) {
   let choice = "empty"; // "empty" | "remix" | "upload"
 
@@ -24,13 +36,6 @@ export function createSetlistModal(ctx) {
     const upload = byId("setlistModalUpload");
     if (remix) remix.hidden = next !== "remix";
     if (upload) upload.hidden = next !== "upload";
-  }
-
-  function sourceOption(value, label) {
-    const opt = document.createElement("option");
-    opt.value = value;
-    opt.textContent = label;
-    return opt;
   }
 
   function populateSources() {
@@ -73,13 +78,8 @@ export function createSetlistModal(ctx) {
     if (nameInput) nameInput.focus();
   }
 
-  function close() {
-    const overlay = byId("setlistModal");
-    if (overlay) overlay.hidden = true;
-  }
-
   function openCreated(entry) {
-    close();
+    closeModal();
     ctx.setlistView.openPersonal(entry.id);
   }
 
@@ -137,13 +137,13 @@ export function createSetlistModal(ctx) {
     if (!overlay) return;
 
     overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) close();
+      if (e.target === overlay) closeModal();
     });
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !overlay.hidden) close();
+      if (e.key === "Escape" && !overlay.hidden) closeModal();
     });
-    on("setlistModalClose", "click", close);
-    on("setlistModalCancel", "click", close);
+    on("setlistModalClose", "click", closeModal);
+    on("setlistModalCancel", "click", closeModal);
     on("setlistModalCreate", "click", create);
 
     qsa(".rj-modal-choice", byId("setlistModalChoices")).forEach((btn) => {

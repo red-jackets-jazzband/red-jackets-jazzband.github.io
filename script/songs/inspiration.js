@@ -39,6 +39,113 @@ function runExecCopy(url) {
   }
 }
 
+// Old-style copy via a throwaway textarea + execCommand, for browsers that
+// deny or lack the async Clipboard API. Returns whether it took.
+function execCopy(url) {
+  try {
+    return runExecCopy(url);
+  } catch {
+    return false;
+  }
+}
+
+function fallbackCopy(url, btn) {
+  if (execCopy(url)) flashShareBtn(btn);
+  else window.prompt("Copy this link:", url);
+}
+
+function flashShareBtn(btn) {
+  if (!btn) return;
+  const icon = btn.querySelector("span");
+  if (!icon || btn.dataset.flashing) return;
+  const original = icon.className;
+  btn.dataset.flashing = "1";
+  icon.className = "fa-solid fa-check";
+  btn.classList.add("copied");
+  setTimeout(() => {
+    icon.className = original;
+    btn.classList.remove("copied");
+    delete btn.dataset.flashing;
+  }, 1400);
+}
+
+// The horizontal position (0-100%) a click/drag point maps to along a slim
+// timeline track.
+function trackFraction(track, e) {
+  const rect = track.getBoundingClientRect();
+  if (rect.width <= 0) return 0;
+  return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+}
+
+function positionLoopHandle(el, value, dur) {
+  if (!el) return;
+  if (value === null || dur <= 0) {
+    el.hidden = true;
+    return;
+  }
+  el.style.left = `${timeToFraction(value, dur) * 100}%`;
+  el.hidden = false;
+}
+
+function maxPanelWidth() {
+  return Math.max(MIN_PANEL_WIDTH, window.innerWidth - EDGE_MARGIN * 2);
+}
+
+function clampWidth(width) {
+  return Math.round(Math.min(maxPanelWidth(), Math.max(MIN_PANEL_WIDTH, width)));
+}
+
+// Keep an explicitly-positioned (already dragged) panel fully on screen after
+// it grows. A still-corner-anchored panel needs nothing — right/bottom hold it
+// in place and max-width caps it to the viewport.
+function clampPanelIntoView(panel) {
+  if (!panel.style.left && !panel.style.top) return;
+  const maxLeft = Math.max(EDGE_MARGIN, window.innerWidth - panel.offsetWidth - EDGE_MARGIN);
+  const maxTop = Math.max(EDGE_MARGIN, window.innerHeight - panel.offsetHeight - EDGE_MARGIN);
+  panel.style.left = `${Math.min(Math.max(EDGE_MARGIN, Number.parseFloat(panel.style.left) || 0), maxLeft)}px`;
+  panel.style.top = `${Math.min(Math.max(EDGE_MARGIN, Number.parseFloat(panel.style.top) || 0), maxTop)}px`;
+}
+
+// The panel can be dragged to any corner by its header; position switches
+// from the default bottom-right anchor to an explicit left/top on first drag.
+function initDrag(panel, header) {
+  let drag = null;
+  header.addEventListener("pointerdown", (e) => {
+    if (e.target.closest(".inspiration-panel-icon-btn")) return;
+    const rect = panel.getBoundingClientRect();
+    drag = { x: e.clientX, y: e.clientY, left: rect.left, top: rect.top };
+    header.setPointerCapture(e.pointerId);
+    panel.classList.add("dragging");
+  });
+  header.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const maxLeft = window.innerWidth - panel.offsetWidth - EDGE_MARGIN;
+    const maxTop = window.innerHeight - panel.offsetHeight - EDGE_MARGIN;
+    const left = Math.min(Math.max(EDGE_MARGIN, drag.left + (e.clientX - drag.x)), Math.max(EDGE_MARGIN, maxLeft));
+    const top = Math.min(Math.max(EDGE_MARGIN, drag.top + (e.clientY - drag.y)), Math.max(EDGE_MARGIN, maxTop));
+    panel.style.left = `${left}px`;
+    panel.style.top = `${top}px`;
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+  });
+  header.addEventListener("pointerup", (e) => {
+    drag = null;
+    panel.classList.remove("dragging");
+    if (header.hasPointerCapture(e.pointerId)) header.releasePointerCapture(e.pointerId);
+  });
+}
+
+// Mirrors the Mixer button's own .active toggle: the Inspiration button
+// stays gold for as long as its panel is open, not just while hovered.
+// Doesn't touch the panel/ctx state, so it lives at module scope rather than
+// nested inside createInspiration.
+function setLinkActive(active) {
+  const btn = byId("inspirationLink");
+  if (!btn) return;
+  btn.classList.toggle("active", active);
+  btn.setAttribute("aria-expanded", active ? "true" : "false");
+}
+
 /*
   The Inspiration picture-in-picture panel: a docked, draggable YouTube player
   that keeps playing across song navigation (until explicitly closed) instead
@@ -130,6 +237,12 @@ export function createInspiration(ctx) {
       btn.addEventListener("click", () => togglePanel(btn.dataset.url, btn.dataset.title));
       const slot = byId("inspirationSlot");
       if (slot) slot.appendChild(btn);
+      // The panel can already be open (playing along across a song change
+      // per the doc comment above) by the time this song's own button gets
+      // (re)created — reflect that straight away instead of waiting for the
+      // next open/close.
+      const panel = byId("inspirationPanel");
+      setLinkActive(Boolean(panel && !panel.hidden));
     }
     btn.dataset.url = url;
     btn.dataset.title = title || "";
@@ -185,36 +298,6 @@ export function createInspiration(ctx) {
     }
   }
 
-  function fallbackCopy(url, btn) {
-    if (execCopy(url)) flashShareBtn(btn);
-    else window.prompt("Copy this link:", url);
-  }
-
-  // Old-style copy via a throwaway textarea + execCommand, for browsers that
-  // deny or lack the async Clipboard API. Returns whether it took.
-  function execCopy(url) {
-    try {
-      return runExecCopy(url);
-    } catch {
-      return false;
-    }
-  }
-
-  function flashShareBtn(btn) {
-    if (!btn) return;
-    const icon = btn.querySelector("span");
-    if (!icon || btn.dataset.flashing) return;
-    const original = icon.className;
-    btn.dataset.flashing = "1";
-    icon.className = "fa-solid fa-check";
-    btn.classList.add("copied");
-    setTimeout(() => {
-      icon.className = original;
-      btn.classList.remove("copied");
-      delete btn.dataset.flashing;
-    }, 1400);
-  }
-
   // ---- open / close -------------------------------------------------
 
   function togglePanel(url, title) {
@@ -238,6 +321,7 @@ export function createInspiration(ctx) {
 
     panelUrl = url;
     panel.hidden = false;
+    setLinkActive(true);
     stopLoopPoll();
     resetLoopState();
 
@@ -260,6 +344,7 @@ export function createInspiration(ctx) {
     const panel = byId("inspirationPanel");
     if (!panel) return;
     panel.hidden = true;
+    setLinkActive(false);
     stopLoopPoll();
     // Drop any id that was queued for a not-yet-ready player, so a late
     // onReady doesn't start a video into the now-hidden panel; likewise a
@@ -334,16 +419,6 @@ export function createInspiration(ctx) {
     if (!played) return;
     const dur = player && player.getDuration ? player.getDuration() : 0;
     played.style.width = `${timeToFraction(t, dur) * 100}%`;
-  }
-
-  function positionLoopHandle(el, value, dur) {
-    if (!el) return;
-    if (value === null || dur <= 0) {
-      el.hidden = true;
-      return;
-    }
-    el.style.left = `${timeToFraction(value, dur) * 100}%`;
-    el.hidden = false;
   }
 
   function updateLoopRange(dur) {
@@ -452,12 +527,6 @@ export function createInspiration(ctx) {
     updateSpeedLabel();
   }
 
-  function trackFraction(track, e) {
-    const rect = track.getBoundingClientRect();
-    if (rect.width <= 0) return 0;
-    return Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-  }
-
   // ---- wiring ----------------------------------------------------
 
   function initLoopBar() {
@@ -508,25 +577,6 @@ export function createInspiration(ctx) {
   }
 
   // ---- panel size ------------------------------------------------
-
-  // Keep an explicitly-positioned (already dragged) panel fully on screen after
-  // it grows. A still-corner-anchored panel needs nothing — right/bottom hold it
-  // in place and max-width caps it to the viewport.
-  function clampPanelIntoView(panel) {
-    if (!panel.style.left && !panel.style.top) return;
-    const maxLeft = Math.max(EDGE_MARGIN, window.innerWidth - panel.offsetWidth - EDGE_MARGIN);
-    const maxTop = Math.max(EDGE_MARGIN, window.innerHeight - panel.offsetHeight - EDGE_MARGIN);
-    panel.style.left = `${Math.min(Math.max(EDGE_MARGIN, Number.parseFloat(panel.style.left) || 0), maxLeft)}px`;
-    panel.style.top = `${Math.min(Math.max(EDGE_MARGIN, Number.parseFloat(panel.style.top) || 0), maxTop)}px`;
-  }
-
-  function maxPanelWidth() {
-    return Math.max(MIN_PANEL_WIDTH, window.innerWidth - EDGE_MARGIN * 2);
-  }
-
-  function clampWidth(width) {
-    return Math.round(Math.min(maxPanelWidth(), Math.max(MIN_PANEL_WIDTH, width)));
-  }
 
   function updateSizeButtonIcon() {
     const icon = byId("inspirationSizeBtn")?.querySelector("span");
@@ -588,35 +638,6 @@ export function createInspiration(ctx) {
       if (handle.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
       writePref(PREF_KEYS.inspirationWidth, String(panelWidth));
       clampPanelIntoView(panel);
-    });
-  }
-
-  // The panel can be dragged to any corner by its header; position switches
-  // from the default bottom-right anchor to an explicit left/top on first drag.
-  function initDrag(panel, header) {
-    let drag = null;
-    header.addEventListener("pointerdown", (e) => {
-      if (e.target.closest(".inspiration-panel-icon-btn")) return;
-      const rect = panel.getBoundingClientRect();
-      drag = { x: e.clientX, y: e.clientY, left: rect.left, top: rect.top };
-      header.setPointerCapture(e.pointerId);
-      panel.classList.add("dragging");
-    });
-    header.addEventListener("pointermove", (e) => {
-      if (!drag) return;
-      const maxLeft = window.innerWidth - panel.offsetWidth - EDGE_MARGIN;
-      const maxTop = window.innerHeight - panel.offsetHeight - EDGE_MARGIN;
-      const left = Math.min(Math.max(EDGE_MARGIN, drag.left + (e.clientX - drag.x)), Math.max(EDGE_MARGIN, maxLeft));
-      const top = Math.min(Math.max(EDGE_MARGIN, drag.top + (e.clientY - drag.y)), Math.max(EDGE_MARGIN, maxTop));
-      panel.style.left = `${left}px`;
-      panel.style.top = `${top}px`;
-      panel.style.right = "auto";
-      panel.style.bottom = "auto";
-    });
-    header.addEventListener("pointerup", (e) => {
-      drag = null;
-      panel.classList.remove("dragging");
-      if (header.hasPointerCapture(e.pointerId)) header.releasePointerCapture(e.pointerId);
     });
   }
 

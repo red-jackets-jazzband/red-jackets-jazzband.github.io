@@ -6,39 +6,39 @@ const emptyRow = (text) => el("div", { class: "song-list-empty", text });
 
 const heading = (text) => el("div", { class: "song-list-letter", text });
 
+function setlistRow(title, count, onOpen, onDelete) {
+  const meta = el("span", { class: "setlist-row-meta" });
+  if (count != null) meta.textContent = songCountLabel(count);
+
+  const row = el("div", { class: "song-list-item setlist-row" }, [
+    el("button", { type: "button", class: "setlist-row-main", text: title, on: { click: onOpen } }),
+    meta,
+  ]);
+
+  if (onDelete) {
+    row.append(el("button", {
+      type: "button",
+      class: "setlist-row-delete",
+      title: "Delete setlist",
+      html: '<span class="fa-solid fa-trash-can" aria-hidden="true"></span>',
+      attrs: { "aria-label": `Delete setlist “${title}”` },
+      on: {
+        click(e) {
+          e.stopPropagation();
+          onDelete();
+        },
+      },
+    }));
+  }
+  return { row, meta };
+}
+
 /*
   The Setlists-tab home view: two shelves — "From the band" (read-only,
   committed to the repo) and "Yours" (personal, in localStorage) — ending with
   a single "New setlist" button that opens the create modal.
 */
 export function createSetlistHome(ctx) {
-  function setlistRow(title, count, onOpen, onDelete) {
-    const meta = el("span", { class: "setlist-row-meta" });
-    if (count != null) meta.textContent = songCountLabel(count);
-
-    const row = el("div", { class: "song-list-item setlist-row" }, [
-      el("button", { type: "button", class: "setlist-row-main", text: title, on: { click: onOpen } }),
-      meta,
-    ]);
-
-    if (onDelete) {
-      row.append(el("button", {
-        type: "button",
-        class: "setlist-row-delete",
-        title: "Delete setlist",
-        html: '<span class="fa-solid fa-trash-can" aria-hidden="true"></span>',
-        attrs: { "aria-label": `Delete setlist “${title}”` },
-        on: {
-          click(e) {
-            e.stopPropagation();
-            onDelete();
-          },
-        },
-      }));
-    }
-    return { row, meta };
-  }
-
   function bandRow(entry) {
     const built = setlistRow(entry.name, null, () => ctx.setlistView.openBand(entry.file, entry.name));
     ctx.setlistData.loadBand(entry.file, (parsed) => {

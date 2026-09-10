@@ -108,9 +108,10 @@
   </div>
 </div>
 <div id="rjSheet" class="rj-sheet">
-<button id="sheetBackBtn" class="rj-sheet-back hideOnprint" type="button">&larr; Songs</button>
+<button id="sheetBackBtn" class="rj-sheet-back hideOnprint" type="button"><span class="fa-solid fa-chevron-left" aria-hidden="true"></span><span id="sheetBackLabel">Songs</span></button>
 <div id="sheetmenu" class="hideOnprint">
   <div id="sheetStatus" class="sheet-status"></div>
+  <div class="sheet-adjust">
   <div class="sheet-stepper" id="keyStepper" title="Key">
     <button type="button" id="keyDownBtn" class="sheet-stepper-btn" aria-label="Lower key">&minus;</button>
     <div class="sheet-stepper-value">
@@ -127,12 +128,15 @@
     </div>
     <button type="button" id="tempoUpBtn" class="sheet-stepper-btn" aria-label="Faster">&plus;</button>
   </div>
+  </div>
+  <div class="sheet-adjust">
   <div class="sheet-transport">
     <button id="playPauseBtn" class="sheet-play-btn" disabled title="Play" aria-label="Play"><span class="fa-solid fa-play" aria-hidden="true"></span></button>
     <button id="stopBtn" class="sheet-icon-btn" type="button" disabled title="Stop and reset to the start" aria-label="Stop and reset to the start"><span class="fa-solid fa-stop" aria-hidden="true"></span></button>
-    <button id="mixerBtn" class="sheet-icon-btn" type="button" disabled title="Mixer" aria-label="Mixer" aria-haspopup="dialog" aria-expanded="false"><span class="fa-solid fa-sliders" aria-hidden="true"></span></button>
+    <button id="mixerBtn" class="sheet-icon-btn" type="button" disabled title="Mixer" aria-label="Mixer" aria-haspopup="dialog" aria-expanded="false"><span class="fa-solid fa-sliders fa-rotate-90" aria-hidden="true"></span></button>
   </div>
   <div id="inspirationSlot"></div>
+  </div>
   <div class="sheet-actions" id="sheetActions">
     <a id="printLink" class="sheet-icon-btn" href="#" title="Print this page" aria-label="Print this page"><span class="fa-solid fa-print" aria-hidden="true"></span></a>
   </div>

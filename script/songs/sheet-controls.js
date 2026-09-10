@@ -16,9 +16,12 @@ export function clearBookletPrintState() {
     .forEach((cls) => classList.remove(cls));
 }
 
+function pad(n) {
+  return String(n).padStart(2, "0");
+}
+
 // Today's date as YYYYMMDD (local time), the prefix on every print's title.
 function printDateStamp(date = new Date()) {
-  const pad = (n) => String(n).padStart(2, "0");
   return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`;
 }
 

@@ -51,6 +51,93 @@ function downloadText(filename, text) {
   URL.revokeObjectURL(url);
 }
 
+// Show the open-setlist chrome (crumb, tools, title row) and set the title /
+// personal-only buttons for `name`.
+function applyOpenChrome(name, isPersonal) {
+  const show = (id, hidden = false) => {
+    const node = byId(id);
+    if (node) node.hidden = hidden;
+  };
+  show("setlistTools");
+  show("setlistsBackBtn");
+  show("openSetlistTools");
+
+  // The title row drops below the "Print …" group, directly on top of the list.
+  const titleRow = byId("setlistTitleRow");
+  const openTools = byId("openSetlistTools");
+  if (titleRow && openTools) openTools.append(titleRow);
+
+  const titleText = byId("setlistTitleText");
+  if (titleText) {
+    titleText.hidden = false;
+    titleText.textContent = name;
+  }
+  show("setlistNameInput", true);
+  show("setlistRenameBtn", !isPersonal);
+  show("setlistExportBtn", !isPersonal);
+}
+
+function draggableRows() {
+  const listEl = byId("songList");
+  return listEl
+    ? Array.from(listEl.querySelectorAll(".setlist-song-row, .setlist-divider-row"))
+    : [];
+}
+
+// Rewrite the number badges / "Set N" placeholders straight from current DOM
+// order — used mid-drag, before any re-render. Mirrors walkSetlist: numbers
+// restart each set when the list has any dividers, else run 1..n.
+function renumberOpen() {
+  const listEl = byId("songList");
+  if (!listEl) return;
+  const rows = qsa(".setlist-song-row, .setlist-divider-row, .setlist-set-heading", listEl);
+  const hasDividers = listEl.querySelector(".setlist-divider-row, .setlist-set-heading") != null;
+  let n = 0;
+  let songInSet = 0;
+  let setNumber = 1;
+  rows.forEach((row) => {
+    if (row.classList.contains("setlist-song-row")) {
+      n += 1;
+      songInSet += 1;
+      const numEl = row.querySelector(".setlist-song-number");
+      if (numEl) numEl.textContent = String(hasDividers ? songInSet : n);
+      return;
+    }
+    songInSet = 0;
+    if (row.classList.contains("setlist-divider-row")) {
+      setNumber += 1;
+      const input = row.querySelector(".setlist-divider-input");
+      if (input) input.placeholder = `Set ${setNumber}`;
+    }
+  });
+}
+
+function showAddSongError() {
+  const resultsEl = byId("setlistAddSongResults");
+  if (!resultsEl) return;
+  clear(resultsEl);
+  resultsEl.classList.add("is-open");
+  resultsEl.append(el("div", {
+    class: "rj-library-add-song-empty",
+    text: "Couldn’t load the song list — try again in a moment.",
+  }));
+}
+
+function addSongResultButtons() {
+  const resultsEl = byId("setlistAddSongResults");
+  return resultsEl
+    ? Array.from(resultsEl.querySelectorAll(".rj-library-add-song-result"))
+    : [];
+}
+
+// A field (or a drag handle) that wants the arrow keys for itself.
+function ownsArrowKeys(target) {
+  if (!target) return false;
+  if (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return true;
+  if (target.isContentEditable) return true;
+  return Boolean(target.closest && target.closest(".setlist-drag-handle"));
+}
+
 /*
   An open setlist: band setlists are read-only, personal ones are fully
   editable (reorder by drag or arrow keys, per-song transpose, add songs / set
@@ -233,32 +320,6 @@ export function createSetlistView(ctx) {
 
   // ---- render ------------------------------------------------
 
-  // Show the open-setlist chrome (crumb, tools, title row) and set the title /
-  // personal-only buttons for `name`.
-  function applyOpenChrome(name, isPersonal) {
-    const show = (id, hidden = false) => {
-      const node = byId(id);
-      if (node) node.hidden = hidden;
-    };
-    show("setlistTools");
-    show("setlistsBackBtn");
-    show("openSetlistTools");
-
-    // The title row drops below the "Print …" group, directly on top of the list.
-    const titleRow = byId("setlistTitleRow");
-    const openTools = byId("openSetlistTools");
-    if (titleRow && openTools) openTools.append(titleRow);
-
-    const titleText = byId("setlistTitleText");
-    if (titleText) {
-      titleText.hidden = false;
-      titleText.textContent = name;
-    }
-    show("setlistNameInput", true);
-    show("setlistRenameBtn", !isPersonal);
-    show("setlistExportBtn", !isPersonal);
-  }
-
   function renderOpen(name, songs, personalEntry, desc) {
     ctx.state.setlistsView = "open";
     ctx.state.currentOpenSongs = songs;
@@ -321,41 +382,6 @@ export function createSetlistView(ctx) {
   }
 
   // ---- drag / keyboard reorder --------------------------------
-
-  function draggableRows() {
-    const listEl = byId("songList");
-    return listEl
-      ? Array.from(listEl.querySelectorAll(".setlist-song-row, .setlist-divider-row"))
-      : [];
-  }
-
-  // Rewrite the number badges / "Set N" placeholders straight from current DOM
-  // order — used mid-drag, before any re-render. Mirrors walkSetlist: numbers
-  // restart each set when the list has any dividers, else run 1..n.
-  function renumberOpen() {
-    const listEl = byId("songList");
-    if (!listEl) return;
-    const rows = qsa(".setlist-song-row, .setlist-divider-row, .setlist-set-heading", listEl);
-    const hasDividers = listEl.querySelector(".setlist-divider-row, .setlist-set-heading") != null;
-    let n = 0;
-    let songInSet = 0;
-    let setNumber = 1;
-    rows.forEach((row) => {
-      if (row.classList.contains("setlist-song-row")) {
-        n += 1;
-        songInSet += 1;
-        const numEl = row.querySelector(".setlist-song-number");
-        if (numEl) numEl.textContent = String(hasDividers ? songInSet : n);
-        return;
-      }
-      songInSet = 0;
-      if (row.classList.contains("setlist-divider-row")) {
-        setNumber += 1;
-        const input = row.querySelector(".setlist-divider-input");
-        if (input) input.placeholder = `Set ${setNumber}`;
-      }
-    });
-  }
 
   function persistOrder(personalId, orderIndices) {
     setPersonalSetlistOrder(ctx.storage(), personalId, orderIndices);
@@ -507,7 +533,12 @@ export function createSetlistView(ctx) {
     openSetlistSong(songs[next], next);
     const row = byId("songList")
       && byId("songList").querySelector(`.setlist-song-row[data-setlist-index="${next}"]`);
-    if (row) row.scrollIntoView({ block: "nearest" });
+    // On the narrow layout the sidebar (and this row with it) is display:none
+    // once a sheet is open — scrollIntoView on an element with no box makes
+    // some browsers fall back to scrolling the document itself to (0,0),
+    // i.e. the whole page jumps to the top. offsetParent is null exactly
+    // when the row has no layout box, so skip the scroll in that case.
+    if (row?.offsetParent) row.scrollIntoView({ block: "nearest" });
   }
 
   function highlightCurrent() {
@@ -526,17 +557,6 @@ export function createSetlistView(ctx) {
 
   // ---- add-song / add-break tray --------------------------
 
-  function showAddSongError() {
-    const resultsEl = byId("setlistAddSongResults");
-    if (!resultsEl) return;
-    clear(resultsEl);
-    resultsEl.classList.add("is-open");
-    resultsEl.append(el("div", {
-      class: "rj-library-add-song-empty",
-      text: "Couldn’t load the song list — try again in a moment.",
-    }));
-  }
-
   // Top matches for an add-song query (empty query -> no matches).
   function addSongMatches(query) {
     return query ? filterSongsByQuery(ctx.state.allSongs, query).slice(0, 8) : [];
@@ -551,13 +571,6 @@ export function createSetlistView(ctx) {
     focusAddSongAfterRender = true;
     refreshOpenPersonal();
     return true;
-  }
-
-  function addSongResultButtons() {
-    const resultsEl = byId("setlistAddSongResults");
-    return resultsEl
-      ? Array.from(resultsEl.querySelectorAll(".rj-library-add-song-result"))
-      : [];
   }
 
   // Paint the keyboard highlight on the active result and scroll it into view.
@@ -748,14 +761,6 @@ export function createSetlistView(ctx) {
     nameInput.addEventListener("blur", () => {
       if (!nameInput.hidden) commit();
     });
-  }
-
-  // A field (or a drag handle) that wants the arrow keys for itself.
-  function ownsArrowKeys(target) {
-    if (!target) return false;
-    if (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return true;
-    if (target.isContentEditable) return true;
-    return Boolean(target.closest && target.closest(".setlist-drag-handle"));
   }
 
   function initArrowNav() {

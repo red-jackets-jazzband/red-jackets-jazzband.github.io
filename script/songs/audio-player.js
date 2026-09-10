@@ -12,6 +12,25 @@ const SYNTH_PARAMS = {
 const PLAY_ICON = '<span class="fa-solid fa-play" aria-hidden="true"></span>';
 const PAUSE_ICON = '<span class="fa-solid fa-pause" aria-hidden="true"></span>';
 
+function setButtonsDisabled(disabled) {
+  ["playPauseBtn", "stopBtn", "mixerBtn"].forEach((id) => {
+    const btn = byId(id);
+    if (btn) btn.disabled = disabled;
+  });
+}
+
+function setLoadingVisible(visible) {
+  const label = byId("audioLoadingLabel");
+  if (label) label.classList.toggle("visible", visible);
+}
+
+function tagElements(groups, milliseconds, measureIdx) {
+  groups.forEach((group) => group.forEach((node) => {
+    node._abcSeekMs = milliseconds;
+    node._abcMeasureIdx = measureIdx;
+  }));
+}
+
 /*
   Owns the sheet's audio: the ABCjs SynthController lifecycle, the transport
   buttons' visual state, note/chord-cell highlighting during playback, the
@@ -63,18 +82,6 @@ export function createAudioPlayer(ctx) {
     btn.innerHTML = state.isPlaying ? PAUSE_ICON : PLAY_ICON;
     btn.title = state.isPlaying ? "Pause" : "Play";
     btn.classList.toggle("playing", state.isPlaying);
-  }
-
-  function setButtonsDisabled(disabled) {
-    ["playPauseBtn", "stopBtn", "mixerBtn"].forEach((id) => {
-      const btn = byId(id);
-      if (btn) btn.disabled = disabled;
-    });
-  }
-
-  function setLoadingVisible(visible) {
-    const label = byId("audioLoadingLabel");
-    if (label) label.classList.toggle("visible", visible);
   }
 
   // ---- highlighting -----------------------------------------------------
@@ -185,13 +192,6 @@ export function createAudioPlayer(ctx) {
       }
     }
     return undefined;
-  }
-
-  function tagElements(groups, milliseconds, measureIdx) {
-    groups.forEach((group) => group.forEach((node) => {
-      node._abcSeekMs = milliseconds;
-      node._abcMeasureIdx = measureIdx;
-    }));
   }
 
   function seekToMs(ms) {
