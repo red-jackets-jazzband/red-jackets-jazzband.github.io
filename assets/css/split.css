@@ -1038,6 +1038,17 @@ video.video {
   border-color: var(--rj-gold);
   color: #222222;
 }
+/*
+  Pattern: also not a channel (see the metronome comment above) — a single
+  <select> choosing the Bass/Chords auto-accompaniment's %%MIDI gchord rhythm
+  (songs/mixer.js, lib/audio-mix.js's GCHORD_PATTERNS). Reuses the Voice
+  pickers' .mixer-voice-select look (same indented full-width row under the
+  label) and the Bass/Chords gate's .is-inactive / .mixer-strip-note styling
+  above, since it needs chord symbols to do anything just like they do.
+*/
+.mixer-swatch--pattern {
+  background: var(--rj-gold);
+}
 .mixer-backdrop {
   position: fixed;
   inset: 0;

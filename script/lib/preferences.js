@@ -22,6 +22,7 @@ export const PREF_KEYS = {
   mixerBassProgram: "rj.mixerBassProgram",
   mixerChordsProgram: "rj.mixerChordsProgram",
   mixerCompingProgram: "rj.mixerCompingProgram",
+  mixerGchordPattern: "rj.mixerGchordPattern",
   metronomeEnabled: "rj.metronomeEnabled",
 };
 

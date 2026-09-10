@@ -1,6 +1,7 @@
 import { byId, el, on } from "../lib/dom.js";
 import { readPref, writePref, PREF_KEYS } from "../lib/preferences.js";
 import { GM_VOICES } from "../lib/gm-voices.js";
+import { GCHORD_PATTERNS, DEFAULT_GCHORD_PATTERN_VALUE } from "../lib/audio-mix.js";
 
 // Full re-engrave (the only way to change what plays — see sheet.js /
 // lib/audio-mix.js) is too heavy to run on every "input" tick of a dragged
@@ -76,6 +77,16 @@ function buildVoiceOptions(select) {
   }
 }
 
+// One <option> per GCHORD_PATTERNS entry, in the order they're declared
+// there (Default first) — no grouping, no leading blank option, since every
+// entry (including "Default") is itself a meaningful choice here, unlike the
+// Voice pickers' own "Default" (= "don't override this channel's program").
+function buildGchordPatternOptions(select) {
+  GCHORD_PATTERNS.forEach((p) => {
+    select.append(el("option", { value: p.value, text: p.label.toUpperCase() }));
+  });
+}
+
 /*
   The sheet toolbar's Mixer button (#mixerBtn) and its popover/bottom-sheet
   panel (#mixerPanel): four channels — Melody, Bass, Chords (the latter two
@@ -96,6 +107,14 @@ function buildVoiceOptions(select) {
   This module only owns the panel's DOM and ctx.state.mixer, so it's still
   tracking Melody/Comping's fader value (sticky, ready for whenever that's
   fixed for real) even while that one control is locked.
+
+  Next to the Metronome toggle sits a fifth, non-channel control: the
+  Pattern picker (#mixerGchordPatternSelect, ctx.state.gchordPattern), which
+  chooses the rhythm the Bass/Chords auto-accompaniment plays via
+  %%MIDI gchord (see lib/audio-mix.js's GCHORD_PATTERNS/resolveGchordPattern
+  and sheet.js's resolveRenderText). It gates on hasChords the same way
+  Bass/Chords do (updatePatternGate), since a pattern picked for an
+  accompaniment that isn't playing has nothing to audibly change.
 */
 function readoutText(channel, percent, muted) {
   if (muted) return "Muted";
@@ -198,11 +217,24 @@ export function createMixer(ctx) {
     if (select) select.disabled = inactive;
   }
 
+  // The Pattern picker isn't a channel (no volume/mute/CHANNELS entry — same
+  // idea as Metronome next to it), but it does gate on hasChords like Bass/
+  // Chords: picking a pattern for an auto-accompaniment that isn't playing
+  // does nothing audible, so it's dimmed the same way rather than left live.
+  function updatePatternGate() {
+    const inactive = !ctx.state.hasChords;
+    const strip = byId("mixerStripPattern");
+    if (strip) strip.classList.toggle("is-inactive", inactive);
+    const select = byId("mixerGchordPatternSelect");
+    if (select) select.disabled = inactive;
+  }
+
   function refresh() {
     CHANNELS.forEach((channel) => {
       updateStripVisual(channel);
       updateGate(channel);
     });
+    updatePatternGate();
   }
 
   function wireStrip(channel) {
@@ -269,8 +301,21 @@ export function createMixer(ctx) {
     setOpen(false);
   }
 
+  function wirePattern() {
+    const select = byId("mixerGchordPatternSelect");
+    if (!select) return;
+    buildGchordPatternOptions(select);
+    select.value = ctx.state.gchordPattern;
+    select.addEventListener("change", () => {
+      ctx.state.gchordPattern = select.value;
+      writePref(PREF_KEYS.mixerGchordPattern, select.value);
+      ctx.sheet.rerender();
+    });
+  }
+
   function init() {
     CHANNELS.forEach(wireStrip);
+    wirePattern();
 
     on("mixerCloseBtn", "click", () => setOpen(false));
     on("mixerBackdrop", "click", () => setOpen(false));
@@ -315,4 +360,14 @@ export function loadMixerState() {
     state[`${channel}Program`] = storedProgram === null || storedProgram === "" ? null : Number(storedProgram);
   });
   return state;
+}
+
+// ctx.state.gchordPattern's initial value, seeded from the persisted pref —
+// falls back to DEFAULT_GCHORD_PATTERN_VALUE both when nothing's stored yet
+// and when a stored value no longer matches a GCHORD_PATTERNS entry (a
+// pattern renamed/removed since it was saved).
+export function loadGchordPatternState() {
+  const stored = readPref(PREF_KEYS.mixerGchordPattern);
+  const isValid = GCHORD_PATTERNS.some((p) => p.value === stored);
+  return isValid ? stored : DEFAULT_GCHORD_PATTERN_VALUE;
 }

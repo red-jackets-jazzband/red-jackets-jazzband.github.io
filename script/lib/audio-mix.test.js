@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   MIDI_VOLUME_MAX, DEFAULT_PROGRAM, percentToMidiVolume, injectMixerAudio, computeVoicesOff,
+  GCHORD_PATTERNS, DEFAULT_GCHORD_PATTERN_VALUE, resolveGchordPattern,
 } from "./audio-mix.js";
 
 test("percentToMidiVolume follows a cubic taper: finer resolution low, full range at the top", () => {
@@ -50,6 +51,32 @@ test("injectMixerAudio stamps Bass/Chords accompaniment directives (default prog
   assert.match(before, new RegExp(`%%MIDI chordprog ${DEFAULT_PROGRAM.chords}`));
   assert.match(before, new RegExp(`%%MIDI bassvol ${percentToMidiVolume(70)}`));
   assert.match(before, new RegExp(`%%MIDI chordvol ${percentToMidiVolume(20)}`));
+});
+
+test("resolveGchordPattern maps a Pattern-picker value to its gchord string, defaulting on the unrecognised", () => {
+  assert.equal(resolveGchordPattern("jazz"), "bzczbzcz");
+  assert.equal(resolveGchordPattern("two-beat"), "fzczfzcz");
+  assert.equal(resolveGchordPattern("latin"), "fczczczc");
+  assert.equal(resolveGchordPattern("default"), null);
+  const defaultEntry = GCHORD_PATTERNS.find((p) => p.value === DEFAULT_GCHORD_PATTERN_VALUE);
+  assert.equal(resolveGchordPattern("not-a-real-pattern"), defaultEntry.pattern);
+  assert.equal(resolveGchordPattern(undefined), defaultEntry.pattern);
+});
+
+test("injectMixerAudio uses a given gchordPattern instead of the default", () => {
+  const out = injectMixerAudio(NO_COMPING_TUNE, {
+    compingActive: false, hasChords: true, bassPercent: 0, chordsPercent: 0, gchordPattern: "fzczfzcz",
+  });
+  assert.match(out, /%%MIDI gchord fzczfzcz/);
+});
+
+test("injectMixerAudio omits the %%MIDI gchord line for a null pattern (Default), keeping the rest of the accompaniment block", () => {
+  const out = injectMixerAudio(NO_COMPING_TUNE, {
+    compingActive: false, hasChords: true, bassPercent: 70, chordsPercent: 20, gchordPattern: null,
+  });
+  assert.doesNotMatch(out, /%%MIDI gchord/);
+  assert.match(out, new RegExp(`%%MIDI bassprog ${DEFAULT_PROGRAM.bass}`));
+  assert.match(out, new RegExp(`%%MIDI bassvol ${percentToMidiVolume(70)}`));
 });
 
 test("injectMixerAudio uses custom Bass/Chords programs when given one", () => {

@@ -2,8 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountPage } from "../../../tests/helpers/dom.js";
 import { makeCtx } from "../../../tests/helpers/ctx.js";
-import { createMixer, loadMixerState } from "./mixer.js";
+import { createMixer, loadMixerState, loadGchordPatternState } from "./mixer.js";
 import { GM_VOICES } from "../lib/gm-voices.js";
+import { GCHORD_PATTERNS } from "../lib/audio-mix.js";
 
 function setup(mixerState = {}) {
   const page = mountPage();
@@ -324,5 +325,65 @@ test("choosing a Voice persists the GM program and re-renders immediately", () =
   } finally {
     window.localStorage.clear();
     cleanup();
+  }
+});
+
+test("init populates the Pattern select with every GCHORD_PATTERNS entry, seeded from ctx.state.gchordPattern", () => {
+  const { cleanup } = setup();
+  try {
+    const select = document.getElementById("mixerGchordPatternSelect");
+    assert.equal(select.options.length, GCHORD_PATTERNS.length);
+    assert.equal(select.options[0].value, "default");
+    assert.equal(select.value, "jazz"); // ctx.state.gchordPattern from the test helper
+  } finally {
+    cleanup();
+  }
+});
+
+test("choosing a Pattern persists it and re-renders immediately", () => {
+  const { ctx, rerenders, cleanup } = setup();
+  try {
+    const select = document.getElementById("mixerGchordPatternSelect");
+    select.value = "waltz";
+    select.dispatchEvent(new window.Event("change"));
+    assert.equal(ctx.state.gchordPattern, "waltz");
+    assert.equal(rerenders.length, 1);
+    assert.equal(window.localStorage.getItem("rj.mixerGchordPattern"), "waltz");
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
+test("refresh() gates the Pattern picker on hasChords, same as Bass/Chords", () => {
+  const { ctx, mixer, cleanup } = setup();
+  try {
+    ctx.state.hasChords = false;
+    mixer.refresh();
+    assert.equal(document.getElementById("mixerStripPattern").classList.contains("is-inactive"), true);
+    assert.equal(document.getElementById("mixerGchordPatternSelect").disabled, true);
+
+    ctx.state.hasChords = true;
+    mixer.refresh();
+    assert.equal(document.getElementById("mixerStripPattern").classList.contains("is-inactive"), false);
+    assert.equal(document.getElementById("mixerGchordPatternSelect").disabled, false);
+  } finally {
+    cleanup();
+  }
+});
+
+test("loadGchordPatternState defaults to 'jazz', reads back a persisted choice, and falls back on a stale one", () => {
+  const page = mountPage();
+  try {
+    assert.equal(loadGchordPatternState(), "jazz");
+
+    window.localStorage.setItem("rj.mixerGchordPattern", "waltz");
+    assert.equal(loadGchordPatternState(), "waltz");
+
+    window.localStorage.setItem("rj.mixerGchordPattern", "not-a-real-pattern");
+    assert.equal(loadGchordPatternState(), "jazz");
+  } finally {
+    window.localStorage.clear();
+    page.cleanup();
   }
 });

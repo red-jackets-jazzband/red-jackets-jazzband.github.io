@@ -36,8 +36,44 @@ export const DEFAULT_PROGRAM = {
   melody: 56, bass: 32, chords: 26, comping: 56,
 };
 
-// ABCjs's own "jazz" example pattern (https://examples.abcjs.net/accompaniment).
-const GCHORD_PATTERN = "bzczbzcz";
+/*
+  Named %%MIDI gchord patterns for the Mixer's Pattern picker (songs/
+  mixer.js, next to the Metronome toggle — both are tune-wide settings, not
+  per-channel controls). Each `pattern` string is built from abcjs's own
+  synth-side gchord alphabet (its source, not abc2midi's — the two parsers
+  accept different letters): "b" plays the chord's root bass note and the
+  full chord together, "f" the root alone, "c" the chord alone, "z" a rest.
+  One letter is one pulse of the tune's basic note length; abcjs stretches
+  or repeats the string to fill each bar. "jazz" is the pattern this file
+  hardcoded before the picker existed (ABCjs's own "jazz" example,
+  https://examples.abcjs.net/accompaniment) — kept as the default `value` so
+  an untouched picker changes nothing audible. `pattern: null` ("Default")
+  means "emit no %%MIDI gchord line at all" — hasChords still gets bassprog/
+  chordprog/bassvol/chordvol (see accompanimentLines), just whichever
+  built-in pattern abc2midi/abcjs falls back to on its own.
+  As with the Bass/Chords GM program defaults above, the non-jazz patterns
+  here are a reasonable rhythmic guess from reading the gchord alphabet, not
+  yet confirmed by ear in a real browser.
+*/
+export const GCHORD_PATTERNS = [
+  { value: "default", label: "Default", pattern: null },
+  { value: "jazz", label: "Jazz (root+chord, chord)", pattern: "bzczbzcz" },
+  { value: "two-beat", label: "Two-beat (root, chord)", pattern: "fzczfzcz" },
+  { value: "four-beat", label: "Four-beat (root+chord each beat)", pattern: "bzbzbzbz" },
+  { value: "waltz", label: "Waltz (root, chord, chord)", pattern: "fzczcz" },
+  { value: "latin", label: "Latin/Calypso (root, off-beat chords)", pattern: "fczczczc" },
+];
+
+export const DEFAULT_GCHORD_PATTERN_VALUE = "jazz";
+
+// The gchord pattern string for a Pattern-picker `value` (falling back to
+// the default entry for anything unrecognised — a stale/corrupted
+// localStorage value, most likely).
+export function resolveGchordPattern(value) {
+  const found = GCHORD_PATTERNS.find((p) => p.value === value);
+  if (found) return found.pattern;
+  return GCHORD_PATTERNS.find((p) => p.value === DEFAULT_GCHORD_PATTERN_VALUE).pattern;
+}
 
 // A fader's usable travel should spend most of itself on the quiet-to-
 // comfortable range, not spread evenly up to "as loud as it goes" — real
@@ -76,16 +112,18 @@ function spliceAfter(text, index, insertion) {
 // carries chord symbols for ABCjs's gchord engine to read (a tune with none
 // would just render an inert directive).
 function accompanimentLines(hasChords, {
-  bassPercent, chordsPercent, bassProgram, chordsProgram,
+  bassPercent, chordsPercent, bassProgram, chordsProgram, gchordPattern,
 }) {
   if (!hasChords) return [];
-  return [
-    `%%MIDI gchord ${GCHORD_PATTERN}`,
+  const lines = [];
+  if (gchordPattern) lines.push(`%%MIDI gchord ${gchordPattern}`);
+  lines.push(
     `%%MIDI bassprog ${bassProgram}`,
     `%%MIDI chordprog ${chordsProgram}`,
     `%%MIDI bassvol ${percentToMidiVolume(bassPercent)}`,
     `%%MIDI chordvol ${percentToMidiVolume(chordsPercent)}`,
-  ];
+  );
+  return lines;
 }
 
 /*
@@ -113,10 +151,11 @@ export function injectMixerAudio(abcText, {
   compingProgram = DEFAULT_PROGRAM.comping,
   bassPercent, bassProgram = DEFAULT_PROGRAM.bass,
   chordsPercent, chordsProgram = DEFAULT_PROGRAM.chords,
+  gchordPattern = resolveGchordPattern(DEFAULT_GCHORD_PATTERN_VALUE),
 }) {
   const withAccompaniment = insertLinesBeforeKeyLine(
     abcText, accompanimentLines(hasChords, {
-      bassPercent, chordsPercent, bassProgram, chordsProgram,
+      bassPercent, chordsPercent, bassProgram, chordsProgram, gchordPattern,
     }),
   );
 

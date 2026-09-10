@@ -203,6 +203,12 @@
       <span class="mixer-strip-label">Metronome</span>
       <button type="button" id="mixerMetronomeToggleBtn" class="mixer-mute-btn mixer-metronome-toggle" aria-pressed="false" title="Enable metronome" aria-label="Enable metronome"><span class="fa-solid fa-toggle-off" aria-hidden="true"></span></button>
     </div>
+    <div class="mixer-strip mixer-strip--pattern" id="mixerStripPattern">
+      <span class="mixer-swatch mixer-swatch--pattern" aria-hidden="true"></span>
+      <span class="mixer-strip-label">Pattern</span>
+      <select id="mixerGchordPatternSelect" class="mixer-voice-select" aria-label="Accompaniment pattern"></select>
+      <p class="mixer-strip-note">This tune has no chord symbols to build an accompaniment from.</p>
+    </div>
   </dialog>
   <div id="mixerBackdrop" class="mixer-backdrop" hidden></div>
 </div>

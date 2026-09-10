@@ -3,7 +3,7 @@ import { offsetForInstrument, changeClefForInstrument } from "../lib/instruments
 import { parseChordScheme, computeChordOffset } from "../lib/chords.js";
 import { convertChordsToRoman } from "../lib/music-theory.js";
 import { buildCompingTune } from "../lib/comping.js";
-import { injectMixerAudio } from "../lib/audio-mix.js";
+import { injectMixerAudio, resolveGchordPattern } from "../lib/audio-mix.js";
 import { renderChordTable, scanRepeatBoundaries, fitChordTable } from "./chord-table.js";
 import { stylePartMarkers, applyCompingColors } from "./sheet-decorations.js";
 import { updateIrealProLink } from "./irealpro-link.js";
@@ -188,6 +188,7 @@ export function createSheet(ctx) {
       bassProgram: mixerProgram("bass"),
       chordsPercent: effectiveMixerPercent("chords"),
       chordsProgram: mixerProgram("chords"),
+      gchordPattern: resolveGchordPattern(ctx.state.gchordPattern),
     });
   }
 
