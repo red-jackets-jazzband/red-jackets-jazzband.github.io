@@ -626,6 +626,62 @@ test("setting point B too close to A to form a loop doesn't enable the toggle", 
   }
 });
 
+// Regression test for a real YouTube IFrame API quirk (see the loopTick doc
+// comment): a repeat-seek can leave the player silently stalled at A —
+// reporting itself as still playing, with getCurrentTime() frozen, and no
+// onStateChange firing to trigger a recovery. The explicit playVideo() after
+// the seek is the backstop for that; this also pins the seek itself back to
+// allowSeekAhead=true (a prior version used false to avoid flashing the
+// native controls, which turned out to cause exactly this stall).
+test("the loop poll's repeat-seek forces a resume so the loop survives more than one repeat", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    let currentTime = 0;
+    const seeks = [];
+    const plays = [];
+    let tick = null;
+    window.setInterval = (fn) => { tick = fn; return 1; };
+    window.clearInterval = () => { tick = null; };
+
+    const { fireState } = await openLoopPanel(window, {
+      getCurrentTime: () => currentTime,
+      seekTo: (t, allowSeekAhead) => {
+        seeks.push([t, allowSeekAhead]);
+        currentTime = t;
+        // Simulates the real-world stall: the seek alone leaves the player
+        // reporting paused rather than continuing playback on its own.
+        fireState(0);
+      },
+      playVideo: () => { plays.push(true); fireState(1); },
+    });
+
+    currentTime = 10;
+    document.getElementById("inspirationSetA").dispatchEvent(new window.Event("click"));
+    currentTime = 20;
+    document.getElementById("inspirationSetB").dispatchEvent(new window.Event("click"));
+
+    fireState(1); // PLAYING — starts the loop poll
+    assert.ok(tick, "loop poll should be running");
+
+    currentTime = 19.95; // within shouldLoopSeek's lead of B
+    tick();
+    assert.deepEqual(seeks, [[10, true], [10, true]]);
+    assert.equal(plays.length, 1, "playVideo must be called to force the resume");
+    assert.ok(tick, "the poll must still be running after the forced resume");
+
+    // A second repeat must still work — this is what regressed without the
+    // playVideo() call: the first repeat's stall permanently stopped the poll.
+    currentTime = 19.95;
+    tick();
+    assert.deepEqual(seeks.at(-1), [10, true]);
+    assert.equal(plays.length, 2);
+  } finally {
+    delete window.YT;
+    page.cleanup();
+  }
+});
+
 test("the share button copies the link ctx.shareUrl builds from the markers", () => {
   inDom(({ window }) => {
     const copied = [];

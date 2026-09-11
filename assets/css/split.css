@@ -1528,8 +1528,20 @@ video.video {
   color: rgba(236,234,230,.55);
   white-space: nowrap;
 }
+/*
+  flex: 1 above makes this element double as the spacer that pins the Speed
+  stepper to the row's right edge (see .inspiration-loop-controls). Letting
+  [hidden]'s default display:none apply here — as for every other [hidden]
+  element in this file — would drop it out of the flex row entirely once
+  there's no A/B time to show, so Speed would visibly jump left to sit right
+  after the marker group instead of holding its position. display:block (an
+  explicit override of the same specificity fight documented for the
+  #setlistTools[hidden] group above) plus visibility keeps it an invisible
+  but still-flex-grown spacer instead.
+*/
 .inspiration-loop-readout[hidden] {
-  display: none;
+  display: block;
+  visibility: hidden;
 }
 .inspiration-loop-stepper-btn {
   flex: none;
@@ -1588,6 +1600,16 @@ video.video {
   .inspiration-loop-readout {
     flex-basis: 100%;
     text-align: left;
+  }
+  /*
+    At this width the readout always forces its own full-width line (the
+    flex-basis: 100% above), so it isn't acting as a same-row spacer the way
+    it does at the default width — keeping it present-but-invisible here
+    would just leave a blank line above Speed. Collapsing it fully with
+    display: none is back to correct for this layout.
+  */
+  .inspiration-loop-readout[hidden] {
+    display: none;
   }
 }
 

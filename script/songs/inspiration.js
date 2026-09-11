@@ -456,11 +456,20 @@ export function createInspiration(ctx) {
       if (span) {
         const rate = player.getPlaybackRate ? player.getPlaybackRate() : 1;
         if (shouldLoopSeek(t, span.a, span.b, loopLeadSeconds(rate, LOOP_POLL_MS))) {
-          // allowSeekAhead=false: A has already played, so it's buffered —
-          // this skips the "new stream request" the player would otherwise
-          // make, which is what flashes the native controls back into view
-          // on every repeat.
-          player.seekTo(span.a, false);
+          // allowSeekAhead=true: an earlier version passed false here, since
+          // A has already played and is buffered, to skip the "new stream
+          // request" the player would otherwise make and avoid flashing its
+          // native controls back into view on every repeat. In practice that
+          // mode is unreliable — confirmed empirically, not just from docs —
+          // and can leave the player silently stalled at A: it keeps
+          // reporting itself as playing (no further onStateChange fires at
+          // all) while getCurrentTime() stops advancing, so the loop just
+          // freezes after its first repeat. A correctness bug is worse than
+          // an occasional UI flash, so this always requests a real seek; the
+          // explicit playVideo() is a backstop for the same stall and a
+          // no-op when playback never actually stopped.
+          player.seekTo(span.a, true);
+          if (player.playVideo) player.playVideo();
           t = span.a;
         }
       }
