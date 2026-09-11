@@ -38,7 +38,11 @@ export function extractYouTubeId(url) {
 // `options` is an object { autoplay, jsApi, origin }; a bare `true` is also
 // accepted as shorthand for { autoplay: true }. `jsApi` adds enablejsapi=1 (+
 // playsinline=1, + origin=... when given) so the LoopTube toolbar can attach a
-// YT.Player to the iframe and drive seek / playback-rate.
+// YT.Player to the iframe and drive seek / playback-rate. It also sets
+// controls=0: every jsApi embed is the Inspiration panel, whose own LoopTube
+// toolbar already reimplements the native control bar's seek (the timeline),
+// play/pause (the play button) and speed (the +/- stepper) — the native bar
+// would just be a redundant, unstyled duplicate under the video.
 export function youtubeEmbedUrl(url, options) {
   const id = extractYouTubeId(url);
   if (!id) return null;
@@ -46,8 +50,7 @@ export function youtubeEmbedUrl(url, options) {
   const params = ["rel=0"];
   if (opts.autoplay) params.push("autoplay=1");
   if (opts.jsApi) {
-    params.push("enablejsapi=1");
-    params.push("playsinline=1");
+    params.push("enablejsapi=1", "playsinline=1", "controls=0");
     if (opts.origin) params.push("origin=" + encodeURIComponent(opts.origin));
   }
   return "https://www.youtube-nocookie.com/embed/" + id + "?" + params.join("&");

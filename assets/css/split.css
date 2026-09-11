@@ -1298,6 +1298,108 @@ video.video {
 .inspiration-loop[hidden] {
   display: none;
 }
+/*
+  The zoomed timeline's own minimap, sitting right above it so the two read
+  as one progress bar with a "detail" view under an "overview" one — its own
+  zoom +/- buttons and current-level readout flank it in the same row (see
+  .inspiration-loop-overview-row below), rather than a separate stepper
+  living elsewhere in the controls row: zoom is a property of this strip,
+  not a bolted-on control that happens to affect it. Always visible, not
+  just once zoomed — at 1x its window simply spans the whole strip, same as
+  a browser scrollbar's thumb filling the track when there's nothing to
+  scroll, which is exactly what makes it the strip's permanent home for the
+  zoom control instead of an extra that only appears once needed.
+*/
+.inspiration-loop-overview-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 12px 0;
+}
+.inspiration-loop-overview {
+  position: relative;
+  flex: 1;
+  height: 8px;
+  border-radius: 3px;
+  background: #232323;
+  cursor: pointer;
+  touch-action: none;
+}
+/* Same gold-ring-instead-of-outline treatment as .setlist-drag-handle
+   elsewhere in this file — a keyboard-focused control needs a visible ring
+   of its own, not the browser default against this dark background. */
+.inspiration-loop-overview:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--rj-gold);
+}
+.inspiration-loop-overview-zoom-btn {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  background: #262626;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 4px;
+  color: rgba(236,234,230,.7);
+  font-size: 9px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+@media (hover: hover) {
+  .inspiration-loop-overview-zoom-btn:hover:not(:disabled) {
+    background: var(--rj-gold);
+    color: #222222;
+  }
+}
+.inspiration-loop-overview-zoom-btn:disabled {
+  opacity: .38;
+  cursor: default;
+}
+.inspiration-loop-overview-zoom-value {
+  flex: none;
+  min-width: 22px;
+  text-align: center;
+  font: 600 10px/1 "Montserrat", sans-serif;
+  color: var(--rj-gold);
+}
+.inspiration-loop-overview-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--rj-gold);
+  opacity: .6;
+  pointer-events: none;
+}
+.inspiration-loop-overview-window {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 6px;
+  background: rgba(212,175,74,.3);
+  border: 1px solid var(--rj-gold);
+  border-radius: 2px;
+  cursor: grab;
+}
+.inspiration-loop-overview-window:active {
+  cursor: grabbing;
+}
+/* Invisible wider hit-targets straddling each edge, so resizing doesn't
+   demand pixel-perfect aim at a 1px border. */
+.inspiration-loop-overview-handle {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 10px;
+  cursor: ew-resize;
+}
+.inspiration-loop-overview-handle--start {
+  left: -5px;
+}
+.inspiration-loop-overview-handle--end {
+  right: -5px;
+}
 .inspiration-loop-timeline {
   position: relative;
   height: 18px;
@@ -1347,24 +1449,55 @@ video.video {
   gap: 6px;
   padding: 6px 12px 9px;
 }
+/*
+  Play/Repeat, A/B/Clear, and the Speed stepper each get their own bordered
+  shell — same visual language the sheet header uses (.sheet-transport /
+  .sheet-stepper in the "Key/Tempo steppers" section above) rather than a
+  bespoke look, so the two playback surfaces (the printed sheet's transport,
+  this panel's LoopTube toolbar) read as one system: a bordered shell per
+  group, flush buttons divided by hairlines, gold at rest only for an
+  editable/armed/held value, everything else a dim glyph until hovered.
+  Scaled down from the sheet's 44px controls to this panel's existing 26px
+  scale (it's a floating video overlay as narrow as 240px, not a full-width
+  toolbar) rather than copied at 1:1 size. Three separate groups (transport,
+  markers, speed) rather than one long bar of five+ buttons is what lets
+  them wrap as independent units and keeps Speed on the same line as the
+  rest at the panel's default width — zoom moved to the overview strip
+  above (see .inspiration-loop-overview-row) is what freed the room for
+  that split in the first place.
+*/
+.inspiration-loop-btn-group,
+.inspiration-loop-stepper {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  height: 26px;
+  background: #262626;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.inspiration-loop-btn-group > * + *,
+.inspiration-loop-stepper > * + * {
+  border-left: 1px solid rgba(255,255,255,.1);
+}
 .inspiration-loop-btn {
   flex: none;
   box-sizing: border-box;
   min-width: 26px;
-  height: 26px;
+  height: 100%;
   padding: 0 7px;
-  display: inline-grid;
+  display: grid;
   place-items: center;
+  background: none;
   border: none;
-  border-radius: 6px;
-  background: #262626;
   color: rgba(236,234,230,.7) !important;
   font: 600 11px/1 "Montserrat", sans-serif;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
 @media (hover: hover) {
-  .inspiration-loop-btn:hover {
+  .inspiration-loop-btn:hover:not(:disabled) {
     background: var(--rj-gold);
     color: #222222 !important;
   }
@@ -1372,8 +1505,6 @@ video.video {
 .inspiration-loop-btn:disabled {
   opacity: .38;
   cursor: default;
-  background: #262626;
-  color: rgba(236,234,230,.7) !important;
 }
 .inspiration-loop-btn[aria-pressed="true"] {
   background: var(--rj-gold);
@@ -1382,6 +1513,12 @@ video.video {
 .inspiration-loop-btn.armed {
   box-shadow: inset 0 0 0 1px var(--rj-gold);
   color: var(--rj-gold) !important;
+}
+/* #inspirationPlayToggle while the video is actually playing — same "solid
+   gold, not just on hover" treatment as .sheet-transport .sheet-play-btn.playing. */
+.inspiration-loop-btn.playing {
+  background: var(--rj-gold);
+  color: #222222 !important;
 }
 .inspiration-loop-readout {
   flex: 1;
@@ -1394,17 +1531,52 @@ video.video {
 .inspiration-loop-readout[hidden] {
   display: none;
 }
-.inspiration-loop-speed {
+.inspiration-loop-stepper-btn {
   flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.inspiration-loop-speed-value {
-  min-width: 30px;
-  text-align: center;
-  font: 600 11px/1 "Montserrat", sans-serif;
+  width: 20px;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: none;
   color: rgba(236,234,230,.7);
+  font: 600 11px/1 "Montserrat", sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+@media (hover: hover) {
+  .inspiration-loop-stepper-btn:hover:not(:disabled) {
+    background: var(--rj-gold);
+    color: #222222;
+  }
+}
+.inspiration-loop-stepper-btn:disabled {
+  opacity: .38;
+  cursor: default;
+}
+/* Mirrors .sheet-stepper-value: a bordered-off center cell with the gold
+   value on top and a tiny uppercase caption underneath (semitones/bpm
+   there, zoom/speed here) rather than a bare, uncaptioned number. */
+.inspiration-loop-stepper-value {
+  flex: none;
+  min-width: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 5px;
+}
+.inspiration-loop-stepper-value > span:first-child {
+  font: 600 11px/1 "Montserrat", sans-serif;
+  color: var(--rj-gold);
+}
+.inspiration-loop-stepper-label {
+  font: 600 6.5px/1 "Montserrat", sans-serif;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: rgba(236,234,230,.4);
+  white-space: nowrap;
 }
 
 @media (max-width: 480px) {

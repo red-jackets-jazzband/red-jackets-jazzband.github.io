@@ -2,6 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { extractYouTubeId, youtubeEmbedUrl } from "./youtube.js";
 
+const SHORT_URL = "https://youtu.be/AqL60Xv_Sbc";
+
 test("extractYouTubeId handles watch?v= urls", () => {
   assert.equal(extractYouTubeId("https://www.youtube.com/watch?v=q3HADwaCnkE"), "q3HADwaCnkE");
 });
@@ -14,7 +16,7 @@ test("extractYouTubeId handles watch?v= urls with trailing params", () => {
 });
 
 test("extractYouTubeId handles youtu.be short links", () => {
-  assert.equal(extractYouTubeId("https://youtu.be/AqL60Xv_Sbc"), "AqL60Xv_Sbc");
+  assert.equal(extractYouTubeId(SHORT_URL), "AqL60Xv_Sbc");
 });
 
 test("extractYouTubeId trims surrounding whitespace", () => {
@@ -48,7 +50,7 @@ test("youtubeEmbedUrl builds a privacy-enhanced embed url", () => {
 
 test("youtubeEmbedUrl adds autoplay=1 when requested", () => {
   assert.equal(
-    youtubeEmbedUrl("https://youtu.be/AqL60Xv_Sbc", true),
+    youtubeEmbedUrl(SHORT_URL, true),
     "https://www.youtube-nocookie.com/embed/AqL60Xv_Sbc?rel=0&autoplay=1",
   );
 });
@@ -59,14 +61,21 @@ test("youtubeEmbedUrl returns null for an unrecognized url", () => {
 
 test("youtubeEmbedUrl adds the JS API params when jsApi is set", () => {
   assert.equal(
-    youtubeEmbedUrl("https://youtu.be/AqL60Xv_Sbc", { autoplay: true, jsApi: true }),
-    "https://www.youtube-nocookie.com/embed/AqL60Xv_Sbc?rel=0&autoplay=1&enablejsapi=1&playsinline=1",
+    youtubeEmbedUrl(SHORT_URL, { autoplay: true, jsApi: true }),
+    "https://www.youtube-nocookie.com/embed/AqL60Xv_Sbc?rel=0&autoplay=1&enablejsapi=1&playsinline=1&controls=0",
   );
 });
 
 test("youtubeEmbedUrl appends an encoded origin when given", () => {
   assert.equal(
-    youtubeEmbedUrl("https://youtu.be/AqL60Xv_Sbc", { jsApi: true, origin: "https://www.redjackets.nl" }),
-    "https://www.youtube-nocookie.com/embed/AqL60Xv_Sbc?rel=0&enablejsapi=1&playsinline=1&origin=https%3A%2F%2Fwww.redjackets.nl",
+    youtubeEmbedUrl(SHORT_URL, { jsApi: true, origin: "https://www.redjackets.nl" }),
+    "https://www.youtube-nocookie.com/embed/AqL60Xv_Sbc?rel=0&enablejsapi=1&playsinline=1&controls=0&origin=https%3A%2F%2Fwww.redjackets.nl",
+  );
+});
+
+test("youtubeEmbedUrl hides native controls only in jsApi mode", () => {
+  assert.equal(
+    youtubeEmbedUrl(SHORT_URL, { autoplay: true }),
+    "https://www.youtube-nocookie.com/embed/AqL60Xv_Sbc?rel=0&autoplay=1",
   );
 });

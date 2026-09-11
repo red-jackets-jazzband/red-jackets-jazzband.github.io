@@ -281,6 +281,19 @@ Retrieved from www.redjackets.nl - <span id="instrumentText"></span>
     <iframe id="inspirationVideoFrame" src="" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Inspiration video" loading="lazy"></iframe>
   </div>
   <div class="inspiration-loop" id="inspirationLoopBar" hidden>
+    <div class="inspiration-loop-overview-row">
+      <button type="button" class="inspiration-loop-overview-zoom-btn" id="inspirationZoomOut" aria-label="Zoom out" disabled><span class="fa-solid fa-magnifying-glass-minus" aria-hidden="true"></span></button>
+      <div class="inspiration-loop-overview" id="inspirationLoopOverview" title="Drag to pan, or drag an edge to zoom" tabindex="0" role="group" aria-label="Timeline overview: Left and Right arrow keys pan, Up and Down arrow keys zoom, Home and End jump to the start or end">
+        <div class="inspiration-loop-overview-tick" id="inspirationOverviewTickA" hidden></div>
+        <div class="inspiration-loop-overview-tick" id="inspirationOverviewTickB" hidden></div>
+        <div class="inspiration-loop-overview-window" id="inspirationOverviewWindow">
+          <div class="inspiration-loop-overview-handle inspiration-loop-overview-handle--start" id="inspirationOverviewHandleStart" aria-hidden="true"></div>
+          <div class="inspiration-loop-overview-handle inspiration-loop-overview-handle--end" id="inspirationOverviewHandleEnd" aria-hidden="true"></div>
+        </div>
+      </div>
+      <button type="button" class="inspiration-loop-overview-zoom-btn" id="inspirationZoomIn" aria-label="Zoom in"><span class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></span></button>
+      <span class="inspiration-loop-overview-zoom-value" id="inspirationZoomValue">1&times;</span>
+    </div>
     <div class="inspiration-loop-timeline" id="inspirationLoopTrack" title="Click to seek">
       <div class="inspiration-loop-range" id="inspirationLoopRange" hidden></div>
       <div class="inspiration-loop-played" id="inspirationLoopPlayed"></div>
@@ -288,16 +301,24 @@ Retrieved from www.redjackets.nl - <span id="instrumentText"></span>
       <button type="button" class="inspiration-loop-handle" id="inspirationLoopHandleB" aria-label="Loop end (B)" hidden></button>
     </div>
     <div class="inspiration-loop-controls">
-      <button type="button" class="inspiration-loop-btn" id="inspirationSetA" title="Set loop start (A) at the current point" aria-label="Set loop start">A</button>
-      <button type="button" class="inspiration-loop-btn" id="inspirationSetB" title="Set loop end (B) at the current point" aria-label="Set loop end">B</button>
-      <button type="button" class="inspiration-loop-btn" id="inspirationLoopToggle" title="Loop between A and B" aria-label="Loop between A and B" aria-pressed="false"><span class="fa-solid fa-repeat" aria-hidden="true"></span></button>
-      <button type="button" class="inspiration-loop-btn" id="inspirationLoopClear" title="Clear A and B" aria-label="Clear loop markers"><span class="fa-solid fa-xmark" aria-hidden="true"></span></button>
+      <div class="inspiration-loop-btn-group">
+        <button type="button" class="inspiration-loop-btn" id="inspirationPlayToggle" title="Play/pause" aria-label="Play"><span class="fa-solid fa-play" aria-hidden="true"></span></button>
+        <button type="button" class="inspiration-loop-btn" id="inspirationLoopToggle" title="Loop between A and B" aria-label="Loop between A and B" aria-pressed="false"><span class="fa-solid fa-repeat" aria-hidden="true"></span></button>
+      </div>
+      <div class="inspiration-loop-btn-group">
+        <button type="button" class="inspiration-loop-btn" id="inspirationSetA" title="Set loop start (A) at the current point" aria-label="Set loop start">A</button>
+        <button type="button" class="inspiration-loop-btn" id="inspirationSetB" title="Set loop end (B) at the current point" aria-label="Set loop end">B</button>
+        <button type="button" class="inspiration-loop-btn" id="inspirationLoopClear" title="Clear A and B" aria-label="Clear loop markers"><span class="fa-solid fa-xmark" aria-hidden="true"></span></button>
+      </div>
       <span class="inspiration-loop-readout" id="inspirationLoopReadout" hidden></span>
-      <span class="inspiration-loop-speed" id="inspirationLoopSpeed" title="Playback speed">
-        <button type="button" class="inspiration-loop-btn" id="inspirationSpeedDown" aria-label="Slower">&minus;</button>
-        <span class="inspiration-loop-speed-value" id="inspirationSpeedValue">1&times;</span>
-        <button type="button" class="inspiration-loop-btn" id="inspirationSpeedUp" aria-label="Faster">&plus;</button>
-      </span>
+      <div class="inspiration-loop-stepper" id="inspirationLoopSpeed" title="Playback speed">
+        <button type="button" class="inspiration-loop-stepper-btn" id="inspirationSpeedDown" aria-label="Slower">&minus;</button>
+        <div class="inspiration-loop-stepper-value">
+          <span id="inspirationSpeedValue">1&times;</span>
+          <span class="inspiration-loop-stepper-label">speed</span>
+        </div>
+        <button type="button" class="inspiration-loop-stepper-btn" id="inspirationSpeedUp" aria-label="Faster">&plus;</button>
+      </div>
     </div>
   </div>
 </div>
