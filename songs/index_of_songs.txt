@@ -2,8 +2,8 @@ Ain't my fault,aint_my_fault.abc
 Alcoholic Blues,alcoholic_blues.abc
 All of me,all_of_me.abc
 All the girls go crazy,all_the_girls.abc
-Auld Lang Syne,auld_lang_syne.abc
 Amazing Grace,amazing_grace.abc
+Auld Lang Syne,auld_lang_syne.abc
 Back Home Again in Indiana,indiana.abc
 Bare Necessities,bare_necessities.abc
 Basin Street Blues,basin_street.abc
@@ -48,13 +48,15 @@ Grazing in the Grass,grazing_in_the_grass.abc
 Happy Birthday,happy_birthday.abc
 Happy Feet Blues,happy_feet_blues.abc
 Home Sweet Home,home_sweet_home.abc
-Honky Tonk Town,honky_tonk_town.abc
 Honky Tonk Town (Riffs),honky_tonk_town_riffs.abc
+Honky Tonk Town,honky_tonk_town.abc
 I Wanna Be Like You,be_like_you.abc
+I wish I coulde shimmy like my sister kater,sister_kate.abc
 I'll fly away,ill_fly_away.abc
 I'm looking over,four_leaf_clover.abc
 I'm looking under,im_looking_under.abc
 I'm Walking,im_walking.abc
+I've Found a New Baby,found_a_new_baby.abc
 I've got a woman,gotta_woman.abc
 Ice Cream,ice_cream.abc
 In the Sweet Bye and Bye,in_the_sweet_bye_and_bye.abc
@@ -62,7 +64,6 @@ Indiana,indiana.abc
 Isle of Capri,isle_of_capri.abc
 It ain't my fault,aint_my_fault.abc
 It's Only a Paper Moon,paper_moon.abc
-I've Found a New Baby,found_a_new_baby.abc
 Jada,jada.abc
 Jambalaya,jambalaya.abc
 Jazz me Blues,jazz_me_blues.abc
@@ -118,6 +119,7 @@ Shame Shame Shame,shame_shame_shame.abc
 Sheik of Araby,sheik_of_araby.abc
 Short Dressed Gal,short_dressed_gal.abc
 Sing On,sing_on.abc
+Sister Kate,sister_kate.abc
 Some of these Days,some_of_these_days.abc
 South,south.abc
 Sugarfoot stomp,dippermouth_blues.abc
