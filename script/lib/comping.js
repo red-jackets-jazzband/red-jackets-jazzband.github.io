@@ -35,7 +35,11 @@ import { computeChordOffset } from "./chords.js";
 // triad planed one diatonic scale step below / above) and nu2 (two steps
 // above). Patterns that don't need the step tokens just ignore the extras.
 
-const PATTERNS = {
+// Exported (alongside the UI-facing COMPING_PATTERNS metadata above) so each
+// pattern's exact rhythm template can be unit-tested directly with plain
+// placeholder tokens, instead of only indirectly through buildCompingTune's
+// full voice-leading pipeline — see comping.test.js.
+export const PATTERNS = {
   on_2_and_4: {
     twobar1: (n) => `z2 ${n}2 z2 ${n}2`,
     twobar2: (n) => `${n} z z ${n}-${n}4`,
@@ -529,8 +533,14 @@ function stripNonMusicLines(body) {
     .join("\n");
 }
 
-// Barline tokens, longest match first so "|1", ":|2", "[2" stay intact.
-const BARLINE = /:\|:|:\|\d+|\|\|:?|::|\|:|:\||\[\||\|\]|\|\d+|\[\d+(?:[-,]\d+)*|\|/g;
+// Barline tokens, longest match first so "|1", ":|2", "[|:", "[2" stay intact.
+// Grouped by leading character (colon / bar / bracket) rather than left flat
+// — same 12 forms, same priority within each group, but well under
+// SonarCloud's regex-complexity threshold this way. Within the bar group,
+// `\|\d+` must come before the optional-colon form: an unqualified `:?`
+// would otherwise "succeed" on zero characters and misparse ":|2" as ":|"
+// followed by a bare "2".
+const BARLINE = /:(?:\|\d+|\|:?|:)|\|(?:\|:?|:|\]|\d+)?|\[(?:\|:?|\d+(?:[-,]\d+)*)/g;
 
 /*
    Walk a melody body's barlines and, for every segment that carries notes,

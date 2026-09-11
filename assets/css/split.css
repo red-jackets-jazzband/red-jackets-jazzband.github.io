@@ -564,7 +564,8 @@ video.video {
   it's actually playing.
 */
 /* Shares its shell (height, border, radius) with .sheet-stepper below. */
-.sheet-transport {
+.sheet-transport,
+.sheet-stepper {
   flex: none;
   display: flex;
   align-items: stretch;
@@ -666,16 +667,6 @@ video.video {
   stand, so they stay always-visible next to Play rather than a tap deep
   inside "More". Same visual pattern for both.
 */
-.sheet-stepper {
-  flex: none;
-  display: flex;
-  align-items: stretch;
-  height: 44px;
-  background: #2f2f2f;
-  border: 1px solid rgba(255,255,255,.11);
-  border-radius: 8px;
-  overflow: hidden;
-}
 .sheet-stepper-btn {
   flex: none;
   width: 26px;
@@ -2298,8 +2289,11 @@ select.rj-modal-input {
 .rj-library-add-song-inline input[type="search"]::placeholder {
   color: rgba(230,228,224,.4);
 }
-/* native "clear" button — recolour it grey/gold, matching the library search */
-.rj-library-add-song-inline input[type="search"]::-webkit-search-cancel-button {
+/* native "clear" button — recolour it grey/gold, shared by the library
+   search and the "Add to setlist" search (identical rendering, margin-right
+   pulls it back right against each field's own padding-right) */
+.rj-library-add-song-inline input[type="search"]::-webkit-search-cancel-button,
+.rj-library-search input::-webkit-search-cancel-button {
   -webkit-appearance: none;
   appearance: none;
   width: 14px;
@@ -2310,7 +2304,8 @@ select.rj-modal-input {
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
 }
-.rj-library-add-song-inline input[type="search"]::-webkit-search-cancel-button:hover {
+.rj-library-add-song-inline input[type="search"]::-webkit-search-cancel-button:hover,
+.rj-library-search input::-webkit-search-cancel-button:hover {
   background-color: #f0b030;
 }
 /* "/" hint badge, hidden once the field is focused or has text */
@@ -2828,22 +2823,8 @@ body:has(#rjLibrary) .split-bio {
 .rj-library-search input::placeholder {
   color: rgba(230,228,224,.42);
 }
-/* native "clear" button — recolour it grey/gold and line it up with where
-   the "/" hint sits (padding-right pushes it left, so pull it back right) */
-.rj-library-search input::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  margin-right: -19px;
-  cursor: pointer;
-  background-color: rgba(230,228,224,.5);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='black' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
-}
-.rj-library-search input::-webkit-search-cancel-button:hover {
-  background-color: #f0b030;
-}
+/* recolour it grey/gold and line it up with where the "/" hint sits
+   (padding-right pushes it left, so pull it back right) — shared rule above */
 .rj-search-hint {
   position: absolute;
   top: 50%;
@@ -3200,7 +3181,7 @@ body:has(#rjLibrary) .split-bio {
   so the instrument keeps its own full-width line but everything else packs
   onto the line below it.
 
-  That single row needs ~750px of #sheetmenu width to actually fit without
+  That single row needs ~740px of #sheetmenu width to actually fit without
   spilling a control onto a third line, and the theme's own generic
   split-layout rules (`.fs-split`'s 30%/70% image/content split above 800px,
   `.split-content-vertically-center`'s 800px max-width at every size) don't
@@ -3213,13 +3194,22 @@ body:has(#rjLibrary) .split-bio {
   to the songs page only (`body:has(#rjLibrary)`) — this page is a control
   panel, not a bio page, so it doesn't need that reading-width cap, and no
   other split-layout page is affected.
+
+  Below 744px (narrower than the iPad Mini's 744px portrait width) even the
+  tightened single row doesn't fit and a control spills onto a third line —
+  measured directly, the row needs 740px and starts wrapping again below
+  that. Rather than compress the controls further (there's no room left to
+  give without making them too small to tap), this block's lower bound stops
+  at 744px and anything narrower falls through to the 1024px block above's
+  phone-style stacked grouping instead, which has room to spare down to
+  phone widths.
 */
-@media (min-width: 700px) and (max-width: 1024px) {
+@media (min-width: 744px) and (max-width: 1024px) {
   #sheetmenu {
     justify-content: flex-start;
     /* Tightened from the base 10px so the row still fits the narrowest
-       common tablet (iPad Mini, 744px portrait) without spilling a control
-       onto a third line. */
+       width this block now applies to (744px, iPad Mini portrait) without
+       spilling a control onto a third line. */
     gap: 8px;
   }
   .sheet-adjust {

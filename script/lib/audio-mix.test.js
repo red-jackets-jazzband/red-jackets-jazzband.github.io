@@ -20,6 +20,12 @@ test("percentToMidiVolume follows a cubic taper: finer resolution low, full rang
   assert.equal(percentToMidiVolume(undefined), 0);
 });
 
+test("DEFAULT_PROGRAM carries the expected hardcoded GM program per channel", () => {
+  assert.deepEqual(DEFAULT_PROGRAM, {
+    melody: 56, bass: 32, chords: 26, comping: 56,
+  });
+});
+
 const NO_COMPING_TUNE = ["X:1", "T:Test", "M:4/4", "L:1/8", "K:C", '"C" C8 |'].join("\n");
 
 test("injectMixerAudio (no comping, no chords) stamps only the melody's %%MIDI program", () => {
@@ -52,6 +58,17 @@ test("injectMixerAudio stamps Bass/Chords accompaniment directives (default prog
   assert.match(before, new RegExp(`%%MIDI chordprog ${DEFAULT_PROGRAM.chords}`));
   assert.match(before, new RegExp(`%%MIDI bassvol ${percentToMidiVolume(70)}`));
   assert.match(before, new RegExp(`%%MIDI chordvol ${percentToMidiVolume(20)}`));
+});
+
+test("GCHORD_PATTERNS carries the expected value/label/pattern for every Pattern-picker entry", () => {
+  assert.deepEqual(GCHORD_PATTERNS, [
+    { value: "default", label: "Default", pattern: null },
+    { value: "jazz", label: "Jazz (root+chord, chord)", pattern: "bzczbzcz" },
+    { value: "two-beat", label: "Two-beat (root, chord)", pattern: "fzczfzcz" },
+    { value: "four-beat", label: "Four-beat (root+chord each beat)", pattern: "bzbzbzbz" },
+    { value: "waltz", label: "Waltz (root, chord, chord)", pattern: "fzczcz" },
+    { value: "latin", label: "Latin/Calypso (root, off-beat chords)", pattern: "fczczczc" },
+  ]);
 });
 
 test("resolveGchordPattern maps a Pattern-picker value to its gchord string, defaulting on the unrecognised", () => {
@@ -93,6 +110,8 @@ test("injectMixerAudio omits accompaniment directives entirely when the tune has
     compingActive: false, hasChords: false, bassPercent: 70, chordsPercent: 20,
   });
   assert.doesNotMatch(out, /%%MIDI (gchord|bassprog|chordprog|bassvol|chordvol)/);
+  // nothing else got spliced in before K: besides the one melody program line
+  assert.equal(out, NO_COMPING_TUNE.replace("K:C", `%%MIDI program ${DEFAULT_PROGRAM.melody}\nK:C`));
 });
 
 test("injectMixerAudio (comping) stamps melody/comping program after their own body markers", () => {
@@ -122,6 +141,18 @@ test("injectMixerAudio (comping) defaults melody/comping program when none given
   assert.match(out, new RegExp(`\\nV:1\\n%%MIDI program ${DEFAULT_PROGRAM.melody}\\n`));
   assert.match(out, new RegExp(`\\nV:2\\n%%MIDI program ${DEFAULT_PROGRAM.comping}\\n`));
   assert.doesNotMatch(out, /%%MIDI (gchord|bassprog|chordprog|bassvol|chordvol)/);
+});
+
+test("injectMixerAudio (comping) is a no-op when the melody's own V:1 body marker is missing", () => {
+  const abc = ["X:1", "T:Test", "L:1/8", "K:C", "V:2", "[CEG]8 |"].join("\n");
+  const out = injectMixerAudio(abc, { compingActive: true, hasChords: false, bassPercent: 0, chordsPercent: 0 });
+  assert.equal(out, abc);
+});
+
+test("injectMixerAudio (comping) is a no-op when the comping voice's own V:2 body marker is missing", () => {
+  const abc = ["X:1", "T:Test", "L:1/8", "K:C", "V:1", '"C" C8 |'].join("\n");
+  const out = injectMixerAudio(abc, { compingActive: true, hasChords: false, bassPercent: 0, chordsPercent: 0 });
+  assert.equal(out, abc);
 });
 
 test("computeVoicesOff without comping: only melody can be muted, as a full mute", () => {

@@ -103,6 +103,34 @@ test("a click outside the panel closes it; clicking inside it or its own button 
   }
 });
 
+test("positionPanel clamps the right offset to REPOSITION_MARGIN instead of letting it go negative", () => {
+  const { mixer, cleanup } = setup();
+  try {
+    const btn = document.getElementById("mixerBtn");
+    const panel = document.getElementById("mixerPanel");
+    const originalInnerWidth = window.innerWidth;
+    // window.innerWidth - rect.right would be negative here without the clamp
+    Object.defineProperty(window, "innerWidth", { value: 100, configurable: true });
+    btn.getBoundingClientRect = () => ({
+      top: 40, bottom: 60, left: 10, right: 300, width: 290, height: 20,
+    });
+    mixer.toggle();
+    assert.equal(panel.style.right, "8px"); // REPOSITION_MARGIN, not a negative value
+
+    // comfortably inside the viewport — the unclamped, computed value applies
+    Object.defineProperty(window, "innerWidth", { value: 500, configurable: true });
+    btn.getBoundingClientRect = () => ({
+      top: 40, bottom: 60, left: 10, right: 110, width: 100, height: 20,
+    });
+    mixer.toggle();
+    mixer.toggle();
+    assert.equal(panel.style.right, "390px"); // 500 - 110
+    Object.defineProperty(window, "innerWidth", { value: originalInnerWidth, configurable: true });
+  } finally {
+    cleanup();
+  }
+});
+
 test("scrolling recomputes the panel's position so it stays glued under the button", () => {
   const { mixer, cleanup } = setup();
   try {
@@ -186,21 +214,32 @@ test("releasing a fader (change) applies immediately without waiting for the deb
   releaseFaderAppliesImmediately({ rangeId: "mixerBassRange", storageKey: "rj.mixerBassVolume", value: 10 });
 });
 
-test("the mute buttons flip state, update the button and re-render at once", () => {
+test("the mute buttons flip state, update the button (icon + label included) and re-render at once", () => {
   const { ctx, rerenders, cleanup } = setup();
   try {
     const btn = document.getElementById("mixerMelodyMuteBtn");
+    const icon = btn.querySelector(".fa-solid");
     btn.dispatchEvent(new window.Event("click"));
     assert.equal(ctx.state.mixer.melodyMuted, true);
     assert.equal(btn.classList.contains("is-muted"), true);
     assert.equal(btn.getAttribute("aria-pressed"), "true");
+    assert.equal(icon.classList.contains("fa-volume-xmark"), true);
+    assert.equal(icon.classList.contains("fa-volume-high"), false);
+    assert.equal(btn.title, "Unmute melody");
+    assert.equal(btn.getAttribute("aria-label"), "Unmute melody");
     assert.equal(document.getElementById("mixerMelodyReadout").textContent, "Muted");
     assert.equal(rerenders.length, 1);
     assert.equal(window.localStorage.getItem("rj.mixerMelodyMuted"), "1");
 
     btn.dispatchEvent(new window.Event("click"));
     assert.equal(ctx.state.mixer.melodyMuted, false);
+    assert.equal(btn.classList.contains("is-muted"), false);
+    assert.equal(btn.getAttribute("aria-pressed"), "false");
+    assert.equal(icon.classList.contains("fa-volume-xmark"), false);
+    assert.equal(icon.classList.contains("fa-volume-high"), true);
+    assert.equal(btn.title, "Mute melody");
     assert.equal(rerenders.length, 2);
+    assert.equal(window.localStorage.getItem("rj.mixerMelodyMuted"), "0");
   } finally {
     window.localStorage.clear();
     cleanup();
@@ -286,6 +325,108 @@ test("Comping's gate never re-enables its permanently-locked fader", () => {
   }
 });
 
+test("refresh() redraws each strip's fill/readout/mute button and the Quality toggle from current state, not just the gates", () => {
+  const { ctx, mixer, cleanup } = setup({ bassVolume: 20 });
+  try {
+    // Mutate state directly (bypassing the input handlers) and confirm
+    // refresh() alone picks it up.
+    ctx.state.mixer.bassVolume = 77;
+    ctx.state.mixer.melodyMuted = true;
+    ctx.state.highQualityAudio = true;
+    mixer.refresh();
+    assert.equal(document.getElementById("mixerBassFill").style.width, "77%");
+    assert.equal(document.getElementById("mixerBassReadout").textContent, "77%");
+    assert.equal(document.getElementById("mixerMelodyReadout").textContent, "Muted");
+    assert.equal(document.getElementById("mixerHighQualityToggleBtn").classList.contains("is-active"), true);
+  } finally {
+    cleanup();
+  }
+});
+
+test("dragging a fader repeatedly before it settles still applies only once (the pending apply is cancelled and rescheduled, not stacked)", (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const { ctx, rerenders, cleanup } = setup();
+  try {
+    const range = document.getElementById("mixerBassRange");
+    for (const value of [10, 20, 30]) {
+      range.value = String(value);
+      range.dispatchEvent(new window.Event("input"));
+    }
+    t.mock.timers.tick(300);
+    assert.equal(rerenders.length, 1); // not 3
+    assert.equal(ctx.state.mixer.bassVolume, 30);
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
+test("releasing a fader (change) right after dragging it cancels the pending debounced apply instead of double-applying", (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const { rerenders, cleanup } = setup();
+  try {
+    const range = document.getElementById("mixerBassRange");
+    range.value = "15";
+    range.dispatchEvent(new window.Event("input"));
+    range.value = "25";
+    range.dispatchEvent(new window.Event("change"));
+    assert.equal(rerenders.length, 1);
+    t.mock.timers.tick(300);
+    assert.equal(rerenders.length, 1); // the cancelled debounce never fires a second apply
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
+test("init seeds each Voice select's value from ctx.state.mixer, not just Default", () => {
+  const { cleanup } = setup({ bassProgram: 33, chordsProgram: 0 });
+  try {
+    assert.equal(document.getElementById("mixerBassVoiceSelect").value, "33");
+    // GM program 0 is falsy but not null — must still seed as "0", not fall through to Default
+    assert.equal(document.getElementById("mixerChordsVoiceSelect").value, "0");
+    assert.equal(document.getElementById("mixerMelodyVoiceSelect").value, ""); // null program -> Default
+  } finally {
+    cleanup();
+  }
+});
+
+test("Escape does nothing while the panel is already closed, and a non-Escape key doesn't close it while open", () => {
+  const { mixer, cleanup } = setup();
+  try {
+    document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    assert.equal(document.getElementById("mixerPanel").open, false); // no-op, not an error
+
+    mixer.toggle();
+    document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    assert.equal(document.getElementById("mixerPanel").open, true);
+  } finally {
+    cleanup();
+  }
+});
+
+test("resizing the window recomputes the panel's position while open, and is a no-op while closed", () => {
+  const { mixer, cleanup } = setup();
+  try {
+    const btn = document.getElementById("mixerBtn");
+    const panel = document.getElementById("mixerPanel");
+    btn.getBoundingClientRect = () => ({
+      top: 5, bottom: 25, left: 0, right: 50, width: 50, height: 20,
+    });
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(panel.style.top, ""); // closed — the resize listener didn't touch it
+
+    mixer.toggle();
+    btn.getBoundingClientRect = () => ({
+      top: 100, bottom: 120, left: 0, right: 50, width: 50, height: 20,
+    });
+    window.dispatchEvent(new window.Event("resize"));
+    assert.equal(panel.style.top, "120px");
+  } finally {
+    cleanup();
+  }
+});
+
 test("loadMixerState defaults to full volume, Bass/Chords muted, every Voice on Default", () => {
   const page = mountPage();
   try {
@@ -305,12 +446,24 @@ test("loadMixerState reads back persisted, clamped values and a chosen program",
     window.localStorage.setItem("rj.mixerBassVolume", "150"); // clamped
     window.localStorage.setItem("rj.mixerChordsVolume", "20");
     window.localStorage.setItem("rj.mixerBassMuted", "0"); // explicit opt-in override
+    window.localStorage.setItem("rj.mixerMelodyMuted", "1"); // explicit opt-in override, opposite direction
     window.localStorage.setItem("rj.mixerChordsProgram", "0"); // GM 0 is falsy — must not read back as null
     assert.deepEqual(loadMixerState(), {
       melodyVolume: 100, bassVolume: 100, chordsVolume: 20, compingVolume: 100,
-      melodyMuted: false, bassMuted: false, chordsMuted: true, compingMuted: false,
+      melodyMuted: true, bassMuted: false, chordsMuted: true, compingMuted: false,
       melodyProgram: null, bassProgram: null, chordsProgram: 0, compingProgram: null,
     });
+  } finally {
+    window.localStorage.clear();
+    page.cleanup();
+  }
+});
+
+test("loadMixerState reads an explicitly-persisted empty-string program back as Default (null), not GM program 0", () => {
+  const page = mountPage();
+  try {
+    window.localStorage.setItem("rj.mixerBassProgram", "");
+    assert.equal(loadMixerState().bassProgram, null);
   } finally {
     window.localStorage.clear();
     page.cleanup();
@@ -324,7 +477,12 @@ test("init populates every Voice select from GM_VOICES, grouped, with a leading 
     assert.equal(select.options[0].value, "");
     assert.equal(select.options[0].text, "DEFAULT");
     assert.equal(select.options.length, GM_VOICES.length + 1); // Default + every curated GM voice
-    assert.ok(select.querySelectorAll("optgroup").length > 1);
+    // one <optgroup> per distinct group, not one per voice
+    const distinctGroups = [...new Set(GM_VOICES.map((v) => v.group))];
+    const optgroups = [...select.querySelectorAll("optgroup")];
+    assert.equal(optgroups.length, distinctGroups.length);
+    assert.deepEqual(optgroups.map((g) => g.label), distinctGroups.map((g) => g.toUpperCase()));
+    assert.equal(select.querySelector(`optgroup[label="${GM_VOICES[0].group.toUpperCase()}"] option`).text, GM_VOICES[0].label.toUpperCase());
   } finally {
     cleanup();
   }
@@ -356,6 +514,7 @@ test("init populates the Pattern select with every GCHORD_PATTERNS entry, seeded
     const select = document.getElementById("mixerGchordPatternSelect");
     assert.equal(select.options.length, GCHORD_PATTERNS.length);
     assert.equal(select.options[0].value, "default");
+    assert.equal(select.options[0].text, GCHORD_PATTERNS[0].label.toUpperCase());
     assert.equal(select.value, "jazz"); // ctx.state.gchordPattern from the test helper
   } finally {
     cleanup();
@@ -470,6 +629,11 @@ test("clicking the Quality toggle flips ctx.state.highQualityAudio, persists it,
 
     btn.dispatchEvent(new window.Event("click"));
     assert.equal(ctx.state.highQualityAudio, false);
+    assert.equal(btn.classList.contains("is-active"), false);
+    assert.equal(btn.getAttribute("aria-pressed"), "false");
+    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-toggle-on"), false);
+    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-toggle-off"), true);
+    assert.equal(btn.title, "Enable high quality audio");
     assert.equal(rerenders.length, 2);
     assert.equal(window.localStorage.getItem("rj.highQualityAudio"), "0");
   } finally {

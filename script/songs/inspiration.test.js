@@ -14,6 +14,20 @@ function inDom(fn) {
   }
 }
 
+// Opens the panel, primes its bounding rect and starts a left-edge drag at
+// clientX 480 (the panel's left edge) — shared by the resize tests below,
+// which differ only in where the pointer moves to next.
+function startResizeDrag(window) {
+  window.localStorage.clear();
+  const insp = createInspiration();
+  insp.init();
+  const panel = document.getElementById("inspirationPanel");
+  const handle = document.getElementById("inspirationResizeHandle");
+  panel.getBoundingClientRect = () => ({ right: 800, left: 480, width: 320, top: 100, bottom: 400, height: 300 });
+  handle.dispatchEvent(new window.PointerEvent("pointerdown", { pointerId: 1, clientX: 480 }));
+  return { insp, panel, handle };
+}
+
 test("updateLink creates the Inspiration button for a tune with a reference", () => {
   inDom(() => {
     const insp = createInspiration();
@@ -165,14 +179,7 @@ test("init restores a persisted panel width", () => {
 
 test("dragging the left edge resizes the panel and persists the new width", () => {
   inDom(({ window }) => {
-    window.localStorage.clear();
-    const insp = createInspiration();
-    insp.init();
-    const panel = document.getElementById("inspirationPanel");
-    const handle = document.getElementById("inspirationResizeHandle");
-    panel.getBoundingClientRect = () => ({ right: 800, left: 480, width: 320, top: 100, bottom: 400, height: 300 });
-
-    handle.dispatchEvent(new window.PointerEvent("pointerdown", { pointerId: 1, clientX: 480 }));
+    const { panel, handle } = startResizeDrag(window);
     handle.dispatchEvent(new window.PointerEvent("pointermove", { pointerId: 1, clientX: 300 }));
     assert.equal(panel.style.width, "500px");
 
@@ -280,14 +287,7 @@ test("a rejected clipboard write falls back to a prompt and shows no success tic
 
 test("edge resize floors the panel at MIN_PANEL_WIDTH", () => {
   inDom(({ window }) => {
-    window.localStorage.clear();
-    const insp = createInspiration();
-    insp.init();
-    const panel = document.getElementById("inspirationPanel");
-    const handle = document.getElementById("inspirationResizeHandle");
-    panel.getBoundingClientRect = () => ({ right: 800, left: 480, width: 320, top: 100, bottom: 400, height: 300 });
-
-    handle.dispatchEvent(new window.PointerEvent("pointerdown", { pointerId: 1, clientX: 480 }));
+    const { panel, handle } = startResizeDrag(window);
     handle.dispatchEvent(new window.PointerEvent("pointermove", { pointerId: 1, clientX: 790 }));
     assert.equal(panel.style.width, "240px");
   });

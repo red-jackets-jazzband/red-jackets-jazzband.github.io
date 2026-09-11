@@ -24,7 +24,7 @@ export function noteChroma(noteName) {
     if (typeof chroma === "number" && !Number.isNaN(chroma)) return chroma;
   }
   const CHROMAS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-  const letter = normalized[0].toUpperCase();
+  const letter = (normalized[0] || "C").toUpperCase();
   const rest = normalized.slice(1);
   let c = CHROMAS[letter] !== undefined ? CHROMAS[letter] : 0;
   for (let i = 0; i < rest.length; i++) {
@@ -198,7 +198,8 @@ const KEY_NAME_BY_CHROMA = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A�
 */
 export function transposeKeyName(keyStr, semitones) {
   const base = noteChroma(keyStr || "C");
-  const n = Math.round(Number(semitones) || 0);
+  const raw = Number(semitones);
+  const n = Number.isFinite(raw) ? Math.round(raw) : 0;
   const idx = (((base + n) % 12) + 12) % 12;
   return KEY_NAME_BY_CHROMA[idx];
 }

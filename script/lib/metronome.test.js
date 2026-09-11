@@ -19,6 +19,13 @@ test("beatsPerMeasure divides a compound (x/8, multiple of 3) meter into dotted-
 test("beatsPerMeasure leaves a non-compound x/8 meter as one click per numerator", () => {
   assert.equal(beatsPerMeasure([{ num: 5, den: 8 }]), 5);
   assert.equal(beatsPerMeasure([{ num: 7, den: 8 }]), 7);
+  // multiple of 3 but below the compound-meter threshold (< 6) — not divided
+  assert.equal(beatsPerMeasure([{ num: 3, den: 8 }]), 3);
+});
+
+test("beatsPerMeasure never divides by 3 for a non-x/8 meter, even at a multiple of 3 >= 6", () => {
+  assert.equal(beatsPerMeasure([{ num: 9, den: 4 }]), 9);
+  assert.equal(beatsPerMeasure([{ num: 6, den: 4 }]), 6);
 });
 
 test("beatsPerMeasure sums an additive meter's terms", () => {
@@ -50,6 +57,13 @@ test("isBackbeat never accents a meter that isn't a multiple of 4 beats", () => 
   assert.equal(isBackbeat(3, 3), false);
   assert.equal(isBackbeat(1, 5), false);
   assert.equal(isBackbeat(1, 2), false);
+});
+
+test("isBackbeat never accents a degenerate zero/negative/non-finite beatsInMeasure", () => {
+  assert.equal(isBackbeat(1, 0), false);
+  assert.equal(isBackbeat(1, -4), false);
+  assert.equal(isBackbeat(1, Number.NaN), false);
+  assert.equal(isBackbeat(1, Number.POSITIVE_INFINITY), false);
 });
 
 test("nextBeatIndex wraps at the end of the measure", () => {
@@ -167,4 +181,30 @@ test("scheduleClicks's catch-up falls back to a single-beat measure for a degene
     scheduleAheadSeconds: 0.1,
   });
   assert.deepEqual(result.clicks, [{ time: 10, accent: false }]);
+  assert.equal(result.beatIndex, 0);
+});
+
+test("scheduleClicks falls back to a single-beat measure for a zero beatsInMeasure, wrapping the beat index instead of leaving it NaN", () => {
+  const result = scheduleClicks({
+    currentTime: 10,
+    nextNoteTime: 0,
+    beatIndex: 0,
+    beatsInMeasure: 0,
+    secondsPerBeat: 0.5,
+    scheduleAheadSeconds: 0.1,
+  });
+  assert.deepEqual(result.clicks, [{ time: 10, accent: false }]);
+  assert.equal(result.beatIndex, 0);
+});
+
+test("scheduleClicks excludes a click that falls exactly on the lookahead horizon", () => {
+  const result = scheduleClicks({
+    currentTime: 0,
+    nextNoteTime: 0,
+    beatIndex: 0,
+    beatsInMeasure: 4,
+    secondsPerBeat: 0.5,
+    scheduleAheadSeconds: 1, // horizon = 1, exactly the third click's time
+  });
+  assert.deepEqual(result.clicks.map((c) => c.time), [0, 0.5]);
 });

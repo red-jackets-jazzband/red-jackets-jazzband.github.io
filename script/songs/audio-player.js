@@ -320,17 +320,31 @@ export function createAudioPlayer(ctx) {
       state.isLoadingPlayback = true;
       updatePlayButton();
     }
-    Promise.resolve(sc.play())
+
+    // sc.play() can throw synchronously (before returning any promise to
+    // resolve/catch) as well as reject asynchronously — route both through
+    // the same recovery so a synchronous failure doesn't leave
+    // isLoadingPlayback stuck and the button unresponsive to retries.
+    const recover = (err) => {
+      console.warn("Play/pause failed:", err);
+      if (sc !== state.synthController) return;
+      state.isLoadingPlayback = false;
+      updatePlayButton();
+    };
+
+    let playResult;
+    try {
+      playResult = sc.play();
+    } catch (err) {
+      recover(err);
+      return;
+    }
+    Promise.resolve(playResult)
       .then(() => {
         if (sc !== state.synthController) return;
         setIsPlaying(Boolean(sc.isStarted));
       })
-      .catch((err) => {
-        console.warn("Play/pause failed:", err);
-        if (sc !== state.synthController) return;
-        state.isLoadingPlayback = false;
-        updatePlayButton();
-      });
+      .catch(recover);
   }
 
   function stop() {

@@ -6,6 +6,7 @@ import { createAbcjsStub, withAbcjs } from "../../../tests/helpers/stubs.js";
 import { createAudioPlayer } from "./audio-player.js";
 
 const flush = () => new Promise((resolve) => { setTimeout(resolve, 0); });
+const SPINNER_SELECTOR = ".fa-spinner";
 
 function setup(stateOverrides = {}) {
   const page = mountPage();
@@ -163,17 +164,17 @@ test("playPause shows a loading spinner while starting, not while pausing", asyn
     await flush();
 
     const btn = document.getElementById("playPauseBtn");
-    assert.equal(btn.querySelector(".fa-spinner"), null);
+    assert.equal(btn.querySelector(SPINNER_SELECTOR), null);
 
     audio.playPause(); // starting — sc.play()'s promise hasn't settled yet
-    assert.ok(btn.querySelector(".fa-spinner"));
+    assert.ok(btn.querySelector(SPINNER_SELECTOR));
     assert.equal(btn.classList.contains("playing"), false);
     await flush();
-    assert.equal(btn.querySelector(".fa-spinner"), null);
+    assert.equal(btn.querySelector(SPINNER_SELECTOR), null);
     assert.equal(btn.classList.contains("playing"), true);
 
     audio.playPause(); // pausing — no gap to cover, no spinner
-    assert.equal(btn.querySelector(".fa-spinner"), null);
+    assert.equal(btn.querySelector(SPINNER_SELECTOR), null);
     await flush();
   } finally {
     cleanup();
@@ -192,6 +193,32 @@ test("a second press while starting is ignored (no double sc.play())", async () 
     // exactly what the isLoadingPlayback guard exists to prevent.
     audio.playPause();
     audio.playPause(); // still loading from the first press — must be ignored
+    await flush();
+    assert.equal(audio.isPlaying, true);
+  } finally {
+    cleanup();
+  }
+});
+
+test("playPause recovers when sc.play() throws synchronously, and a retry works", async () => {
+  const { audio, cleanup } = setup();
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+
+    const sc = abcjs.calls.synthControllers.at(-1);
+    sc.play = () => { throw new Error("boom"); };
+    const btn = document.getElementById("playPauseBtn");
+
+    audio.playPause();
+    await flush();
+    assert.equal(audio.isPlaying, false);
+    assert.equal(btn.querySelector(SPINNER_SELECTOR), null); // isLoadingPlayback cleared
+    assert.equal(btn.disabled, false); // not left stuck mid-loading
+
+    sc.play = () => { sc.isStarted = !sc.isStarted; return Promise.resolve(); };
+    audio.playPause(); // a retry after the synchronous failure must work normally
     await flush();
     assert.equal(audio.isPlaying, true);
   } finally {
