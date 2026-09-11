@@ -813,7 +813,12 @@ video.video {
   sets `top`/`right` from the button's own rect on open; the sub-1024px media
   query below overrides those inline coordinates (with !important, since
   inline style otherwise always wins over a stylesheet) to dock it as a
-  bottom sheet instead.
+  bottom sheet instead. That bottom sheet also caps its own height and
+  scrolls internally (see the media query) — the panel has grown a strip at a
+  time (Metronome, Quality, Pattern, Swing) since this dock was first written
+  for four short channel strips, and a mobile browser's own bottom chrome
+  (URL bar / tab strip) can eat into the visible viewport below the
+  `bottom: 0` edge, hiding whatever doesn't fit without a scroll of its own.
 */
 .mixer-panel {
   position: fixed;
@@ -1109,6 +1114,9 @@ video.video {
     top: auto !important;
     width: auto !important;
     max-width: none !important;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     border-radius: 16px 16px 0 0;
     padding-bottom: 22px;
   }
@@ -3179,6 +3187,64 @@ body:has(#rjLibrary) .split-bio {
   .rj-library-rail button {
     font-size: 10px;
     min-height: 0;
+  }
+}
+
+/*
+  Tablet portrait widths (below the 1024px stack breakpoint above) have room
+  for every #sheetmenu control except the instrument dropdown to share a
+  single row — the per-group centered lines the 1024px block above builds
+  (Key+Tempo, then Play+Inspiration, then a third line for
+  Print/iRealPro/advanced-toggle) are phone-width-only. Unwind them back to
+  #sheetmenu's own plain single-row flex flow — the same one desktop uses —
+  so the instrument keeps its own full-width line but everything else packs
+  onto the line below it.
+
+  That single row needs ~750px of #sheetmenu width to actually fit without
+  spilling a control onto a third line, and the theme's own generic
+  split-layout rules (`.fs-split`'s 30%/70% image/content split above 800px,
+  `.split-content-vertically-center`'s 800px max-width at every size) don't
+  hand it that: between 800px and this page's own 1024px stack breakpoint
+  the sidebar image is still eating 30% of the viewport (the theme only
+  stacks it full-width below 800px), and the 800px content cap eats the
+  rest even once stacked. Most current tablets (iPad 810-834px portrait and
+  up) sit in exactly that squeeze. Mirror the theme's own sub-800px stacked
+  treatment up to 1024px here, and drop the prose-column max-width, scoped
+  to the songs page only (`body:has(#rjLibrary)`) — this page is a control
+  panel, not a bio page, so it doesn't need that reading-width cap, and no
+  other split-layout page is affected.
+*/
+@media (min-width: 700px) and (max-width: 1024px) {
+  #sheetmenu {
+    justify-content: flex-start;
+    /* Tightened from the base 10px so the row still fits the narrowest
+       common tablet (iPad Mini, 744px portrait) without spilling a control
+       onto a third line. */
+    gap: 8px;
+  }
+  .sheet-adjust {
+    display: contents;
+  }
+  #keyStepper,
+  #tempoStepper {
+    width: auto;
+  }
+  .sheet-stepper-value {
+    flex: none;
+  }
+  body:has(#rjLibrary) .fs-split {
+    flex-wrap: wrap;
+  }
+  body:has(#rjLibrary) .fs-split .split-image {
+    width: 100%;
+    height: 80vh;
+  }
+  body:has(#rjLibrary) .fs-split .split-content {
+    width: 100%;
+  }
+  body:has(#rjLibrary) .split-content-vertically-center {
+    max-width: none;
+    padding: 40px;
   }
 }
 

@@ -155,6 +155,50 @@ test("playPause resumes on the first press after pausing (ABCjs play() is a togg
   }
 });
 
+test("playPause shows a loading spinner while starting, not while pausing", async () => {
+  const { audio, cleanup } = setup();
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+
+    const btn = document.getElementById("playPauseBtn");
+    assert.equal(btn.querySelector(".fa-spinner"), null);
+
+    audio.playPause(); // starting — sc.play()'s promise hasn't settled yet
+    assert.ok(btn.querySelector(".fa-spinner"));
+    assert.equal(btn.classList.contains("playing"), false);
+    await flush();
+    assert.equal(btn.querySelector(".fa-spinner"), null);
+    assert.equal(btn.classList.contains("playing"), true);
+
+    audio.playPause(); // pausing — no gap to cover, no spinner
+    assert.equal(btn.querySelector(".fa-spinner"), null);
+    await flush();
+  } finally {
+    cleanup();
+  }
+});
+
+test("a second press while starting is ignored (no double sc.play())", async () => {
+  const { audio, cleanup } = setup();
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+
+    // The stub's play() toggles isStarted and resolves immediately, so a
+    // second, un-ignored call here would flip it right back to false —
+    // exactly what the isLoadingPlayback guard exists to prevent.
+    audio.playPause();
+    audio.playPause(); // still loading from the first press — must be ignored
+    await flush();
+    assert.equal(audio.isPlaying, true);
+  } finally {
+    cleanup();
+  }
+});
+
 test("playPause is a no-op while the transport buttons are disabled", async () => {
   const { audio, cleanup } = setup();
   const abcjs = createAbcjsStub({ audioSupported: true });
@@ -211,6 +255,46 @@ test("a Tempo nudge on a never-played sheet doesn't light up a chord cell", asyn
     assert.equal(note.classList.contains("abcjs-current-note"), true);
     assert.ok(document.querySelector("#chordtable .chordCell").classList.contains("chordCell-playing"));
     assert.equal(ctx.state.tempoOverrideBpm, 128);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a torn-down controller's belated callback doesn't move the cursor once a newer one has taken over", async () => {
+  const { audio, cleanup } = setup();
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+    const staleCursorControl = abcjs.calls.synthControllers[0]._cursorControl;
+
+    // A second render (e.g. a mixer change, or picking the song again)
+    // swaps in a fresh controller while the first is still reachable —
+    // pause() can't stop async work the first controller hadn't finished.
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+    withAbcjs(abcjs, () => audio.playPause());
+    await flush();
+    assert.equal(audio.isPlaying, true);
+
+    // The stale controller's own setWarp/go from a tempo change made just
+    // before the rerender finally unwinds and fires onEvent. It must not
+    // repaint the cursor now that it's retired.
+    document.getElementById("chordtable").innerHTML = '<span class="chordCell">C</span>';
+    const staleNote = document.createElement("span");
+    staleNote._abcMeasureIdx = 0;
+    staleCursorControl.onEvent({ elements: [[staleNote]] });
+
+    assert.equal(staleNote.classList.contains("abcjs-current-note"), false);
+    assert.equal(
+      document.querySelector("#chordtable .chordCell").classList.contains("chordCell-playing"),
+      false,
+    );
+
+    // A belated onFinished from the same stale controller must not stop
+    // playback or clear the current highlight either.
+    staleCursorControl.onFinished();
+    assert.equal(audio.isPlaying, true);
   } finally {
     cleanup();
   }
