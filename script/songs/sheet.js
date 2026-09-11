@@ -78,7 +78,11 @@ function hasInstrumentVoices(text) {
 
 function buildComping(abcText, compingValue) {
   const concertSong = parseTune(abcText, 0);
-  const concertChords = parseChordScheme(concertSong);
+  // Unlike the chord table's scheme, this must have one entry per physical
+  // bar exactly as printed — including a second-ending's own bars — or the
+  // comping voice runs out of bars (and falls silent) the moment the melody
+  // reaches such an ending. See parseChordScheme's doc comment.
+  const concertChords = parseChordScheme(concertSong, { includeAlternateEndings: true });
   return buildCompingTune(abcText, concertChords, concertSong, compingValue);
 }
 

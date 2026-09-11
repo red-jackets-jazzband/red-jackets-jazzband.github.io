@@ -11,6 +11,7 @@ import {
   buildCompingTune,
   measureBarSlots,
 } from "./comping.js";
+import { BREAK_CHORD } from "./chords.js";
 import { tonalStub as TonalStub, withTonal, nameToMidi } from "../../../tests/helpers/stubs.js";
 import { injectMixerAudio } from "./audio-mix.js";
 
@@ -218,6 +219,24 @@ test("measureBarSlots doesn't mistake a second-ending bracket ([2 ...) for an in
   // "[2" is ABC's repeat-ending marker (a digit, not a letter+colon field) —
   // it must not swallow the notes that follow it.
   assert.equal(measureBarSlots("[2 c4 c4", 1, 8), 8);
+});
+
+test("measureBarSlots reads a chord's duration off its first note when it isn't given after the closing bracket", () => {
+  // happy_feet_blues' part C ("_Break rhythm") spells every chord tone's
+  // length out individually, e.g. "[F2_d2]" rather than the more usual
+  // "[Fd]2" — ABCjs itself takes the chord's duration from its first note
+  // (confirmed against a real parse), so this must too, or the bar reads as
+  // shorter than it is and buildVoiceBody mistakes it for a sub-bar pickup.
+  assert.equal(measureBarSlots("[F2_d2]", 1, 8), 2);
+  assert.equal(measureBarSlots("[F2_d2] [F2d2] [F2d2] [F2d2]", 1, 8), 8);
+  // a bare, un-numbered chord tone still defaults to one slot
+  assert.equal(measureBarSlots("[Fd]", 1, 8), 1);
+  // a trailing duration after "]" (the usual form) still works
+  assert.equal(measureBarSlots("[CEG]2", 1, 8), 2);
+  // both a first-note duration inside the bracket AND a trailing duration
+  // after it are independent ABC duration modifiers that multiply (2 * 2 =
+  // 4 slots), not two digit strings concatenated into a bogus "22"
+  assert.equal(measureBarSlots("[F2_d2]2", 1, 8), 4);
 });
 
 test("measureBarSlots keeps an unclosed inline field's text verbatim instead of dropping it", () => {
@@ -781,4 +800,48 @@ test("buildCompingTune scales pattern durations to a L:1/4 tune", () => {
   // whole_note bar 1 is "n8-" in eighths -> "n4-" at L:1/4
   const v2 = out.abc.split("\nV:2\n").pop();
   assert.match(v2, /4-/);
+});
+
+// ---------------------------------------------------------------------------
+// Break ("N.C.") chords rest the comping voice instead of holding over
+// ---------------------------------------------------------------------------
+
+test("buildCompingTune rests a whole break bar instead of holding the previous chord", () => {
+  const chords = [{ text: ["C"] }, { text: [BREAK_CHORD] }, { text: ["F"] }];
+  const tune = ["M:4/4", "L:1/8", "K:C", '"C" C8 | z8 | "F" F8 |'].join("\n");
+  const out = withTonal(() => buildCompingTune(tune, chords, fakeSong(), "whole_note"));
+  const v2 = out.abc.split("\nV:2\n").pop();
+  const bars = v2.split("|").map((b) => b.trim()).filter(Boolean);
+  assert.equal(bars.length, 3);
+  // the break bar is a plain rest, no chord bracket drawn
+  assert.equal(bars[1], "z8");
+  assert.doesNotMatch(bars[1], /\[/);
+  // only two chord onsets total: the break contributes none
+  assert.equal(out.palette.length, 2);
+});
+
+test("buildCompingTune rests a half bar when a break shares a measure with a real chord", () => {
+  const chords = [{ text: ["C", BREAK_CHORD] }];
+  const tune = ["M:4/4", "L:1/8", "K:C", '"C" C4 z4 |'].join("\n");
+  const out = withTonal(() => buildCompingTune(tune, chords, fakeSong(), "whole_note"));
+  const v2 = out.abc.split("\nV:2\n").pop().trim();
+  assert.match(v2, /^\[[A-Ga-g][A-Ga-g][A-Ga-g]\]4 z4/);
+  assert.equal(out.palette.length, 1);
+});
+
+test("buildCompingTune voice-leads the chord after a break from the chord before it, unaffected by the gap", () => {
+  const chords = [{ text: ["C"] }, { text: [BREAK_CHORD] }, { text: ["G"] }];
+  const tune = ["M:4/4", "L:1/8", "K:C", '"C" C8 | z8 | "G" G8 |'].join("\n");
+  const withBreak = withTonal(() => buildCompingTune(tune, chords, fakeSong(), "whole_note"));
+
+  const noBreakChords = [{ text: ["C"] }, { text: ["G"] }];
+  const noBreakTune = ["M:4/4", "L:1/8", "K:C", '"C" C8 | "G" G8 |'].join("\n");
+  const noBreak = withTonal(() => buildCompingTune(noBreakTune, noBreakChords, fakeSong(), "whole_note"));
+
+  // The chord after the break voice-leads from the one before it exactly as
+  // it would with no gap between them at all — the break bar doesn't perturb
+  // the running voice-leading reference.
+  const withBreakMidis = compingChordMidis(withBreak.abc);
+  const noBreakMidis = compingChordMidis(noBreak.abc);
+  assert.deepEqual(withBreakMidis[1], noBreakMidis[1]);
 });

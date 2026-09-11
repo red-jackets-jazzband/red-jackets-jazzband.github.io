@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { irealProFromAbc } from "./irealpro.js";
+import { BREAK_CHORD } from "./chords.js";
 
 function baseSong(overrides = {}) {
   return {
@@ -46,4 +47,22 @@ test("irealProFromAbc converts special chord characters for the iRealPro chord t
   // m -> -, Ø -> h
   assert.match(decoded, /C-7/);
   assert.match(decoded, /Dh/);
+});
+
+test("irealProFromAbc translates a break (\"N.C.\") measure to iRealPro's own \"n\" no-chord token", () => {
+  const song = baseSong();
+  const chords = [{ text: ["F7"] }, { text: [BREAK_CHORD] }, { text: ["Bb"] }];
+  const decoded = decodeURIComponent(irealProFromAbc(song, chords));
+  const body = decoded.split("=T44")[1];
+  assert.doesNotMatch(body, /N\.C\./);
+  assert.match(body, /\|F7 {3}\|n {3}\|Bb {3}Z/);
+});
+
+test("irealProFromAbc translates a break sharing a measure with a real chord", () => {
+  const song = baseSong();
+  const chords = [{ text: ["F7", BREAK_CHORD] }];
+  const decoded = decodeURIComponent(irealProFromAbc(song, chords));
+  const body = decoded.split("=T44")[1];
+  assert.doesNotMatch(body, /N\.C\./);
+  assert.match(body, /F7 ,n/);
 });

@@ -34,6 +34,19 @@ function renderRail(railEl, groups) {
   });
 }
 
+// Returns true when it opened a row (so the caller suppresses the default).
+function handleEnter(searchInput, rows) {
+  const isSearching = searchInput.value.trim().length > 0;
+  let target = rows.find((r) => r.classList.contains("kbd-active"));
+  if (!target && isSearching && rows.length === 1) [target] = rows;
+  if (!target) return false;
+  // The row's own click handler clears the search when one is active.
+  target.click();
+  // Drop focus so Spacebar plays the song straight away instead of typing.
+  searchInput.blur();
+  return true;
+}
+
 function moveHighlight(rows, delta, fromEnd) {
   const current = rows.findIndex((r) => r.classList.contains("kbd-active"));
   let next;
@@ -54,6 +67,13 @@ function moveHighlight(rows, delta, fromEnd) {
   so you can type, arrow and hit Enter without leaving the keyboard.
 */
 export function createLibraryTab(ctx) {
+  function clearSearchIfActive() {
+    const searchInput = byId("songSearch");
+    if (!searchInput || searchInput.value.trim().length === 0) return;
+    searchInput.value = "";
+    render("");
+  }
+
   function buildSongRow(song) {
     const slug = songTitleSlug(song);
     return el("a", {
@@ -69,6 +89,7 @@ export function createLibraryTab(ctx) {
           // always resolve to its first occurrence.
           ctx.state.currentLibraryIndex = libraryRows().indexOf(e.currentTarget);
           ctx.openLibrarySong(song);
+          clearSearchIfActive();
         },
       },
     });
@@ -140,22 +161,6 @@ export function createLibraryTab(ctx) {
     // i.e. the whole page jumps to the top. offsetParent is null exactly
     // when the row has no layout box, so skip the scroll in that case.
     if (rows[next].offsetParent) rows[next].scrollIntoView({ block: "nearest" });
-  }
-
-  // Returns true when it opened a row (so the caller suppresses the default).
-  function handleEnter(searchInput, rows) {
-    const isSearching = searchInput.value.trim().length > 0;
-    let target = rows.find((r) => r.classList.contains("kbd-active"));
-    if (!target && isSearching && rows.length === 1) [target] = rows;
-    if (!target) return false;
-    target.click();
-    if (isSearching) {
-      searchInput.value = "";
-      render("");
-    }
-    // Drop focus so Spacebar plays the song straight away instead of typing.
-    searchInput.blur();
-    return true;
   }
 
   function initKeyNav(searchInput) {

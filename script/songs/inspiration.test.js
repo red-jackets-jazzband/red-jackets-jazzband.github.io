@@ -418,6 +418,39 @@ test("the overview window covers the full strip at 1x and narrows once zoomed, e
   }
 });
 
+test("the overview strip's played marker tracks the playhead against the full clip, not the zoomed view", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    let currentTime = 0;
+    let tick = null;
+    window.setInterval = (fn) => { tick = fn; return 1; };
+    window.clearInterval = () => { tick = null; };
+
+    const { fireState } = await openLoopPanel(window, { getCurrentTime: () => currentTime });
+    const overviewPlayed = document.getElementById("inspirationOverviewPlayed");
+    assert.equal(overviewPlayed.style.width, "0%");
+
+    fireState(1); // PLAYING — starts the loop poll
+    assert.ok(tick, "loop poll should be running");
+
+    currentTime = 50; // 50/200 of the 200s clip
+    tick();
+    assert.equal(overviewPlayed.style.width, "25%");
+
+    // Zoom in around the current playhead — the zoomed timeline's own played
+    // bar would now read differently (it's relative to the narrower view),
+    // but the overview marker still reads against the whole clip.
+    document.getElementById("inspirationZoomIn").dispatchEvent(new window.Event("click"));
+    currentTime = 100; // 100/200
+    tick();
+    assert.equal(overviewPlayed.style.width, "50%");
+  } finally {
+    delete window.YT;
+    page.cleanup();
+  }
+});
+
 test("dragging the overview window's body pans it without changing the zoom level", async () => {
   const page = mountPage();
   const { window } = page;
@@ -562,7 +595,7 @@ test("dragging a handle near the zoomed timeline's edge pans the window", async 
     // trapping the drag at the pre-pan [75,125] floor: without panning, 1%
     // into that window would land on 75.5s ("1:15"); with it, the window has
     // shifted to [65,115] and 1% into that lands on 65.5s ("1:05") instead.
-    assert.equal(document.getElementById("inspirationLoopReadout").textContent, "1:05 – –");
+    assert.equal(document.getElementById("inspirationSetATime").textContent, "1:05");
     assert.equal(document.getElementById("inspirationZoomValue").textContent, "4×"); // zoom level itself is untouched by panning
   } finally {
     delete window.YT;
@@ -676,6 +709,32 @@ test("the loop poll's repeat-seek forces a resume so the loop survives more than
     tick();
     assert.deepEqual(seeks.at(-1), [10, true]);
     assert.equal(plays.length, 2);
+  } finally {
+    delete window.YT;
+    page.cleanup();
+  }
+});
+
+test("clicking the timeline to seek while paused moves the played bar immediately, not just on the next loop-poll tick", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    const seeks = [];
+    await openLoopPanel(window, {
+      getCurrentTime: () => 0,
+      getDuration: () => 200,
+      seekTo: (t) => seeks.push(t),
+    });
+    // No fireState(PLAYING) here — the player stays paused, so the loop poll
+    // (the only other thing that normally drives these bars) never starts.
+
+    const track = document.getElementById("inspirationLoopTrack");
+    track.getBoundingClientRect = () => ({ left: 0, width: 200 });
+    track.dispatchEvent(new window.PointerEvent("pointerdown", { pointerId: 1, clientX: 100 })); // 50% of 200s
+
+    assert.deepEqual(seeks, [100]);
+    assert.equal(document.getElementById("inspirationLoopPlayed").style.width, "50%");
+    assert.equal(document.getElementById("inspirationOverviewPlayed").style.width, "50%");
   } finally {
     delete window.YT;
     page.cleanup();

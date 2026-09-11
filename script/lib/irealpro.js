@@ -1,3 +1,5 @@
+import { BREAK_CHORD } from "./chords.js";
+
 // Builds an irealbook:// URL from a parsed abcjs tune and its chord-per-measure
 // array (the same array that feeds the on-page chord table).
 export function irealProFromAbc(song, chords) {
@@ -44,7 +46,13 @@ export function irealProFromAbc(song, chords) {
     }
   }
 
+  // iReal Pro's own no-chord token is a single "n" (the format's fixed "n"
+  // in the header above is unrelated) — our own BREAK_CHORD display text
+  // ("N.C.") isn't a chord iReal Pro can parse, so it's translated here the
+  // same way "%" is translated to iReal Pro's "x" (repeat previous bar).
+  const breakChordPattern = new RegExp(BREAK_CHORD.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), "g");
   irealProText = irealProText
+    .replace(breakChordPattern, "n")
     .replace(/Ø/g, "h")
     .replace(/m/g, "-")
     .replace(/%/g, "x ")

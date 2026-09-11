@@ -287,6 +287,53 @@ test("a Tempo nudge on a never-played sheet doesn't light up a chord cell", asyn
   }
 });
 
+test("buildExportOptions is null before any tune has loaded", () => {
+  const { audio, cleanup } = setup();
+  try {
+    assert.equal(audio.buildExportOptions(), null);
+  } finally {
+    cleanup();
+  }
+});
+
+test("buildExportOptions carries the current visualObj, synth params, and the native tempo at 100% warp", async () => {
+  const { audio, cleanup } = setup();
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  const visualObj = {
+    metaText: { tempo: { bpm: 100 } },
+    millisecondsPerMeasure: () => 500,
+  };
+  try {
+    withAbcjs(abcjs, () => audio.initForTune(visualObj));
+    await flush();
+
+    const built = audio.buildExportOptions();
+    assert.equal(built.visualObj, visualObj);
+    assert.equal(built.millisecondsPerMeasure, 500); // no override -> 100% warp
+    assert.equal(built.options.soundFontUrl, "https://gleitz.github.io/midi-js-soundfonts/FatBoy/");
+  } finally {
+    cleanup();
+  }
+});
+
+test("buildExportOptions scales millisecondsPerMeasure by the Tempo stepper's warp, same as setWarp", async () => {
+  const { ctx, audio, cleanup } = setup();
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  const visualObj = {
+    metaText: { tempo: { bpm: 100 } },
+    millisecondsPerMeasure: () => 500,
+  };
+  try {
+    withAbcjs(abcjs, () => audio.initForTune(visualObj));
+    await flush();
+
+    ctx.state.tempoOverrideBpm = 150; // 150% of the native 100 bpm
+    assert.equal(audio.buildExportOptions().millisecondsPerMeasure, 500 * 100 / 150);
+  } finally {
+    cleanup();
+  }
+});
+
 test("a torn-down controller's belated callback doesn't move the cursor once a newer one has taken over", async () => {
   const { audio, cleanup } = setup();
   const abcjs = createAbcjsStub({ audioSupported: true });

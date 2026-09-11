@@ -563,8 +563,13 @@ video.video {
   gold is reserved for editable fields at rest) and only fills gold while
   it's actually playing.
 */
+/*
+  .sheet-actions (Print / Export WAV / iRealPro) shares this same pill shell
+  — see the comment above its own rule further down.
+*/
 /* Shares its shell (height, border, radius) with .sheet-stepper below. */
 .sheet-transport,
+.sheet-actions,
 .sheet-stepper {
   flex: none;
   display: flex;
@@ -577,14 +582,17 @@ video.video {
 }
 .sheet-transport .sheet-play-btn,
 .sheet-transport .sheet-icon-btn,
-#sheetmenu .sheet-transport .sheet-icon-btn {
+.sheet-actions .sheet-icon-btn,
+#sheetmenu .sheet-transport .sheet-icon-btn,
+#sheetmenu .sheet-actions .sheet-icon-btn {
   box-sizing: border-box;
   width: 42px;
   height: 100%;
   border: none;
   border-radius: 0;
 }
-#sheetmenu .sheet-transport > * + * {
+#sheetmenu .sheet-transport > * + *,
+#sheetmenu .sheet-actions > * + * {
   border-left: 1px solid rgba(255,255,255,.1);
 }
 .sheet-transport .sheet-play-btn {
@@ -729,11 +737,18 @@ video.video {
   <span>: a lone inline element on its own line in songs.md gets wrapped
   in a <p> by Goldmark, and that <p>'s margin threw the button ~10px
   above the sibling 44px controls). Centered flex so the mounted button
-  lines up with everything else in #sheetmenu.
+  lines up with everything else in #sheetmenu. Empty (no F: field on the
+  current tune, so inspiration.js never appends a button) collapses out of
+  #sheetmenu's flex flow entirely — otherwise, as a zero-width flex item, it
+  still counted for #sheetmenu's own `gap`, silently doubling the visible
+  space between Play and the Print/Export/iRealPro pill on either side of it.
 */
 #inspirationSlot {
   display: flex;
   align-items: center;
+}
+#inspirationSlot:empty {
+  display: none;
 }
 
 .sheet-inspiration-link {
@@ -765,17 +780,12 @@ video.video {
 }
 
 /*
-  Print / Export / iRealPro: icon-only 44px buttons (same footprint and
-  secondary styling as Stop / Mute-melody), grouped so they wrap together
-  when #sheetmenu runs out of width. iRealPro is appended here at runtime
-  by add_irealpro_link. These replace the old "More" overflow menu.
+  Print / Export WAV / iRealPro: one bordered pill of flush 42px icon
+  buttons divided by hairlines — the same shell as .sheet-transport's
+  Play/Stop/Mixer cluster, not three separate boxes with gaps between
+  them. iRealPro is appended here at runtime by updateIrealProLink. These
+  replace the old "More" overflow menu.
 */
-.sheet-actions {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .sheet-actions .sheet-icon-btn {
   color: rgba(236,234,230,.72);
   text-decoration: none;
@@ -1120,6 +1130,10 @@ video.video {
   their solid border should be — throwing their height 1px past the <button>
   siblings — and repaints their glyphs body-grey. Re-assert the intended
   border and colour through #sheetmenu so <a> and <button> controls match.
+  Print and iRealPro now live flush inside the .sheet-actions pill though
+  (no border of their own — the pill shell carries it), so the more specific
+  `#sheetmenu .sheet-actions .sheet-icon-btn` border:none rule above wins
+  over this one for them, the same way it already does inside .sheet-transport.
 */
 #sheetmenu .sheet-icon-btn,
 #sheetmenu .sheet-inspiration-link {
@@ -1324,6 +1338,7 @@ video.video {
   background: #232323;
   cursor: pointer;
   touch-action: none;
+  -webkit-tap-highlight-color: transparent;
 }
 /* Same gold-ring-instead-of-outline treatment as .setlist-drag-handle
    elsewhere in this file — a keyboard-focused control needs a visible ring
@@ -1336,6 +1351,7 @@ video.video {
   flex: none;
   width: 18px;
   height: 18px;
+  padding: 0;
   display: grid;
   place-items: center;
   background: #262626;
@@ -1381,6 +1397,7 @@ video.video {
   border: 1px solid var(--rj-gold);
   border-radius: 2px;
   cursor: grab;
+  -webkit-tap-highlight-color: transparent;
 }
 .inspiration-loop-overview-window:active {
   cursor: grabbing;
@@ -1393,12 +1410,30 @@ video.video {
   bottom: -3px;
   width: 10px;
   cursor: ew-resize;
+  -webkit-tap-highlight-color: transparent;
 }
 .inspiration-loop-overview-handle--start {
   left: -5px;
 }
 .inspiration-loop-overview-handle--end {
   right: -5px;
+}
+/* Same "played so far" bar as .inspiration-loop-played below, mapped against
+   the whole clip's duration rather than the zoomed view — so progress stays
+   visible on the overview strip even once zoomed away from the playhead,
+   the one thing the window rectangle (which only tracks the visible range)
+   can't show on its own. Painted after the window so it stays visible on
+   top of that translucent overlay rather than getting tinted under it. */
+.inspiration-loop-overview-played {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 2px;
+  width: 0;
+  transform: translateY(-50%);
+  background: rgba(236,234,230,.55);
+  border-radius: 1px;
+  pointer-events: none;
 }
 .inspiration-loop-timeline {
   position: relative;
@@ -1408,6 +1443,12 @@ video.video {
   background: #2b2b2b;
   cursor: pointer;
   touch-action: none;
+  /* Without this, tapping to seek flashes the browser's default blue
+     tap-highlight overlay over the whole bar before it fades — jarring
+     against a gold-accented dark panel that never uses blue anywhere
+     else. The click still gets its own feedback from the played bar and
+     handles moving. */
+  -webkit-tap-highlight-color: transparent;
 }
 .inspiration-loop-range {
   position: absolute;
@@ -1429,18 +1470,70 @@ video.video {
   border-radius: 2px;
   pointer-events: none;
 }
+/*
+  A/B is a flag-tab-plus-stem pin, not a plain slider bar: the stem is the
+  exact-position indicator (a 2px line, same weight as the overview strip's
+  ticks), the tab is the readable A/B label, and the two get the same dark-
+  border + drop-shadow treatment as .inspiration-loop-handle used to apply
+  to the whole bar, now scoped to just the tab that needs the lift off the
+  track. The tab's one square corner (bottom-left for A, bottom-right for
+  B) points into the A-B range so the pair reads as "start/end of this
+  span" rather than two identical, interchangeable blobs. Letter comes from
+  `content` on the ID selectors below, not markup, since the two buttons
+  are otherwise identical elements distinguished only by id.
+*/
 .inspiration-loop-handle {
   position: absolute;
   top: -2px;
-  width: 12px;
-  height: 22px;
-  margin-left: -6px;
+  bottom: -2px;
+  width: 16px;
+  margin-left: -8px;
   padding: 0;
-  border: 1px solid rgba(0,0,0,.35);
-  border-radius: 3px;
-  background: var(--rj-gold);
+  border: none;
+  background: none;
   cursor: ew-resize;
   touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.inspiration-loop-handle::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 3px;
+  width: 10px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  background: var(--rj-gold);
+  color: #222222;
+  font: 700 9px/1 "Montserrat", sans-serif;
+  border: 1px solid rgba(0,0,0,.35);
+  border-radius: 3px 3px 3px 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+#inspirationLoopHandleA::before {
+  content: "A";
+}
+#inspirationLoopHandleB::before {
+  content: "B";
+  border-radius: 3px 3px 0 3px;
+}
+.inspiration-loop-handle::after {
+  content: "";
+  position: absolute;
+  top: 13px;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--rj-gold);
+  border-radius: 1px;
+}
+.inspiration-loop-handle:focus-visible {
+  outline: none;
+}
+.inspiration-loop-handle:focus-visible::before {
+  box-shadow: 0 0 0 2px var(--rj-gold), 0 1px 2px rgba(0,0,0,.35);
 }
 .inspiration-loop-controls {
   display: flex;
@@ -1450,7 +1543,7 @@ video.video {
   padding: 6px 12px 9px;
 }
 /*
-  Play/Repeat, A/B/Clear, and the Speed stepper each get their own bordered
+  Play/Repeat, the Speed stepper, and A/B/Clear each get their own bordered
   shell — same visual language the sheet header uses (.sheet-transport /
   .sheet-stepper in the "Key/Tempo steppers" section above) rather than a
   bespoke look, so the two playback surfaces (the printed sheet's transport,
@@ -1460,7 +1553,7 @@ video.video {
   Scaled down from the sheet's 44px controls to this panel's existing 26px
   scale (it's a floating video overlay as narrow as 240px, not a full-width
   toolbar) rather than copied at 1:1 size. Three separate groups (transport,
-  markers, speed) rather than one long bar of five+ buttons is what lets
+  speed, markers) rather than one long bar of five+ buttons is what lets
   them wrap as independent units and keeps Speed on the same line as the
   rest at the panel's default width — zoom moved to the overview strip
   above (see .inspiration-loop-overview-row) is what freed the room for
@@ -1510,38 +1603,35 @@ video.video {
   background: var(--rj-gold);
   color: #222222 !important;
 }
+/*
+  Armed (a loop point is placed): switches from the single centered letter
+  to the same two-row layout as .inspiration-loop-stepper-value (see below)
+  — the letter keeps its place on top, the point's time appears underneath
+  in the .inspiration-loop-stepper-label caption style. An unarmed button
+  has no second row to show (its time span stays [hidden]), so it renders
+  exactly as before: a single centered letter via the base .inspiration-loop-btn
+  grid rule.
+*/
 .inspiration-loop-btn.armed {
   box-shadow: inset 0 0 0 1px var(--rj-gold);
   color: var(--rj-gold) !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 2px 6px;
+}
+.inspiration-loop-btn-time {
+  font: 600 6.5px/1 "Montserrat", sans-serif;
+  letter-spacing: .04em;
+  color: rgba(236,234,230,.4);
 }
 /* #inspirationPlayToggle while the video is actually playing — same "solid
    gold, not just on hover" treatment as .sheet-transport .sheet-play-btn.playing. */
 .inspiration-loop-btn.playing {
   background: var(--rj-gold);
   color: #222222 !important;
-}
-.inspiration-loop-readout {
-  flex: 1;
-  min-width: 0;
-  text-align: right;
-  font: 600 11px/1 "Montserrat", sans-serif;
-  color: rgba(236,234,230,.55);
-  white-space: nowrap;
-}
-/*
-  flex: 1 above makes this element double as the spacer that pins the Speed
-  stepper to the row's right edge (see .inspiration-loop-controls). Letting
-  [hidden]'s default display:none apply here — as for every other [hidden]
-  element in this file — would drop it out of the flex row entirely once
-  there's no A/B time to show, so Speed would visibly jump left to sit right
-  after the marker group instead of holding its position. display:block (an
-  explicit override of the same specificity fight documented for the
-  #setlistTools[hidden] group above) plus visibility keeps it an invisible
-  but still-flex-grown spacer instead.
-*/
-.inspiration-loop-readout[hidden] {
-  display: block;
-  visibility: hidden;
 }
 .inspiration-loop-stepper-btn {
   flex: none;
@@ -1596,20 +1686,6 @@ video.video {
     right: 12px;
     bottom: 12px;
     width: 260px;
-  }
-  .inspiration-loop-readout {
-    flex-basis: 100%;
-    text-align: left;
-  }
-  /*
-    At this width the readout always forces its own full-width line (the
-    flex-basis: 100% above), so it isn't acting as a same-row spacer the way
-    it does at the default width — keeping it present-but-invisible here
-    would just leave a blank line above Speed. Collapsing it fully with
-    display: none is back to correct for this layout.
-  */
-  .inspiration-loop-readout[hidden] {
-    display: none;
   }
 }
 

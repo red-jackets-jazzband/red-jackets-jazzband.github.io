@@ -11,6 +11,7 @@ import {
   transposeKeyName,
   tempoBpmFromAbc,
 } from "./music-theory.js";
+import { BREAK_CHORD } from "./chords.js";
 
 // No `Tonal` global in Node, so these exercise the manual fallback table.
 test("noteChroma resolves natural, flat, and sharp notes", () => {
@@ -98,6 +99,9 @@ test("chordToRomanNumeral maps a chord to its scale degree in a major key", () =
   assert.equal(chordToRomanNumeral("Eb", "Bb", ""), "IV"); // Eb is the 4th degree of Bb major
   assert.equal(chordToRomanNumeral("Bb7", "Bb", ""), "I7");
   assert.equal(chordToRomanNumeral(" % ", "Bb", ""), " % ");
+  // "N.C." doesn't start with a chord root letter, so it passes straight
+  // through unchanged, same as the " % " hold marker above.
+  assert.equal(chordToRomanNumeral(BREAK_CHORD, "Bb", ""), BREAK_CHORD);
 });
 
 test("chordToRomanNumeral passes a missing chord straight through instead of crashing", () => {

@@ -67,6 +67,23 @@ function fallbackCopy(url, btn) {
   else window.prompt("Copy this link:", url);
 }
 
+// Echoes a loop point's time inside its own Set A/B button — same
+// gold-letter-over-caption layout as the Speed stepper's value cell — once
+// that point is placed; an unset button is left exactly as it was (a bare
+// letter), rather than showing a placeholder time. Doesn't touch the
+// panel/ctx state, so it lives at module scope rather than nested inside
+// createInspiration.
+function updateMarkerTime(id, value) {
+  const time = byId(id);
+  if (!time) return;
+  if (value !== null) {
+    time.textContent = formatClock(value);
+    time.hidden = false;
+  } else {
+    time.hidden = true;
+  }
+}
+
 function flashShareBtn(btn) {
   if (!btn) return;
   const icon = btn.querySelector("span");
@@ -116,6 +133,17 @@ function positionOverviewTick(el, value, duration) {
   }
   el.style.left = `${timeToFraction(value, duration) * 100}%`;
   el.hidden = false;
+}
+
+// The overview strip's own "played so far" marker (see the CSS doc comment
+// on .inspiration-loop-overview-played) — mapped against the whole clip via
+// timeToFraction, not the zoomed view timeToViewFraction uses for the main
+// timeline's played bar, so it keeps tracking the real playhead even once
+// zoomed away from it.
+function updateOverviewPlayed(t, dur) {
+  const el = byId("inspirationOverviewPlayed");
+  if (!el) return;
+  el.style.width = `${timeToFraction(t, dur) * 100}%`;
 }
 
 function maxPanelWidth() {
@@ -485,12 +513,14 @@ export function createInspiration(ctx) {
 
   function updatePlayhead(t) {
     const played = byId("inspirationLoopPlayed");
-    if (!played) return;
-    // Clamps to the near/far edge of the current view when the playhead is
-    // outside it (e.g. still playing past a zoomed-in window) — the same
-    // "clipped, not wrong" reading a scrolled-out-of-view progress bar gets
-    // anywhere else, so it's left as a plain clamp rather than hidden.
-    played.style.width = `${timeToViewFraction(t, viewStart, viewEnd) * 100}%`;
+    if (played) {
+      // Clamps to the near/far edge of the current view when the playhead is
+      // outside it (e.g. still playing past a zoomed-in window) — the same
+      // "clipped, not wrong" reading a scrolled-out-of-view progress bar gets
+      // anywhere else, so it's left as a plain clamp rather than hidden.
+      played.style.width = `${timeToViewFraction(t, viewStart, viewEnd) * 100}%`;
+    }
+    updateOverviewPlayed(t, playerDuration());
   }
 
   function updateLoopRange() {
@@ -507,17 +537,9 @@ export function createInspiration(ctx) {
     }
   }
 
-  function updateLoopReadout() {
-    const readout = byId("inspirationLoopReadout");
-    if (!readout) return;
-    if (loopA !== null || loopB !== null) {
-      const a = loopA !== null ? formatClock(loopA) : "–";
-      const b = loopB !== null ? formatClock(loopB) : "–";
-      readout.textContent = `${a} – ${b}`;
-      readout.hidden = false;
-    } else {
-      readout.hidden = true;
-    }
+  function updateLoopMarkerTimes() {
+    updateMarkerTime("inspirationSetATime", loopA);
+    updateMarkerTime("inspirationSetBTime", loopB);
   }
 
   function updateZoomUI(dur) {
@@ -538,7 +560,10 @@ export function createInspiration(ctx) {
     its place once zoomed. At 1x its window simply spans the whole strip,
     same as a browser scrollbar's thumb filling the track when there's
     nothing to scroll. A/B's own position is echoed as a tick so they stay
-    visible even when zoomed away from them entirely.
+    visible even when zoomed away from them entirely. The playhead itself is
+    echoed the same way — see updateOverviewPlayed/.inspiration-loop-overview-played
+    — so overall progress through the clip stays visible here too, not just
+    on the zoomed timeline below.
   */
   function updateOverviewUI(dur) {
     const win = byId("inspirationOverviewWindow");
@@ -570,7 +595,7 @@ export function createInspiration(ctx) {
     if (setB) setB.classList.toggle("armed", loopB !== null);
 
     updateLoopRange();
-    updateLoopReadout();
+    updateLoopMarkerTimes();
     updateZoomUI(dur);
     updateOverviewUI(dur);
 
@@ -714,6 +739,8 @@ export function createInspiration(ctx) {
     if (player && playerReady && player.setPlaybackRate) player.setPlaybackRate(1);
     const played = byId("inspirationLoopPlayed");
     if (played) played.style.width = "0%";
+    const overviewPlayed = byId("inspirationOverviewPlayed");
+    if (overviewPlayed) overviewPlayed.style.width = "0%";
     updateSpeedLabel();
     updateLoopUI();
   }
@@ -745,7 +772,10 @@ export function createInspiration(ctx) {
       // played at all — the markers can be dragged into a region the
       // player hasn't buffered yet — so this seek must be allowed to
       // request a new stream rather than silently no-op.
-      if (t < span.a || t >= span.b) player.seekTo(span.a, true);
+      if (t < span.a || t >= span.b) {
+        player.seekTo(span.a, true);
+        updatePlayhead(span.a);
+      }
     }
   }
 
@@ -787,7 +817,13 @@ export function createInspiration(ctx) {
         return;
       }
       if (!player || !playerReady || viewEnd <= viewStart) return;
-      player.seekTo(viewFractionToTime(trackFraction(track, e), viewStart, viewEnd), true);
+      const t = viewFractionToTime(trackFraction(track, e), viewStart, viewEnd);
+      player.seekTo(t, true);
+      // The loop poll (which normally drives the played-bar position) only
+      // runs while playing, so a seek made while paused would otherwise
+      // leave the bar showing the old position until playback resumes —
+      // reflect the new position immediately instead of waiting for that.
+      updatePlayhead(t);
     });
     track.addEventListener("pointermove", (e) => {
       if (!loopDragging) return;

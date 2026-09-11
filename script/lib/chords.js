@@ -10,6 +10,21 @@ function isValidChordName(name) {
   return VALID_CHORD_BASE.test(name.slice(0, slash)) && VALID_CHORD_BASS.test(name.slice(slash + 1));
 }
 
+// Synonyms abcjs's own bundled accompaniment engine (breakSynonyms, in the
+// midi player) recognizes as "no chord" — silencing the auto-generated
+// Bass/Chords accompaniment for that bar — when written with a position
+// prefix ("^N.C.") so abcjs doesn't parse it as a literal (and unparseable)
+// chord name. Matched here the same way, case-insensitively, so the chord
+// table and comping generator agree with abcjs on what counts as a break.
+const BREAK_CHORD_NAMES = new Set(["break", "(break)", "no chord", "n.c.", "tacet"]);
+
+// The single display form every break synonym above normalizes to.
+export const BREAK_CHORD = "N.C.";
+
+function isBreakChordName(name) {
+  return BREAK_CHORD_NAMES.has(name.toLowerCase());
+}
+
 // Replaces the sharp and flat signs with the official unicode chars.
 export function replaceAccidentalWithUtf8Char(note) {
   return note.replace("b ", "♭").replace("#", "♯").replace("dim", "Ø");
@@ -17,90 +32,130 @@ export function replaceAccidentalWithUtf8Char(note) {
 
 // Reads the chords from an abcjs tune (parsed intermediate format) into a
 // list of measures, each `{ text: [chordStrings...], leftRepeat?, ... }`.
-export function parseChordScheme(song) {
-  let chords = [];
-  let currentMeasure = { text: [] };
+//
+// By default, measures inside a second-or-later ("[2", "[3", ...) repeat
+// ending are dropped: the chord table (and its repeat-boundary highlighting)
+// wants the scheme's one canonical pass, not a tag/outro ending's extra bars
+// thrown in on top — that's what lets a blues head with a coda still
+// simplify down to a clean 12-bar grid. `includeAlternateEndings: true`
+// keeps every measure instead, one entry per physical bar exactly as
+// printed — buildCompingTune needs that full count, or the comping voice
+// runs out of bars (and falls silent) the moment the melody enters such an
+// ending, e.g. happy_feet_blues's part C outro.
+// Walks one voice's elements, accumulating measures the same way the old
+// single-function parser did — split into small methods purely to keep each
+// piece's own branching shallow; the state (and the order it's touched in)
+// is unchanged from before.
+class ChordSchemeParser {
+  constructor(includeAlternateEndings) {
+    this.includeAlternateEndings = includeAlternateEndings;
+    this.chords = [];
+    this.currentMeasure = { text: [] };
+    this.parsedValidChord = false;
+    this.didNotParseChordInThisMeasure = true;
+    this.inAlternativeEnding = false;
+    this.noteOrRestInMeasure = false;
+  }
 
-  let parsedValidChord = false;
-  let didNotParseChordInThisMeasure = true;
-  let inAlternativeEnding = false;
-  let noteOrRestInMeasure = false;
+  get skipEnding() {
+    return this.inAlternativeEnding && !this.includeAlternateEndings;
+  }
 
-  for (let i = 0; i < song.lines.length; i += 1) {
-    // Subtitle is added to song.lines, don't break when line has no staff
-    if (song.lines[i].staff !== undefined) {
-      const line = song.lines[i].staff[0].voices[0];
-
-      for (let lineIdx = 0; lineIdx < line.length; lineIdx += 1) {
-        const element = line[lineIdx];
-
-        if (element.el_type === "note") {
-          noteOrRestInMeasure = true;
-        }
-
-        if (element.el_type === "bar") {
-          if (element.type === "bar_left_repeat") {
-            currentMeasure.leftRepeat = true;
-          } else if (element.type === "bar_right_repeat") {
-            currentMeasure.rightRepeat = true;
-          } else if (element.type === "bar_thin_thin") {
-            if (noteOrRestInMeasure && parsedValidChord) {
-              currentMeasure.doubeThinBarRight = true;
-            } else {
-              currentMeasure.doubeThinBarLeft = true;
-            }
-          }
-
-          if (element.startEnding !== undefined) {
-            if (element.startEnding > 1) {
-              inAlternativeEnding = true;
-            }
-          } else if (element.endEnding !== undefined && inAlternativeEnding) {
-            inAlternativeEnding = false;
-          }
-
-          if (!inAlternativeEnding) {
-            if (didNotParseChordInThisMeasure && parsedValidChord && noteOrRestInMeasure) {
-              currentMeasure.text.push(" % ");
-            }
-
-            if (currentMeasure.text.length > 0) {
-              currentMeasure.text = currentMeasure.text.slice(0);
-
-              chords.push(currentMeasure);
-              currentMeasure = { text: [] };
-              noteOrRestInMeasure = false;
-            }
-
-            didNotParseChordInThisMeasure = true;
-          }
-        }
-
-        if (!inAlternativeEnding) {
-          if (element.chord !== undefined && isValidChordName(element.chord[0].name)) {
-            const chord = replaceAccidentalWithUtf8Char(element.chord[0].name);
-            currentMeasure.text.push(chord);
-            didNotParseChordInThisMeasure = false;
-            parsedValidChord = true;
-          }
-        }
+  applyBarShape(element) {
+    if (element.type === "bar_left_repeat") {
+      this.currentMeasure.leftRepeat = true;
+    } else if (element.type === "bar_right_repeat") {
+      this.currentMeasure.rightRepeat = true;
+    } else if (element.type === "bar_thin_thin") {
+      if (this.noteOrRestInMeasure && this.parsedValidChord) {
+        this.currentMeasure.doubeThinBarRight = true;
+      } else {
+        this.currentMeasure.doubeThinBarLeft = true;
       }
     }
   }
 
-  // An ABC body that ends without a closing barline never reaches the bar
-  // flush above, so the final measure's chords are still sitting unpushed in
-  // currentMeasure — flush them here or the chord table (and comping) loses
-  // the last bar.
-  if (!inAlternativeEnding && currentMeasure.text.length > 0) {
-    chords.push(currentMeasure);
+  updateEndingState(element) {
+    if (element.startEnding !== undefined) {
+      if (element.startEnding > 1) this.inAlternativeEnding = true;
+    } else if (element.endEnding !== undefined && this.inAlternativeEnding) {
+      this.inAlternativeEnding = false;
+    }
   }
 
-  // Prevent returning only % % % % % ....
-  if (!parsedValidChord) {
-    chords = [];
+  flushMeasure() {
+    if (this.didNotParseChordInThisMeasure && this.parsedValidChord && this.noteOrRestInMeasure) {
+      this.currentMeasure.text.push(" % ");
+    }
+    if (this.currentMeasure.text.length > 0) {
+      this.chords.push(this.currentMeasure);
+      this.currentMeasure = { text: [] };
+      this.noteOrRestInMeasure = false;
+    }
+    this.didNotParseChordInThisMeasure = true;
   }
-  return chords;
+
+  handleBar(element) {
+    this.applyBarShape(element);
+    this.updateEndingState(element);
+    if (!this.skipEnding) this.flushMeasure();
+  }
+
+  handleChord(element) {
+    if (this.skipEnding || element.chord === undefined) return;
+    const rawName = element.chord[0].name;
+    if (isValidChordName(rawName)) {
+      this.currentMeasure.text.push(replaceAccidentalWithUtf8Char(rawName));
+      this.didNotParseChordInThisMeasure = false;
+      this.parsedValidChord = true;
+    } else if (isBreakChordName(rawName)) {
+      this.currentMeasure.text.push(BREAK_CHORD);
+      this.didNotParseChordInThisMeasure = false;
+      this.parsedValidChord = true;
+    }
+  }
+
+  handleElement(element) {
+    if (element.el_type === "note") this.noteOrRestInMeasure = true;
+    if (element.el_type === "bar") this.handleBar(element);
+    this.handleChord(element);
+  }
+
+  finish() {
+    // An ABC body that ends without a closing barline never reaches the bar
+    // flush above, so the final measure's chords are still sitting unpushed
+    // in currentMeasure — flush them here or the chord table (and comping)
+    // loses the last bar.
+    if (!this.skipEnding && this.currentMeasure.text.length > 0) {
+      this.chords.push(this.currentMeasure);
+    }
+    // Prevent returning only % % % % % ....
+    return this.parsedValidChord ? this.chords : [];
+  }
+}
+
+// Reads the chords from an abcjs tune (parsed intermediate format) into a
+// list of measures, each `{ text: [chordStrings...], leftRepeat?, ... }`.
+//
+// By default, measures inside a second-or-later ("[2", "[3", ...) repeat
+// ending are dropped: the chord table (and its repeat-boundary highlighting)
+// wants the scheme's one canonical pass, not a tag/outro ending's extra bars
+// thrown in on top — that's what lets a blues head with a coda still
+// simplify down to a clean 12-bar grid. `includeAlternateEndings: true`
+// keeps every measure instead, one entry per physical bar exactly as
+// printed — buildCompingTune needs that full count, or the comping voice
+// runs out of bars (and falls silent) the moment the melody enters such an
+// ending, e.g. happy_feet_blues's part C outro.
+export function parseChordScheme(song, { includeAlternateEndings = false } = {}) {
+  const parser = new ChordSchemeParser(includeAlternateEndings);
+  for (const line of song.lines) {
+    // Subtitle is added to song.lines, don't break when line has no staff
+    if (line.staff === undefined) continue;
+    for (const element of line.staff[0].voices[0]) {
+      parser.handleElement(element);
+    }
+  }
+  return parser.finish();
 }
 
 // Checks if it is a 12-bar blues scheme, if so, and every repeat is

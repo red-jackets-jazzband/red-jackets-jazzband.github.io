@@ -1,4 +1,6 @@
-import { byId, el, qsa, clear, on } from "../lib/dom.js";
+import {
+  byId, el, qsa, clear, on, downloadBlob,
+} from "../lib/dom.js";
 import { isSetlistDivider } from "../lib/setlist-format.js";
 import { walkSetlist } from "../lib/setlist-walk.js";
 import { filterSongsByQuery } from "../lib/song-index.js";
@@ -42,13 +44,7 @@ function semitoneOverride(rawValue) {
 }
 
 function downloadText(filename, text) {
-  const blob = new Blob([text], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const link = el("a", { href: url, download: filename });
-  document.body.append(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+  downloadBlob(filename, new Blob([text], { type: "text/plain" }));
 }
 
 // Show the open-setlist chrome (crumb, tools, title row) and set the title /

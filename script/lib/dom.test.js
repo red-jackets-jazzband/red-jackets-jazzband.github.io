@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountPage } from "../../../tests/helpers/dom.js";
-import { byId, qs, qsa, clear, setHidden, on, el, mount } from "./dom.js";
+import {
+  byId, qs, qsa, clear, setHidden, on, el, mount, downloadBlob,
+} from "./dom.js";
 
 function inDom(fn) {
   const page = mountPage({ html: "<div id='root'></div>" });
@@ -97,5 +99,29 @@ test("mount appends to an element or id and skips nullish", () => {
   inDom(() => {
     mount("root", el("span", { text: "a" }), null, el("span", { text: "b" }));
     assert.equal(byId("root").textContent, "ab");
+  });
+});
+
+// jsdom implements neither URL.createObjectURL/revokeObjectURL nor a real
+// anchor click's navigation, so both are stubbed for this one test.
+test("downloadBlob clicks a throwaway object-URL anchor, then cleans it up", () => {
+  inDom(() => {
+    const created = [];
+    const revoked = [];
+    URL.createObjectURL = (blob) => { created.push(blob); return "blob:fake-url"; };
+    URL.revokeObjectURL = (url) => revoked.push(url);
+    let clickedHref = null;
+    const originalClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function click() { clickedHref = this.href; };
+    try {
+      const blob = new Blob(["hi"], { type: "text/plain" });
+      downloadBlob("notes.txt", blob);
+      assert.deepEqual(created, [blob]);
+      assert.equal(clickedHref, "blob:fake-url");
+      assert.deepEqual(revoked, ["blob:fake-url"]);
+      assert.equal(document.querySelectorAll("a[download]").length, 0);
+    } finally {
+      HTMLAnchorElement.prototype.click = originalClick;
+    }
   });
 });

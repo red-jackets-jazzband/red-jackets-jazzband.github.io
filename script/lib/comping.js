@@ -1,4 +1,4 @@
-import { computeChordOffset } from "./chords.js";
+import { computeChordOffset, BREAK_CHORD } from "./chords.js";
 
 /*
    Chord-tone comping generator.
@@ -257,17 +257,69 @@ function scanNoteLetter(str, i, letters) {
 
 // Scans an optional duration suffix — digits, then an optional run of "/"s
 // with their own optional digits (e.g. "2", "/2", "3/2", "/") — returning
-// both the index just past it and the numerator/denominator it spelled out.
+// the index just past it, the resulting multiplier, and the exact
+// numerator/denominator it spelled out (num/den, before any reduction) so a
+// caller that needs to combine two duration suffixes exactly — see
+// stripChordBrackets below — can multiply the fractions instead of the
+// already-rounded float `mult`.
 function scanDurationMultiplier(str, i) {
   const numEnd = scanRun(str, i, isDigit);
   const numerator = str.slice(i, numEnd);
-  const mult = numerator ? Number.parseInt(numerator, 10) : 1;
-  if (str[numEnd] !== "/") return { end: numEnd, mult };
+  const num = numerator ? Number.parseInt(numerator, 10) : 1;
+  if (str[numEnd] !== "/") return { end: numEnd, mult: num, num, den: 1 };
   const slashEnd = scanRun(str, numEnd, isSlash);
   const denomEnd = scanRun(str, slashEnd, isDigit);
   const denominator = str.slice(slashEnd, denomEnd);
-  const denom = denominator ? Number.parseInt(denominator, 10) : 2 ** (slashEnd - numEnd);
-  return { end: denomEnd, mult: mult / denom };
+  const den = denominator ? Number.parseInt(denominator, 10) : 2 ** (slashEnd - numEnd);
+  return { end: denomEnd, mult: num / den, num, den };
+}
+
+// Formats the product of two duration-suffix fractions (see
+// scanDurationMultiplier) as the ABC suffix text that would reproduce that
+// same combined multiplier if re-scanned — "" for 1, a bare integer when the
+// product is whole, otherwise "num/den".
+function multiplyDurationSuffixes(a, b) {
+  const num = a.num * b.num;
+  const den = a.den * b.den;
+  const g = gcd(num, den);
+  const n = num / g;
+  const d = den / g;
+  if (n === 1 && d === 1) return "";
+  return d === 1 ? String(n) : n + "/" + d;
+}
+
+// Like stripDelimited("[", "]", ...) but the replacement carries the
+// chord's own duration instead of a fixed placeholder: a bracket that spells
+// each tone's length out individually ("[F2_d2]", with no shared duration
+// trailing the "]" — the "_Break rhythm" bars in happy_feet_blues' part C)
+// must still count as one duration-2 event, not silently default to 1.
+// ABCjs itself takes a chord's duration from its first note, so this reads
+// the same one. A duration suffix can *also* trail the closing "]" itself
+// ("[F2_d2]2" — the whole chord doubled on top of its own first note's
+// length); the two multipliers are independent ABC duration modifiers and
+// must be multiplied together, not have their digit text concatenated.
+function stripChordBrackets(str) {
+  let result = "";
+  let i = 0;
+  while (i < str.length) {
+    if (str[i] !== "[") {
+      result += str[i];
+      i += 1;
+      continue;
+    }
+    const end = str.indexOf("]", i + 1);
+    if (end === -1) {
+      result += str.slice(i);
+      break;
+    }
+    const inner = str.slice(i + 1, end);
+    const noteEnd = scanNoteLetter(inner, 0, CHORD_NOTE_LETTERS);
+    const innerDur = noteEnd === -1 ? { num: 1, den: 1 } : scanDurationMultiplier(inner, noteEnd);
+    const outerDur = scanDurationMultiplier(str, end + 1);
+    result += "Y" + multiplyDurationSuffixes(innerDur, outerDur);
+    i = outerDur.end;
+  }
+  return result;
 }
 
 export function measureBarSlots(segment, lnum, lden) {
@@ -277,7 +329,7 @@ export function measureBarSlots(segment, lnum, lden) {
   s = stripDelimited(s, "!", "!", "");
   s = stripInlineFields(s);
   s = stripDelimited(s, "{", "}", "");
-  s = stripDelimited(s, "[", "]", "Y");
+  s = stripChordBrackets(s);
 
   let total = 0;
   let matched = false;
@@ -828,13 +880,22 @@ function chordArgs(voices, keyScale) {
 // on: after voice-leading the black voice may well be sitting on a fifth.
 const VOICE_KEYS = ["R", "3", "5"];
 
-// Chord scheme -> per-bar arrays of triads, each triad [{pc}] root/3rd/5th first.
+// Chord scheme -> per-bar arrays of triads, each triad [{pc}] root/3rd/5th
+// first, or `null` for a break ("N.C.") slot — a deliberate silence the
+// comping voice should rest through rather than hold the previous chord
+// over. `last` (the "%"-hold memory) is left untouched by a break, so a
+// hold *after* one still continues whatever chord preceded the break, not
+// "N.C." itself.
 function extractChordNotes(chords) {
   const result = [];
   let last = "C";
   for (const measure of chords) {
     const row = [];
     for (const raw of measure.text) {
+      if (raw === BREAK_CHORD) {
+        row.push(null);
+        continue;
+      }
       let name = plainChordName(raw);
       if (name === "%" || name === "") name = last;
       name = name.split("/")[0];
@@ -924,6 +985,13 @@ function voiceLead(bars) {
   for (const bar of bars) {
     const voicedBar = [];
     for (const curr of bar) {
+      // A break ("N.C.") slot: pass the rest through untouched, and leave
+      // the voice-leading memory alone so the next real chord still leads
+      // on from whatever came before the silence.
+      if (curr === null) {
+        voicedBar.push(null);
+        continue;
+      }
       if (!homeRefs) homeRefs = seedRefs(curr);
       const pcKey = curr.map((t) => t.pc).join(",");
       const chordChanged = prevPcKey !== null && pcKey !== prevPcKey;
@@ -1043,24 +1111,32 @@ export function buildCompingTune(text, chords, song, pattern) {
     const cb = voiced[bar];
     let fragment;
     let barPalette;
+    // A `null` triple is a break ("N.C.") slot: draw a plain rest instead of
+    // a chord pattern, and contribute no palette entries (a rest draws no
+    // notehead onset for sheet-decorations.js to colour).
     if (cb.length === 1) {
-      const fn = bar % 2 === 0 ? pat.twobar1 : pat.twobar2;
-      fragment = fn.apply(null, chordArgs(cb[0], keyScale));
-      const order = cb[0].map((v) => v.fn);
-      barPalette = Array(countChords(fragment)).fill(order);
+      if (cb[0] === null) {
+        fragment = "z8";
+        barPalette = [];
+      } else {
+        const fn = bar % 2 === 0 ? pat.twobar1 : pat.twobar2;
+        fragment = fn.apply(null, chordArgs(cb[0], keyScale));
+        const order = cb[0].map((v) => v.fn);
+        barPalette = new Array(countChords(fragment)).fill(order);
+      }
     } else if (cb.length === 2) {
-      const fragA = pat.half.apply(null, chordArgs(cb[0], keyScale));
-      const fragB = pat.half.apply(null, chordArgs(cb[1], keyScale));
+      const fragA = cb[0] === null ? "z4" : pat.half.apply(null, chordArgs(cb[0], keyScale));
+      const fragB = cb[1] === null ? "z4" : pat.half.apply(null, chordArgs(cb[1], keyScale));
       fragment = fragA + " " + fragB;
-      barPalette = Array(countChords(fragA))
-        .fill(cb[0].map((v) => v.fn))
-        .concat(Array(countChords(fragB)).fill(cb[1].map((v) => v.fn)));
+      barPalette = new Array(countChords(fragA))
+        .fill(cb[0] === null ? [] : cb[0].map((v) => v.fn))
+        .concat(new Array(countChords(fragB)).fill(cb[1] === null ? [] : cb[1].map((v) => v.fn)));
     } else {
       const durs = distribute(8, cb.length);
       fragment = cb
-        .map((triple, i) => chordArgs(triple, keyScale)[0] + durs[i])
+        .map((triple, i) => (triple === null ? "z" + durs[i] : chordArgs(triple, keyScale)[0] + durs[i]))
         .join(" ");
-      barPalette = cb.map((triple) => triple.map((v) => v.fn));
+      barPalette = cb.map((triple) => (triple === null ? [] : triple.map((v) => v.fn)));
     }
     compBars.push(rebeamBar(respellBar(fragment, keySig), lnum, lden));
     compPalettes.push(barPalette);

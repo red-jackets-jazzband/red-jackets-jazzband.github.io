@@ -5,6 +5,7 @@ import { makeCtx } from "../../../tests/helpers/ctx.js";
 import { createLibraryTab } from "./library-tab.js";
 
 const CORRINE_FILE = "corrine.abc";
+const SONG_ROW_SELECTOR = "a.song-list-item";
 
 const SONGS = [
   { name: "All of Me", file: "all_of_me.abc" },
@@ -34,7 +35,7 @@ test("render groups songs by letter and builds the A-Z rail", () => {
       [...list.querySelectorAll(".song-list-letter")].map((h) => h.textContent),
       ["A", "B", "C"],
     );
-    assert.equal(list.querySelectorAll("a.song-list-item").length, 4);
+    assert.equal(list.querySelectorAll(SONG_ROW_SELECTOR).length, 4);
     assert.deepEqual(
       [...document.getElementById("songRail").querySelectorAll("button")].map((b) => b.textContent),
       ["A", "B", "C"],
@@ -50,7 +51,7 @@ test("render filters on a query and clears the rail", () => {
     tab.render("bi");
     const list = document.getElementById("songList");
     assert.deepEqual(
-      [...list.querySelectorAll("a.song-list-item")].map((a) => a.textContent),
+      [...list.querySelectorAll(SONG_ROW_SELECTOR)].map((a) => a.textContent),
       ["Bill Bailey"],
     );
     assert.equal(list.querySelectorAll(".song-list-letter").length, 0);
@@ -77,12 +78,31 @@ test("clicking a row opens the song and suppresses navigation", () => {
   const { tab, opened, cleanup } = setup();
   try {
     tab.render("");
-    const row = document.querySelector("a.song-list-item");
+    const row = document.querySelector(SONG_ROW_SELECTOR);
     const event = new window.Event("click", { cancelable: true, bubbles: true });
     row.dispatchEvent(event);
     assert.equal(opened.length, 1);
     assert.equal(opened[0].file, "all_of_me.abc");
     assert.equal(event.defaultPrevented, true);
+  } finally {
+    cleanup();
+  }
+});
+
+test("clicking a row among multiple search results clears the search", () => {
+  const { tab, opened, cleanup } = setup();
+  try {
+    tab.init();
+    const search = document.getElementById("songSearch");
+    search.value = "b";
+    search.dispatchEvent(new window.Event("input"));
+    const rows = [...document.querySelectorAll(SONG_ROW_SELECTOR)];
+    assert.equal(rows.length, 2);
+
+    rows[0].dispatchEvent(new window.Event("click", { cancelable: true, bubbles: true }));
+    assert.equal(opened.at(-1).file, "basin_street.abc");
+    assert.equal(search.value, "");
+    assert.equal(document.querySelectorAll(SONG_ROW_SELECTOR).length, 4);
   } finally {
     cleanup();
   }
@@ -147,7 +167,7 @@ test("stepLibrarySong advances past a song file that appears twice in the index"
   const { tab, ctx, opened, cleanup } = setup({ state: { allSongs: DUPES, activeTab: "library" } });
   try {
     tab.render("");
-    const rows = [...document.querySelectorAll("a.song-list-item")];
+    const rows = [...document.querySelectorAll(SONG_ROW_SELECTOR)];
     // Rows render alphabetically: All of Me, Corrine Corrina, Corrine (alt
     // title), Deep River Blues. Click the *second* row for CORRINE_FILE
     // directly, as a user would.

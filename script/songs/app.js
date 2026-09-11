@@ -13,6 +13,7 @@ import {
 import { createMetronome, loadMetronomeState } from "./metronome.js";
 import { createInspiration } from "./inspiration.js";
 import { initSheetControls } from "./sheet-controls.js";
+import { initWavExport } from "./wav-export.js";
 import { createInstrumentDropdown, createCompingDropdown } from "./selects.js";
 import { createLibraryTab } from "./library-tab.js";
 import { createSetlistData } from "./setlist-data.js";
@@ -160,6 +161,7 @@ function createApp() {
     createInstrumentDropdown(ctx);
     createCompingDropdown(ctx);
     initSheetControls(ctx);
+    initWavExport(ctx);
     ctx.mixer.init();
     ctx.metronome.init();
     ctx.inspiration.init();
