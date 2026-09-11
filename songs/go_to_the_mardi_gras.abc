@@ -1,25 +1,21 @@
 X:1
 T:Go to the Mardi Gras (Mardi Gras in New Orleans)
 M:4/4
-L:1/8
-Q:1/4=140
+L:1/4
+Q:1/4=200
 R:Traditional
 F:https://www.youtube.com/watch?v=N1oQDLE2lW8
 C:Professor Longhair (R. Byrd) and T. Terry (1949)
 K:Bbmaj
-FG |: "Bb" B2B2 d d z2|z BBB/2B3/2 FBB| B,2 z2 z4 |
+FG |: "Bb" B2B2 | d d z2|z BBB/2B/2-|B FBB| B,2 z2 | z4 |
 w:While you stroll in New Orleans, You ought to go see the Mardi Gras
 w:Get your ticket in your hand, If you wan-na go through New Orleans
 w:You will see the Zulu King, Down on St. Claude _and Du-maire
-z4 z2 FG | "Eb7" B2B2 f _d z2|z BBB/2B3/2 FBB| "Bb" B,2 z2 z4 |
+z4 | z2 FG | "Eb7" B2B2 | f _d z2|z BBB/2B1/2-| B FBB| "Bb" B,2 z2 | z4 |
 w:If you go to New Orleans, You ought to go see the Mardi Gras
 w:Get your ticket in your hand, If you wan-na go through New Orleans
 w:You know, you'll see the Zulu~King, Down on St. Claude _and Du-maire
-z4 z2 GB | "F7" c2 c2 F2 z2 | z B BB/2B3/2 F AA |
-w:When you see~the Mardi Gras, Some-body'll tell you what's Car-nival
-w:You know when~you~get~to New Orleans, Some-body'll show you the Zu-lu
-w:And if you~stay right there, I'm sure you'll see the Zu-lu
-"Bb" B2 z2 z4 | z4 z2 FG :|
-w:for
-w:King
-w:Queen
+z4 | z2 GB | "F7" c2 c2 | F2 z2 | z B BB/2B/2-|B F AA | "Bb" B2 z2 | z4 | z4 | z2 FG :|
+w:When you see~the Mardi Gras, Some-body'll tell you what's Car-nival for
+w:You know when~you~get~to New Orleans, Some-body'll show you the Zu-lu King
+w:And if you~stay right there, I'm sure you'll see the Zu-lu Queen

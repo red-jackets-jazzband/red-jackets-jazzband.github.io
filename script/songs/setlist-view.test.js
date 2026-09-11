@@ -4,13 +4,17 @@ import { mountPage } from "../../../tests/helpers/dom.js";
 import { makeCtx, memoryStorage } from "../../../tests/helpers/ctx.js";
 import {
   createPersonalSetlist, addSongToPersonalSetlist, addDividerToPersonalSetlist,
-  updateDividerLabelInPersonalSetlist, getPersonalSetlist,
+  updateDividerLabelInPersonalSetlist, getPersonalSetlist, setPersonalSetlistOrder,
 } from "../lib/setlists-store.js";
 import { createSetlistView } from "./setlist-view.js";
 
 const DRAG_HANDLE_SELECTOR = ".setlist-song-row .setlist-drag-handle";
+const SONG_TITLE_SELECTOR = ".setlist-song-title";
 const BASIN_STREET_FILE = "basin_street.abc";
 const BASIN_STREET_NAME = "Basin Street Blues";
+const ADD_SONG_SEARCH_ID = "setlistAddSongSearch";
+const addSongSearch = () => document.getElementById(ADD_SONG_SEARCH_ID);
+const MINIMAL_ABC = "X:1\nK:C\nC2|";
 
 function setup({ songs = [], personal = true } = {}) {
   const page = mountPage();
@@ -59,7 +63,7 @@ test("renderOpen numbers a flat personal setlist 1..n with drag handles + remove
     assert.deepEqual(rowNumbers(), ["1", "2", "3"]);
     assert.equal(document.querySelectorAll(DRAG_HANDLE_SELECTOR).length, 3);
     assert.equal(document.querySelectorAll(".setlist-song-remove").length, 3);
-    assert.ok(document.getElementById("setlistAddSongSearch"), "add-song tray present");
+    assert.ok(addSongSearch(), "add-song tray present");
   } finally {
     cleanup();
   }
@@ -72,13 +76,13 @@ function enterAddSong(allSongs, query) {
   try {
     ctx.state.allSongs = allSongs;
     view.renderOpen(entry.name, entry.songs, entry, "");
-    const search = document.getElementById("setlistAddSongSearch");
+    const search = addSongSearch();
     search.value = query;
     search.dispatchEvent(new window.Event("input"));
     search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     return {
       files: getPersonalSetlist(storage, entry.id).songs.map((s) => s.file),
-      value: document.getElementById("setlistAddSongSearch").value,
+      value: addSongSearch().value,
     };
   } finally {
     cleanup();
@@ -111,7 +115,7 @@ function openAddSongSearch(allSongs, query) {
   const { view, ctx, entry } = result;
   ctx.state.allSongs = allSongs;
   view.renderOpen(entry.name, entry.songs, entry, "");
-  const search = document.getElementById("setlistAddSongSearch");
+  const search = addSongSearch();
   search.value = query;
   search.dispatchEvent(new window.Event("input"));
   return { ...result, search };
@@ -129,7 +133,7 @@ test("clicking an add-song result adds the song and clears the search field", ()
       getPersonalSetlist(storage, entry.id).songs.map((s) => s.file),
       ["a.abc", BASIN_STREET_FILE],
     );
-    assert.equal(document.getElementById("setlistAddSongSearch").value, "");
+    assert.equal(addSongSearch().value, "");
     assert.equal(document.querySelectorAll(".rj-library-add-song-result").length, 0);
   } finally {
     cleanup();
@@ -188,11 +192,11 @@ test("with the add-song field empty, ArrowUp jumps to the setlist and ArrowDown 
   try {
     ctx.state.allSongs = [{ file: "a.abc", name: "A" }, { file: "b.abc", name: "B" }];
     view.renderOpen(entry.name, entry.songs, entry, "");
-    const search = document.getElementById("setlistAddSongSearch");
+    const search = addSongSearch();
 
     search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
-    const handles = document.querySelectorAll(DRAG_HANDLE_SELECTOR);
-    assert.equal(document.activeElement, handles[handles.length - 1]);
+    const titles = document.querySelectorAll(SONG_TITLE_SELECTOR);
+    assert.equal(document.activeElement, titles[titles.length - 1], "lands on the row, not its drag handle");
 
     search.focus();
     search.dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
@@ -305,29 +309,13 @@ test("openPersonal still renders the setlist when the song index fails to load",
   }
 });
 
-test("keyboard nudge on a drag handle persists the new order", () => {
-  const { view, entry, storage, cleanup } = setup({
-    songs: [{ file: "a.abc" }, { file: "b.abc" }, { file: "c.abc" }],
-  });
-  try {
-    view.renderOpen(entry.name, entry.songs, entry, "");
-    const firstHandle = document.querySelector(DRAG_HANDLE_SELECTOR);
-    firstHandle.dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
-    assert.deepEqual(
-      getPersonalSetlist(storage, entry.id).songs.map((s) => s.file),
-      ["b.abc", "a.abc", "c.abc"],
-    );
-  } finally {
-    cleanup();
-  }
-});
-
 // Open a personal setlist of three songs (a/b/c), already rendered.
 function openThreeSongSetlist() {
   const result = setup({
     songs: [{ file: "a.abc" }, { file: "b.abc" }, { file: "c.abc" }],
   });
   const { view, entry } = result;
+  view.initControls();
   view.renderOpen(entry.name, entry.songs, entry, "");
   return result;
 }
@@ -369,19 +357,192 @@ test("Delete on the only row's drag handle moves focus to the add-song field", (
     view.renderOpen(entry.name, entry.songs, entry, "");
     document.querySelector(DRAG_HANDLE_SELECTOR)
       .dispatchEvent(new window.KeyboardEvent("keydown", { key: "Delete", bubbles: true }));
-    assert.equal(document.activeElement, document.getElementById("setlistAddSongSearch"));
+    assert.equal(document.activeElement, addSongSearch());
   } finally {
     cleanup();
   }
 });
 
 test("remove reads the row's live position so it survives a reorder", () => {
-  assertRemoval(() => {
-    // Nudge the first song down, then remove what is now the first row (b.abc).
+  const { view, entry, storage, cleanup } = openThreeSongSetlist();
+  try {
+    // Swap the first two songs (as a drag would), then remove what is now
+    // the first row (b.abc) — removeRow must read the row's live DOM
+    // position, not a stale index captured when the row was built.
+    setPersonalSetlistOrder(storage, entry.id, [1, 0, 2]);
+    view.renderOpen(entry.name, getPersonalSetlist(storage, entry.id).songs, entry, "");
+    document.querySelector(".setlist-song-remove").dispatchEvent(new window.Event("click"));
+    assert.deepEqual(
+      getPersonalSetlist(storage, entry.id).songs.map((s) => s.file),
+      ["a.abc", "c.abc"],
+    );
+  } finally {
+    cleanup();
+  }
+});
+
+// Dispatch an Alt+Up/Alt+Down keydown on the element at `index` of `selector`
+// (drag handle or song title — both live inside the row and should trigger
+// the same reorder) and assert the surviving song order. Shared by the
+// reorder tests below.
+function assertAltArrowReorder(selector, index, key, expectedFiles) {
+  const { entry, storage, cleanup } = openThreeSongSetlist();
+  try {
+    document.querySelectorAll(selector)[index].dispatchEvent(
+      new window.KeyboardEvent("keydown", { key, altKey: true, bubbles: true }),
+    );
+    assert.deepEqual(
+      getPersonalSetlist(storage, entry.id).songs.map((s) => s.file),
+      expectedFiles,
+    );
+  } finally {
+    cleanup();
+  }
+}
+
+test("Alt+ArrowDown on a focused drag handle moves that row down and persists the order", () => {
+  assertAltArrowReorder(DRAG_HANDLE_SELECTOR, 0, "ArrowDown", ["b.abc", "a.abc", "c.abc"]);
+});
+
+test("Alt+ArrowUp on a focused drag handle moves that row up and persists the order", () => {
+  assertAltArrowReorder(DRAG_HANDLE_SELECTOR, 2, "ArrowUp", ["a.abc", "c.abc", "b.abc"]);
+});
+
+test("Alt+ArrowUp on the first row's drag handle is a no-op (clamped at the top)", () => {
+  assertAltArrowReorder(DRAG_HANDLE_SELECTOR, 0, "ArrowUp", ["a.abc", "b.abc", "c.abc"]);
+});
+
+test("Alt+ArrowDown on the focused song title (not the drag handle) also reorders", () => {
+  assertAltArrowReorder(SONG_TITLE_SELECTOR, 0, "ArrowDown", ["b.abc", "a.abc", "c.abc"]);
+});
+
+test("Alt+ArrowDown re-focuses the moved row's drag handle after re-render", () => {
+  const { cleanup } = openThreeSongSetlist();
+  try {
+    document.querySelectorAll(DRAG_HANDLE_SELECTOR)[0].dispatchEvent(
+      new window.KeyboardEvent("keydown", { key: "ArrowDown", altKey: true, bubbles: true }),
+    );
+    const handles = document.querySelectorAll(DRAG_HANDLE_SELECTOR);
+    assert.equal(document.activeElement, handles[1]);
+    assert.equal(document.activeElement.closest(".setlist-song-row").dataset.songFile, "a.abc");
+  } finally {
+    cleanup();
+  }
+});
+
+test("a plain arrow key still steps the open sheet's song, not a reorder, off a focused title", () => {
+  const { view, ctx, entry, rendered, cleanup } = openThreeSongSetlist();
+  try {
+    ctx.setSheetBackLabel = () => {};
+    ctx.readFile = (path, onLoad) => onLoad(MINIMAL_ABC);
+    view.openSongInOpenSetlist("a");
+    document.querySelectorAll(SONG_TITLE_SELECTOR)[0].dispatchEvent(
+      new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
+    );
+    assert.equal(ctx.state.currentSetlistSongIndex, 1, "stepped to the next song");
+    assert.deepEqual(
+      getPersonalSetlist(ctx.storage(), entry.id).songs.map((s) => s.file),
+      ["a.abc", "b.abc", "c.abc"],
+      "no reorder happened without Alt",
+    );
+    assert.equal(rendered.length, 2);
+  } finally {
+    cleanup();
+  }
+});
+
+test("stepping without Alt continues from the last moved item, not a stale index", () => {
+  const { view, ctx, cleanup } = openThreeSongSetlist();
+  try {
+    ctx.setSheetBackLabel = () => {};
+    ctx.readFile = (path, onLoad) => onLoad(MINIMAL_ABC);
+    // Open "a" (index 0), then move it down past "b" with Alt+ArrowDown —
+    // it now sits at index 1, and its pointer should move with it.
+    view.openSongInOpenSetlist("a");
+    document.querySelectorAll(DRAG_HANDLE_SELECTOR)[0].dispatchEvent(
+      new window.KeyboardEvent("keydown", { key: "ArrowDown", altKey: true, bubbles: true }),
+    );
+    assert.equal(ctx.state.currentSetlistSongIndex, 1, "index pointer followed the moved song");
+
+    // A plain ArrowDown now should step to whatever follows "a" at its new
+    // spot ("c"), not re-derive from the old pre-move index (which would
+    // also land on "c" here, so use the file to prove it's the *new* slot).
+    document.querySelectorAll(DRAG_HANDLE_SELECTOR)[1].dispatchEvent(
+      new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
+    );
+    assert.equal(ctx.state.currentSongFile, "c.abc");
+    assert.equal(ctx.state.currentSetlistSongIndex, 2);
+  } finally {
+    cleanup();
+  }
+});
+
+test("arrow keys step to the next song even while a drag handle has focus", () => {
+  const { view, entry, ctx, rendered, cleanup } = setup({
+    songs: [{ file: "a.abc", key: "" }, { file: "b.abc", key: "" }],
+  });
+  try {
+    ctx.setSheetBackLabel = () => {};
+    ctx.readFile = (path, onLoad) => onLoad(MINIMAL_ABC);
+    view.initControls();
+    view.renderOpen(entry.name, entry.songs, entry, "");
+    document.querySelector(SONG_TITLE_SELECTOR).dispatchEvent(new window.Event("click"));
+    assert.equal(ctx.state.currentSetlistSongIndex, 0);
+
     document.querySelector(DRAG_HANDLE_SELECTOR)
       .dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
-    document.querySelector(".setlist-song-remove").dispatchEvent(new window.Event("click"));
-  }, ["a.abc", "c.abc"]);
+
+    assert.equal(ctx.state.currentSetlistSongIndex, 1, "arrow key opened the next song");
+    assert.deepEqual(
+      getPersonalSetlist(ctx.storage(), entry.id).songs.map((s) => s.file),
+      ["a.abc", "b.abc"],
+      "the drag handle did not reorder the setlist",
+    );
+    assert.equal(rendered.length, 2);
+  } finally {
+    cleanup();
+  }
+});
+
+test("arrow-down on the last song of a personal setlist hands off to the add-song search", () => {
+  const { view, entry, ctx, cleanup } = setup({
+    songs: [{ file: "a.abc", key: "" }, { file: "b.abc", key: "" }],
+  });
+  try {
+    ctx.setSheetBackLabel = () => {};
+    ctx.readFile = (path, onLoad) => onLoad(MINIMAL_ABC);
+    view.initControls();
+    view.renderOpen(entry.name, entry.songs, entry, "");
+    const titles = document.querySelectorAll(SONG_TITLE_SELECTOR);
+    titles[titles.length - 1].dispatchEvent(new window.Event("click")); // open the last song
+    assert.equal(ctx.state.currentSetlistSongIndex, 1);
+
+    document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+
+    assert.equal(ctx.state.currentSetlistSongIndex, 1, "clamped, didn't step past the end");
+    assert.equal(document.activeElement, addSongSearch());
+  } finally {
+    cleanup();
+  }
+});
+
+test("arrow-down on the last song of a read-only band setlist is a no-op (no add-song tray)", () => {
+  const { view, ctx, cleanup } = setup({ personal: false });
+  try {
+    ctx.setSheetBackLabel = () => {};
+    ctx.readFile = (path, onLoad) => onLoad(MINIMAL_ABC);
+    view.initControls();
+    view.renderOpen("Band Night", [{ file: "a.abc", key: "" }, { file: "b.abc", key: "" }], null, "");
+    document.querySelectorAll(SONG_TITLE_SELECTOR)[1].dispatchEvent(new window.Event("click"));
+    assert.equal(ctx.state.currentSetlistSongIndex, 1);
+
+    document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+
+    assert.equal(ctx.state.currentSetlistSongIndex, 1);
+    assert.equal(addSongSearch(), null);
+  } finally {
+    cleanup();
+  }
 });
 
 test("clicking a song title opens it in the sheet with the resolved transpose", () => {
@@ -391,7 +552,7 @@ test("clicking a song title opens it in the sheet with the resolved transpose", 
     ctx.setSheetBackLabel = (label) => backLabels.push(label);
     ctx.readFile = (path, onLoad) => onLoad("X:1\nK:Bb\nB2|");
     view.renderOpen(entry.name, entry.songs, entry, "");
-    document.querySelector(".setlist-song-title").dispatchEvent(new window.Event("click"));
+    document.querySelector(SONG_TITLE_SELECTOR).dispatchEvent(new window.Event("click"));
     assert.equal(rendered.length, 1);
     assert.equal(ctx.state.currentSongFile, "a.abc");
     assert.equal(ctx.state.currentSetlistSongIndex, 0);
@@ -410,7 +571,7 @@ test("a slow earlier song load can't overwrite the sheet the user moved on to", 
     ctx.readFile = (path, onLoad) => calls.push({ path, onLoad });
     view.renderOpen(entry.name, entry.songs, entry, "");
 
-    const [titleA, titleB] = document.querySelectorAll(".setlist-song-title");
+    const [titleA, titleB] = document.querySelectorAll(SONG_TITLE_SELECTOR);
     titleA.dispatchEvent(new window.Event("click")); // start loading A
     titleB.dispatchEvent(new window.Event("click")); // switch to B before A lands
 

@@ -126,12 +126,13 @@ function addSongResultButtons() {
     : [];
 }
 
-// A field (or a drag handle) that wants the arrow keys for itself.
+// A field that wants the arrow keys for itself. Drag handles don't — reorder
+// is a pointer-drag-only gesture, so the arrow keys always step through songs
+// even when a handle has focus (see initArrowNav below).
 function ownsArrowKeys(target) {
   if (!target) return false;
   if (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return true;
-  if (target.isContentEditable) return true;
-  return Boolean(target.closest && target.closest(".setlist-drag-handle"));
+  return Boolean(target.isContentEditable);
 }
 
 /*
@@ -210,21 +211,14 @@ export function createSetlistView(ctx) {
       class: "setlist-drag-handle",
       title: "Drag to reorder",
       html: '<span class="fa-solid fa-grip-vertical" aria-hidden="true"></span>',
-      attrs: { "aria-label": "Reorder — drag, or use the arrow keys" },
+      attrs: { "aria-label": "Drag to reorder" },
       on: {
         pointerdown: (e) => beginRowDrag(e, handle, row, personalEntry.id),
         keydown: (e) => {
           if (e.key === "Delete" || e.key === "Backspace") {
             e.preventDefault();
             removeRow(row, personalEntry.id);
-            return;
           }
-          let step = 0;
-          if (e.key === "ArrowUp") step = -1;
-          else if (e.key === "ArrowDown") step = 1;
-          if (!step) return;
-          e.preventDefault();
-          nudgeRow(row, personalEntry.id, step);
         },
       },
     });
@@ -300,6 +294,7 @@ export function createSetlistView(ctx) {
         type: "button",
         class: "setlist-song-title",
         text: ctx.songName(song.file),
+        ...(personalEntry ? { title: "Alt+↑/↓ to reorder" } : {}),
         on: { click: () => openSetlistSong(song, index) },
       }),
     ]);
@@ -401,16 +396,27 @@ export function createSetlistView(ctx) {
     refreshOpenPersonal();
   }
 
-  function nudgeRow(row, personalId, step) {
+  // Alt+Up/Alt+Down on any focusable element of a row (title button, divider
+  // input, drag handle): the keyboard peer of a pointer-drag, one slot at a
+  // time. Clamped at both ends (no wraparound). Wired into initArrowNav
+  // rather than the drag handle alone, so it works no matter which part of
+  // the row currently has focus.
+  function moveRowByKeyboard(row, personalId, dir) {
     const rows = draggableRows();
-    const from = rows.indexOf(row);
-    const to = from + step;
-    if (from === -1 || to < 0 || to >= rows.length) return;
-    const order = rows.map((_row, i) => i);
-    order.splice(from, 1);
-    order.splice(to, 0, from);
-    focusHandleAfterRender = to;
-    persistOrder(personalId, order.map((i) => Number(rows[i].dataset.setlistIndex)));
+    const pos = rows.indexOf(row);
+    const target = pos + dir;
+    if (pos === -1 || target < 0 || target >= rows.length) return;
+    row.parentNode.insertBefore(row, dir < 0 ? rows[target] : rows[target].nextSibling);
+    renumberOpen();
+    focusHandleAfterRender = target;
+    // If the moved row is the song currently open in the sheet, carry its
+    // index pointer along with it — otherwise a later plain Up/Down would
+    // step from the now-stale pre-move index instead of continuing from
+    // where the song just landed.
+    if (row.dataset.songFile && row.dataset.songFile === ctx.state.currentSongFile) {
+      ctx.state.currentSetlistSongIndex = target;
+    }
+    persistOrder(personalId, draggableRows().map((r) => Number(r.dataset.setlistIndex)));
   }
 
   function beginRowDrag(e, handle, row, personalId) {
@@ -506,15 +512,16 @@ export function createSetlistView(ctx) {
   }
 
   // Open the previous / next song of the open setlist, skipping break dividers
-  // and clamping at both ends.
+  // and clamping at both ends. Returns whether it actually moved, so a caller
+  // (initArrowNav) can tell a clamped edge apart from a real step.
   function stepSong(dir) {
     const songs = ctx.state.currentOpenSongs;
-    if (ctx.state.setlistsView !== "open" || !songs || !songs.length) return;
+    if (ctx.state.setlistsView !== "open" || !songs?.length) return false;
     const songIndexes = [];
     songs.forEach((item, i) => {
       if (!isSetlistDivider(item)) songIndexes.push(i);
     });
-    if (!songIndexes.length) return;
+    if (!songIndexes.length) return false;
 
     const pos = songIndexes.indexOf(ctx.state.currentSetlistSongIndex);
     let next;
@@ -522,7 +529,7 @@ export function createSetlistView(ctx) {
       next = dir > 0 ? songIndexes[0] : songIndexes[songIndexes.length - 1];
     } else {
       const np = pos + dir;
-      if (np < 0 || np >= songIndexes.length) return;
+      if (np < 0 || np >= songIndexes.length) return false;
       next = songIndexes[np];
     }
 
@@ -535,6 +542,7 @@ export function createSetlistView(ctx) {
     // i.e. the whole page jumps to the top. offsetParent is null exactly
     // when the row has no layout box, so skip the scroll in that case.
     if (row?.offsetParent) row.scrollIntoView({ block: "nearest" });
+    return true;
   }
 
   function highlightCurrent() {
@@ -629,17 +637,18 @@ export function createSetlistView(ctx) {
 
   function buildAddSongRow() {
     // With the field empty there are no results to walk, so the arrows leave
-    // the tray: Up jumps back into the setlist (its last row), Down drops
-    // onto the "Add a set break" button.
+    // the tray: Up jumps back into the setlist (its last row's title — never
+    // the drag handle, which is a pointer-drag target only, not an arrow-key
+    // stop), Down drops onto the "Add a set break" button.
     function focusAdjacentOnEmptyArrow(key) {
       if (key === "ArrowDown") {
         breakBtn.focus();
         return;
       }
-      const handles = byId("songList")
-        ? byId("songList").querySelectorAll(".setlist-drag-handle")
+      const rows = byId("songList")
+        ? byId("songList").querySelectorAll(".setlist-song-title, .setlist-divider-input")
         : [];
-      const last = handles[handles.length - 1];
+      const last = rows[rows.length - 1];
       if (last) last.focus();
     }
 
@@ -759,13 +768,38 @@ export function createSetlistView(ctx) {
     });
   }
 
+  // Alt+Up/Alt+Down anywhere inside an open personal setlist's row (title
+  // button, divider input, drag handle) reorders that row instead of falling
+  // through to song navigation.
+  function moveFocusedRowOnAltArrow(e) {
+    if (ctx.state.setlistsView !== "open" || !ctx.state.currentPersonalId) return false;
+    const row = e.target.closest?.(".setlist-song-row, .setlist-divider-row");
+    if (!row) return false;
+    e.preventDefault();
+    moveRowByKeyboard(row, ctx.state.currentPersonalId, e.key === "ArrowDown" ? 1 : -1);
+    return true;
+  }
+
+  function handlePlainArrowNav(e) {
+    if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+    if (ctx.state.setlistsView !== "open" || ownsArrowKeys(e.target)) return;
+    e.preventDefault();
+    const down = e.key === "ArrowDown";
+    if (stepSong(down ? 1 : -1)) return;
+    // Stepped past the last song: hand off to the "Add to setlist" tray
+    // (personal setlists only — a band setlist has no such tray) instead
+    // of just clamping in place.
+    if (down) byId("setlistAddSongSearch")?.focus();
+  }
+
   function initArrowNav() {
     document.addEventListener("keydown", (e) => {
       if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
-      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
-      if (ctx.state.setlistsView !== "open" || ownsArrowKeys(e.target)) return;
-      e.preventDefault();
-      stepSong(e.key === "ArrowDown" ? 1 : -1);
+      if (e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+        moveFocusedRowOnAltArrow(e);
+        return;
+      }
+      handlePlainArrowNav(e);
     });
   }
 

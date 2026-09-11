@@ -5,6 +5,12 @@ import { makeCtx } from "../../../tests/helpers/ctx.js";
 import { createAbcjsStub, withAbcjs } from "../../../tests/helpers/stubs.js";
 import { createSetlistPrint } from "./setlist-print.js";
 
+// Flushes any number of chained microtask hops (font-load promise ->
+// Promise.all -> refit -> readSettled is a few) — a macrotask boundary is the
+// simplest way to guarantee they've all run, same pattern used elsewhere in
+// this suite (audio-player.test.js, wav-export.test.js).
+const flush = () => new Promise((resolve) => { setTimeout(resolve, 0); });
+
 const ABC = {
   "a.abc": "X:1\nT:Song A\nQ:1/4=120\nK:Bb\nB2|",
   "b.abc": "X:1\nT:Song B\nQ:1/4=90\nK:F\nF2|",
@@ -145,7 +151,7 @@ test("a stale read from a superseded booklet build is ignored", () => {
   }
 });
 
-test("print() waits for the booklet's song reads before opening the dialog", () => {
+test("print() waits for the booklet's song reads before opening the dialog", async () => {
   const { print, reads, cleanup } = manualSetup();
   try {
     let printed = 0;
@@ -156,13 +162,17 @@ test("print() waits for the booklet's song reads before opening the dialog", () 
       assert.equal(printed, 0, "held while reads are outstanding");
       reads.forEach((r) => r.onLoad(ABC[r.file]));
     });
+    // The song reads have all landed, but the title page's own font-fit read
+    // (see below) settles via a promise microtask, not synchronously.
+    assert.equal(printed, 0, "still held on the title page's own pending read");
+    await flush();
     assert.equal(printed, 1, "fires once every read has landed");
   } finally {
     cleanup();
   }
 });
 
-test("a held print() shows a song-by-song progress line, then clears it", () => {
+test("a held print() shows a song-by-song progress line, then clears it", async () => {
   const { print, reads, cleanup } = manualSetup();
   try {
     window.print = () => {};
@@ -171,16 +181,46 @@ test("a held print() shows a song-by-song progress line, then clears it", () => 
       print.buildBooklet("Gig", SONGS, "");
       print.print("songbook");
       assert.equal(status.hidden, false);
-      assert.match(status.textContent, /Preparing the songbook — 0 of 3 songs/);
+      assert.match(status.textContent, /Preparing the songbook — 0 of 4 songs/);
 
       reads[0].onLoad(ABC[reads[0].file]);
-      assert.match(status.textContent, /1 of 3 songs/);
+      assert.match(status.textContent, /1 of 4 songs/);
 
       reads.slice(1).forEach((r) => r.onLoad(ABC[r.file]));
     });
+    assert.equal(status.hidden, false, "still held on the title page's own pending read");
+    await flush();
     assert.equal(status.hidden, true);
     assert.equal(status.textContent, "");
   } finally {
+    cleanup();
+  }
+});
+
+test("print() also waits for the title page's font-fit against Saniretro/AkuraPopo", async () => {
+  const { print, reads, cleanup } = manualSetup();
+  let resolveFonts;
+  // Both the Saniretro and AkuraPopo load() calls resolve off this one
+  // controllable promise — the point here is just "fonts still loading", not
+  // distinguishing the two faces.
+  const fontsPromise = new Promise((resolve) => { resolveFonts = resolve; });
+  document.fonts = { load: () => fontsPromise };
+  try {
+    let printed = 0;
+    window.print = () => { printed += 1; };
+    withAbcjs(createAbcjsStub(), () => {
+      print.buildBooklet("Gig", SONGS, "");
+      print.print("songbook");
+      assert.equal(printed, 0, "held before anything has landed");
+      reads.forEach((r) => r.onLoad(ABC[r.file]));
+    });
+    assert.equal(printed, 0, "song reads alone aren't enough — the fonts are still loading");
+
+    resolveFonts();
+    await flush();
+    assert.equal(printed, 1, "fires once the fonts have loaded and the title has been refit");
+  } finally {
+    delete document.fonts;
     cleanup();
   }
 });
@@ -193,6 +233,36 @@ test("a personal-setlist desc adds a cover page", async () => {
     const cover = document.querySelector("#setlistPrintBooklet .setlist-cover");
     assert.ok(cover);
     assert.equal(cover.querySelector("p").textContent, "Our summer set");
+  } finally {
+    cleanup();
+  }
+});
+
+test("buildBooklet adds a generic-branded title page for a non-N.O.A.D.S. setlist", async () => {
+  const { ctx, print, settle, cleanup } = setup();
+  try {
+    ctx.state.currentSetlistId = "setlist_2026";
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Setlist 2026", SONGS, ""));
+    await settle();
+    const titlepage = document.querySelector("#setlistPrintBooklet .setlist-titlepage");
+    assert.ok(titlepage);
+    assert.equal(titlepage.querySelector(".setlist-titlepage-title").textContent, "Red Jackets");
+    assert.equal(titlepage.querySelector(".setlist-titlepage-name").textContent, "Setlist 2026");
+    assert.equal(titlepage.querySelector(".setlist-titlepage-instrument").textContent, "concert pitch");
+  } finally {
+    cleanup();
+  }
+});
+
+test("buildBooklet keeps the original N.O.A.D.S. branding for that band setlist", async () => {
+  const { ctx, print, settle, cleanup } = setup();
+  try {
+    ctx.state.currentSetlistId = "noads_songbook";
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("N.O.A.D.S. Songbook", SONGS, ""));
+    await settle();
+    const titlepage = document.querySelector("#setlistPrintBooklet .setlist-titlepage");
+    assert.equal(titlepage.querySelector(".setlist-titlepage-title").textContent, "N.O.A.D.S.");
+    assert.equal(titlepage.querySelector(".setlist-titlepage-name").textContent, "streetclassics");
   } finally {
     cleanup();
   }

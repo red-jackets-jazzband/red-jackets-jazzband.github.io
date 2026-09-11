@@ -50,6 +50,7 @@ function createApp() {
       currentSongFile: null,
       currentSetlistSongIndex: null,
       currentLibraryIndex: null,
+      currentLibrarySongName: undefined, // name of the row currentLibraryIndex was set from, to tell apart duplicate aliases sharing a file
       currentSongText: undefined, // clef-adjusted ABC currently on the sheet
       compingActive: false,
       tempoOverrideBpm: null,
@@ -68,6 +69,22 @@ function createApp() {
     return match ? match.name : humanizeSongFile(file);
   };
 
+  // The tab title as rendered by Hugo, e.g. "Red Jackets Jazzband - Songs" —
+  // captured once so the active song/setlist can be appended to it without
+  // hardcoding the site/page name here.
+  const baseTitle = document.title;
+
+  // Reflect whatever's on the sheet in the tab title: the open song takes
+  // priority (it's what's actually rendered, even back at the setlists home
+  // with a setlist no longer open — see setlist-home.js's `show()`), else the
+  // open setlist's name, else just the page's own base title.
+  ctx.updateTitle = () => {
+    let activeName = null;
+    if (ctx.state.currentSongFile) activeName = ctx.songName(ctx.state.currentSongFile);
+    else if (ctx.state.currentSetlistId) activeName = ctx.state.currentOpenSetlistName;
+    document.title = activeName ? `${baseTitle} - ${activeName}` : baseTitle;
+  };
+
   // The mobile "back" button leaves the sheet for whichever sidebar list you
   // came from — the Library song list, or an open setlist's song list.
   ctx.setSheetBackLabel = (label) => {
@@ -80,6 +97,10 @@ function createApp() {
   // (`a`/`b`) are never written here — they only ride the Inspiration "copy
   // link" button (see ctx.shareUrl).
   ctx.syncHash = () => {
+    // Runs even when the hash itself doesn't change: a deep link into an
+    // already-matching hash, or a renamed personal setlist whose id (and so
+    // whose hash) stays the same, both still need the tab title refreshed.
+    ctx.updateTitle();
     const hash = buildSongsHash({
       song: songSlug(ctx.state.currentSongFile),
       setlist: ctx.state.currentSetlistId,

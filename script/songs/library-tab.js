@@ -47,8 +47,38 @@ function handleEnter(searchInput, rows) {
   return true;
 }
 
-function moveHighlight(rows, delta, fromEnd) {
-  const current = rows.findIndex((r) => r.classList.contains("kbd-active"));
+// The row for the currently-open song, preferring the remembered index (a
+// song can appear more than once in the index, so matching by file alone
+// would always land on its first occurrence) but falling back to a file+name
+// lookup when the list has moved on since (e.g. clearing a search re-renders
+// the filtered list into the full grouped one, at completely different
+// positions — the stored index from before then points at an unrelated row),
+// and finally to a plain file lookup when the remembered name doesn't match
+// anything either — currentSongFile can change through paths that don't
+// update currentLibrarySongName (a deep link, a setlist song, swipe-nav), so
+// a stale name must never make this resolve to nothing.
+function currentSongRowIndex(rows, ctx) {
+  if (!ctx.state.currentSongFile) return -1;
+  const stored = ctx.state.currentLibraryIndex;
+  const storedName = ctx.state.currentLibrarySongName;
+  const matchesFile = (row) => row.dataset.songFile === ctx.state.currentSongFile;
+  const matchesIdentity = (row) => matchesFile(row) && row.dataset.songName === storedName;
+  if (stored !== null && rows[stored] && matchesFile(rows[stored])
+    && (storedName === undefined || rows[stored].dataset.songName === storedName)) {
+    return stored;
+  }
+  if (storedName !== undefined) {
+    const byIdentity = rows.findIndex(matchesIdentity);
+    if (byIdentity >= 0) return byIdentity;
+  }
+  return rows.findIndex(matchesFile);
+}
+
+function moveHighlight(rows, delta, fromEnd, ctx) {
+  let current = rows.findIndex((r) => r.classList.contains("kbd-active"));
+  // No highlight yet (e.g. the last action was a mouse click, not an arrow
+  // key) — start from the currently-open song instead of snapping to an end.
+  if (current < 0) current = currentSongRowIndex(rows, ctx);
   let next;
   if (current < 0) next = fromEnd ? rows.length - 1 : 0;
   else next = Math.min(Math.max(current + delta, 0), rows.length - 1);
@@ -80,7 +110,7 @@ export function createLibraryTab(ctx) {
       class: "song-list-item",
       href: `#s=${slug}`,
       text: song.name,
-      dataset: { songFile: song.file },
+      dataset: { songFile: song.file, songName: song.name },
       on: {
         click(e) {
           e.preventDefault();
@@ -88,6 +118,7 @@ export function createLibraryTab(ctx) {
           // can appear more than once in the index, so matching by file would
           // always resolve to its first occurrence.
           ctx.state.currentLibraryIndex = libraryRows().indexOf(e.currentTarget);
+          ctx.state.currentLibrarySongName = song.name;
           ctx.openLibrarySong(song);
           clearSearchIfActive();
         },
@@ -145,15 +176,12 @@ export function createLibraryTab(ctx) {
     if (!ctx.state.currentSongFile) return;
     const rows = libraryRows();
     if (!rows.length) return;
-    const stored = ctx.state.currentLibraryIndex;
-    const current = (stored !== null && rows[stored]
-      && rows[stored].dataset.songFile === ctx.state.currentSongFile)
-      ? stored
-      : rows.findIndex((r) => r.dataset.songFile === ctx.state.currentSongFile);
+    const current = currentSongRowIndex(rows, ctx);
     if (current < 0) return;
     const next = current + dir;
     if (next < 0 || next >= rows.length) return;
     ctx.state.currentLibraryIndex = next;
+    ctx.state.currentLibrarySongName = rows[next].dataset.songName;
     rows[next].click();
     // On the narrow layout the sidebar (and this row with it) is display:none
     // once a sheet is open — scrollIntoView on an element with no box makes
@@ -178,7 +206,7 @@ export function createLibraryTab(ctx) {
         return;
       }
       e.preventDefault();
-      moveHighlight(rows, e.key === "ArrowDown" ? 1 : -1, e.key === "ArrowUp");
+      moveHighlight(rows, e.key === "ArrowDown" ? 1 : -1, e.key === "ArrowUp", ctx);
     });
   }
 

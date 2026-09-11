@@ -119,8 +119,18 @@ a:hover {
     opacity: 1;
   }
 }
+/*
+  Every page's <body> carries .page-template-page-fullsingle-split (see
+  baseof.html), which paints var(--rj-ground) — but the CSS canvas
+  background comes from <html> whenever it sets its own background-color,
+  not from <body>. On mobile, where the split layout's height is content-
+  driven instead of a fixed 100vh, any page/tab whose content is shorter
+  than the viewport (e.g. the Setlists tab with few setlists) left this
+  #EEEEEE showing below the content as a near-white band. Match it to the
+  dark ground so a short page reads as more dark background, not white.
+*/
 html {
-  background-color: #EEEEEE;
+  background-color: var(--rj-ground);
 }
 
 body.page-template-page-fullsingle-split {
@@ -436,6 +446,76 @@ video.video {
   font-family: 'MuseJazzText';
   src: url('/fonts/MuseJazzText.woff') format('woff'), /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
    url('/fonts/MuseJazzText.ttf') format('truetype'); /* Chrome 4+, Firefox 3.5, Opera 10+, Safari 3—5 */
+}
+
+/*
+  The two display fonts from the physical N.O.A.D.S. songbook's own cover
+  (static/images/songbook_cover.svg — Inkscape had flattened its "N.O.A.D.S." /
+  "songbook" / "www.redjackets.nl" to Saniretro and "streetclassics" to Akura
+  Popo, baked as paths). Vendored here so the setlist print booklet's title
+  page (setlist-titlepage.js) can render live, re-brandable text instead of a
+  fixed image. Saniretro is SIL OFL; Akura Popo is free for personal/commercial
+  use, redistribution for private use only — both already shipped as this
+  site's own printed cover art, now just live text instead of flattened paths.
+*/
+@font-face {
+  font-family: 'Saniretro';
+  src: url('/fonts/Saniretro.woff') format('woff'),
+   url('/fonts/Saniretro.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'AkuraPopo';
+  src: url('/fonts/AkuraPopo.woff') format('woff'),
+   url('/fonts/AkuraPopo.ttf') format('truetype');
+}
+
+/*
+  Deliberately NOT scoped to @media print: setlist-titlepage.js measures each
+  string's rendered width with SVG getBBox() to fit it to the page while the
+  booklet is still built off-screen (see the comment on #setlistPrintBooklet
+  in the "Setlist print booklet" section below) — that measurement needs the
+  real font already applied, not just once printing starts, or the fit is
+  computed against a fallback font's metrics and comes out wrong at print time.
+*/
+.setlist-titlepage-title,
+.setlist-titlepage-sub,
+.setlist-titlepage-url {
+  font-family: 'Saniretro', sans-serif;
+  fill: #191102;
+}
+.setlist-titlepage-name {
+  font-family: 'AkuraPopo', serif;
+  fill: #6f1207;
+}
+
+/*
+  Also deliberately NOT scoped to @media print, and NOT a percentage width:
+  #setlistPrintBooklet (see further below) is a fixed 718px off-screen —
+  fine for the engraved songs it's otherwise sized for, but a `width: 100%`
+  cover art would then get fitted (getBBox(), above) at a genuinely different
+  physical resolution than it prints at (a real A4 page, ~794px at 96dpi
+  once the negative margin below un-crops it to the full sheet) — text
+  shaping/hinting is sensitive enough to that ~10% difference that a long
+  setlist name's fitted size (correct at 718px) was measurably too big by
+  the time it actually printed, running past the page edge. Fixing both the
+  build-time and print-time box to the same physical 210mm/297mm size (the
+  artwork's own native page size) keeps the two identical.
+*/
+.setlist-titlepage {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  /* Bleed to the physical page edge: the shared @page margin (8mm 10mm,
+     "Tighter than the browser's ~13mm default" elsewhere) would otherwise
+     frame the cover art in a band of white on all four sides. Negative
+     margins push this page's box back out to the paper edge — harmless
+     off-screen too (nothing else shares this fixed-size box). */
+  margin: -8mm -10mm;
+}
+.setlist-titlepage-art {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /*
@@ -1753,7 +1833,8 @@ video.video {
   body.export-mode-setlist #setlistPrintBooklet .setlist-booklet-song,
   body.export-mode-setlist #setlistPrintBooklet .setlist-booklet-set-heading,
   body.export-mode-setlist #setlistPrintBooklet .setlist-booklet-index,
-  body.export-mode-setlist #setlistPrintBooklet .setlist-cover {
+  body.export-mode-setlist #setlistPrintBooklet .setlist-cover,
+  body.export-mode-setlist #setlistPrintBooklet .setlist-titlepage {
     display: none !important;
   }
   /* The stage list is only for "Print setlist"; the other two stack charts. */
@@ -1795,10 +1876,14 @@ video.video {
   /* The front matter already ends its page; the first "Set N" heading / song
      must not ALSO force its own break, or the two combine into a blank sheet
      between the index and the first song (Firefox honours both; Chromium
-     collapses them). The chordbook has the same rule scoped to its float
-     layout further down. */
-  #setlistPrintBooklet .setlist-booklet-frontmatter + .setlist-booklet-set-heading,
-  #setlistPrintBooklet .setlist-booklet-frontmatter + .setlist-booklet-song {
+     collapses them). Scoped off chordbook mode: its front matter floats and
+     deliberately does NOT end its own page (see further down), so without a
+     forced break here the implicit "Set 1" heading has nothing pushing it
+     onto a page at all and gets stranded on the index page while its first
+     tile flows onto the next one — the same break every other "Set N"
+     heading already gets. */
+  body:not(.export-mode-chordbook) #setlistPrintBooklet .setlist-booklet-frontmatter + .setlist-booklet-set-heading,
+  body:not(.export-mode-chordbook) #setlistPrintBooklet .setlist-booklet-frontmatter + .setlist-booklet-song {
     page-break-before: avoid;
     break-before: avoid;
   }
@@ -1867,6 +1952,38 @@ video.video {
     color: #000;
   }
 
+  /*
+    "Print songbook" only: a branded title page ahead of the front matter,
+    styled after the physical N.O.A.D.S. songbook's own cover art (see
+    setlist-titlepage.js + the vendored Saniretro/AkuraPopo @font-face above).
+    Hidden for "Print setlist" / "Print chordbook" above, so it always ends
+    its own page here rather than needing a mode-scoped selector.
+    (Its own size/position and its text's font-family/fill live outside
+    @media print, right after the Saniretro/AkuraPopo @font-face above —
+    setlist-titlepage.js measures each string's rendered width with
+    getBBox() to fit it to the page while the booklet is still off-screen,
+    which needs the real font already applied AND the same physical size
+    it will actually print at, not just once printing actually starts.)
+  */
+  .setlist-titlepage {
+    page-break-after: always;
+    break-after: page;
+  }
+  /* Echoes the old standalone Songbook page's own bottom-right instrument
+     badge (`.text-block`, further down): black box, white MuseJazzText. */
+  .setlist-titlepage-instrument {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    background-color: #000 !important;
+    color: #fff !important;
+    padding: 4px 16px;
+    font-family: 'MuseJazzText', 'Georgia', serif;
+    font-size: xx-large;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
   /* "Print chordbook" — same stacked DOM as the songbook, staves removed.
      Without the staves each song is just a title + a chord grid, so the
      chordbook prints landscape with four charts tiled 2×2 to a page. At
@@ -1922,9 +2039,19 @@ video.video {
     float: left;
     box-sizing: border-box;
     width: 139.5mm;
-    /* Every tile is exactly this tall, so two rows fill the page and the
-       floats tile 2-up without needing `clear`. */
-    height: 96mm;
+    /* Two rows of this height tile the page 2-up without needing `clear`.
+       Deliberately 1mm short of the true half (96mm, half of the 192mm
+       printable height): at exactly 96mm, a set whose tiles fill a page's
+       last row perfectly (no smaller remainder row after it) makes Chromium
+       print pagination emit a genuinely blank extra page at the very end of
+       the booklet — the last row's height exactly equalling the remaining
+       page height, with nothing left to overflow onto it, still trips a
+       spurious page. Confirmed on setlist_2026.txt's Set 4 (6 songs: a full
+       4-tile page followed by a blank one) and fixed by this same 1mm shave;
+       reproduce by rendering to PDF (`page.pdf({ preferCSSPageSize: true })`)
+       and checking the last page's pixels, not by eyeballing Chromium's print
+       preview, which doesn't show the extra page as obviously blank. */
+    height: 95mm;
     overflow: hidden;
     padding: 3mm 8mm;
     /* Sit the chart in the middle of its quarter-page; `safe` keeps a chart
@@ -1933,15 +2060,17 @@ video.video {
     flex-direction: column;
     justify-content: safe center;
   }
-  /* "Set N" headings still open a fresh page; clear the tiled row before
-     them and let the tiles start flowing again straight after. */
+  /* Every "Set N" heading, "Set 1" included (see the frontmatter-adjacency
+     rule above), opens a fresh page; clear the tiled row before it and let
+     the tiles start flowing again straight after. */
   body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-set-heading {
     clear: both;
     page-break-after: avoid;
   }
   body.export-mode-chordbook #setlistPrintBooklet .setlist-view-title,
-  body.export-mode-chordbook #setlistPrintBooklet .setlist-cover {
-    display: none; /* the front-matter page stands in for the plain heading and the desc cover */
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-cover,
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-titlepage {
+    display: none; /* the front-matter page stands in for the plain heading, the desc cover and the branded title page */
   }
   body.export-mode-chordbook #setlistPrintBooklet .songtitle {
     font-size: x-large;
@@ -2768,6 +2897,19 @@ select.rj-modal-input {
 }
 .setlist-song-title:hover {
   color: var(--rj-hover);
+}
+.setlist-song-title:focus-visible {
+  outline: none;
+}
+/* Keyboard focus anywhere in a row (its title, semitone field, drag handle
+   or remove button) highlights the whole row rather than just that one
+   control — e.g. arrowing up out of the "Add to setlist" tray lands on the
+   last row's title, and the row itself should read as focused, not just
+   the song name text. */
+.setlist-song-row:focus-within,
+.setlist-divider-row:focus-within {
+  background: rgba(255,255,255,.06);
+  border-radius: 6px;
 }
 .setlist-song-key-badge {
   flex: none;

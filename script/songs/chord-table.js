@@ -1,14 +1,9 @@
 import { el, clear } from "../lib/dom.js";
 import { simplifyBlues, simplifySong } from "../lib/chords.js";
 
-// How full the grid's trailing partial row is at a given column count (1 when
-// it divides evenly). Used to pick between 4 and 8 columns for long schemes:
-// an odd-length song (e.g. Sister Kate's 18 bars) leaves a nearly-empty
-// 2-of-8 last row at 8 columns but a half-full 2-of-4 row at 4 columns.
-function trailingRowFill(length, cols) {
-  const remainder = length % cols;
-  return remainder === 0 ? 1 : remainder / cols;
-}
+// At 24 bars or more, a 4-column grid runs too tall for the sheet, so long
+// schemes (e.g. The Bare Necessities' 42 bars) always switch to 8 columns.
+const LONG_SCHEME_BAR_THRESHOLD = 24;
 
 // Reading offsetWidth is what forces a layout reflow; returning it (rather
 // than discarding it inline with `void` or an unused variable) is what
@@ -34,11 +29,7 @@ export function renderChordTable(chords, container) {
   // chaining is safe (e.g. an 8-bar collapse leaves nothing left for the
   // 16-bar check to match against).
   const measures = simplifySong(simplifySong(simplifyBlues(chords), 8), 16);
-  const cols =
-    measures.length > 4 * 4 &&
-    trailingRowFill(measures.length, 8) >= trailingRowFill(measures.length, 4)
-      ? 8
-      : 4;
+  const cols = measures.length >= LONG_SCHEME_BAR_THRESHOLD ? 8 : 4;
 
   const grid = el("div", { class: "chordGrid", style: { "--chord-cols": String(cols) } });
 

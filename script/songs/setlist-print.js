@@ -5,6 +5,9 @@ import {
   instrumentTransposes, instrumentLabel, exportInstrumentLine, resolvedExportSongMeta,
 } from "../lib/export-meta.js";
 import { clearBookletPrintState, printWithTitle } from "./sheet-controls.js";
+import { buildTitlePage, fitTitlePage } from "./setlist-titlepage.js";
+
+const NOADS_SETLIST_ID = "noads_songbook";
 
 const PRINT_MODES = ["setlist", "chordbook", "songbook"];
 const PRINT_MODE_LABELS = { setlist: "Setlist", chordbook: "Chordbook", songbook: "Songbook" };
@@ -219,6 +222,17 @@ export function createSetlistPrint(ctx) {
     clear(container);
 
     container.append(el("div", { class: "setlist-view-title", text: name }));
+    const titlePage = buildTitlePage({
+      isNoads: ctx.state.currentSetlistId === NOADS_SETLIST_ID,
+      setlistName: name,
+      instrumentText: instrumentLabel(instrument()).toLowerCase(),
+    });
+    container.append(titlePage);
+    // Held in the same pendingReads gate as the per-song .abc reads below, so
+    // a print doesn't fire with the title/name still sized off a fallback
+    // font while Saniretro/AkuraPopo are still loading.
+    pendingReads += 1;
+    fitTitlePage(titlePage).then(() => readSettled(seq));
     if (desc) container.append(coverPage(name, desc));
     container.append(frontMatter(name, songs));
 
