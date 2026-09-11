@@ -28,6 +28,13 @@ const VOLUME_LOCKED = new Set(["melody", "comping"]);
 // both read from ctx.state, kept in sync by sheet.js on every render.
 const GATE_STATE_KEY = { melody: null, bass: "hasChords", chords: "hasChords", comping: "compingActive" };
 
+// Swing isn't a channel either (no mute/Voice, no CHANNELS entry) — a single
+// tune-wide fader next to Pattern, feeding ABCjs's own `swing` synth option
+// (see lib/audio-mix.js's percentToAbcjsSwing doc comment) rather than
+// anything baked into the ABC text. No gate: it's audible on any tune with
+// eighth notes, chords or not.
+const SWING_DEFAULT_PERCENT = 0;
+
 function clampPercent(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 100;
@@ -108,13 +115,27 @@ function buildGchordPatternOptions(select) {
   tracking Melody/Comping's fader value (sticky, ready for whenever that's
   fixed for real) even while that one control is locked.
 
-  Next to the Metronome toggle sits a fifth, non-channel control: the
-  Pattern picker (#mixerGchordPatternSelect, ctx.state.gchordPattern), which
-  chooses the rhythm the Bass/Chords auto-accompaniment plays via
-  %%MIDI gchord (see lib/audio-mix.js's GCHORD_PATTERNS/resolveGchordPattern
-  and sheet.js's resolveRenderText). It gates on hasChords the same way
-  Bass/Chords do (updatePatternGate), since a pattern picked for an
-  accompaniment that isn't playing has nothing to audibly change.
+  Below the four channels sits a fifth, non-channel control: the Pattern
+  picker (#mixerGchordPatternSelect, ctx.state.gchordPattern), which chooses
+  the rhythm the Bass/Chords auto-accompaniment plays via %%MIDI gchord (see
+  lib/audio-mix.js's GCHORD_PATTERNS/resolveGchordPattern and sheet.js's
+  resolveRenderText). It gates on hasChords the same way Bass/Chords do
+  (updatePatternGate), since a pattern picked for an accompaniment that
+  isn't playing has nothing to audibly change.
+
+  Next comes Swing (#mixerSwingRange, ctx.state.swing): a tune-wide 0-100
+  fader, same look and drag/release behaviour as a channel volume fader but
+  ungated (there's no "no swing to mix" state — it's audible on any tune).
+  It maps onto ABCjs's own `swing` synth init option (lib/audio-mix.js's
+  percentToAbcjsSwing) rather than a %%MIDI text directive, so
+  audio-player.js's synthParams reads ctx.state.swing directly instead of
+  going through sheet.js's injectMixerAudio.
+
+  At the bottom of the panel, Metronome and Quality share one row
+  (#mixerStripMetronome / #mixerStripQuality, each a plain
+  .mixer-toggle-item) — neither has a fader or Voice picker to wrap onto a
+  second line, so they sit side by side instead of stacking like every
+  strip above them.
 */
 function readoutText(channel, percent, muted) {
   if (muted) return "Muted";
@@ -148,6 +169,7 @@ export function createMixer(ctx) {
       const program = m[`${channel}Program`];
       writePref(programKey(channel), program === null ? "" : String(program));
     });
+    writePref(PREF_KEYS.mixerSwing, String(ctx.state.swing));
   }
 
   function commit() {
@@ -229,12 +251,45 @@ export function createMixer(ctx) {
     if (select) select.disabled = inactive;
   }
 
+  // Quality is a third non-channel control, next to Metronome: a real toggle
+  // (songs/audio-player.js's synthParams reads ctx.state.highQualityAudio to
+  // pick FatBoy vs the much richer/heavier MusyngKite soundfont) rather than
+  // a per-channel Voice choice, so it lives here rather than in gm-voices.js.
+  // No gate — switching soundfonts is always meaningful, tune or no chords.
+  function updateQualityToggleVisual() {
+    const btn = byId("mixerHighQualityToggleBtn");
+    if (!btn) return;
+    const enabled = ctx.state.highQualityAudio;
+    btn.classList.toggle("is-active", enabled);
+    btn.setAttribute("aria-pressed", enabled ? "true" : "false");
+    const icon = btn.querySelector(".fa-solid");
+    if (icon) {
+      icon.classList.toggle("fa-toggle-on", enabled);
+      icon.classList.toggle("fa-toggle-off", !enabled);
+    }
+    const label = `${enabled ? "Disable" : "Enable"} high quality audio`;
+    btn.title = label;
+    btn.setAttribute("aria-label", label);
+  }
+
+  // Swing's own fader/readout, mirroring updateStripVisual's fill+readout
+  // pair but without a channel's mute/gate concerns.
+  function updateSwingVisual() {
+    const percent = ctx.state.swing;
+    const fill = byId("mixerSwingFill");
+    if (fill) fill.style.width = `${percent}%`;
+    const readout = byId("mixerSwingReadout");
+    if (readout) readout.textContent = percent === 0 ? "Off" : `${percent}%`;
+  }
+
   function refresh() {
     CHANNELS.forEach((channel) => {
       updateStripVisual(channel);
       updateGate(channel);
     });
     updatePatternGate();
+    updateQualityToggleVisual();
+    updateSwingVisual();
   }
 
   function wireStrip(channel) {
@@ -313,9 +368,38 @@ export function createMixer(ctx) {
     });
   }
 
+  // Same drag-to-adjust shape as a channel fader (scheduleApply while
+  // dragging, applyNow on release) — reuses clampPercent since Swing shares
+  // the same 0-100 domain as a volume fader.
+  function wireSwing() {
+    const range = byId("mixerSwingRange");
+    if (!range) return;
+    range.value = String(ctx.state.swing);
+    range.addEventListener("input", () => {
+      ctx.state.swing = clampPercent(range.value);
+      updateSwingVisual();
+      scheduleApply();
+    });
+    range.addEventListener("change", applyNow);
+  }
+
+  // A plain preference flip, applied at once like Pattern — full re-engrave
+  // is the only way to hand the new soundFontUrl to a fresh SynthController
+  // (see audio-player.js's initForTune), so there's nothing to debounce here.
+  function wireQuality() {
+    on("mixerHighQualityToggleBtn", "click", () => {
+      ctx.state.highQualityAudio = !ctx.state.highQualityAudio;
+      writePref(PREF_KEYS.highQualityAudio, ctx.state.highQualityAudio ? "1" : "0");
+      updateQualityToggleVisual();
+      ctx.sheet.rerender();
+    });
+  }
+
   function init() {
     CHANNELS.forEach(wireStrip);
     wirePattern();
+    wireQuality();
+    wireSwing();
 
     on("mixerCloseBtn", "click", () => setOpen(false));
     on("mixerBackdrop", "click", () => setOpen(false));
@@ -370,4 +454,24 @@ export function loadGchordPatternState() {
   const stored = readPref(PREF_KEYS.mixerGchordPattern);
   const isValid = GCHORD_PATTERNS.some((p) => p.value === stored);
   return isValid ? stored : DEFAULT_GCHORD_PATTERN_VALUE;
+}
+
+// ctx.state.highQualityAudio's initial value, seeded from the persisted
+// pref — off by default, same reasoning as DEFAULT_MUTED's Bass/Chords:
+// nothing should suddenly start fetching ~5x-bigger soundfont files the
+// first time this ships.
+export function loadHighQualityAudioState() {
+  return readPref(PREF_KEYS.highQualityAudio) === "1";
+}
+
+// ctx.state.swing's initial value, seeded from the persisted pref — off
+// (straight eighths) by default, same reasoning as every other new control
+// here: nothing should suddenly sound different the first time this ships.
+export function loadSwingState() {
+  const stored = readPref(PREF_KEYS.mixerSwing);
+  const n = Number(stored);
+  // clampPercent's own not-a-number fallback is 100 — right for a volume
+  // fader's "missing means full volume" default, wrong here: a corrupted
+  // rj.mixerSwing value should fall back to off, not maximum swing.
+  return stored === null || !Number.isFinite(n) ? SWING_DEFAULT_PERCENT : clampPercent(n);
 }

@@ -172,6 +172,24 @@ export function injectMixerAudio(abcText, {
   return spliceAfter(withComping, v1 + "\nV:1\n".length, `%%MIDI program ${melodyProgram}\n`);
 }
 
+// ABCjs's live synth reads a tune-wide `swing` init option directly (not a
+// %%MIDI text directive — confirmed from its own source: CreateSynth's buffer
+// priming shifts each off-beat eighth note's start time by an amount derived
+// from this option, applied after the note sequence is built, independent of
+// any per-voice/per-channel directive). Its native scale is 50 (disabled —
+// anything at or below this is a no-op) to 75 (maximum swing); anything above
+// 75 is clamped down to it internally. That range isn't intuitive to expose
+// directly on a fader, so the Mixer's Swing control uses the same familiar
+// 0-100 scale as every volume fader (0 = off/straight eighths, 100 = maximum
+// swing) and this maps it onto ABCjs's native range.
+export const ABCJS_SWING_MIN = 50;
+export const ABCJS_SWING_MAX = 75;
+
+export function percentToAbcjsSwing(percent) {
+  const clamped = Math.max(0, Math.min(100, Number(percent) || 0));
+  return Math.round(ABCJS_SWING_MIN + (clamped / 100) * (ABCJS_SWING_MAX - ABCJS_SWING_MIN));
+}
+
 /*
   Which ABCjs voice indices to exclude from the audio buffer entirely, or
   `true` to render silence outright when there's only one voice to mute.

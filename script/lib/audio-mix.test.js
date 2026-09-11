@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   MIDI_VOLUME_MAX, DEFAULT_PROGRAM, percentToMidiVolume, injectMixerAudio, computeVoicesOff,
   GCHORD_PATTERNS, DEFAULT_GCHORD_PATTERN_VALUE, resolveGchordPattern,
+  ABCJS_SWING_MIN, ABCJS_SWING_MAX, percentToAbcjsSwing,
 } from "./audio-mix.js";
 
 test("percentToMidiVolume follows a cubic taper: finer resolution low, full range at the top", () => {
@@ -128,6 +129,18 @@ test("computeVoicesOff without comping: only melody can be muted, as a full mute
   assert.equal(computeVoicesOff({ compingActive: false, melodyMuted: true, compingMuted: false }).voicesOff, true);
   // compingMuted is meaningless without a comping voice at all
   assert.equal(computeVoicesOff({ compingActive: false, melodyMuted: false, compingMuted: true }).voicesOff, undefined);
+});
+
+test("percentToAbcjsSwing maps the 0-100 fader onto ABCjs's 50-75 native scale", () => {
+  assert.equal(percentToAbcjsSwing(0), ABCJS_SWING_MIN);
+  assert.equal(percentToAbcjsSwing(100), ABCJS_SWING_MAX);
+  assert.equal(percentToAbcjsSwing(50), 63); // round(50 + 0.5*25) = round(62.5)
+  assert.equal(percentToAbcjsSwing(-20), ABCJS_SWING_MIN);
+  assert.equal(percentToAbcjsSwing(500), ABCJS_SWING_MAX);
+  assert.equal(percentToAbcjsSwing(undefined), ABCJS_SWING_MIN);
+  // monotonic — never dips as the fader rises
+  const values = [0, 10, 25, 40, 50, 60, 75, 90, 100].map(percentToAbcjsSwing);
+  for (let i = 1; i < values.length; i++) assert.ok(values[i] >= values[i - 1]);
 });
 
 test("computeVoicesOff with comping: melody and comping mute independently", () => {

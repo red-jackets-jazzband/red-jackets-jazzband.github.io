@@ -7,7 +7,9 @@ import { humanizeSongFile } from "../lib/filename.js";
 import { readFile } from "./read-file.js";
 import { createAudioPlayer } from "./audio-player.js";
 import { createSheet } from "./sheet.js";
-import { createMixer, loadMixerState, loadGchordPatternState } from "./mixer.js";
+import {
+  createMixer, loadMixerState, loadGchordPatternState, loadHighQualityAudioState, loadSwingState,
+} from "./mixer.js";
 import { createMetronome, loadMetronomeState } from "./metronome.js";
 import { createInspiration } from "./inspiration.js";
 import { initSheetControls } from "./sheet-controls.js";
@@ -53,6 +55,8 @@ function createApp() {
       mixer: loadMixerState(),
       gchordPattern: loadGchordPatternState(),
       metronomeEnabled: loadMetronomeState(),
+      highQualityAudio: loadHighQualityAudioState(),
+      swing: loadSwingState(),
     },
     readFile,
     storage: safeStorage,

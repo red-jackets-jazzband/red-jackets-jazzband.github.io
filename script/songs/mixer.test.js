@@ -2,11 +2,13 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountPage } from "../../../tests/helpers/dom.js";
 import { makeCtx } from "../../../tests/helpers/ctx.js";
-import { createMixer, loadMixerState, loadGchordPatternState } from "./mixer.js";
+import {
+  createMixer, loadMixerState, loadGchordPatternState, loadHighQualityAudioState, loadSwingState,
+} from "./mixer.js";
 import { GM_VOICES } from "../lib/gm-voices.js";
 import { GCHORD_PATTERNS } from "../lib/audio-mix.js";
 
-function setup(mixerState = {}) {
+function setup(mixerState = {}, stateOverrides = {}) {
   const page = mountPage();
   const rerenders = [];
   const ctx = makeCtx({
@@ -19,6 +21,7 @@ function setup(mixerState = {}) {
         melodyProgram: null, bassProgram: null, chordsProgram: null, compingProgram: null,
         ...mixerState,
       },
+      ...stateOverrides,
     },
     sheet: { rerender: () => rerenders.push(1) },
   });
@@ -127,41 +130,60 @@ test("scrolling recomputes the panel's position so it stays glued under the butt
   }
 });
 
-test("dragging a fader updates its readout live, and re-renders only once settled", (t) => {
+function dragFaderDebounces(t, {
+  rangeId, readoutId, fillId, storageKey, value, getValue,
+}) {
   t.mock.timers.enable({ apis: ["setTimeout"] });
   const { ctx, rerenders, cleanup } = setup();
   try {
-    const range = document.getElementById("mixerBassRange");
-    range.value = "42";
+    const range = document.getElementById(rangeId);
+    range.value = String(value);
     range.dispatchEvent(new window.Event("input"));
 
-    assert.equal(ctx.state.mixer.bassVolume, 42);
-    assert.equal(document.getElementById("mixerBassReadout").textContent, "42%");
-    assert.equal(document.getElementById("mixerBassFill").style.width, "42%");
+    assert.equal(getValue(ctx), value);
+    assert.equal(document.getElementById(readoutId).textContent, `${value}%`);
+    assert.equal(document.getElementById(fillId).style.width, `${value}%`);
     assert.equal(rerenders.length, 0); // debounced, not yet applied
 
     t.mock.timers.tick(300);
     assert.equal(rerenders.length, 1);
-    assert.equal(window.localStorage.getItem("rj.mixerBassVolume"), "42");
+    assert.equal(window.localStorage.getItem(storageKey), String(value));
   } finally {
     window.localStorage.clear();
     cleanup();
   }
-});
+}
 
-test("releasing a fader (change) applies immediately without waiting for the debounce", () => {
+function releaseFaderAppliesImmediately({
+  rangeId, storageKey, value,
+}) {
   const { rerenders, cleanup } = setup();
   try {
-    const range = document.getElementById("mixerBassRange");
-    range.value = "10";
+    const range = document.getElementById(rangeId);
+    range.value = String(value);
     range.dispatchEvent(new window.Event("input"));
     range.dispatchEvent(new window.Event("change"));
     assert.equal(rerenders.length, 1);
-    assert.equal(window.localStorage.getItem("rj.mixerBassVolume"), "10");
+    assert.equal(window.localStorage.getItem(storageKey), String(value));
   } finally {
     window.localStorage.clear();
     cleanup();
   }
+}
+
+test("dragging a fader updates its readout live, and re-renders only once settled", (t) => {
+  dragFaderDebounces(t, {
+    rangeId: "mixerBassRange",
+    readoutId: "mixerBassReadout",
+    fillId: "mixerBassFill",
+    storageKey: "rj.mixerBassVolume",
+    value: 42,
+    getValue: (ctx) => ctx.state.mixer.bassVolume,
+  });
+});
+
+test("releasing a fader (change) applies immediately without waiting for the debounce", () => {
+  releaseFaderAppliesImmediately({ rangeId: "mixerBassRange", storageKey: "rj.mixerBassVolume", value: 10 });
 });
 
 test("the mute buttons flip state, update the button and re-render at once", () => {
@@ -369,6 +391,102 @@ test("refresh() gates the Pattern picker on hasChords, same as Bass/Chords", () 
     assert.equal(document.getElementById("mixerGchordPatternSelect").disabled, false);
   } finally {
     cleanup();
+  }
+});
+
+test("init seeds the Swing range from ctx.state.swing and shows Off at 0", () => {
+  const { cleanup } = setup();
+  try {
+    assert.equal(document.getElementById("mixerSwingRange").value, "0");
+    assert.equal(document.getElementById("mixerSwingReadout").textContent, "Off");
+  } finally {
+    cleanup();
+  }
+});
+
+test("init seeds the Swing range, readout, and fill from a non-default ctx.state.swing", () => {
+  const { cleanup } = setup({}, { swing: 40 });
+  try {
+    assert.equal(document.getElementById("mixerSwingRange").value, "40");
+    assert.equal(document.getElementById("mixerSwingReadout").textContent, "40%");
+    assert.equal(document.getElementById("mixerSwingFill").style.width, "40%");
+  } finally {
+    cleanup();
+  }
+});
+
+test("dragging the Swing fader updates its readout live, and re-renders only once settled", (t) => {
+  dragFaderDebounces(t, {
+    rangeId: "mixerSwingRange",
+    readoutId: "mixerSwingReadout",
+    fillId: "mixerSwingFill",
+    storageKey: "rj.mixerSwing",
+    value: 40,
+    getValue: (ctx) => ctx.state.swing,
+  });
+});
+
+test("releasing the Swing fader (change) applies immediately without waiting for the debounce", () => {
+  releaseFaderAppliesImmediately({ rangeId: "mixerSwingRange", storageKey: "rj.mixerSwing", value: 60 });
+});
+
+test("loadSwingState defaults to 0 (off), reads back a persisted, clamped value", () => {
+  const page = mountPage();
+  try {
+    assert.equal(loadSwingState(), 0);
+    window.localStorage.setItem("rj.mixerSwing", "150"); // clamped
+    assert.equal(loadSwingState(), 100);
+  } finally {
+    window.localStorage.clear();
+    page.cleanup();
+  }
+});
+
+test("loadSwingState falls back to off on a corrupted (non-numeric) stored value", () => {
+  const page = mountPage();
+  try {
+    window.localStorage.setItem("rj.mixerSwing", "invalid");
+    assert.equal(loadSwingState(), 0);
+  } finally {
+    window.localStorage.clear();
+    page.cleanup();
+  }
+});
+
+test("clicking the Quality toggle flips ctx.state.highQualityAudio, persists it, updates the button, and re-renders at once", () => {
+  const { ctx, rerenders, cleanup } = setup();
+  try {
+    const btn = document.getElementById("mixerHighQualityToggleBtn");
+    assert.equal(btn.classList.contains("is-active"), false);
+
+    btn.dispatchEvent(new window.Event("click"));
+    assert.equal(ctx.state.highQualityAudio, true);
+    assert.equal(btn.classList.contains("is-active"), true);
+    assert.equal(btn.getAttribute("aria-pressed"), "true");
+    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-toggle-on"), true);
+    assert.equal(btn.title, "Disable high quality audio");
+    assert.equal(rerenders.length, 1);
+    assert.equal(window.localStorage.getItem("rj.highQualityAudio"), "1");
+
+    btn.dispatchEvent(new window.Event("click"));
+    assert.equal(ctx.state.highQualityAudio, false);
+    assert.equal(rerenders.length, 2);
+    assert.equal(window.localStorage.getItem("rj.highQualityAudio"), "0");
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
+test("loadHighQualityAudioState defaults to off, and reflects a persisted '1'", () => {
+  const page = mountPage();
+  try {
+    assert.equal(loadHighQualityAudioState(), false);
+    window.localStorage.setItem("rj.highQualityAudio", "1");
+    assert.equal(loadHighQualityAudioState(), true);
+  } finally {
+    window.localStorage.clear();
+    page.cleanup();
   }
 });
 

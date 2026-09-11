@@ -891,6 +891,7 @@ video.video {
   flex: 0 0 46px;
   font: 600 11px/1.2 "Montserrat", sans-serif;
   color: #ece6e6;
+  white-space: nowrap;
 }
 .mixer-fader-track {
   position: relative;
@@ -1039,6 +1040,30 @@ video.video {
   color: #222222;
 }
 /*
+  Quality: also not a channel (see the metronome comment above) — a toggle
+  between the default FatBoy soundfont and the richer, much larger MusyngKite
+  set (songs/audio-player.js's synthParams, songs/mixer.js's wireQuality).
+  Reuses .mixer-metronome-toggle's on/off look — same kind of control, just a
+  different setting.
+*/
+.mixer-swatch--quality {
+  background: #7fa6c9;
+}
+/*
+  Metronome and Quality share one row (they're both a single toggle button
+  with no fader/Voice picker to wrap onto a second line) — two independent
+  swatch+label+toggle groups spread across the strip's width, rather than
+  the label-then-control layout every other strip uses.
+*/
+.mixer-strip--toggles {
+  justify-content: space-between;
+}
+.mixer-toggle-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/*
   Pattern: also not a channel (see the metronome comment above) — a single
   <select> choosing the Bass/Chords auto-accompaniment's %%MIDI gchord rhythm
   (songs/mixer.js, lib/audio-mix.js's GCHORD_PATTERNS). Reuses the Voice
@@ -1048,6 +1073,17 @@ video.video {
 */
 .mixer-swatch--pattern {
   background: var(--rj-gold);
+}
+/*
+  Swing: also not a channel (see the metronome comment above) — the panel's
+  bottom-most control, a tune-wide fader feeding ABCjs's own `swing` synth
+  init option (songs/audio-player.js's synthParams, lib/audio-mix.js's
+  percentToAbcjsSwing) rather than baked into the ABC text like the channel
+  faders above it. Reuses the plain .mixer-fader-track/.mixer-readout look
+  (no mute button, no Voice picker, no gate — it's always live).
+*/
+.mixer-swatch--swing {
+  background: #6fae8a;
 }
 .mixer-backdrop {
   position: fixed;
