@@ -543,6 +543,39 @@ test("buildCompingTune appends comping as V:3 on a big_chief.abc-shaped tune wit
   assert.equal(out.palette.length, CHORDS.length);
 });
 
+test("buildCompingTune preserves an explicit-voice chart's own %%score/%%staves layout, appending the new voice rather than dropping it", () => {
+  const stagedTune = HONKY_STYLE_TUNE.replace("K:C", "%%staves {1 2} 3\nK:C");
+  const out = withTonal(() => buildCompingTune(stagedTune, CHORDS, fakeSong(), "whole_note"));
+  assert.ok(out && out.abc, PRODUCED_A_TUNE);
+  // the original grouping/braces survive, with the new comping voice (V:4)
+  // tacked on the end as its own ungrouped staff
+  assert.equal((out.abc.match(/^%%staves\b.*$/gm) || []).length, 1);
+  assert.match(out.abc, /^%%staves \{1 2\} 3 4$/m);
+});
+
+// nextVoiceId's own collision/sparse/non-numeric-id behavior is unit-tested
+// in lib/voice-id.test.js; this only checks buildCompingTune actually wires
+// it up against a chart shaped to expose a length+1 collision (voice ids
+// "1"/"3", where a naive length+1 guess would land back on the used "3").
+test("buildCompingTune's new voice id doesn't collide with a sparse voice list", () => {
+  const sparseTune = [
+    "T:Sparse Voices",
+    "M:4/4",
+    "L:1/4",
+    "K:C",
+    'V:1 name="Melody"',
+    'V:3 name="Harmony"',
+    "V: 1",
+    '"C" c4| "F" f4| "G7" g4| "C" c4|',
+    "V: 3",
+    "e4| a4| b4| e4|",
+  ].join("\n");
+  const out = withTonal(() => buildCompingTune(sparseTune, CHORDS, fakeSong(), "whole_note"));
+  assert.ok(out && out.abc, PRODUCED_A_TUNE);
+  assert.doesNotMatch(out.abc, /^V:3 name="R\\n3\\n5"$/m);
+  assert.match(out.abc, /^V:4 name="R\\n3\\n5"$/m);
+});
+
 test("buildCompingTune defaults to 4/4 when the tune has no M: field at all", () => {
   const noMeter = TUNE.split("\n").filter((l) => !l.startsWith("M:")).join("\n");
   const out = withTonal(() => buildCompingTune(noMeter, CHORDS, fakeSong(), "whole_note"));

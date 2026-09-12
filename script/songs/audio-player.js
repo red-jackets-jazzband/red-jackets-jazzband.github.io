@@ -56,6 +56,19 @@ function meterValueOf(visualObj) {
   return visualObj?.lines?.[0]?.staff?.[0]?.meter?.value;
 }
 
+// A pickup/anacrusis's length, in beats — both abcjs methods return a
+// fraction of a whole note (e.g. 0.25 = a quarter note), the same unit, so
+// dividing gives a beat count directly. Guarded the same way as
+// meterValueOf: this also feeds songs/metronome.js's scheduler, and a tune
+// with no pickup (the common case) reports a getPickupLength() of 0.
+function pickupBeatsOf(visualObj) {
+  if (!visualObj || typeof visualObj.getPickupLength !== "function"
+    || typeof visualObj.getBeatLength !== "function") return 0;
+  const beatLength = visualObj.getBeatLength();
+  if (!beatLength) return 0;
+  return visualObj.getPickupLength() / beatLength;
+}
+
 /*
   Owns the sheet's audio: the ABCjs SynthController lifecycle, the transport
   buttons' visual state, note/chord-cell highlighting during playback, the
@@ -487,15 +500,26 @@ export function createAudioPlayer(ctx) {
     get isPlaying() {
       return state.isPlaying;
     },
-    // The two things songs/metronome.js needs to keep its click in step with
-    // the loaded tune: its own Q: tempo (resolveBpm falls back to this when
-    // the Tempo stepper hasn't been touched) and its time signature, read the
-    // same way lib/irealpro.js reads it off the same visualObj.
+    // The things songs/metronome.js needs to keep its click in step with the
+    // loaded tune: its own Q: tempo (resolveBpm falls back to this when the
+    // Tempo stepper hasn't been touched), its time signature (read the same
+    // way lib/irealpro.js reads it off the same visualObj), how many leading
+    // chordless bars it has (so the click can skip a rubato/no-chord intro
+    // instead of ticking through it — see resolveChordCell above for the
+    // same offset used to align the chord table), and its pickup length (so
+    // a tune that starts on a partial measure doesn't throw off which beat
+    // is the backbeat from the very first tick).
     get nativeQpm() {
       return state.nativeQpm;
     },
     get beatsPerMeasure() {
       return beatsPerMeasure(meterValueOf(state.currentVisualObj));
+    },
+    get chordOffset() {
+      return state.chordOffset;
+    },
+    get pickupBeats() {
+      return pickupBeatsOf(state.currentVisualObj);
     },
     // songs/wav-export.js reads this before its offline synth's await chain
     // and again after, to tell whether a newer render (a song switch, or a

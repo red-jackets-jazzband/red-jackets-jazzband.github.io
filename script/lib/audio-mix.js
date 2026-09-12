@@ -1,3 +1,5 @@
+import { nextVoiceId } from "./voice-id.js";
+
 // Pure helpers for the sheet's Mixer panel (songs/mixer.js).
 //
 // ABCjs's live web-audio synth doesn't honor every %%MIDI directive its own
@@ -185,12 +187,18 @@ export function parseVoiceList(abcText) {
       "Melody 2", ... (counting only the unnamed ones) so they stay distinct;
     - Comping, when active, is always literally "Comping" — never folded into
       the Melody-numbering scheme even if every other voice is unnamed.
-  The appended Comping voice's `id` is whatever the *next* voice slot would
-  be (`String(voices.length + 1)`) — matching comping.js's buildCompingTune,
-  which appends its generated voice the same way: V:2 for an ordinary
-  one-voice tune, or one past however many voices a chart already declares
-  (see its own doc comment) — honky_tonk_town_riffs.abc's Root/Third/Fifth
-  gets Comping as V:4.
+  The appended Comping voice's `id` is whatever the next free voice slot is
+  (`lib/voice-id.js`'s `nextVoiceId`, shared with comping.js's
+  buildCompingTune so both always agree — kept in its own module rather than
+  one file importing the other, see voice-id.js's own doc comment) —
+  matching buildCompingTune, which appends its generated voice the same way:
+  V:2 for an ordinary one-voice tune, or one past however many voices a
+  chart already declares (see its own doc comment) —
+  honky_tonk_town_riffs.abc's Root/Third/Fifth gets Comping as V:4. Sharing
+  `nextVoiceId` (rather than each file re-deriving "length + 1" on its own)
+  is what keeps the two in agreement even for a chart with sparse or
+  non-numeric voice ids, where a plain length-based guess could collide with
+  an id the chart already uses.
 */
 export function resolveMixerVoices(rawVoices, compingActive) {
   const base = rawVoices.length > 0 ? rawVoices : [{ id: "1", index: 0, name: null }];
@@ -202,7 +210,8 @@ export function resolveMixerVoices(rawVoices, compingActive) {
     return { id: v.id, index: v.index, label: unnamedTotal > 1 ? `Melody ${unnamedSeen}` : "Melody" };
   });
   if (!compingActive) return labeled;
-  return [...labeled, { id: String(labeled.length + 1), index: labeled.length, label: "Comping" }];
+  const id = nextVoiceId(labeled.map((v) => v.id));
+  return [...labeled, { id, index: labeled.length, label: "Comping" }];
 }
 
 // Insert `%%MIDI program <n>` right after each voice's own first declaration

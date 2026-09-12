@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  beatsPerMeasure, isBackbeat, nextBeatIndex, scheduleClicks,
+  beatsPerMeasure, hasBackbeat, introDelaySeconds, isBackbeat, nextBeatIndex,
+  pickupStartBeatIndex, scheduleClicks,
 } from "./metronome.js";
 
 test("beatsPerMeasure reads simple meters straight from the numerator", () => {
@@ -39,6 +40,18 @@ test("beatsPerMeasure falls back to 4/4 for missing/empty/zero meter data", () =
   assert.equal(beatsPerMeasure([{ num: 0, den: 4 }]), 4);
 });
 
+test("hasBackbeat is true only for a multiple-of-4 measure", () => {
+  assert.equal(hasBackbeat(4), true);
+  assert.equal(hasBackbeat(8), true);
+  assert.equal(hasBackbeat(12), true);
+  assert.equal(hasBackbeat(3), false);
+  assert.equal(hasBackbeat(5), false);
+  assert.equal(hasBackbeat(0), false);
+  assert.equal(hasBackbeat(-4), false);
+  assert.equal(hasBackbeat(Number.NaN), false);
+  assert.equal(hasBackbeat(Number.POSITIVE_INFINITY), false);
+});
+
 test("isBackbeat accents beats 2 & 4 (indices 1 & 3) in a 4-beat measure", () => {
   assert.equal(isBackbeat(0, 4), false);
   assert.equal(isBackbeat(1, 4), true);
@@ -64,6 +77,65 @@ test("isBackbeat never accents a degenerate zero/negative/non-finite beatsInMeas
   assert.equal(isBackbeat(1, -4), false);
   assert.equal(isBackbeat(1, Number.NaN), false);
   assert.equal(isBackbeat(1, Number.POSITIVE_INFINITY), false);
+});
+
+test("introDelaySeconds multiplies bars by the measure length in seconds", () => {
+  assert.equal(introDelaySeconds(2, 4, 0.5), 4); // 2 bars * 4 beats/bar * 0.5s/beat
+  assert.equal(introDelaySeconds(1, 3, 0.25), 0.75);
+});
+
+test("introDelaySeconds is 0 for a tune with no intro (the common case)", () => {
+  assert.equal(introDelaySeconds(0, 4, 0.5), 0);
+});
+
+test("introDelaySeconds falls back to 0 for degenerate/missing inputs rather than blocking the click track", () => {
+  assert.equal(introDelaySeconds(undefined, 4, 0.5), 0);
+  assert.equal(introDelaySeconds(null, 4, 0.5), 0);
+  assert.equal(introDelaySeconds(-1, 4, 0.5), 0);
+  assert.equal(introDelaySeconds(Number.NaN, 4, 0.5), 0);
+  assert.equal(introDelaySeconds(2, 0, 0.5), 0);
+  assert.equal(introDelaySeconds(2, Number.NaN, 0.5), 0);
+  assert.equal(introDelaySeconds(2, 4, 0), 0);
+  assert.equal(introDelaySeconds(2, 4, -1), 0);
+});
+
+test("introDelaySeconds swaps the first intro bar's length for the pickup's real (shorter) length", () => {
+  // 1 pickup beat + 1 full 4-beat bar = 5 beats, not 2*4 = 8.
+  assert.equal(introDelaySeconds(2, 4, 0.5, 1), 2.5);
+  // A single-bar intro that's entirely the pickup: just the pickup's length.
+  assert.equal(introDelaySeconds(1, 4, 0.5, 1), 0.5);
+});
+
+test("introDelaySeconds ignores a degenerate/missing pickupBeats, falling back to the plain full-bar count", () => {
+  assert.equal(introDelaySeconds(2, 4, 0.5), 4); // no 4th argument at all
+  assert.equal(introDelaySeconds(2, 4, 0.5, 0), 4);
+  assert.equal(introDelaySeconds(2, 4, 0.5, -1), 4);
+  assert.equal(introDelaySeconds(2, 4, 0.5, Number.NaN), 4);
+});
+
+test("pickupStartBeatIndex phases the clock so N pickup beats later lands back on beat index 0", () => {
+  assert.equal(pickupStartBeatIndex(1, 4), 3); // 1-beat pickup: starts on beat 4
+  assert.equal(pickupStartBeatIndex(2, 4), 2); // 2-beat pickup: starts on beat 3
+  assert.equal(pickupStartBeatIndex(3, 4), 1); // 3-beat pickup: starts on beat 2
+});
+
+test("pickupStartBeatIndex is 0 for no pickup, and for a pickup that's a whole number of full measures", () => {
+  assert.equal(pickupStartBeatIndex(0, 4), 0);
+  assert.equal(pickupStartBeatIndex(4, 4), 0);
+  assert.equal(pickupStartBeatIndex(8, 4), 0);
+});
+
+test("pickupStartBeatIndex rounds a fractional pickup to the nearest whole beat", () => {
+  assert.equal(pickupStartBeatIndex(0.9, 4), 3); // rounds up to 1 beat -> same as pickupStartBeatIndex(1, 4)
+});
+
+test("pickupStartBeatIndex falls back to 0 for degenerate/missing inputs", () => {
+  assert.equal(pickupStartBeatIndex(undefined, 4), 0);
+  assert.equal(pickupStartBeatIndex(null, 4), 0);
+  assert.equal(pickupStartBeatIndex(-1, 4), 0);
+  assert.equal(pickupStartBeatIndex(Number.NaN, 4), 0);
+  assert.equal(pickupStartBeatIndex(1, 0), 0);
+  assert.equal(pickupStartBeatIndex(1, Number.NaN), 0);
 });
 
 test("nextBeatIndex wraps at the end of the measure", () => {

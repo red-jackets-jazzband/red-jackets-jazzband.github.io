@@ -1,4 +1,5 @@
 import { computeChordOffset, BREAK_CHORD } from "./chords.js";
+import { nextVoiceId } from "./voice-id.js";
 
 /*
    Chord-tone comping generator.
@@ -534,7 +535,7 @@ function readUnit(text) {
 
 function lastKLineIndex(lines) {
   for (let i = lines.length - 1; i >= 0; i--) {
-    if (/^K:/.test(lines[i])) return i;
+    if (lines[i].startsWith("K:")) return i;
   }
   return -1;
 }
@@ -1185,7 +1186,10 @@ export function buildCompingTune(text, chords, song, pattern) {
 
   const voiceIds = findVoiceIds(text);
   const explicitVoices = voiceIds.length > 0;
-  const newVoiceId = String((explicitVoices ? voiceIds.length : 1) + 1);
+  // An ordinary tune has no "V:" of its own, but always ends up as V:1 below
+  // (the synthesized "%%staves [1 2]\nV:1\n..." block), so that's the id to
+  // avoid colliding with here even though findVoiceIds found nothing.
+  const newVoiceId = nextVoiceId(explicitVoices ? voiceIds : ["1"]);
   // The body a tune with its own voices interleaves per system -- repeated
   // whole-line "V: 1" / "V: 2" / "V: 3" switches (honky_tonk_town_riffs.abc)
   // or inline "[V:1] ... [V:2] ..." markers (big_chief.abc) -- must be
@@ -1255,9 +1259,13 @@ export function buildCompingTune(text, chords, song, pattern) {
   const label = PATTERN_LABEL[pattern] || pattern;
 
   const headerOut = [];
+  let layoutLine = null;
   for (const line of split.header) {
     if (/^L:/.test(line)) continue;
-    if (/^%%(score|staves)\b/.test(line)) continue;
+    if (/^%%(score|staves)\b/.test(line)) {
+      layoutLine = line;
+      continue;
+    }
     if (/^T:/.test(line)) {
       headerOut.push(line + "  (comping \u2013 " + label + ")");
       continue;
@@ -1267,7 +1275,8 @@ export function buildCompingTune(text, chords, song, pattern) {
   headerOut.push("L:" + lnum + "/" + lden);
   // Stacked R / 3 / 5 label at the staff's left, naming the chord tones the
   // three notehead colours pick out (root / third / fifth, bottom to top).
-  const compingVoiceLine = "V:" + newVoiceId + ' name="R\\n3\\n5"' + clefSuffix;
+  const compingVoiceLine =
+    "V:" + newVoiceId + String.raw` name="R\n3\n5"` + clefSuffix;
   const existingBody = split.body.trimEnd();
   let abc;
   if (explicitVoices) {
@@ -1276,6 +1285,12 @@ export function buildCompingTune(text, chords, song, pattern) {
     // all of that untouched and simply append the new voice, declaring it
     // (name="...") the first and only time it's used, same as any of the
     // tune's own voices would.
+    // A chart that already lays out its own staves (bracing/grouping a brass
+    // section, say) keeps that layout verbatim — the new comping voice is
+    // just tacked on the end as its own ungrouped staff, same as it would be
+    // appended to the voice declarations themselves, rather than losing the
+    // tune's own grouping outright the way stripping-and-not-replacing would.
+    if (layoutLine) headerOut.push(layoutLine.trimEnd() + " " + newVoiceId);
     headerOut.push(split.kLine);
     abc =
       headerOut.join("\n") +
@@ -1285,10 +1300,7 @@ export function buildCompingTune(text, chords, song, pattern) {
     // %%staves (not %%score) so ABCjs draws the barlines connecting the
     // melody staff to the comping staff — they read as one system. The
     // bracket [ ] groups them.
-    headerOut.push("%%staves [1 2]");
-    headerOut.push("V:1");
-    headerOut.push(compingVoiceLine);
-    headerOut.push(split.kLine);
+    headerOut.push("%%staves [1 2]", "V:1", compingVoiceLine, split.kLine);
     abc =
       headerOut.join("\n") +
       "\nV:1\n" + existingBody +

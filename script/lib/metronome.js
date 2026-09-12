@@ -25,21 +25,74 @@ export function beatsPerMeasure(meterValue) {
 }
 
 /*
+  Whether a measure of this size has a 2-&-4 to lean on at all: only a
+  measure built from groups of 4 beats (4/4 and its multiples — 8/4, or 12/8
+  read as 4 dotted-quarters). A 3/4 waltz or a 5/4 tune has no "beat 4", so
+  those fall back to clicking every beat instead of forcing a backbeat that
+  doesn't fit — see isBackbeat and songs/metronome.js's tick().
+*/
+export function hasBackbeat(beatsInMeasure) {
+  return Number.isFinite(beatsInMeasure) && beatsInMeasure >= 4 && beatsInMeasure % 4 === 0;
+}
+
+/*
   The backbeat — beats 2 & 4 — is what this site's tunes want the metronome
-  to lean on, not the usual downbeat accent: a heavier click there gives a
-  clearer feel to lock a swing/New-Orleans groove onto than a metronome that
-  just booms on beat 1. That convention only means something for a measure
-  built from groups of 4 beats (4/4 and its multiples — 8/4, or 12/8 read as
-  4 dotted-quarters); a 3/4 waltz or a 5/4 tune has no "beat 4" to lean on,
-  so those fall back to a plain, unaccented click on every beat rather than
-  forcing an accent that doesn't fit. beatIndex is 0-based.
+  to lean on, not the usual downbeat: a hihat tick there gives a clearer feel
+  to lock a swing/New-Orleans groove onto than a click that just booms on
+  beat 1. beatIndex is 0-based.
 */
 export function isBackbeat(beatIndex, beatsInMeasure) {
-  if (!Number.isFinite(beatsInMeasure) || beatsInMeasure < 4 || beatsInMeasure % 4 !== 0) {
-    return false;
-  }
+  if (!hasBackbeat(beatsInMeasure)) return false;
   const beatInGroup = beatIndex % 4;
   return beatInGroup === 1 || beatInGroup === 3;
+}
+
+/*
+  How long (in seconds) the metronome should hold off before its first tick:
+  a rubato/free intro with no chords under it (introBars — ctx.audio's
+  chordOffset, the same "leading chordless bars" count comping.js already
+  rests through) usually isn't in strict tempo, so a click ticking through it
+  would just clash rather than help. A tune with no such intro (introBars 0,
+  the common case) gets no delay at all. Degenerate/missing inputs (no meter
+  info yet, say) fall back to no delay rather than silencing the click track
+  outright.
+
+  pickupBeats (ctx.audio's own pickup length, in beats — see
+  pickupStartBeatIndex below) corrects for one wrinkle: chordOffset counts
+  abcjs's own bars, and a tune's pickup/anacrusis is one such bar even though
+  it's shorter than a full measure. Treating it as a full beatsInMeasure-long
+  bar like the others would overcount the delay by the pickup's own
+  shortfall, landing the first click late. Only the first intro bar can ever
+  be the pickup, so only one bar's length is swapped out.
+*/
+export function introDelaySeconds(introBars, beatsInMeasure, secondsPerBeat, pickupBeats = 0) {
+  if (!Number.isFinite(introBars) || introBars <= 0) return 0;
+  if (!Number.isFinite(beatsInMeasure) || beatsInMeasure <= 0) return 0;
+  if (!Number.isFinite(secondsPerBeat) || secondsPerBeat <= 0) return 0;
+  const pickup = Number.isFinite(pickupBeats) && pickupBeats > 0 ? pickupBeats : 0;
+  const introBeats = pickup > 0 ? pickup + (introBars - 1) * beatsInMeasure : introBars * beatsInMeasure;
+  return introBeats * secondsPerBeat;
+}
+
+/*
+  Which 0-based beat index the metronome's clock should start counting from,
+  for a tune with a pickup/anacrusis (a partial measure before the first full
+  bar) and no chordless intro to skip ahead of it (see introDelaySeconds —
+  when there IS an intro to skip, skipping it always lands exactly on a bar
+  line, so the clock resumes at index 0 regardless of any pickup). Without
+  this, the clock's usual assumption — that beat index 0 starts counting
+  right as Play begins — treats the tune's very first note as beat 1, when
+  it's really already partway into a phantom measure the pickup borrows the
+  tail end of. A whole number of pickup beats lands exactly back on index 0
+  (no pickup, or a pickup that happens to be a full measure); a fractional
+  pickup rounds to the nearest beat, since the clock only ticks on whole
+  beats anyway.
+*/
+export function pickupStartBeatIndex(pickupBeats, beatsInMeasure) {
+  if (!Number.isFinite(pickupBeats) || pickupBeats <= 0) return 0;
+  if (!Number.isFinite(beatsInMeasure) || beatsInMeasure <= 0) return 0;
+  const rounded = Math.round(pickupBeats) % beatsInMeasure;
+  return rounded === 0 ? 0 : beatsInMeasure - rounded;
 }
 
 // The next 0-based beat index, wrapping at the end of the measure.
