@@ -55,7 +55,7 @@ test("applyCompingColors fills noteheads by chord-tone function", () => {
       <g class="abcjs-note abcjs-v1">
         <path class="abcjs-chord-pos-1"></path>
       </g>
-      <text class="abcjs-voice-name abcjs-v1"><tspan>R</tspan><tspan>3</tspan><tspan>5</tspan></text>`;
+      <text class="abcjs-voice-name abcjs-v1"><tspan>5</tspan><tspan>3</tspan><tspan>R</tspan></text>`;
     applyCompingColors(container, [["R", "3", "5"], ["5", "R", "3"]]);
     const first = container.querySelectorAll("g")[0].querySelectorAll("path");
     // jsdom normalises the hex/var() values, so compare relationally: the
@@ -66,8 +66,10 @@ test("applyCompingColors fills noteheads by chord-tone function", () => {
     const second = container.querySelectorAll("g")[1].querySelector("path");
     assert.equal(second.style.fill, fills[2]); // palette pos-1 here is "5"
     const tspans = container.querySelectorAll("tspan");
-    assert.equal(tspans[0].style.fill, fills[0]);
-    assert.equal(tspans[2].style.fill, fills[2]);
+    // label reads 5/3/R top to bottom, so tspan 0 ("5") takes fills[2] and
+    // tspan 2 ("R") takes fills[0].
+    assert.equal(tspans[0].style.fill, fills[2]);
+    assert.equal(tspans[2].style.fill, fills[0]);
   });
 });
 
@@ -129,7 +131,7 @@ test("applyCompingColors targets the given voiceIndex, not always v1", () => {
     container.innerHTML = `
       <g class="abcjs-note abcjs-v1"><path class="abcjs-chord-pos-1"></path></g>
       <g class="abcjs-note abcjs-v3"><path class="abcjs-chord-pos-1"></path></g>
-      <text class="abcjs-voice-name abcjs-v3"><tspan>R</tspan><tspan>3</tspan><tspan>5</tspan></text>`;
+      <text class="abcjs-voice-name abcjs-v3"><tspan>5</tspan><tspan>3</tspan><tspan>R</tspan></text>`;
     applyCompingColors(container, [["5", "R", "3"]], 3);
     const [v1Note, v3Note] = container.querySelectorAll("g.abcjs-note path");
     assert.equal(v1Note.style.fill, "");

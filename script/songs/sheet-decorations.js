@@ -101,7 +101,7 @@ function colorCompingTies(container, orderByOnset, voiceClass) {
   position != function, so we zip the rendered onsets against the palette
   instead of using CSS. Inline fills survive ABCjs's resize handler (it rescales
   the viewBox, it doesn't re-render) and are re-applied on every full re-render.
-  The tie arcs and the stacked "R / 3 / 5" voice label are tinted to match.
+  The tie arcs and the stacked "5 / 3 / R" voice label are tinted to match.
 
   `voiceIndex` is the comping voice's own 0-indexed ABCjs voice number
   (ABCjs's own ".abcjs-vN" class order, matching resolveMixerVoices' resolved
@@ -136,7 +136,7 @@ export function applyCompingColors(container, palette, voiceIndex = 1) {
   const label = container.querySelector(`text.abcjs-voice-name.${voiceClass}`);
   if (label) {
     const tspans = label.querySelectorAll("tspan");
-    ["R", "3", "5"].forEach((fn, i) => {
+    ["5", "3", "R"].forEach((fn, i) => {
       if (tspans[i]) tspans[i].style.fill = COMPING_FN_FILL[fn];
     });
   }

@@ -5,15 +5,18 @@
 // file for why) into the checked program as a side effect of the import.
 
 // The smallest positive integer id not already in `usedIds` -- starting the
-// guess at "one past however many voices there are" (right for the common
-// case: a tune's own ids are a contiguous "1".."N", so N+1 is free), then
-// counting up past any collision. Handles a chart whose own ids are sparse
-// (e.g. "1"/"3", where a plain length+1 guess would land back on "3") or
-// non-numeric (e.g. "T"/"S" -- those never collide with a numeric guess at
-// all, so this returns the same length+1 guess as before for that case).
+// count at 1 and counting up past any collision, so this is the id's actual
+// definition, not an approximation of it. For the common case (a tune's own
+// ids are a contiguous "1".."N") that lands on N+1, same as a plain
+// length+1 guess would. It only differs for a chart whose own ids are
+// sparse (e.g. "1"/"3": the true smallest unused id is "2", not "4" — a
+// length+1 guess starts at 3, collides, and only counts upward from there,
+// so it can never find a gap below its own starting point) or non-numeric
+// (e.g. "T"/"S" -- those never collide with a numeric guess at all, so this
+// still lands on "1" here, same as if usedIds were empty).
 export function nextVoiceId(usedIds) {
   const used = new Set(usedIds);
-  let n = usedIds.length + 1;
+  let n = 1;
   while (used.has(String(n))) n++;
   return String(n);
 }

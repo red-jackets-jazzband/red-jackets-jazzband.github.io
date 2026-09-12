@@ -98,7 +98,7 @@ test("enabling the toggle while the sheet is already playing starts clicking onc
       assert.equal(instance.bufferSources.length, 0);
 
       // Still inside the lookahead window for the first backbeat (beat 2, due
-      // at t=0.55) rather than past it — jumping past nextNoteTime would trip
+      // at t=0.53) rather than past it — jumping past nextNoteTime would trip
       // scheduleClicks's own catch-up path (see lib/metronome.test.js) and
       // skip straight over the click this test wants to observe.
       instance.currentTime = 0.5;
@@ -382,25 +382,37 @@ test("ticks land only on the backbeat (beats 2 & 4) for a 4/4 tune, read live of
   }
 });
 
+// The intro/pickup timing below only ever applies to a genuine Play from
+// position 0 (start()'s `fromStart` flag — see its own doc comment), so
+// these tests arm the toggle while the sheet isn't playing yet (a plain
+// click wouldn't reach start() at all) and then simulate audio-player.js's
+// own fresh-start signal directly, the same way playPause()/setIsPlaying
+// would for a Play with nothing paused mid-tune since the last Stop/load.
+function startFresh(ctx, metronome) {
+  ctx.audio.isPlaying = true;
+  metronome.onPlaybackChange(true, true);
+}
+
 test("holds off ticking during a rubato/chordless intro (ctx.audio.chordOffset), then starts on schedule", (t) => {
   t.mock.timers.enable({ apis: ["setInterval"] });
   // beatsPerMeasure: 3 has no backbeat to gate on, so this is purely about
   // the intro delay, not accent placement. 2 intro bars * 3 beats * 0.5s = 3s.
-  const { cleanup } = setup({ isPlaying: true, beatsPerMeasure: 3, chordOffset: 2 });
+  const { ctx, metronome, cleanup } = setup({ isPlaying: false, beatsPerMeasure: 3, chordOffset: 2 });
   const { Ctor, instance } = createAudioContextStub();
   try {
     withAudioContext(Ctor, () => {
       document.getElementById("mixerMetronomeToggleBtn").click();
+      startFresh(ctx, metronome);
       t.mock.timers.tick(25);
       assert.equal(instance.bufferSources.length, 0, "no click during the intro");
 
       // Still inside the lookahead window for the first post-intro click
-      // (due at t=3.05) rather than past it, for the same reason as the
+      // (due at t=3.03) rather than past it, for the same reason as the
       // "starts clicking once the backbeat arrives" test above.
       instance.currentTime = 3;
       t.mock.timers.tick(25);
       assert.equal(instance.bufferSources.length, 1);
-      assert.equal(instance.bufferSources[0].startedAt, 3.05);
+      assert.equal(instance.bufferSources[0].startedAt, 3.03);
     });
   } finally {
     window.localStorage.clear();
@@ -410,11 +422,12 @@ test("holds off ticking during a rubato/chordless intro (ctx.audio.chordOffset),
 
 test("a tune with no intro (chordOffset 0, the default) ticks immediately, unaffected by the intro delay", (t) => {
   t.mock.timers.enable({ apis: ["setInterval"] });
-  const { cleanup } = setup({ isPlaying: true, beatsPerMeasure: 3, chordOffset: 0 });
+  const { ctx, metronome, cleanup } = setup({ isPlaying: false, beatsPerMeasure: 3, chordOffset: 0 });
   const { Ctor, instance } = createAudioContextStub();
   try {
     withAudioContext(Ctor, () => {
       document.getElementById("mixerMetronomeToggleBtn").click();
+      startFresh(ctx, metronome);
       t.mock.timers.tick(25);
       assert.equal(instance.bufferSources.length, 1);
     });
@@ -429,14 +442,15 @@ test("a pickup phases the clock so its own beat lands correctly in the backbeat 
   // A 1-beat pickup into a 4/4 tune with no chordless intro: the pickup note
   // itself is beat 4 of a phantom measure, so it's a backbeat and clicks
   // immediately instead of being (wrongly) treated as an unaccented beat 1.
-  const { cleanup } = setup({ isPlaying: true, chordOffset: 0, pickupBeats: 1 });
+  const { ctx, metronome, cleanup } = setup({ isPlaying: false, chordOffset: 0, pickupBeats: 1 });
   const { Ctor, instance } = createAudioContextStub();
   try {
     withAudioContext(Ctor, () => {
       document.getElementById("mixerMetronomeToggleBtn").click();
+      startFresh(ctx, metronome);
       t.mock.timers.tick(25);
       assert.equal(instance.bufferSources.length, 1);
-      assert.equal(instance.bufferSources[0].startedAt, 0.05);
+      assert.ok(Math.abs(instance.bufferSources[0].startedAt - 0.03) < 1e-9);
     });
   } finally {
     window.localStorage.clear();
@@ -446,11 +460,12 @@ test("a pickup phases the clock so its own beat lands correctly in the backbeat 
 
 test("a pickup that's a whole number of measures doesn't shift the clock's phase", (t) => {
   t.mock.timers.enable({ apis: ["setInterval"] });
-  const { cleanup } = setup({ isPlaying: true, chordOffset: 0, pickupBeats: 4 });
+  const { ctx, metronome, cleanup } = setup({ isPlaying: false, chordOffset: 0, pickupBeats: 4 });
   const { Ctor, instance } = createAudioContextStub();
   try {
     withAudioContext(Ctor, () => {
       document.getElementById("mixerMetronomeToggleBtn").click();
+      startFresh(ctx, metronome);
       t.mock.timers.tick(25);
       // beat index 0 (the downbeat) — no click, same as the no-pickup case.
       assert.equal(instance.bufferSources.length, 0);
@@ -464,24 +479,25 @@ test("a pickup that's a whole number of measures doesn't shift the clock's phase
 test("an intro to skip always resumes the clock at beat 1, regardless of any pickup", (t) => {
   t.mock.timers.enable({ apis: ["setInterval"] });
   // 1 pickup beat + 1 full 4-beat bar = 5 beats * 0.5s/beat = 2.5s delay,
-  // landing exactly on a bar line at t=2.55 (beat 1) — not phased by the
+  // landing exactly on a bar line at t=2.53 (beat 1) — not phased by the
   // pickup the way the no-intro tests above are.
-  const { cleanup } = setup({ isPlaying: true, chordOffset: 2, pickupBeats: 1 });
+  const { ctx, metronome, cleanup } = setup({ isPlaying: false, chordOffset: 2, pickupBeats: 1 });
   const { Ctor, instance } = createAudioContextStub();
   try {
     withAudioContext(Ctor, () => {
       document.getElementById("mixerMetronomeToggleBtn").click();
+      startFresh(ctx, metronome);
       t.mock.timers.tick(25);
       assert.equal(instance.bufferSources.length, 0, "still inside the intro delay");
 
-      instance.currentTime = 2.5; // inside the window for the bar line at t=2.55
+      instance.currentTime = 2.5; // inside the window for the bar line at t=2.53
       t.mock.timers.tick(25);
       assert.equal(instance.bufferSources.length, 0, "beat 1 itself doesn't click");
 
-      instance.currentTime = 3.0; // inside the window for the backbeat at t=3.05
+      instance.currentTime = 3.0; // inside the window for the backbeat at t=3.03
       t.mock.timers.tick(25);
       assert.equal(instance.bufferSources.length, 1);
-      assert.equal(instance.bufferSources[0].startedAt, 3.05);
+      assert.equal(instance.bufferSources[0].startedAt, 3.03);
     });
   } finally {
     window.localStorage.clear();
@@ -498,6 +514,55 @@ test("a 3/4 tune ticks every beat (no backbeat to lean on)", (t) => {
       document.getElementById("mixerMetronomeToggleBtn").click();
       tickThroughBeats(t, instance, 0.25, 4);
       assert.ok(instance.bufferSources.length >= 4);
+    });
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
+test("resuming from a mid-tune pause ticks immediately, without reapplying the intro delay", (t) => {
+  t.mock.timers.enable({ apis: ["setInterval"] });
+  // beatsPerMeasure: 3 has no backbeat to gate on, so every scheduled click
+  // sounds -- this is purely about whether the intro delay reapplies.
+  const { ctx, metronome, cleanup } = setup({ isPlaying: false, beatsPerMeasure: 3, chordOffset: 2 });
+  const { Ctor, instance } = createAudioContextStub();
+  try {
+    withAudioContext(Ctor, () => {
+      document.getElementById("mixerMetronomeToggleBtn").click();
+      startFresh(ctx, metronome); // a genuine fresh start -- the 3s intro delay applies
+      t.mock.timers.tick(25);
+      assert.equal(instance.bufferSources.length, 0, "still inside the intro delay");
+
+      // Pause mid-intro, then resume -- this mirrors audio-player.js's
+      // playPause(), which marks a pause as pausedMidway so the following
+      // resume is passed fromStart: false, not true.
+      ctx.audio.isPlaying = false;
+      metronome.onPlaybackChange(false);
+      ctx.audio.isPlaying = true;
+      metronome.onPlaybackChange(true, false);
+      t.mock.timers.tick(25);
+      assert.equal(instance.bufferSources.length, 1, "resume ticks immediately, not after another 3s delay");
+    });
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
+test("enabling the metronome mid-playback ticks immediately, without applying the intro delay", (t) => {
+  t.mock.timers.enable({ apis: ["setInterval"] });
+  // The sheet is already playing (from some earlier, untracked point) when
+  // the toggle itself is what starts the click -- never a "from the top" Play.
+  const { cleanup } = setup({
+    isPlaying: true, beatsPerMeasure: 3, chordOffset: 2, pickupBeats: 1,
+  });
+  const { Ctor, instance } = createAudioContextStub();
+  try {
+    withAudioContext(Ctor, () => {
+      document.getElementById("mixerMetronomeToggleBtn").click();
+      t.mock.timers.tick(25);
+      assert.equal(instance.bufferSources.length, 1, "ticks immediately, not after the 3s intro delay");
     });
   } finally {
     window.localStorage.clear();

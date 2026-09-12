@@ -3699,9 +3699,13 @@ body:has(#rjLibrary) .split-bio {
   overflow: hidden;
 }
 
-.chordCell.chordCell-playing {
-  background-color: var(--rj-gold);
-  color: #222222;
+/* Screen-only, same reasoning as .abcjs-current-note above: a chord cell
+   shouldn't print gold just because playback happened to be paused on it. */
+@media screen {
+  .chordCell.chordCell-playing {
+    background-color: var(--rj-gold);
+    color: #222222;
+  }
 }
 
 .chordDiv {
@@ -4396,12 +4400,19 @@ body:has(#rjLibrary) .split-bio {
   display: inline;
 }
 
-/* Current note highlight during playback */
-.abcjs-current-note path,
-.abcjs-current-note ellipse,
-.abcjs-current-note polygon,
-.abcjs-current-note rect {
-  fill: var(--rj-gold) !important;
+/* Current note highlight during playback. Screen-only: printing while a note
+   is highlighted (e.g. paused mid-playback) shouldn't bake that gold fill
+   into the page, and scoping it out here — rather than resetting fill back
+   in @media print — leaves the comping noteheads' own inline colors
+   (sheet-decorations.js's applyCompingColors, set directly on these same
+   elements) as the only fill in play when printed. */
+@media screen {
+  .abcjs-current-note path,
+  .abcjs-current-note ellipse,
+  .abcjs-current-note polygon,
+  .abcjs-current-note rect {
+    fill: var(--rj-gold) !important;
+  }
 }
 
 /* Make notes clickable */

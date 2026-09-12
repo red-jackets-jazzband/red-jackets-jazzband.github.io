@@ -250,19 +250,24 @@ test("injectMixerAudio (multi-voice) only stamps a voice present in the map, and
   assert.equal((out.match(/%%MIDI program 0/g) || []).length, 1);
 });
 
-test("injectMixerAudio (comping) stamps melody + comping right after buildCompingTune's own header declarations", () => {
+test("injectMixerAudio (comping) stamps melody + comping right after their own *body* declarations, not buildCompingTune's header ones", () => {
   const abc = [
-    "X:1", "T:Test", "L:1/8", "%%staves [1 2]", "V:1", 'V:2 name="R\\n3\\n5"', "K:C",
+    "X:1", "T:Test", "L:1/8", "%%staves [1 2]", "V:1", 'V:2 name="5\\n3\\nR"', "K:C",
     "V:1", '"C" C8 |', "V:2", "[CEG]8 |",
   ].join("\n");
   const out = injectMixerAudio(abc, {
     hasChords: true, bassPercent: 0, chordsPercent: 0, voicePrograms: new Map([["1", 56], ["2", 0]]),
   });
-  assert.match(out, /%%staves \[1 2\]\nV:1\n%%MIDI program 56\nV:2 name="R\\n3\\n5"\n%%MIDI program 0\n%%MIDI gchord/);
+  // the header declarations are left bare — a %%MIDI program trailing a V:
+  // line still in the header lands in ABCjs's one shared, tune-wide program
+  // slot rather than a per-voice one, so two different header-trailing
+  // lines here would silently collide (the second overwriting the first for
+  // the whole tune, melody included) instead of giving each voice its own.
+  assert.match(out, /%%staves \[1 2\]\nV:1\nV:2 name="5\\n3\\nR"\n%%MIDI gchord/);
   assert.match(out, /%%MIDI chordvol 0\nK:C/);
-  // the body markers further down are untouched — nothing got stamped there
-  assert.match(out, /\nV:1\n"C" C8 \|/);
-  assert.match(out, /\nV:2\n\[CEG\]8 \|/);
+  // each program is stamped right after that voice's own *body* switch instead
+  assert.match(out, /\nV:1\n%%MIDI program 56\n"C" C8 \|/);
+  assert.match(out, /\nV:2\n%%MIDI program 0\n\[CEG\]8 \|/);
 });
 
 test("a native multi-voice chart with a real V: declaration always finds a scoping point (never falls back to the tune-wide line)", () => {

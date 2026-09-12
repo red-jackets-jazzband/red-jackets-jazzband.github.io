@@ -214,21 +214,53 @@ export function resolveMixerVoices(rawVoices, compingActive) {
   return [...labeled, { id, index: labeled.length, label: "Comping" }];
 }
 
-// Insert `%%MIDI program <n>` right after each voice's own first declaration
-// line (matched the same way parseVoiceList finds it), so abc2midi scopes the
-// program to that voice from there on. `programsById` only needs entries for
-// the voices worth stamping; anything else is left to whatever ABCjs/abc2midi
-// falls back to on its own.
+/*
+  Insert `%%MIDI program <n>` right after each voice's own declaration line
+  (matched the same way parseVoiceList finds it) -- but a *body* declaration
+  (after the tune's K: line) whenever the voice has one there, never a header
+  one, even though a header declaration is what most tunes hit first: ABCjs's
+  own parser only scopes a %%MIDI directive to "the voice it trails" when it
+  reads it *inside* the tune body, once real music has started. One that
+  trails a V: line still in the header (before K:) — where a comping-
+  augmented ordinary tune's "V:1" / "V:2 name=..." pair, and most multi-voice
+  charts' own voice declarations, normally live — instead lands in the tune's
+  single shared `formatting.midi.program` slot, not a per-voice one; every
+  such header directive overwrites the last, so whichever voice's line comes
+  last in the header silently wins the *entire tune's* program, melody
+  included (confirmed by decoding actual generated MIDI bytes: two different
+  header-trailing %%MIDI program lines emitted one Program Change, on the
+  same channel, at the second line's value only). A body declaration doesn't
+  have this problem, so it's preferred whenever the voice has one — which,
+  for every shape buildCompingTune produces, it always does (the comping
+  voice's own declaration is body-only to begin with; an ordinary tune's
+  synthesized "V:1"/"V:2" pair each reappear in the body too). Only a voice
+  with no body declaration at all (a genuinely single-voice tune, comping
+  off, so nothing else can collide with its one header-scoped directive)
+  falls back to its header line.
+*/
 function injectVoicePrograms(text, programsById) {
-  const seen = new Set();
-  const lines = text.split("\n").flatMap((line) => {
+  const lines = text.split("\n");
+  const kIndex = lines.findIndex((l) => l.startsWith("K:"));
+  const chosen = new Map();
+  lines.forEach((line, index) => {
     const m = /^V:\s*(\S+)/.exec(line);
-    if (!m || seen.has(m[1])) return [line];
-    seen.add(m[1]);
-    const program = programsById.get(m[1]);
-    return program === undefined ? [line] : [line, `%%MIDI program ${program}`];
+    if (!m) return;
+    const id = m[1];
+    const isBody = kIndex !== -1 && index > kIndex;
+    const prev = chosen.get(id);
+    if (!prev || (isBody && !prev.isBody)) chosen.set(id, { index, isBody });
   });
-  return lines.join("\n");
+  const insertAfter = new Map();
+  chosen.forEach(({ index }, id) => {
+    const program = programsById.get(id);
+    if (program !== undefined) insertAfter.set(index, program);
+  });
+  return lines
+    .flatMap((line, index) => {
+      if (!insertAfter.has(index)) return [line];
+      return [line, `%%MIDI program ${insertAfter.get(index)}`];
+    })
+    .join("\n");
 }
 
 // True once `text` declares at least one voice of its own (a real "V:<id>"

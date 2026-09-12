@@ -36,7 +36,7 @@ test("stepTempo seeds from the tune's native tempo, then steps and clamps", asyn
   const { ctx, audio, cleanup } = setup();
   const abcjs = createAbcjsStub({ audioSupported: true });
   try {
-    withAbcjs(abcjs, () => audio.initForTune({ metaText: { tempo: { bpm: 100 } } }));
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: { tempo: { bpm: 100 } }, getBpm: () => 100 }));
     await flush();
     withAbcjs(abcjs, () => audio.stepTempo(4));
     assert.equal(ctx.state.tempoOverrideBpm, 104); // 100 (native) + 4
@@ -197,6 +197,74 @@ test("playPause resumes on the first press after pausing (ABCjs play() is a togg
   }
 });
 
+// songs/metronome.js's start() only applies its chordless-intro/pickup
+// timing for a genuine Play from position 0 -- setIsPlaying's `fromStart`
+// argument (threaded through to ctx.metronome.onPlaybackChange) is how it
+// knows the difference. These spy on that argument directly rather than on
+// any audible effect, since audio-player.js is what computes it.
+function setupWithMetronomeSpy() {
+  const page = mountPage();
+  const calls = [];
+  const ctx = makeCtx({
+    state: { tempoOverrideBpm: null, compingActive: false },
+    metronome: {
+      init: () => {},
+      refresh: () => {},
+      onPlaybackChange: (playing, fromStart) => calls.push([playing, fromStart]),
+    },
+  });
+  const audio = createAudioPlayer(ctx);
+  return { page, audio, calls, cleanup: page.cleanup };
+}
+
+test("playPause reports fromStart:true only for a genuine first Play, never a pause or resume", async () => {
+  const { audio, calls, cleanup } = setupWithMetronomeSpy();
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+    calls.length = 0; // drop initForTune's own setIsPlaying(false)
+
+    audio.playPause(); // first Play, from position 0
+    await flush();
+    assert.deepEqual(calls.pop(), [true, true]);
+
+    audio.playPause(); // pause
+    await flush();
+    assert.deepEqual(calls.pop(), [false, false]);
+
+    audio.playPause(); // resume — mid-tune, not from the top
+    await flush();
+    assert.deepEqual(calls.pop(), [true, false]);
+  } finally {
+    cleanup();
+  }
+});
+
+test("playPause reports fromStart:true again after an explicit Stop resets the tune to position 0", async () => {
+  const { audio, calls, cleanup } = setupWithMetronomeSpy();
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+
+    audio.playPause(); // first Play
+    await flush();
+    audio.playPause(); // pause mid-tune
+    await flush();
+
+    withAbcjs(abcjs, () => audio.stop()); // resets position back to 0
+    await flush();
+    calls.length = 0;
+
+    audio.playPause(); // Play again — this is a fresh start, not a resume
+    await flush();
+    assert.deepEqual(calls.pop(), [true, true]);
+  } finally {
+    cleanup();
+  }
+});
+
 test("playPause shows a loading spinner while starting, not while pausing", async () => {
   const { audio, cleanup } = setup();
   const abcjs = createAbcjsStub({ audioSupported: true });
@@ -297,7 +365,7 @@ test("a Tempo nudge on a never-played sheet doesn't light up a chord cell", asyn
   const { ctx, audio, cleanup } = setup();
   const abcjs = createAbcjsStub({ audioSupported: true });
   try {
-    withAbcjs(abcjs, () => audio.initForTune({ metaText: { tempo: { bpm: 120 } } }));
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: { tempo: { bpm: 120 } }, getBpm: () => 120 }));
     await flush();
 
     // Stand in for the DOM ABCjs would report back through its seek(0) event.
@@ -342,6 +410,7 @@ test("buildExportOptions carries the current visualObj, synth params, and the na
   const abcjs = createAbcjsStub({ audioSupported: true });
   const visualObj = {
     metaText: { tempo: { bpm: 100 } },
+    getBpm: () => 100,
     millisecondsPerMeasure: () => 500,
   };
   try {
@@ -362,6 +431,7 @@ test("buildExportOptions scales millisecondsPerMeasure by the Tempo stepper's wa
   const abcjs = createAbcjsStub({ audioSupported: true });
   const visualObj = {
     metaText: { tempo: { bpm: 100 } },
+    getBpm: () => 100,
     millisecondsPerMeasure: () => 500,
   };
   try {

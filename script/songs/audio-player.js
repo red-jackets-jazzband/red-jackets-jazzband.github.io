@@ -95,6 +95,12 @@ export function createAudioPlayer(ctx) {
     synthController: null,
     isPlaying: false,
     isLoadingPlayback: false,
+    // True once playback has been paused (not stopped) at least once since
+    // the tune loaded or was last Stopped — see playPause()'s own doc
+    // comment for why this, and not just "isPlaying flipped to true", is
+    // what tells songs/metronome.js's start() whether a Play is resuming
+    // mid-tune or genuinely beginning from position 0.
+    pausedMidway: false,
     totalMs: 0,
     currentVisualObj: null,
     nativeQpm: null,
@@ -162,11 +168,15 @@ export function createAudioPlayer(ctx) {
   // ticks while the sheet is actually playing) both in step with it, instead
   // of each of the 5 call sites repeating "set the flag, then update the
   // button" and risking a new one that forgets the metronome notification.
-  function setIsPlaying(playing) {
+  // `fromStart` is only meaningful when `playing` is true — it tells the
+  // metronome whether this is a genuine start from position 0 (its own
+  // chordless-intro/pickup timing applies) or a resume/mid-playback toggle
+  // (it should tick immediately, unphased — see playPause()'s doc comment).
+  function setIsPlaying(playing, fromStart = false) {
     state.isPlaying = playing;
     state.isLoadingPlayback = false;
     updatePlayButton();
-    ctx.metronome.onPlaybackChange(playing);
+    ctx.metronome.onPlaybackChange(playing, fromStart);
   }
 
   // ---- highlighting -----------------------------------------------------
@@ -225,6 +235,9 @@ export function createAudioPlayer(ctx) {
     onEvent: highlightEvent,
     onFinished() {
       setIsPlaying(false);
+      // A tune that played to the end restarts from position 0 next time,
+      // same as an explicit Stop — the next Play is a fresh start again.
+      state.pausedMidway = false;
       clearHighlight();
     },
     onBeat() {},
@@ -355,6 +368,18 @@ export function createAudioPlayer(ctx) {
     // pausing an already-playing tune is effectively instant, so it's left
     // showing the Pause icon throughout.
     const starting = !state.isPlaying;
+    // Read state.pausedMidway *before* this pause (if that's what this call
+    // is) flips it below — a Play is only ever "from the start" when nothing
+    // has paused it mid-tune since the tune loaded or was last Stopped (both
+    // reset pausedMidway to false; onFinished does too, since a tune that
+    // played to the end also restarts from position 0 next time).
+    const fromStart = starting && !state.pausedMidway;
+    // A pause is "effectively instant" (see above), so mark it synchronously
+    // rather than waiting on sc.play()'s own promise below — the *next*
+    // play, whenever it comes, needs to already know it's resuming mid-tune,
+    // not starting fresh. A resume itself doesn't reset this back to false:
+    // any later pause/resume in the same session is still a resume.
+    if (!starting) state.pausedMidway = true;
     if (starting) {
       state.isLoadingPlayback = true;
       updatePlayButton();
@@ -381,7 +406,7 @@ export function createAudioPlayer(ctx) {
     Promise.resolve(playResult)
       .then(() => {
         if (sc !== state.synthController) return;
-        setIsPlaying(Boolean(sc.isStarted));
+        setIsPlaying(Boolean(sc.isStarted), fromStart);
       })
       .catch(recover);
   }
@@ -394,6 +419,7 @@ export function createAudioPlayer(ctx) {
       // pause on an already-stopped controller can throw — nothing to do.
     }
     setIsPlaying(false);
+    state.pausedMidway = false; // resetting to position 0 below — next Play is a fresh start
     clearHighlight();
     setButtonsDisabled(true);
 
@@ -429,9 +455,19 @@ export function createAudioPlayer(ctx) {
       state.synthController = null;
     }
     setIsPlaying(false);
+    state.pausedMidway = false; // a freshly (re)loaded tune's next Play is a fresh start
     state.totalMs = 0;
     state.currentVisualObj = visualObj;
-    state.nativeQpm = (visualObj.metaText && visualObj.metaText.tempo && visualObj.metaText.tempo.bpm) || null;
+    // ABCjs's own getBpm(), not a raw read of metaText.tempo.bpm: a tune with
+    // no Q: field at all has metaText.tempo undefined, but ABCjs's synth
+    // still plays it at its own default tempo (180qpm, or 120 for a compound
+    // meter whose numerator isn't itself 3 — see getBpm's own fallback) —
+    // reading metaText.tempo.bpm directly left nativeQpm null for every such
+    // tune, so resolveBpm fell back to this codebase's own DEFAULT_BPM (120)
+    // instead, mismatching the audio's actual tempo and dragging the
+    // metronome (and the Tempo stepper's displayed native bpm) out of sync
+    // with real playback.
+    state.nativeQpm = typeof visualObj.getBpm === "function" ? visualObj.getBpm() : null;
     setButtonsDisabled(true);
     setLoadingVisible(true);
 

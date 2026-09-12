@@ -572,6 +572,30 @@ function findVoiceIds(text) {
   return ids;
 }
 
+// Voice ids that only ever show up as an inline "[V:n]" switch (big_chief.abc's
+// kind) and never get their own whole-line "V:" declaration -- e.g. a tune
+// that names V:1 in its header but steps into V:2 purely inline, or one that
+// never declares any voice at all and interleaves "[V:1] ... [V:2] ..." from
+// the very first body line. findVoiceIds alone misses these entirely, which
+// left buildCompingTune free to hand the generated Comping voice an id one of
+// them already has -- see its own call site below. In order of first
+// appearance, like findVoiceIds.
+function findInlineVoiceIds(text) {
+  const ids = [];
+  const seen = new Set();
+  for (const line of text.split("\n")) {
+    INLINE_VOICE_SWITCH.lastIndex = 0;
+    let m;
+    while ((m = INLINE_VOICE_SWITCH.exec(line)) !== null) {
+      if (!seen.has(m[1])) {
+        seen.add(m[1]);
+        ids.push(m[1]);
+      }
+    }
+  }
+  return ids;
+}
+
 // A voice switch inline in the music itself -- big_chief.abc's
 // "[V:1] ... | [V:2] ... |", one per source line -- as opposed to
 // honky_tonk_town_riffs.abc's own repeated whole-line "V: 1" / "V: 2"
@@ -1184,11 +1208,21 @@ export function buildCompingTune(text, chords, song, pattern) {
   const keySig = keySignature(keyScale);
   const bassClef = /clef\s*=\s*bass/.test(split.kLine);
 
-  const voiceIds = findVoiceIds(text);
+  // findVoiceIds alone only sees a whole-line "V:" declaration -- a voice
+  // that's only ever switched into inline (findInlineVoiceIds) is just as
+  // real and just as much a collision risk for the id nextVoiceId is about
+  // to hand the generated Comping voice, so both are merged before that
+  // allocation runs. Declared ids come first so voiceIds[0] below still
+  // means "the tune's own first/melody voice" even when it's undeclared and
+  // only ever named inline (a tune with no "V:" line at all, interleaving
+  // "[V:1] ... [V:2] ..." from its very first body line).
+  const declaredVoiceIds = findVoiceIds(text);
+  const inlineVoiceIds = findInlineVoiceIds(text).filter((id) => !declaredVoiceIds.includes(id));
+  const voiceIds = [...declaredVoiceIds, ...inlineVoiceIds];
   const explicitVoices = voiceIds.length > 0;
   // An ordinary tune has no "V:" of its own, but always ends up as V:1 below
   // (the synthesized "%%staves [1 2]\nV:1\n..." block), so that's the id to
-  // avoid colliding with here even though findVoiceIds found nothing.
+  // avoid colliding with here even though voiceIds found nothing.
   const newVoiceId = nextVoiceId(explicitVoices ? voiceIds : ["1"]);
   // The body a tune with its own voices interleaves per system -- repeated
   // whole-line "V: 1" / "V: 2" / "V: 3" switches (honky_tonk_town_riffs.abc)
@@ -1273,10 +1307,12 @@ export function buildCompingTune(text, chords, song, pattern) {
     headerOut.push(line);
   }
   headerOut.push("L:" + lnum + "/" + lden);
-  // Stacked R / 3 / 5 label at the staff's left, naming the chord tones the
-  // three notehead colours pick out (root / third / fifth, bottom to top).
+  // Stacked 5 / 3 / R label at the staff's left, naming the chord tones the
+  // three notehead colours pick out (fifth / third / root, top to bottom —
+  // the label's own stacking order mirrors the notes' vertical stacking in
+  // the chord, root at the bottom).
   const compingVoiceLine =
-    "V:" + newVoiceId + String.raw` name="R\n3\n5"` + clefSuffix;
+    "V:" + newVoiceId + String.raw` name="5\n3\nR"` + clefSuffix;
   const existingBody = split.body.trimEnd();
   let abc;
   if (explicitVoices) {

@@ -354,7 +354,7 @@ test("buildCompingTune adds a bracketed one-voice block-chord comping staff", ()
   assert.ok(out && out.abc, PRODUCED_A_TUNE);
   const abc = out.abc;
   assert.match(abc, /^%%staves \[1 2\]/m);
-  assert.match(abc, /^V:2 name="R\\n3\\n5"$/m);
+  assert.match(abc, /^V:2 name="5\\n3\\nR"$/m);
   assert.doesNotMatch(abc, /^V:3/m);
   // melody body is kept verbatim under V:1, repeat included
   assert.match(abc, /V:1\n\|: "C" C8 \| "F" F8 \| "G7" G8 \| "C" C8 :\|/);
@@ -371,18 +371,23 @@ test("buildCompingTune adds a bracketed one-voice block-chord comping staff", ()
 // this function's exact "%%staves [1 2]\nV:1\nV:2 name=...\nK:...\nV:1\n
 // <melody>\nV:2\n<comping>\n" header+body shape (see its own doc comment
 // above) to stamp each voice's %%MIDI program (Voice picker) right after its
-// own first declaration line — this exercises that dependency against the
+// own *body* declaration line — this exercises that dependency against the
 // real output rather than a hand-typed guess at the shape.
 test("buildCompingTune's output accepts lib/audio-mix.js's injectMixerAudio", () => {
   const out = withTonal(() => buildCompingTune(TUNE, CHORDS, fakeSong(), "whole_note"));
   const stamped = injectMixerAudio(out.abc, {
     hasChords: false, bassPercent: 0, chordsPercent: 0, voicePrograms: new Map([["1", 71], ["2", 0]]),
   });
-  // Each program lands right after that voice's own first ("V:1"/"V:2
-  // name=...") header declaration, before K: — not the later body markers.
-  assert.match(stamped, /\nV:1\n%%MIDI program 71\nV:2 name="R\\n3\\n5"[^\n]*\n%%MIDI program 0\nK:/);
+  // Each program lands right after that voice's own body switch ("V:1" /
+  // "V:2"), not the header's "V:1"/"V:2 name=..." pair before K: — a header-
+  // trailing %%MIDI program isn't scoped per voice by ABCjs's own parser, so
+  // stamping both voices there would have the second line silently win the
+  // whole tune's program instead of each voice keeping its own.
+  assert.match(stamped, /\nK:C\nV:1\n%%MIDI program 71\n/);
+  assert.match(stamped, /\nV:2\n%%MIDI program 0\n/);
+  assert.doesNotMatch(stamped, /%%MIDI program (71|0)\nK:/);
   // the voice declaration line is still there exactly once, untouched
-  assert.equal((stamped.match(/V:2 name="R\\n3\\n5"/g) || []).length, 1);
+  assert.equal((stamped.match(/V:2 name="5\\n3\\nR"/g) || []).length, 1);
 });
 
 test("buildCompingTune returns a colour palette, one entry per drawn chord onset", () => {
@@ -443,7 +448,7 @@ test("buildCompingTune bass instrument stamps clef=bass on the comping voice", (
   const out = withTonal(() =>
     buildCompingTune(bassTune, CHORDS, fakeSong(), "whole_note"),
   );
-  assert.match(out.abc, /^V:2 name="R\\n3\\n5" clef=bass middle=D/m);
+  assert.match(out.abc, /^V:2 name="5\\n3\\nR" clef=bass middle=D/m);
 });
 
 test("buildCompingTune returns null when it cannot apply", () => {
@@ -470,7 +475,7 @@ test("buildCompingTune adds N+1 (V:2) to a tune whose one voice is declared befo
   assert.ok(out && out.abc, PRODUCED_A_TUNE);
   // the tune's own V:1 declaration survives untouched, no synthesized V:1/V:2 pair
   assert.equal((out.abc.match(/^V:1$/gm) || []).length, 1);
-  assert.match(out.abc, /\nV:2 name="R\\n3\\n5"\n/);
+  assert.match(out.abc, /\nV:2 name="5\\n3\\nR"\n/);
   assert.equal(out.palette.length, 4);
 });
 
@@ -504,8 +509,8 @@ test("buildCompingTune appends comping as V:4 on a honky_tonk_town_riffs.abc-sha
   // no %%staves synthesized -- the tune's own voice layout is left alone
   assert.doesNotMatch(abc, /%%staves/);
   // comping is appended as the fourth voice, once, after everything else
-  assert.equal((abc.match(/^V:4 name="R\\n3\\n5"$/gm) || []).length, 1);
-  const comping = abc.split('V:4 name="R\\n3\\n5"\n').pop().trim();
+  assert.equal((abc.match(/^V:4 name="5\\n3\\nR"$/gm) || []).length, 1);
+  const comping = abc.split('V:4 name="5\\n3\\nR"\n').pop().trim();
   assert.match(comping, /\[[A-Ga-g][A-Ga-g][A-Ga-g]\]/);
   // the pattern tracked V:1's four bars (one per CHORDS entry), not V:2's/V:3's
   assert.equal(out.palette.length, CHORDS.length);
@@ -536,10 +541,41 @@ test("buildCompingTune appends comping as V:3 on a big_chief.abc-shaped tune wit
   assert.match(abc, /V:1 clef=treble name="Trumpet"\nV:2 clef=bass name="Sousaphone"\n/);
   assert.match(abc, /\[V:1\] "C" c4\| "F" f4\|\n\[V:2\] e4\| a4\|\n\[V:1\] "G7" g4\| "C" c4\|\n\[V:2\] b4\| e4\|/);
   // comping is appended as the third voice, once, after everything else
-  assert.equal((abc.match(/^V:3 name="R\\n3\\n5"$/gm) || []).length, 1);
-  const comping = abc.split('V:3 name="R\\n3\\n5"\n').pop().trim();
+  assert.equal((abc.match(/^V:3 name="5\\n3\\nR"$/gm) || []).length, 1);
+  const comping = abc.split('V:3 name="5\\n3\\nR"\n').pop().trim();
   assert.match(comping, /\[[A-Ga-g][A-Ga-g][A-Ga-g]\]/);
   // the pattern tracked V:1's four bars (one per CHORDS entry), not V:2's
+  assert.equal(out.palette.length, CHORDS.length);
+});
+
+// A tune shaped like INLINE_VOICE_TUNE above, but without either voice ever
+// getting its own whole-line "V:" declaration -- both are named purely by
+// the inline "[V:n]" switch itself, from the very first body line onward.
+// findVoiceIds alone sees no voices at all here, which used to make
+// buildCompingTune treat this as an ordinary single-voice tune and hand the
+// generated Comping voice "V:2" -- the tune's own second (inline-only) voice.
+const INLINE_ONLY_VOICE_TUNE = [
+  "T:Inline Only",
+  "M:4/4",
+  "L:1/4",
+  "K:C",
+  '[V:1] "C" c4| "F" f4|',
+  "[V:2] e4| a4|",
+  '[V:1] "G7" g4| "C" c4|',
+  "[V:2] b4| e4|",
+].join("\n");
+
+test("buildCompingTune appends comping as V:3 on a tune whose voices are only ever named inline, never declared on their own V: line", () => {
+  const out = withTonal(() => buildCompingTune(INLINE_ONLY_VOICE_TUNE, CHORDS, fakeSong(), "whole_note"));
+  assert.ok(out && out.abc, PRODUCED_A_TUNE);
+  const abc = out.abc;
+  // every inline-switched body line survives untouched
+  assert.match(abc, /\[V:1\] "C" c4\| "F" f4\|\n\[V:2\] e4\| a4\|\n\[V:1\] "G7" g4\| "C" c4\|\n\[V:2\] b4\| e4\|/);
+  // comping gets its own new voice id, not the tune's own already-used V:2
+  assert.doesNotMatch(abc, /^V:2 name="5\\n3\\nR"$/m);
+  assert.equal((abc.match(/^V:3 name="5\\n3\\nR"$/gm) || []).length, 1);
+  // the pattern tracked V:1's four bars (one per CHORDS entry), not V:2's --
+  // i.e. the melody voice stayed separate from the generated Comping voice
   assert.equal(out.palette.length, CHORDS.length);
 });
 
@@ -555,9 +591,10 @@ test("buildCompingTune preserves an explicit-voice chart's own %%score/%%staves 
 
 // nextVoiceId's own collision/sparse/non-numeric-id behavior is unit-tested
 // in lib/voice-id.test.js; this only checks buildCompingTune actually wires
-// it up against a chart shaped to expose a length+1 collision (voice ids
-// "1"/"3", where a naive length+1 guess would land back on the used "3").
-test("buildCompingTune's new voice id doesn't collide with a sparse voice list", () => {
+// it up against a chart with a gap in its own voice ids ("1"/"3") -- the
+// generated Comping voice must fill that gap ("2"), not just count up past
+// the chart's own highest id.
+test("buildCompingTune's new voice id fills a gap in a sparse voice list", () => {
   const sparseTune = [
     "T:Sparse Voices",
     "M:4/4",
@@ -572,8 +609,8 @@ test("buildCompingTune's new voice id doesn't collide with a sparse voice list",
   ].join("\n");
   const out = withTonal(() => buildCompingTune(sparseTune, CHORDS, fakeSong(), "whole_note"));
   assert.ok(out && out.abc, PRODUCED_A_TUNE);
-  assert.doesNotMatch(out.abc, /^V:3 name="R\\n3\\n5"$/m);
-  assert.match(out.abc, /^V:4 name="R\\n3\\n5"$/m);
+  assert.doesNotMatch(out.abc, /^V:3 name="5\\n3\\nR"$/m);
+  assert.match(out.abc, /^V:2 name="5\\n3\\nR"$/m);
 });
 
 test("buildCompingTune defaults to 4/4 when the tune has no M: field at all", () => {

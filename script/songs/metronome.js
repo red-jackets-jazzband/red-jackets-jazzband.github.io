@@ -14,6 +14,15 @@ import {
 const LOOKAHEAD_INTERVAL_MS = 25;
 const SCHEDULE_AHEAD_SECONDS = 0.1;
 
+// A fixed forward nudge applied to every scheduled click. This metronome
+// runs on its own independent AudioContext with no link at all to ABCjs's
+// SynthController clock (see createMetronome's own doc comment below), so
+// there's nothing here to measure real playback latency against — it can
+// only be tuned by ear. Empirically the click reads as landing slightly
+// behind the beat rather than dead on it, so every click is scheduled this
+// much earlier than the clock's own reckoning would otherwise put it.
+const CLICK_ADVANCE_SECONDS = 0.02;
+
 /*
   A closed hihat tick, not a mechanical click: filtered white noise rather
   than a tuned oscillator, since a real closed hihat is a burst of
@@ -96,30 +105,24 @@ function playClick(audioCtx, noiseBuffer, time) {
   isBackbeat/hasBackbeat), the way a drummer's hihat foot keeps time under a
   swing/New-Orleans groove, rather than clicking every beat; a meter with no
   2-&-4 to lean on (a 3/4 waltz, say) falls back to ticking every beat so the
-  click track still means something there. It also holds off ticking at all
-  until a rubato/free intro with no chords under it (ctx.audio.chordOffset —
-  see lib/metronome.js's introDelaySeconds) has passed, rather than clicking
-  through a section that isn't in strict tempo in the first place, and — for
-  a tune with no such intro — starts its clock already phased to the tune's
-  own pickup/anacrusis (ctx.audio.pickupBeats, lib/metronome.js's
-  pickupStartBeatIndex) instead of always assuming the very first note is
-  beat 1.
+  click track still means something there.
+
+  Its chordless-intro and pickup handling (ctx.audio.chordOffset /
+  pickupBeats, lib/metronome.js's introDelaySeconds / pickupStartBeatIndex —
+  holding off until a rubato intro has passed, or phasing the very first
+  beat to a pickup/anacrusis) is derived once from the tune's own static
+  data, on the assumption that "now" is position 0. That's only true for a
+  genuine Play from the top, so start()'s `fromStart` flag (threaded through
+  from audio-player.js's setIsPlaying — see its own doc comment) gates it:
+  false for a resume from a mid-tune pause, or for the toggle itself being
+  flipped on while the sheet is already playing, both of which just tick
+  immediately and unphased instead — there's no way to know the real current
+  position in either case, so counting from "beat 1 now" is the honest
+  fallback rather than reapplying timing that assumes position 0.
 
   Tempo and time signature are read live off ctx.state / ctx.audio on every
   scheduling tick (never snapshotted), so a Tempo-stepper nudge or a new tune
   takes effect on the very next click with no extra wiring.
-
-  Simplification, called out because it's a real trade-off and not an
-  oversight: beyond the intro/pickup handling above (both derived once from
-  the tune's own static data, not from where playback actually is), the
-  click always restarts its beat count the same way regardless of where in
-  the tune it (re)starts. This only matters for a Pause mid-measure followed
-  by Play: ABCjs's SynthController resumes audio from that exact mid-measure
-  position (see playPause's own doc comment), but the click has no way to
-  know that position and just starts over as if from the top, so it can be
-  out of phase with the actual beat until the next full Stop/Play. Good
-  enough for a click track and far simpler than cross-referencing ABCjs's
-  internal timing on every resume to phase-lock to it exactly.
 */
 export function createMetronome(ctx) {
   let audioCtx = null;
@@ -170,20 +173,33 @@ export function createMetronome(ctx) {
     beatIndex = result.beatIndex;
   }
 
-  function start() {
+  // `fromStart` is true only for a genuine Play from position 0 (see
+  // audio-player.js's playPause/setIsPlaying) — the only time the intro/
+  // pickup timing below means anything, since it's derived from the tune's
+  // own static data assuming playback begins at the top. A resume from a
+  // mid-tune pause, or the metronome toggle itself being flipped on while
+  // the sheet is already playing, ticks immediately and unphased instead:
+  // there's no way to know the real current position, so counting from
+  // "beat 1 now" is the same simplification already documented above for a
+  // mid-measure resume, just applied a beat sooner.
+  function start(fromStart) {
     const audio = ensureAudioContext();
     if (!audio) return; // no Web Audio support — the toggle just does nothing audible
     if (audio.state === "suspended" && typeof audio.resume === "function") audio.resume();
-    const bpm = resolveBpm(ctx.state.tempoOverrideBpm, ctx.audio.nativeQpm);
     const beats = ctx.audio.beatsPerMeasure;
-    const introBars = ctx.audio.chordOffset || 0;
-    const pickupBeats = ctx.audio.pickupBeats || 0;
-    const delay = introDelaySeconds(introBars, beats, 60 / bpm, pickupBeats);
-    // Skipping an intro always lands exactly on a bar line, so the clock
-    // resumes at beat 1 either way; with nothing to skip, a pickup phases
-    // the clock's very first beat instead (see pickupStartBeatIndex).
-    beatIndex = introBars > 0 ? 0 : pickupStartBeatIndex(pickupBeats, beats);
-    nextNoteTime = audio.currentTime + 0.05 + delay;
+    let delay = 0;
+    beatIndex = 0;
+    if (fromStart) {
+      const bpm = resolveBpm(ctx.state.tempoOverrideBpm, ctx.audio.nativeQpm);
+      const introBars = ctx.audio.chordOffset || 0;
+      const pickupBeats = ctx.audio.pickupBeats || 0;
+      delay = introDelaySeconds(introBars, beats, 60 / bpm, pickupBeats);
+      // Skipping an intro always lands exactly on a bar line, so the clock
+      // resumes at beat 1 either way; with nothing to skip, a pickup phases
+      // the clock's very first beat instead (see pickupStartBeatIndex).
+      beatIndex = introBars > 0 ? 0 : pickupStartBeatIndex(pickupBeats, beats);
+    }
+    nextNoteTime = audio.currentTime + 0.05 - CLICK_ADVANCE_SECONDS + delay;
     timerId = setInterval(tick, LOOKAHEAD_INTERVAL_MS);
     running = true;
   }
@@ -211,9 +227,14 @@ export function createMetronome(ctx) {
   // ctx.audio.isPlaying flips (songs/audio-player.js's setIsPlaying) and the
   // toggle button itself call this, so either one turning on/off while the
   // other already holds its own state starts/stops the click immediately.
-  function syncRunning() {
+  // `fromStart` (see start()'s own doc comment) defaults to false, which is
+  // exactly right for the toggle-button call site below: flipping the
+  // toggle on never itself means "the tune just started" — either the sheet
+  // isn't playing yet (shouldRun is false, so start() never even runs), or
+  // it's already mid-playback and the click is only just joining it.
+  function syncRunning(fromStart = false) {
     const shouldRun = ctx.state.metronomeEnabled && ctx.audio.isPlaying;
-    if (shouldRun && !running) start();
+    if (shouldRun && !running) start(fromStart);
     else if (!shouldRun && running) stop();
   }
 
@@ -246,7 +267,12 @@ export function createMetronome(ctx) {
   return {
     init,
     refresh: updateToggleVisual,
-    onPlaybackChange: syncRunning,
+    // `playing` itself is only read via the live ctx.audio.isPlaying getter
+    // inside syncRunning, not this argument — kept here only so the call
+    // site (audio-player.js's setIsPlaying) reads naturally either way.
+    onPlaybackChange(playing, fromStart) {
+      syncRunning(fromStart);
+    },
   };
 }
 
