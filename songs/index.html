@@ -136,18 +136,21 @@
     <button id="stopBtn" class="sheet-icon-btn" type="button" disabled title="Stop and reset to the start" aria-label="Stop and reset to the start"><span class="fa-solid fa-stop" aria-hidden="true"></span></button>
     <button id="mixerBtn" class="sheet-icon-btn" type="button" disabled title="Mixer" aria-label="Mixer" aria-haspopup="dialog" aria-expanded="false"><span class="fa-solid fa-sliders fa-rotate-90" aria-hidden="true"></span></button>
   </div>
-  <div id="inspirationSlot"></div>
-  </div>
   <div class="sheet-actions" id="sheetActions">
     <a id="printLink" class="sheet-icon-btn" href="#" title="Print this page" aria-label="Print this page"><span class="fa-solid fa-print" aria-hidden="true"></span></a>
     <button id="exportWavBtn" class="sheet-icon-btn" type="button" disabled title="Export as WAV" aria-label="Export as WAV"><span class="fa-solid fa-file-audio" aria-hidden="true"></span></button>
   </div>
-  <span class="audio-loading" id="audioLoadingLabel">...</span>
+  <div id="inspirationSlot"></div>
   <!-- Keep the next two on the same HTML block (no blank lines): a lone <button>
        on its own line gets wrapped in a <p> by Goldmark, and that <p> becomes
        the flex child instead of the button — knocking it out of the top-row
-       alignment (same gotcha as #inspirationSlot). -->
+       alignment (same gotcha as #inspirationSlot). advancedToggleBtn lives here
+       (grouped with Inspiration), not next to compingSlot below, so it wraps
+       onto the same mobile-portrait line as Inspiration instead of stranding
+       itself alone on a trailing line. -->
   <button id="advancedToggleBtn" class="sheet-icon-btn sheet-advanced-toggle" type="button" title="More controls" aria-label="Show more controls" aria-expanded="false"><span class="fa-solid fa-angles-right" aria-hidden="true"></span></button>
+  <span class="audio-loading" id="audioLoadingLabel">...</span>
+  </div>
   <div id="compingSlot" class="sheet-comping sheet-adv-item"></div>
   <dialog id="mixerPanel" class="mixer-panel" aria-label="Mixer">
     <div class="mixer-head">

@@ -739,12 +739,12 @@ video.video {
 }
 
 /*
-  Purely a grouping node — wraps Key+Tempo, and separately Play+Inspiration,
-  so each pair's row can be aligned independently of #sheetmenu's own
-  justify-content (see the mobile override below). `display: contents`
-  erases it from the box tree here, so on desktop/tablet its children
-  remain #sheetmenu's own flex children, unchanged from before this
-  wrapper existed.
+  Purely a grouping node — wraps Key+Tempo, and separately
+  Play+Print/Export/iRealPro+Inspiration, so each group's row can be aligned
+  independently of #sheetmenu's own justify-content (see the mobile override
+  below). `display: contents` erases it from the box tree here, so on
+  desktop/tablet its children remain #sheetmenu's own flex children,
+  unchanged from before this wrapper existed.
 */
 .sheet-adjust {
   display: contents;
@@ -3468,25 +3468,26 @@ body:has(#rjLibrary) .split-bio {
   }
 
   /*
-    Key + Tempo steppers plus Play/Inspiration/Print don't fit on one line at
-    phone widths — wrapping #sheetmenu (rather than shrinking every control
-    to the point of being unreadable) keeps every control thumb-sized. The
-    instrument caption takes its own first line since it's the widest,
-    least-interactive item.
+    Key + Tempo steppers plus Play/Print/Export/iRealPro/Inspiration/
+    advanced-toggle don't fit on one line at phone widths — wrapping
+    #sheetmenu (rather than shrinking every control to the point of being
+    unreadable) keeps every control thumb-sized. The instrument caption
+    takes its own first line since it's the widest, least-interactive item.
   */
   /*
     Each wrapped line was left-packed by default: content-sized items just
     piled up at the start of their own line with whatever was left over
     sitting empty after them, so consecutive lines landed at visibly
     different widths and felt randomly sized next to each other.
-    justify-content stretches that leftover gap between a line's own items
-    instead, so every line reaches both edges the same way the full-width
-    instrument dropdown above them already does. Only the icon actions
-    (Print/iRealPro/advanced-toggle) are left to this — Key+Tempo and
-    Play+Inspiration are each pulled out of #sheetmenu's own flex flow into
+    justify-content would stretch that leftover gap between a line's own
+    items instead — but there's nothing left in #sheetmenu's own direct flex
+    flow for it to apply to any more (audio-loading is display:none outside
+    an active load, and compingSlot is display:none outside show-advanced):
+    Key+Tempo, and separately Play+Print/Export/iRealPro+Inspiration+
+    advanced-toggle, are each pulled out of #sheetmenu's own flex flow into
     their own centered .sheet-adjust row below, since space-between would
-    otherwise shove each pair to opposite edges instead of keeping them
-    together.
+    otherwise shove each group's items to opposite edges instead of keeping
+    them together.
   */
   #sheetmenu {
     flex-wrap: wrap;
@@ -3499,23 +3500,31 @@ body:has(#rjLibrary) .split-bio {
   /*
     Turn each .sheet-adjust wrapper into a real flex row of its own —
     escaping #sheetmenu's space-between above, which would otherwise shove
-    a wrapper's two children to opposite edges — so Key+Tempo, and
-    separately Play+Inspiration, each center as a pair on their own line
-    instead of sitting flush left (or apart).
+    a wrapper's own items to opposite edges — so Key+Tempo, and separately
+    Play+Print/Export/iRealPro+Inspiration+advanced-toggle, each center as a
+    group on their own line instead of sitting flush left (or apart). The
+    second group now holds four items rather than two, so it's allowed to
+    wrap onto a second centered line of its own (row-gap matching
+    #sheetmenu's own) on the narrowest phones instead of overflowing —
+    Inspiration and the advanced-toggle end up sharing that wrapped second
+    line together, rather than the toggle stranding itself alone below.
   */
   .sheet-adjust {
     display: flex;
+    flex-wrap: wrap;
     flex-basis: 100%;
     justify-content: center;
     gap: 10px;
+    row-gap: 8px;
   }
   /*
     Key/Tempo used to grow to fill their whole line, which read as two
     arbitrarily wide bars rather than controls that belong with
     Play/Stop/Mixer. Pin them instead to .sheet-transport's own rendered
     width (its three 42px buttons + 2px border, no padding) so all three
-    pills read as one family of same-sized controls. Play+Inspiration need
-    no such pinning — they already share .sheet-adjust's centering and are
+    pills read as one family of same-sized controls. The
+    Play/Print/Export/iRealPro/Inspiration/advanced-toggle group needs no
+    such pinning — its items already share .sheet-adjust's centering and are
     left at their own natural (different) sizes.
   */
   #keyStepper,
@@ -3587,11 +3596,11 @@ body:has(#rjLibrary) .split-bio {
   Tablet portrait widths (below the 1024px stack breakpoint above) have room
   for every #sheetmenu control except the instrument dropdown to share a
   single row — the per-group centered lines the 1024px block above builds
-  (Key+Tempo, then Play+Inspiration, then a third line for
-  Print/iRealPro/advanced-toggle) are phone-width-only. Unwind them back to
-  #sheetmenu's own plain single-row flex flow — the same one desktop uses —
-  so the instrument keeps its own full-width line but everything else packs
-  onto the line below it.
+  (Key+Tempo, then Play+Print/Export/iRealPro+Inspiration+advanced-toggle)
+  are phone-width-only. Unwind them back to #sheetmenu's own plain
+  single-row flex flow — the same one desktop uses — so the instrument
+  keeps its own full-width line but everything else packs onto the line
+  below it.
 
   That single row needs ~740px of #sheetmenu width to actually fit without
   spilling a control onto a third line, and the theme's own generic
@@ -3611,12 +3620,20 @@ body:has(#rjLibrary) .split-bio {
   tightened single row doesn't fit and a control spills onto a third line —
   measured directly, the row needs 740px and starts wrapping again below
   that. Rather than compress the controls further (there's no room left to
-  give without making them too small to tap), this block's lower bound stops
-  at 744px and anything narrower falls through to the 1024px block above's
-  phone-style stacked grouping instead, which has room to spare down to
-  phone widths.
+  give without making them too small to tap), this block's own min-width
+  stops at 744px and anything narrower falls through to the 1024px block
+  above's phone-style stacked grouping instead, which has room to spare down
+  to phone widths — UNLESS the viewport is also landscape (the second,
+  comma-OR'd condition below, with no min-width of its own): a landscape
+  phone is short on height rather than width, and even below 744px there's
+  usually enough width to unwind most of the stack down to two lines, so the
+  portrait-only 1024px block's forced four-line grouping would waste height
+  a landscape phone doesn't have to spare. Below the width this row actually
+  needs, it still wraps — just onto as few lines as the available width
+  allows, same graceful degradation as narrow tablet portrait gets above.
 */
-@media (min-width: 744px) and (max-width: 1024px) {
+@media (min-width: 744px) and (max-width: 1024px),
+       (max-width: 1024px) and (orientation: landscape) {
   #sheetmenu {
     justify-content: flex-start;
     /* Tightened from the base 10px so the row still fits the narrowest
@@ -3625,7 +3642,12 @@ body:has(#rjLibrary) .split-bio {
     gap: 8px;
   }
   .sheet-adjust {
-    display: contents;
+    display: flex;
+    flex-wrap: wrap;
+    flex-basis: 100%;
+    justify-content: center;
+    gap: 10px;
+    row-gap: 8px;
   }
   #keyStepper,
   #tempoStepper {
