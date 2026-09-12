@@ -3,7 +3,10 @@ import { offsetForInstrument, changeClefForInstrument } from "../lib/instruments
 import { parseChordScheme, computeChordOffset } from "../lib/chords.js";
 import { convertChordsToRoman } from "../lib/music-theory.js";
 import { buildCompingTune } from "../lib/comping.js";
-import { injectMixerAudio, resolveGchordPattern } from "../lib/audio-mix.js";
+import {
+  injectMixerAudio, resolveGchordPattern, parseVoiceList, resolveMixerVoices,
+} from "../lib/audio-mix.js";
+import { guessGmProgram } from "../lib/gm-voices.js";
 import { renderChordTable, scanRepeatBoundaries, fitChordTable } from "./chord-table.js";
 import { stylePartMarkers, applyCompingColors } from "./sheet-decorations.js";
 import { updateIrealProLink } from "./irealpro-link.js";
@@ -161,15 +164,15 @@ function extractLyrics(notationEl) {
 */
 export function createSheet(ctx) {
   // A muted Bass/Chords channel is just its fader forced to 0 — see
-  // lib/audio-mix.js. (Melody/Comping mute goes through computeVoicesOff in
-  // audio-player.js instead — see lib/audio-mix.js's own doc comment for why
-  // the two channel groups aren't handled the same way.)
+  // lib/audio-mix.js. (Every other voice's mute goes through computeVoicesOff
+  // in audio-player.js instead — see lib/audio-mix.js's own doc comment for
+  // why Bass/Chords aren't handled the same way.)
   function effectiveMixerPercent(channel) {
     const m = ctx.state.mixer;
     return m[`${channel}Muted`] ? 0 : m[`${channel}Volume`];
   }
 
-  // null (the Voice picker left on "Default") has to become undefined, not
+  // null (the Voice picker left un-overridden) has to become undefined, not
   // pass through as null — injectMixerAudio's own default parameters only
   // kick in for undefined, so a stored null would otherwise reach ABCjs as
   // a literal "%%MIDI program null".
@@ -178,21 +181,56 @@ export function createSheet(ctx) {
     return value === null ? undefined : value;
   }
 
-  // Live sheet only: stamp the mixer's Bass/Chords levels + all four
-  // channels' voices into the ABC text before it's parsed, so the one
+  // Builds the id -> program map injectMixerAudio needs to stamp each of the
+  // tune's resolved voices (lib/audio-mix.js's resolveMixerVoices — always
+  // at least one). A null program in ctx.state.mixerVoices (the Voice picker
+  // left un-overridden) resolves to a guess from the voice's own name
+  // (lib/gm-voices.js's guessGmProgram) rather than one flat default, since a
+  // chart can mix several different real instruments on one page.
+  function voiceProgramMap() {
+    const map = new Map();
+    ctx.state.mixerVoices.forEach((v) => {
+      map.set(v.id, v.program === null ? guessGmProgram(v.label) : v.program);
+    });
+    return map;
+  }
+
+  // Live sheet only (kept out of engrave() itself so its own branches don't
+  // push engrave's cyclomatic complexity over the lint gate): resolve the
+  // tune's own voice declarations (lib/audio-mix.js's parseVoiceList) plus
+  // whether Comping is on into the Mixer's one flat voice list
+  // (resolveMixerVoices) and hand it to the Mixer. Reads the raw `text`
+  // param, never the transpose-adjusted `abcText`, so a prior comping/
+  // instrument pass can't be mistaken for a second declaration of a voice.
+  function syncInstrumentVoices(text, compingActive, isBooklet) {
+    if (isBooklet) return;
+    ctx.state.instrumentVoices = resolveMixerVoices(parseVoiceList(text), compingActive);
+    ctx.mixer.syncVoices(ctx.state.instrumentVoices);
+  }
+
+  // The comping voice is always the last entry resolveMixerVoices resolved
+  // to -- its own `index` is that voice's 0-indexed ABCjs voice number
+  // (V:2 for an ordinary tune, or one past however many voices a chart like
+  // honky_tonk_town_riffs.abc already declares). Only called once comping is
+  // known active and syncInstrumentVoices has run, so
+  // ctx.state.instrumentVoices reflects this same render.
+  function compingVoiceIndex() {
+    return ctx.state.instrumentVoices.at(-1).index;
+  }
+
+  // Live sheet only: stamp the mixer's Bass/Chords levels and every
+  // resolved voice's Voice into the ABC text before it's parsed, so the one
   // visualObj that gets rendered is exactly what plays — see lib/audio-mix.js.
   function resolveRenderText(comping, hasChords, isBooklet) {
     if (isBooklet) return comping.renderText;
     return injectMixerAudio(comping.renderText, {
-      compingActive: comping.active,
       hasChords,
-      melodyProgram: mixerProgram("melody"),
-      compingProgram: mixerProgram("comping"),
       bassPercent: effectiveMixerPercent("bass"),
       bassProgram: mixerProgram("bass"),
       chordsPercent: effectiveMixerPercent("chords"),
       chordsProgram: mixerProgram("chords"),
       gchordPattern: resolveGchordPattern(ctx.state.gchordPattern),
+      voicePrograms: voiceProgramMap(),
     });
   }
 
@@ -220,6 +258,7 @@ export function createSheet(ctx) {
 
     const comping = applyComping(abcText, chords, isBooklet);
     ctx.state.compingActive = comping.active;
+    syncInstrumentVoices(text, comping.active, isBooklet);
 
     const renderText = resolveRenderText(comping, chords.length > 0, isBooklet);
 
@@ -238,7 +277,7 @@ export function createSheet(ctx) {
 
     const visualObjs = ABCJS.renderAbc(notationId, renderText, abcParams(visual));
 
-    if (comping.active) applyCompingColors(notationEl, comping.palette);
+    if (comping.active) applyCompingColors(notationEl, comping.palette, compingVoiceIndex());
 
     notationEl.querySelectorAll(".abcjs-title").forEach((node) => {
       node.setAttribute("display", "none");

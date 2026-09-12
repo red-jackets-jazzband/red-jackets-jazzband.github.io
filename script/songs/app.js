@@ -53,6 +53,8 @@ function createApp() {
       currentLibrarySongName: undefined, // name of the row currentLibraryIndex was set from, to tell apart duplicate aliases sharing a file
       currentSongText: undefined, // clef-adjusted ABC currently on the sheet
       compingActive: false,
+      instrumentVoices: [], // this tune's fully resolved Mixer voice list — see lib/audio-mix.js's resolveMixerVoices
+      mixerVoices: [], // per-voice Mixer channel state, materialised from instrumentVoices — see mixer.js's syncVoices
       tempoOverrideBpm: null,
       mixer: loadMixerState(),
       gchordPattern: loadGchordPatternState(),

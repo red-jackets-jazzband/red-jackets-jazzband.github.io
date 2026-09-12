@@ -120,6 +120,24 @@ test("applyCompingColors advances the palette only past chord groups", () => {
   });
 });
 
+// A multi-voice chart (honky_tonk_town_riffs.abc's Root/Third/Fifth) puts
+// comping at whatever voice slot comes after the tune's own voices, not
+// always v1 -- applyCompingColors must target that voice, and leave an
+// earlier voice that happens to carry its own chord-pos marks untouched.
+test("applyCompingColors targets the given voiceIndex, not always v1", () => {
+  inDom((container) => {
+    container.innerHTML = `
+      <g class="abcjs-note abcjs-v1"><path class="abcjs-chord-pos-1"></path></g>
+      <g class="abcjs-note abcjs-v3"><path class="abcjs-chord-pos-1"></path></g>
+      <text class="abcjs-voice-name abcjs-v3"><tspan>R</tspan><tspan>3</tspan><tspan>5</tspan></text>`;
+    applyCompingColors(container, [["5", "R", "3"]], 3);
+    const [v1Note, v3Note] = container.querySelectorAll("g.abcjs-note path");
+    assert.equal(v1Note.style.fill, "");
+    assert.ok(v3Note.style.fill);
+    assert.ok(container.querySelector("tspan").style.fill);
+  });
+});
+
 test("COMPING_FN_FILL maps each chord-tone function to a distinct fill", () => {
   assert.deepEqual(Object.keys(COMPING_FN_FILL).sort(), ["3", "5", "R"]);
   assert.equal(new Set(Object.values(COMPING_FN_FILL)).size, 3);

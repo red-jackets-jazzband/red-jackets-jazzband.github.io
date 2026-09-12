@@ -29,3 +29,35 @@ export const GM_VOICES = [
   { value: 71, label: "Clarinet", group: "Reeds" },
   { value: 73, label: "Flute", group: "Reeds" },
 ];
+
+// A tune's own instrument-voice name (a Rebirth Brass Band chart's "Trumpet"/
+// "Sousaphone" V: declarations — see lib/audio-mix.js's parseVoiceList) is a
+// far better hint for that voice's Mixer "Default" sound than the single
+// hardcoded Trumpet every plain melody voice defaulted to before per-voice
+// Voice pickers existed. Checked in order (most specific first, so e.g.
+// "Baritone Sax" matches before the generic "sax" fallback); an unrecognised
+// name falls back to Trumpet, the same one-size-fits-all default every other
+// channel's own "Default" already uses.
+const VOICE_NAME_PROGRAM_HINTS = [
+  { test: /sousaphone|tuba/i, value: 58 },
+  { test: /trombone/i, value: 57 },
+  { test: /trumpet/i, value: 56 },
+  { test: /french horn/i, value: 60 },
+  { test: /baritone sax/i, value: 67 },
+  { test: /tenor sax/i, value: 66 },
+  { test: /alto sax|sax(ophone)?/i, value: 65 },
+  { test: /clarinet/i, value: 71 },
+  { test: /flute/i, value: 73 },
+  { test: /banjo/i, value: 105 },
+  { test: /bass/i, value: 32 },
+  { test: /guitar/i, value: 26 },
+  { test: /organ/i, value: 16 },
+  { test: /piano/i, value: 0 },
+  { test: /vibraphone|vibes/i, value: 11 },
+];
+
+export function guessGmProgram(label, fallback = 56) {
+  if (!label) return fallback;
+  const hit = VOICE_NAME_PROGRAM_HINTS.find((hint) => hint.test.test(label));
+  return hit ? hit.value : fallback;
+}

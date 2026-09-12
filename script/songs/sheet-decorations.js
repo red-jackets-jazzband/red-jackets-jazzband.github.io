@@ -68,9 +68,9 @@ function tieAnchorY(el) {
   are a filled crescent; a dotted tie is a stroked open path — colour whichever
   the arc uses.
 */
-function colorCompingTies(container, orderByOnset) {
+function colorCompingTies(container, orderByOnset, voiceClass) {
   const groups = new Map();
-  container.querySelectorAll("path.abcjs-tie.abcjs-v1").forEach((tie) => {
+  container.querySelectorAll(`path.abcjs-tie.${voiceClass}`).forEach((tie) => {
     const cls = tie.getAttribute("class") || "";
     const start = /abcjs-start-m(\d+)-n(\d+)/.exec(cls);
     const line = /(?:^|\s)abcjs-l(\d+)(?:\s|$)/.exec(cls);
@@ -102,10 +102,17 @@ function colorCompingTies(container, orderByOnset) {
   instead of using CSS. Inline fills survive ABCjs's resize handler (it rescales
   the viewBox, it doesn't re-render) and are re-applied on every full re-render.
   The tie arcs and the stacked "R / 3 / 5" voice label are tinted to match.
+
+  `voiceIndex` is the comping voice's own 0-indexed ABCjs voice number
+  (ABCjs's own ".abcjs-vN" class order, matching resolveMixerVoices' resolved
+  voice list) — V:2 (index 1) for an ordinary one-voice tune, comping.js's
+  default, but one past however many voices (N) a chart like honky_tonk_town_
+  riffs.abc already declares of its own.
 */
-export function applyCompingColors(container, palette) {
+export function applyCompingColors(container, palette, voiceIndex = 1) {
   if (!container || !palette || !palette.length) return;
-  const groups = container.querySelectorAll("g.abcjs-note.abcjs-v1");
+  const voiceClass = `abcjs-v${voiceIndex}`;
+  const groups = container.querySelectorAll(`g.abcjs-note.${voiceClass}`);
   const orderByOnset = new Map();
   let index = 0;
   groups.forEach((group) => {
@@ -124,9 +131,9 @@ export function applyCompingColors(container, palette) {
     if (key) orderByOnset.set(key, order);
   });
 
-  colorCompingTies(container, orderByOnset);
+  colorCompingTies(container, orderByOnset, voiceClass);
 
-  const label = container.querySelector("text.abcjs-voice-name.abcjs-v1");
+  const label = container.querySelector(`text.abcjs-voice-name.${voiceClass}`);
   if (label) {
     const tspans = label.querySelectorAll("tspan");
     ["R", "3", "5"].forEach((fn, i) => {

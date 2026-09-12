@@ -132,6 +132,90 @@ test("a booklet render ignores the Key stepper and never touches audio", () => {
   }
 });
 
+const MULTI_VOICE_TUNE = [
+  "X:1", "T:Feel like Funkin' it up", "M:4/4", "L:1/8", "K:F",
+  'V:1 clef=treble name="Trumpet"',
+  'V:2 clef=bass name="Sousaphone"',
+  "[V:1] z8 |", "[V:2] z8 |",
+].join("\n");
+
+// syncInstrumentVoices/resolveRenderText's own logic (parseVoiceList,
+// resolveMixerVoices, injectMixerAudio's voicePrograms branch) is unit-tested
+// directly in lib/audio-mix.test.js; this only checks that sheet.js wires
+// ctx.mixer into that pipeline correctly. ctx.mixer.syncVoices is a no-op
+// stub by default (tests/helpers/ctx.js), so it's overridden here to do what
+// the real mixer.js does — materialise ctx.state.mixerVoices — since that's
+// what resolveRenderText's voiceProgramMap reads back out.
+function withSyncedMixerVoices(ctx) {
+  let lastSig = null;
+  ctx.mixer.syncVoices = (voices) => {
+    const sig = voices.map((v) => `${v.id}:${v.label}`).join("|");
+    if (sig === lastSig) return; // same rebuild-skip behaviour as the real mixer.js
+    lastSig = sig;
+    ctx.state.mixerVoices = voices.map((v) => ({ ...v, muted: false, program: null }));
+  };
+}
+
+test("engrave hands the tune's own instrument voices to ctx.mixer.syncVoices, and stamps each voice's program into the render text", () => {
+  const { ctx, abcjs, sheet, cleanup } = setup();
+  try {
+    withSyncedMixerVoices(ctx);
+    withAbcjs(abcjs, () => sheet.render(MULTI_VOICE_TUNE));
+    assert.deepEqual(ctx.state.instrumentVoices.map((v) => v.label), ["Trumpet", "Sousaphone"]);
+    const renderedAbc = abcjs.calls.renderAbc.at(-1).abc;
+    assert.match(renderedAbc, /name="Trumpet"\n%%MIDI program 56\n/); // guessed from the name
+    assert.match(renderedAbc, /name="Sousaphone"\n%%MIDI program 58\n/);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a voice's chosen (non-Default) program wins over the name-based guess", () => {
+  const { ctx, abcjs, sheet, cleanup } = setup();
+  try {
+    withSyncedMixerVoices(ctx);
+    withAbcjs(abcjs, () => sheet.render(MULTI_VOICE_TUNE));
+    ctx.state.mixerVoices[1].program = 0; // Sousaphone -> Piano, overriding the Tuba guess
+    withAbcjs(abcjs, () => sheet.rerender());
+    assert.match(abcjs.calls.renderAbc.at(-1).abc, /name="Sousaphone"\n%%MIDI program 0\n/);
+  } finally {
+    cleanup();
+  }
+});
+
+test("an ordinary single-voice tune resolves to one synthetic 'Melody' voice, not an empty list", () => {
+  const { ctx, abcjs, sheet, cleanup } = setup();
+  try {
+    const synced = [];
+    ctx.mixer.syncVoices = (voices) => synced.push(voices);
+    withAbcjs(abcjs, () => sheet.render(TUNE));
+    assert.deepEqual(ctx.state.instrumentVoices, [{ id: "1", index: 0, label: "Melody" }]);
+    assert.deepEqual(synced, [[{ id: "1", index: 0, label: "Melody" }]]);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a booklet render never touches ctx.state.instrumentVoices or calls ctx.mixer.syncVoices", () => {
+  const { ctx, abcjs, sheet, cleanup } = setup();
+  try {
+    let calls = 0;
+    ctx.mixer.syncVoices = () => { calls += 1; };
+    ctx.state.instrumentVoices = ["sentinel"];
+    document.getElementById("notation").insertAdjacentHTML(
+      "afterend",
+      "<div id='bk-n3'></div><div id='bk-c3'></div><div id='bk-t3'></div>",
+    );
+    withAbcjs(abcjs, () => sheet.renderIntoBooklet(MULTI_VOICE_TUNE, {
+      notationId: "bk-n3", chordId: "bk-c3", titleId: "bk-t3",
+    }));
+    assert.deepEqual(ctx.state.instrumentVoices, ["sentinel"]);
+    assert.equal(calls, 0);
+  } finally {
+    cleanup();
+  }
+});
+
 test("rerender re-engraves the stored (clef-adjusted) song text", () => {
   const { ctx, abcjs, sheet, cleanup } = setup();
   try {

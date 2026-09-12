@@ -59,20 +59,31 @@ test("stepTempo with no native tempo steps from the default bpm", () => {
   }
 });
 
-test("initForTune's setTune passes voicesOff computed from the mixer's Melody/Comping mute state", async () => {
-  const { ctx, audio, cleanup } = setup({ compingActive: true, mixer: { melodyMuted: true, compingMuted: false } });
+test("initForTune's setTune passes voicesOff computed from ctx.state.mixerVoices (melody + comping)", async () => {
+  const { ctx, audio, cleanup } = setup({
+    mixerVoices: [
+      { id: "1", index: 0, label: "Melody", muted: true },
+      { id: "2", index: 1, label: "Comping", muted: false },
+    ],
+  });
   const abcjs = createAbcjsStub({ audioSupported: true });
   try {
     withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
     await flush();
     assert.deepEqual(abcjs.calls.setTune.at(-1).params.voicesOff, [0]);
 
-    ctx.state.mixer = { melodyMuted: false, compingMuted: true };
+    ctx.state.mixerVoices = [
+      { id: "1", index: 0, label: "Melody", muted: false },
+      { id: "2", index: 1, label: "Comping", muted: true },
+    ];
     withAbcjs(abcjs, () => audio.stop()); // re-primes via setTune with fresh synthParams
     await flush();
     assert.deepEqual(abcjs.calls.setTune.at(-1).params.voicesOff, [1]);
 
-    ctx.state.mixer = { melodyMuted: false, compingMuted: false };
+    ctx.state.mixerVoices = [
+      { id: "1", index: 0, label: "Melody", muted: false },
+      { id: "2", index: 1, label: "Comping", muted: false },
+    ];
     withAbcjs(abcjs, () => audio.stop());
     await flush();
     assert.equal("voicesOff" in abcjs.calls.setTune.at(-1).params, false);
@@ -81,8 +92,38 @@ test("initForTune's setTune passes voicesOff computed from the mixer's Melody/Co
   }
 });
 
-test("initForTune's setTune fully mutes when melody is off and there's no comping voice", async () => {
-  const { audio, cleanup } = setup({ compingActive: false, mixer: { melodyMuted: true, compingMuted: false } });
+test("initForTune's setTune mutes by index for a chart with more than two of its own voices", async () => {
+  const { ctx, audio, cleanup } = setup({
+    mixerVoices: [
+      { id: "1", index: 0, label: "Trumpet", muted: false },
+      { id: "2", index: 1, label: "Sousaphone", muted: true },
+    ],
+  });
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+    assert.deepEqual(abcjs.calls.setTune.at(-1).params.voicesOff, [1]);
+
+    ctx.state.mixerVoices[0].muted = true;
+    withAbcjs(abcjs, () => audio.stop());
+    await flush();
+    assert.deepEqual(abcjs.calls.setTune.at(-1).params.voicesOff, [0, 1]);
+
+    ctx.state.mixerVoices[0].muted = false;
+    ctx.state.mixerVoices[1].muted = false;
+    withAbcjs(abcjs, () => audio.stop());
+    await flush();
+    assert.equal("voicesOff" in abcjs.calls.setTune.at(-1).params, false);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a single-entry mixerVoices (an ordinary one-voice tune) mutes as a full mute (true), same as before per-voice channels existed", async () => {
+  const { audio, cleanup } = setup({
+    mixerVoices: [{ id: "1", index: 0, label: "Melody", muted: true }],
+  });
   const abcjs = createAbcjsStub({ audioSupported: true });
   try {
     withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));

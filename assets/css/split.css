@@ -573,7 +573,7 @@ video.video {
     align-items: center;
     gap: 10px;
     row-gap: 8px;
-    padding: 12px 16px;
+    padding: 12px 16px 18px;
     position: relative;
 }
 
@@ -961,23 +961,46 @@ video.video {
   border-radius: 50%;
   box-shadow: 0 0 0 1px rgba(255,255,255,.35) inset;
 }
-.mixer-swatch--melody {
-  background: #f0eee9;
-}
 .mixer-swatch--bass {
   background: #8a6244;
 }
 .mixer-swatch--chords {
   background: var(--rj-body);
 }
-.mixer-swatch--comping {
-  background: var(--rj-hover);
+/*
+  Voice strips (songs/mixer.js's buildVoiceStrip, one per the tune's resolved
+  voices — an ordinary tune's own Melody, a chart's own named staves like
+  Trumpet + Sousaphone, or Comping) have no established colour coding the way
+  Bass/Chords do above — these just cycle by list position so 2-4 voices on
+  one tune stay visually distinguishable.
+*/
+.mixer-swatch--voice-0 {
+  background: #7fa6c9;
+}
+.mixer-swatch--voice-1 {
+  background: #c98a7f;
+}
+.mixer-swatch--voice-2 {
+  background: #9fc97f;
+}
+.mixer-swatch--voice-3 {
+  background: #c9b17f;
 }
 .mixer-strip-label {
   flex: 0 0 46px;
   font: 600 11px/1.2 "Montserrat", sans-serif;
   color: #ece6e6;
   white-space: nowrap;
+}
+/* A resolved voice's own name can run longer than the fixed Bass/Chords
+   labels above ("Sousaphone" vs "Bass") — let it size to its text instead of
+   the fixed 46px column, but still clip with an ellipsis rather than push
+   the Voice picker/mute button off the panel. */
+.mixer-strip--voice .mixer-strip-label {
+  flex: 0 1 auto;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .mixer-fader-track {
   position: relative;
@@ -1077,42 +1100,32 @@ video.video {
   border-color: var(--rj-gold);
   color: #ece6e6;
 }
-/* Melody/Comping: Mute and Voice are real; volume isn't (see
+/* Every resolved voice strip: Mute and Voice are real; volume isn't (see
    lib/audio-mix.js's doc comment for why) — their fader is permanently
    dimmed (and `disabled` in the markup) rather than left interactive with
    no audible effect. */
 .mixer-strip--volume-locked .mixer-fader-track {
   opacity: .4;
 }
-.mixer-strip-note {
-  display: none;
-  flex: 0 0 100%;
-  margin: 4px 0 0;
-  font: 400 11.5px/1.5 "Lora", serif;
-  font-style: italic;
-  color: rgba(236,234,230,.45);
+/* #mixerVoicesSection wraps the tune's resolved voice strips (songs/
+   mixer.js's rebuildVoiceStrips) — a plain block, not a .mixer-strip itself,
+   so it needs its own top margin next to its neighbours (.mixer-strip +
+   .mixer-strip only fires between two direct .mixer-strip siblings, not
+   through this wrapper) and something to space its own first child from the
+   strip above it. */
+.mixer-strip + .mixer-voices-section,
+.mixer-voices-section + .mixer-strip {
+  margin-top: 10px;
 }
 /* Bass/Chords need chord symbols to build an accompaniment from — a gated
-   channel with nothing to mix is dimmed out of interaction and swaps in an
-   explainer, rather than left clickable with no audible effect (see
+   channel with nothing to mix hides the whole strip (swatch, label, fader,
+   mute, Voice, readout) rather than leaving a dead control visible (see
    songs/mixer.js's updateGate). */
-.mixer-strip.is-inactive .mixer-fader-track,
-.mixer-strip.is-inactive .mixer-mute-btn,
-.mixer-strip.is-inactive .mixer-voice-select {
-  opacity: .4;
-  pointer-events: none;
-}
-.mixer-strip.is-inactive .mixer-strip-note {
-  display: block;
-}
-/* Comping needs its own pattern turned on; with no comping voice at all
-   there's nothing in its row worth even dimming — hide the whole strip
-   (swatch, label, fader, mute, Voice, readout), not just its controls. */
-.mixer-strip--comping.is-inactive {
+.mixer-strip.is-inactive {
   display: none;
 }
 /*
-  Metronome: not a channel like the four above it — no volume fader, no
+  Metronome: not a channel like Bass/Chords above it — no volume fader, no
   Voice picker, nothing to gate on the current tune (see songs/mixer.js's
   CHANNELS / GATE_STATE_KEY, neither of which lists it) — just a toggle
   button, real on/off, wired by songs/metronome.js.
@@ -1154,8 +1167,8 @@ video.video {
   <select> choosing the Bass/Chords auto-accompaniment's %%MIDI gchord rhythm
   (songs/mixer.js, lib/audio-mix.js's GCHORD_PATTERNS). Reuses the Voice
   pickers' .mixer-voice-select look (same indented full-width row under the
-  label) and the Bass/Chords gate's .is-inactive / .mixer-strip-note styling
-  above, since it needs chord symbols to do anything just like they do.
+  label) and the Bass/Chords gate's .is-inactive styling above, since it
+  needs chord symbols to do anything just like they do.
 */
 .mixer-swatch--pattern {
   background: var(--rj-gold);
@@ -3468,11 +3481,13 @@ body:has(#rjLibrary) .split-bio {
   }
 
   /*
-    Key + Tempo steppers plus Play/Print/Export/iRealPro/Inspiration/
-    advanced-toggle don't fit on one line at phone widths — wrapping
-    #sheetmenu (rather than shrinking every control to the point of being
-    unreadable) keeps every control thumb-sized. The instrument caption
-    takes its own first line since it's the widest, least-interactive item.
+    Key + Tempo steppers plus Play/Print/Export/iRealPro/Inspiration don't
+    fit on one line at phone widths — wrapping #sheetmenu (rather than
+    shrinking every control to the point of being unreadable) keeps every
+    control thumb-sized. The instrument caption takes its own first line
+    since it's the widest, least-interactive item. (The advanced-toggle
+    drawer handle isn't part of this flow at all — it's absolutely
+    positioned on #sheetmenu's own bottom edge, see .sheet-advanced-toggle.)
   */
   /*
     Each wrapped line was left-packed by default: content-sized items just
@@ -3483,11 +3498,10 @@ body:has(#rjLibrary) .split-bio {
     items instead — but there's nothing left in #sheetmenu's own direct flex
     flow for it to apply to any more (audio-loading is display:none outside
     an active load, and compingSlot is display:none outside show-advanced):
-    Key+Tempo, and separately Play+Print/Export/iRealPro+Inspiration+
-    advanced-toggle, are each pulled out of #sheetmenu's own flex flow into
-    their own centered .sheet-adjust row below, since space-between would
-    otherwise shove each group's items to opposite edges instead of keeping
-    them together.
+    Key+Tempo, and separately Play+Print/Export/iRealPro+Inspiration, are
+    each pulled out of #sheetmenu's own flex flow into their own centered
+    .sheet-adjust row below, since space-between would otherwise shove each
+    group's items to opposite edges instead of keeping them together.
   */
   #sheetmenu {
     flex-wrap: wrap;
@@ -3501,21 +3515,26 @@ body:has(#rjLibrary) .split-bio {
     Turn each .sheet-adjust wrapper into a real flex row of its own —
     escaping #sheetmenu's space-between above, which would otherwise shove
     a wrapper's own items to opposite edges — so Key+Tempo, and separately
-    Play+Print/Export/iRealPro+Inspiration+advanced-toggle, each center as a
-    group on their own line instead of sitting flush left (or apart). The
-    second group now holds four items rather than two, so it's allowed to
-    wrap onto a second centered line of its own (row-gap matching
+    Play+Print/Export/iRealPro+Inspiration, each center as a group on their
+    own line instead of sitting flush left (or apart). The second group is
+    allowed to wrap onto a second centered line of its own (row-gap matching
     #sheetmenu's own) on the narrowest phones instead of overflowing —
-    Inspiration and the advanced-toggle end up sharing that wrapped second
-    line together, rather than the toggle stranding itself alone below.
+    Inspiration ends up alone on that wrapped second line rather than
+    forcing the whole group tighter.
+    Column gap is tightened from the base 10px to 4px here: at the narrowest
+    real phone widths (measured at 360px, e.g. Galaxy S8/S9/S10e) the
+    available row is only ~262px, 4px short of the two 128px pills
+    (Key+Tempo, or Play/Stop/Mixer + Print/Export/iRealPro) plus a 10px gap —
+    just enough to tip each pair onto its own line and balloon this section
+    to extra rows instead of the intended four. 4px of column gap gives
+    both pairs their fit back with a couple of pixels to spare.
   */
   .sheet-adjust {
     display: flex;
     flex-wrap: wrap;
     flex-basis: 100%;
     justify-content: center;
-    gap: 10px;
-    row-gap: 8px;
+    gap: 8px 4px;
   }
   /*
     Key/Tempo used to grow to fill their whole line, which read as two
@@ -3523,9 +3542,9 @@ body:has(#rjLibrary) .split-bio {
     Play/Stop/Mixer. Pin them instead to .sheet-transport's own rendered
     width (its three 42px buttons + 2px border, no padding) so all three
     pills read as one family of same-sized controls. The
-    Play/Print/Export/iRealPro/Inspiration/advanced-toggle group needs no
-    such pinning — its items already share .sheet-adjust's centering and are
-    left at their own natural (different) sizes.
+    Play/Print/Export/iRealPro/Inspiration group needs no such pinning —
+    its items already share .sheet-adjust's centering and are left at
+    their own natural (different) sizes.
   */
   #keyStepper,
   #tempoStepper {
@@ -3596,8 +3615,8 @@ body:has(#rjLibrary) .split-bio {
   Tablet portrait widths (below the 1024px stack breakpoint above) have room
   for every #sheetmenu control except the instrument dropdown to share a
   single row — the per-group centered lines the 1024px block above builds
-  (Key+Tempo, then Play+Print/Export/iRealPro+Inspiration+advanced-toggle)
-  are phone-width-only. Unwind them back to #sheetmenu's own plain
+  (Key+Tempo, then Play+Print/Export/iRealPro+Inspiration) are phone-width-
+  only. Unwind them back to #sheetmenu's own plain
   single-row flex flow — the same one desktop uses — so the instrument
   keeps its own full-width line but everything else packs onto the line
   below it.
@@ -4309,11 +4328,13 @@ body:has(#rjLibrary) .split-bio {
    fills that survive abcjs's resize (it rescales, doesn't re-render). */
 
 /* ============================================================
-   Advanced controls toggle (double chevron in the sheet menu)
+   Advanced controls toggle (drawer handle between menu and sheet)
    ============================================================
-   The chevron button is the last control on the top row and is always
-   visible; "advanced" items (currently just the comping dropdown, more
-   later) sit on their own second row and stay hidden until it's expanded.
+   The chevron button is a small pull-tab straddling the seam between
+   #sheetmenu and the sheet paper below it — a drawer handle, not one of
+   the toolbar's own icon buttons. "Advanced" items (currently just the
+   comping dropdown, more later) sit on their own row inside #sheetmenu,
+   under the top toolbar, and stay hidden until the drawer is opened.
    State lives on #sheetmenu.show-advanced, set/persisted by
    initAdvancedToggle. */
 #sheetmenu:not(.show-advanced) .sheet-adv-item {
@@ -4330,15 +4351,35 @@ body:has(#rjLibrary) .split-bio {
   width: 100%;
   max-width: 280px;
 }
-/* Same 44px box as Stop / Mute / Print so it aligns on the top row. */
+/*
+  Anchored to #sheetmenu's own bottom edge (#sheetmenu is `position:
+  relative`, see above) rather than sitting in its flex flow, so the handle
+  stays centred on the seam whether the drawer is open or shut — opening it
+  grows #sheetmenu by one row, #sheetmenu's bottom edge (and border-radius
+  clip inherited from #rjSheet's own `overflow: hidden`, see .rj-sheet) moves
+  down with it, and `bottom: 0` + the -50%/50% translate keep the handle
+  glued to that edge either way. Deliberately smaller than the 44px icon
+  buttons above it — a drawer pull, not another toolbar action.
+*/
 .sheet-advanced-toggle {
-  order: 1;
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 40px;
+  height: 22px;
+  transform: translate(-50%, 50%);
+  border-radius: 11px;
+  z-index: 2;
 }
 .sheet-advanced-toggle .fa-angles-right {
   transition: transform 0.15s ease;
-}
-#sheetmenu.show-advanced .sheet-advanced-toggle .fa-angles-right {
   transform: rotate(90deg);
+  font-size: 12px;
+}
+/* Points down at rest (an invitation to pull the drawer open) and flips to
+   point up, towards the seam it collapses back behind, once expanded. */
+#sheetmenu.show-advanced .sheet-advanced-toggle .fa-angles-right {
+  transform: rotate(-90deg);
 }
 
 /* ============================================================

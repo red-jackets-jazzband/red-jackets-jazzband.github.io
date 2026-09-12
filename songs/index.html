@@ -141,32 +141,33 @@
     <button id="exportWavBtn" class="sheet-icon-btn" type="button" disabled title="Export as WAV" aria-label="Export as WAV"><span class="fa-solid fa-file-audio" aria-hidden="true"></span></button>
   </div>
   <div id="inspirationSlot"></div>
-  <!-- Keep the next two on the same HTML block (no blank lines): a lone <button>
-       on its own line gets wrapped in a <p> by Goldmark, and that <p> becomes
-       the flex child instead of the button — knocking it out of the top-row
-       alignment (same gotcha as #inspirationSlot). advancedToggleBtn lives here
-       (grouped with Inspiration), not next to compingSlot below, so it wraps
-       onto the same mobile-portrait line as Inspiration instead of stranding
-       itself alone on a trailing line. -->
-  <button id="advancedToggleBtn" class="sheet-icon-btn sheet-advanced-toggle" type="button" title="More controls" aria-label="Show more controls" aria-expanded="false"><span class="fa-solid fa-angles-right" aria-hidden="true"></span></button>
+  <!-- Keep the next two on the same HTML block (no blank lines): a lone
+       element on its own line gets wrapped in a <p> by Goldmark, and that
+       <p> becomes the flex child instead of the element itself — knocking
+       it out of the top-row alignment. -->
   <span class="audio-loading" id="audioLoadingLabel">...</span>
   </div>
+  <!-- advancedToggleBtn is absolutely positioned (see .sheet-advanced-toggle
+       in split.css) as a small drawer handle straddling the seam between
+       #sheetmenu and the sheet paper below it, so it no longer needs to sit
+       inside the flex toolbar above. Kept on the same HTML block as
+       #compingSlot (no blank line) for the same Goldmark-wraps-a-lone-element
+       gotcha called out above. -->
+  <button id="advancedToggleBtn" class="sheet-icon-btn sheet-advanced-toggle" type="button" title="More controls" aria-label="Show more controls" aria-expanded="false"><span class="fa-solid fa-angles-right" aria-hidden="true"></span></button>
   <div id="compingSlot" class="sheet-comping sheet-adv-item"></div>
   <dialog id="mixerPanel" class="mixer-panel" aria-label="Mixer">
     <div class="mixer-head">
       <h3 class="mixer-head-title">Mixer</h3>
       <button type="button" id="mixerCloseBtn" class="mixer-close" aria-label="Close mixer"><span class="fa-solid fa-xmark" aria-hidden="true"></span></button>
     </div>
-    <div class="mixer-strip mixer-strip--volume-locked" id="mixerStripMelody">
-      <span class="mixer-swatch mixer-swatch--melody" aria-hidden="true"></span>
-      <span class="mixer-strip-label">Melody</span>
-      <div class="mixer-fader-track">
-        <div class="mixer-fader-fill" id="mixerMelodyFill"></div>
-        <input type="range" id="mixerMelodyRange" min="0" max="100" value="100" aria-label="Melody volume" disabled title="Volume control isn't available for this channel yet — use Mute">
-      </div>
-      <span class="mixer-readout" id="mixerMelodyReadout">—</span>
-      <button type="button" id="mixerMelodyMuteBtn" class="mixer-mute-btn" aria-pressed="false" title="Mute melody" aria-label="Mute melody"><span class="fa-solid fa-volume-high" aria-hidden="true"></span></button>
-      <select id="mixerMelodyVoiceSelect" class="mixer-voice-select" aria-label="Melody voice"></select>
+    <!-- Populated by songs/mixer.js's syncVoices/rebuildVoiceStrips — one
+         strip per the tune's resolved voice (lib/audio-mix.js's
+         resolveMixerVoices): an ordinary tune's own Melody, a chart's own
+         named staves (Trumpet + Sousaphone, ...), plus Comping appended when
+         it's on. Always at least one strip once a song is open; see
+         mixer.js's own doc comment. -->
+    <div id="mixerVoicesSection" class="mixer-voices-section">
+      <div id="mixerVoicesList"></div>
     </div>
     <div class="mixer-strip" id="mixerStripBass">
       <span class="mixer-swatch mixer-swatch--bass" aria-hidden="true"></span>
@@ -178,7 +179,6 @@
       <span class="mixer-readout" id="mixerBassReadout">100%</span>
       <button type="button" id="mixerBassMuteBtn" class="mixer-mute-btn" aria-pressed="false" title="Mute bass" aria-label="Mute bass"><span class="fa-solid fa-volume-high" aria-hidden="true"></span></button>
       <select id="mixerBassVoiceSelect" class="mixer-voice-select" aria-label="Bass voice"></select>
-      <p class="mixer-strip-note">This tune has no chord symbols to build an accompaniment from.</p>
     </div>
     <div class="mixer-strip" id="mixerStripChords">
       <span class="mixer-swatch mixer-swatch--chords" aria-hidden="true"></span>
@@ -190,24 +190,11 @@
       <span class="mixer-readout" id="mixerChordsReadout">100%</span>
       <button type="button" id="mixerChordsMuteBtn" class="mixer-mute-btn" aria-pressed="false" title="Mute chords" aria-label="Mute chords"><span class="fa-solid fa-volume-high" aria-hidden="true"></span></button>
       <select id="mixerChordsVoiceSelect" class="mixer-voice-select" aria-label="Chords voice"></select>
-      <p class="mixer-strip-note">This tune has no chord symbols to build an accompaniment from.</p>
-    </div>
-    <div class="mixer-strip mixer-strip--volume-locked mixer-strip--comping" id="mixerStripComping">
-      <span class="mixer-swatch mixer-swatch--comping" aria-hidden="true"></span>
-      <span class="mixer-strip-label">Comping</span>
-      <div class="mixer-fader-track">
-        <div class="mixer-fader-fill" id="mixerCompingFill"></div>
-        <input type="range" id="mixerCompingRange" min="0" max="100" value="100" aria-label="Comping volume" disabled title="Volume control isn't available for this channel yet — use Mute">
-      </div>
-      <span class="mixer-readout" id="mixerCompingReadout">—</span>
-      <button type="button" id="mixerCompingMuteBtn" class="mixer-mute-btn" aria-pressed="false" title="Mute comping" aria-label="Mute comping"><span class="fa-solid fa-volume-high" aria-hidden="true"></span></button>
-      <select id="mixerCompingVoiceSelect" class="mixer-voice-select" aria-label="Comping voice"></select>
     </div>
     <div class="mixer-strip mixer-strip--pattern" id="mixerStripPattern">
       <span class="mixer-swatch mixer-swatch--pattern" aria-hidden="true"></span>
       <span class="mixer-strip-label">Pattern</span>
       <select id="mixerGchordPatternSelect" class="mixer-voice-select" aria-label="Accompaniment pattern"></select>
-      <p class="mixer-strip-note">This tune has no chord symbols to build an accompaniment from.</p>
     </div>
     <div class="mixer-strip mixer-strip--swing" id="mixerStripSwing">
       <span class="mixer-swatch mixer-swatch--swing" aria-hidden="true"></span>

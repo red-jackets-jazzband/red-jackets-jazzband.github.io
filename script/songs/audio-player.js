@@ -62,17 +62,20 @@ function meterValueOf(visualObj) {
   click-to-seek timing map, and the Tempo stepper's effect (SynthController
   warp). sheet.js calls initForTune() after each live render; sheet-controls.js
   wires the buttons to playPause / stop / stepTempo. The Mixer panel
-  (songs/mixer.js) reaches this file only for Melody/Comping *mute*, through
-  computeVoicesOff below — SynthController's own voicesOff option, the one
-  mechanism proven to actually reach the live synth for a regular voice (a
-  generic %%MIDI vol/program directive doesn't, unlike ABCjs's own gchord/bass
-  accompaniment directives — see lib/audio-mix.js's doc comment). Bass/Chords'
-  volume and voice, and Melody/Comping's voice, are baked into the ABC text
+  (songs/mixer.js) reaches this file only for *mute*: ctx.state.mixerVoices
+  (the tune's resolved voice list — lib/audio-mix.js's resolveMixerVoices,
+  always at least one entry: an ordinary tune's own Melody, a chart's own
+  named voices, plus Comping when it's on) feeds computeVoicesOff, which sets
+  SynthController's own voicesOff option — the one mechanism proven to
+  actually reach the live synth for a regular voice (a generic %%MIDI vol/
+  program directive doesn't, unlike ABCjs's own gchord/bass accompaniment
+  directives — see lib/audio-mix.js's doc comment). Bass/Chords' volume and
+  voice, and every resolved voice's own Voice, are baked into the ABC text
   instead (sheet.js + lib/audio-mix.js's injectMixerAudio) — this file never
-  reads ctx.state.mixer for those. Swing (ctx.state.swing, the Mixer panel's
-  bottom-most, tune-wide fader) is a third case: read directly here via
-  lib/audio-mix.js's percentToAbcjsSwing into ABCjs's own `swing` synth init
-  option, since it's neither a per-voice mute nor a %%MIDI text directive.
+  reads ctx.state.mixer(Voices) for those. Swing (ctx.state.swing, the Mixer
+  panel's bottom-most, tune-wide fader) is a third case: read directly here
+  via lib/audio-mix.js's percentToAbcjsSwing into ABCjs's own `swing` synth
+  init option, since it's neither a per-voice mute nor a %%MIDI text directive.
 */
 export function createAudioPlayer(ctx) {
   const state = {
@@ -119,11 +122,7 @@ export function createAudioPlayer(ctx) {
       soundFontUrl: ctx.state.highQualityAudio ? HIGH_QUALITY_SOUNDFONT_URL : STANDARD_SOUNDFONT_URL,
       swing: percentToAbcjsSwing(ctx.state.swing),
     };
-    const { voicesOff } = computeVoicesOff({
-      compingActive: ctx.state.compingActive,
-      melodyMuted: ctx.state.mixer.melodyMuted,
-      compingMuted: ctx.state.mixer.compingMuted,
-    });
+    const { voicesOff } = computeVoicesOff(ctx.state.mixerVoices);
     if (voicesOff !== undefined) params.voicesOff = voicesOff;
     if (state.transposeSemitones) params.midiTranspose = state.transposeSemitones;
     return params;

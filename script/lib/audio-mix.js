@@ -8,7 +8,9 @@
 //     %%MIDI gchord/bassprog/chordprog/bassvol/chordvol stamped into the ABC
 //     text before ABCjs parses it (there's no live gain node in ABCjs's
 //     synth, so a *change* has to be baked into the text).
-//   - Melody/Comping (regular ABC voices, not gchord-generated) get real
+//   - Every other channel is just an ordinary notated ABC voice — the tune's
+//     own melody line, one of a chart's own several named voices (Trumpet +
+//     Sousaphone, ...), or the generated Comping voice — and those get real
 //     MUTE (through computeVoicesOff — SynthController's own `voicesOff`
 //     option, unrelated to any text directive) and real VOICE (a per-voice
 //     %%MIDI program line, same text-injection idea as Bass/Chords' program
@@ -22,18 +24,25 @@
 //     doesn't know about yet, or priming a separate SynthController per
 //     channel through its own Web Audio GainNode and mixing them by hand —
 //     a real audio-engine change that needs a real browser to verify.
+//
+// See resolveMixerVoices' own doc comment for how "every other channel"
+// above is modelled: one flat list of N voices (however many the tune's own
+// ABC declares, or a single implicit one for an ordinary tune with none),
+// plus Comping appended as voice N+1 when it's turned on — Melody and
+// Comping aren't special-cased channels of their own any more, just voices
+// with a resolved name like any other.
 
 // The MIDI channel-volume range abc2midi's `bassvol`/`chordvol` directives
 // accept.
 export const MIDI_VOLUME_MAX = 127;
 
-// Each channel's GM program (see lib/gm-voices.js) when its Voice picker is
-// left on "Default" — Trumpet for Melody/Comping (today's one hardcoded
-// program before the Mixer existed, kept as-is so an untouched picker
-// changes nothing audible), Acoustic Bass / Jazz Guitar for Bass/Chords (a
-// reasonable jazz-combo guess, not yet checked by ear in a real browser).
+// Bass/Chords' GM program (see lib/gm-voices.js) when their Voice picker is
+// left on "Default" — Acoustic Bass / Jazz Guitar, a reasonable jazz-combo
+// guess, not yet checked by ear in a real browser. Every other voice's own
+// "Default" program is resolved per-voice instead, from its own name — see
+// lib/gm-voices.js's guessGmProgram.
 export const DEFAULT_PROGRAM = {
-  melody: 56, bass: 32, chords: 26, comping: 56,
+  bass: 32, chords: 26,
 };
 
 /*
@@ -104,10 +113,6 @@ function insertLinesBeforeKeyLine(text, lines) {
   return split.join("\n");
 }
 
-function spliceAfter(text, index, insertion) {
-  return text.slice(0, index) + insertion + text.slice(index);
-}
-
 // The Bass/Chords header block: only worth emitting when the tune actually
 // carries chord symbols for ABCjs's gchord engine to read (a tune with none
 // would just render an inert directive).
@@ -127,7 +132,103 @@ function accompanimentLines(hasChords, {
 }
 
 /*
-  Stamp Bass/Chords' full accompaniment directives, and Melody/Comping's
+  Parse the tune's own V: voice declarations — id + optional name="..." — in
+  order of first appearance. This reads only the tune's original, un-augmented
+  source text (before comping.js or injectMixerAudio ever touch it), so it
+  finds genuine multi-staff charts (a Rebirth Brass Band tune's Trumpet +
+  Sousaphone, honky_tonk_town_riffs.abc's hand-written Root/Third/Fifth) —
+  never the comping-generated V:1/V:2 split, which only exists in the
+  *rendered* text buildCompingTune produces, not the file on disk. Returns
+  `name: null` (not a fallback label) for a voice with no name="..." of its
+  own — resolveMixerVoices below owns turning that into a display name.
+
+  Matches only lines that themselves start with "V:" (optionally with
+  leading digits’ worth of whitespace after the colon, e.g. "V: 1") — a
+  voice's *declaration*, wherever it falls relative to K: (some tunes declare
+  voices before it, honky_tonk_town_riffs.abc after). Inline mid-line voice
+  switches some tunes use instead of a repeated header line ("[V:1] ... |")
+  never match this regex (the line starts with "[", not "V:"), so they're
+  correctly not counted as a second declaration of the same voice. A voice's
+  name is read from whichever of its lines carries a `name="..."` attribute
+  first — later bare re-declarations (a body voice-switch marker with no
+  attributes) don't overwrite an already-found name.
+*/
+export function parseVoiceList(abcText) {
+  const voices = new Map();
+  abcText.split("\n").forEach((line) => {
+    const m = /^V:\s*(\S+)/.exec(line);
+    if (!m) return;
+    const id = m[1];
+    if (!voices.has(id)) voices.set(id, null);
+    if (!voices.get(id)) {
+      const nameMatch = /name="([^"]*)"/.exec(line);
+      if (nameMatch) voices.set(id, nameMatch[1]);
+    }
+  });
+  return Array.from(voices.entries()).map(([id, name], index) => ({ id, index, name }));
+}
+
+/*
+  Turn "the tune's own raw voice declarations" (parseVoiceList's result, [] for
+  an ordinary tune with none) plus "is Comping turned on" into the Mixer's one
+  flat list of voice channels — the single generalisation this file builds
+  everything else on: a tune is always N voices (N >= 1; an ordinary tune with
+  no V: lines of its own still counts as one implicit voice), plus Comping
+  appended as voice N+1 when its pattern picker is on. Melody and Comping
+  aren't their own special channels any more — they're just voices, resolved
+  to a display name the same way:
+    - a voice with its own name="..." keeps it (Trumpet, Sousaphone, ...);
+    - an unnamed voice is "Melody" (a plain one-voice tune, or a chart that
+      declares its voices without naming them, e.g. honky_tonk_town_riffs.abc
+      *would* have been "Voice 1"/"Voice 2" before it got name="..." attrs);
+    - two or more unnamed voices in the same tune number as "Melody 1",
+      "Melody 2", ... (counting only the unnamed ones) so they stay distinct;
+    - Comping, when active, is always literally "Comping" — never folded into
+      the Melody-numbering scheme even if every other voice is unnamed.
+  The appended Comping voice's `id` is whatever the *next* voice slot would
+  be (`String(voices.length + 1)`) — matching comping.js's buildCompingTune,
+  which appends its generated voice the same way: V:2 for an ordinary
+  one-voice tune, or one past however many voices a chart already declares
+  (see its own doc comment) — honky_tonk_town_riffs.abc's Root/Third/Fifth
+  gets Comping as V:4.
+*/
+export function resolveMixerVoices(rawVoices, compingActive) {
+  const base = rawVoices.length > 0 ? rawVoices : [{ id: "1", index: 0, name: null }];
+  const unnamedTotal = base.filter((v) => !v.name).length;
+  let unnamedSeen = 0;
+  const labeled = base.map((v) => {
+    if (v.name) return { id: v.id, index: v.index, label: v.name };
+    unnamedSeen += 1;
+    return { id: v.id, index: v.index, label: unnamedTotal > 1 ? `Melody ${unnamedSeen}` : "Melody" };
+  });
+  if (!compingActive) return labeled;
+  return [...labeled, { id: String(labeled.length + 1), index: labeled.length, label: "Comping" }];
+}
+
+// Insert `%%MIDI program <n>` right after each voice's own first declaration
+// line (matched the same way parseVoiceList finds it), so abc2midi scopes the
+// program to that voice from there on. `programsById` only needs entries for
+// the voices worth stamping; anything else is left to whatever ABCjs/abc2midi
+// falls back to on its own.
+function injectVoicePrograms(text, programsById) {
+  const seen = new Set();
+  const lines = text.split("\n").flatMap((line) => {
+    const m = /^V:\s*(\S+)/.exec(line);
+    if (!m || seen.has(m[1])) return [line];
+    seen.add(m[1]);
+    const program = programsById.get(m[1]);
+    return program === undefined ? [line] : [line, `%%MIDI program ${program}`];
+  });
+  return lines.join("\n");
+}
+
+// True once `text` declares at least one voice of its own (a real "V:<id>"
+// line, wherever it falls relative to K:) — i.e. whether injectVoicePrograms
+// above has anything to attach a scoped %%MIDI program line to at all.
+const HAS_VOICE_DECLARATION = /^V:\s*\S+/m;
+
+/*
+  Stamp Bass/Chords' full accompaniment directives, and every other voice's
   Voice (program only — see the file doc comment for why not volume), into
   the ABC text about to be handed to ABCJS.renderAbc, so whatever gets
   rendered is exactly what plays — there's no separate "audio-only" reparse,
@@ -135,23 +236,22 @@ function accompanimentLines(hasChords, {
   ties cursor highlighting to the actual rendered visualObj, not a freshly
   parsed twin of it).
 
-  Melody/Comping are per-voice: without comping there's a single implicit
-  voice, so one %%MIDI program line in the header sets it. With comping on,
-  buildCompingTune's own contract (see its doc comment in lib/comping.js)
-  fixes the body's shape as "...\nV:1\n<melody>\nV:2\n<comping>\n" — melody
-  voice 1, comping voice 2 — so each gets its own line right after its body
-  marker. lastIndexOf targets that body marker rather than the *voice
-  declaration* line the same header carries a little earlier
-  (%%staves [1 2]\nV:1\nV:2 name="R\n3\n5"...), which repeats the same bare
-  "V:1" text once before the bodies start.
+  `voicePrograms` (id -> program) comes from resolveMixerVoices' resolved
+  list — always at least one entry. Most tunes end up with a real "V:<id>"
+  declaration in the text to scope each program to (either the tune's own,
+  or the "V:1"/"V:2" pair buildCompingTune always emits once Comping is on —
+  see its own doc comment). The one tune shape with no such line at all is an
+  ordinary single-voice tune with Comping off and no V: declaration of its
+  own (the vast majority of songs here): there's nothing to scope a program
+  to, so this falls back to one tune-wide %%MIDI program line before K:,
+  exactly as if the whole tune were voice 1.
 */
 export function injectMixerAudio(abcText, {
-  compingActive, hasChords,
-  melodyProgram = DEFAULT_PROGRAM.melody,
-  compingProgram = DEFAULT_PROGRAM.comping,
+  hasChords,
   bassPercent, bassProgram = DEFAULT_PROGRAM.bass,
   chordsPercent, chordsProgram = DEFAULT_PROGRAM.chords,
   gchordPattern = resolveGchordPattern(DEFAULT_GCHORD_PATTERN_VALUE),
+  voicePrograms,
 }) {
   const withAccompaniment = insertLinesBeforeKeyLine(
     abcText, accompanimentLines(hasChords, {
@@ -159,17 +259,12 @@ export function injectMixerAudio(abcText, {
     }),
   );
 
-  if (!compingActive) {
-    return insertLinesBeforeKeyLine(withAccompaniment, [`%%MIDI program ${melodyProgram}`]);
+  if (HAS_VOICE_DECLARATION.test(withAccompaniment)) {
+    return injectVoicePrograms(withAccompaniment, voicePrograms);
   }
 
-  const v1 = withAccompaniment.lastIndexOf("\nV:1\n");
-  const v2 = withAccompaniment.lastIndexOf("\nV:2\n");
-  if (v1 === -1 || v2 === -1) return withAccompaniment;
-
-  // Insert at the later marker first so the earlier one's index stays valid.
-  const withComping = spliceAfter(withAccompaniment, v2 + "\nV:2\n".length, `%%MIDI program ${compingProgram}\n`);
-  return spliceAfter(withComping, v1 + "\nV:1\n".length, `%%MIDI program ${melodyProgram}\n`);
+  const [[, onlyProgram]] = voicePrograms;
+  return insertLinesBeforeKeyLine(withAccompaniment, [`%%MIDI program ${onlyProgram}`]);
 }
 
 // ABCjs's live synth reads a tune-wide `swing` init option directly (not a
@@ -192,23 +287,26 @@ export function percentToAbcjsSwing(percent) {
 
 /*
   Which ABCjs voice indices to exclude from the audio buffer entirely, or
-  `true` to render silence outright when there's only one voice to mute.
-  Melody is always voice 0; comping (when active) is voice 1 (see
-  lib/comping.js's buildCompingTune doc comment). The `voicesOff` field is
-  undefined when nothing should be muted, so callers can leave `voicesOff`
-  off the synth params object entirely rather than pass an empty array.
+  `true` to render silence outright when there's only one voice to mute (the
+  common case: an ordinary tune, Comping off — `[0]` and `true` should be
+  equivalent whenever voice 0 is the *only* voice, but `true` is the one
+  form already proven in a real browser from before per-voice channels
+  existed at all, so it's kept for exactly that case rather than assumed
+  equivalent). `voices` is ctx.state.mixerVoices — resolveMixerVoices' list,
+  materialised with each voice's own `muted` flag by songs/mixer.js — always
+  at least one entry. The `voicesOff` field is undefined when nothing should
+  be muted, so callers can leave `voicesOff` off the synth params object
+  entirely rather than pass an empty array.
 
   Always wrapped in a `{ voicesOff }` object (rather than returning the bare
   true/array/undefined value directly) so the function itself has one
   consistent return type — `voicesOff`'s value still varies, but that's a
   field on a plain object, not the function's own return type.
 */
-export function computeVoicesOff({ compingActive, melodyMuted, compingMuted }) {
-  if (!compingActive) {
-    return { voicesOff: melodyMuted ? true : undefined };
+export function computeVoicesOff(voices) {
+  if (voices.length === 1) {
+    return { voicesOff: voices[0].muted ? true : undefined };
   }
-  const off = [];
-  if (melodyMuted) off.push(0);
-  if (compingMuted) off.push(1);
+  const off = voices.filter((v) => v.muted).map((v) => v.index);
   return { voicesOff: off.length ? off : undefined };
 }

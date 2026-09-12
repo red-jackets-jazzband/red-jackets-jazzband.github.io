@@ -532,6 +532,13 @@ function readUnit(text) {
   return [1, 8];
 }
 
+function lastKLineIndex(lines) {
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (/^K:/.test(lines[i])) return i;
+  }
+  return -1;
+}
+
 /*
    Split an ABC tune string into { header, kLine, body }: header is every line
    before the last K: line, body is everything after it. Returns null when
@@ -539,19 +546,87 @@ function readUnit(text) {
 */
 function splitHeaderBody(text) {
   const lines = text.split("\n");
-  let kIdx = -1;
-  for (let i = lines.length - 1; i >= 0; i--) {
-    if (/^K:/.test(lines[i])) {
-      kIdx = i;
-      break;
-    }
-  }
+  const kIdx = lastKLineIndex(lines);
   if (kIdx === -1) return null;
   return {
     header: lines.slice(0, kIdx),
     kLine: lines[kIdx],
     body: lines.slice(kIdx + 1).join("\n"),
   };
+}
+
+// Voice ids the tune itself declares, in order of first appearance -- e.g.
+// honky_tonk_town_riffs.abc's Root/Third/Fifth, or a Trumpet+Sousaphone
+// chart. [] for an ordinary tune with no V: lines of its own.
+function findVoiceIds(text) {
+  const ids = [];
+  const seen = new Set();
+  for (const line of text.split("\n")) {
+    const m = /^V:\s*(\S+)/.exec(line);
+    if (m && !seen.has(m[1])) {
+      seen.add(m[1]);
+      ids.push(m[1]);
+    }
+  }
+  return ids;
+}
+
+// A voice switch inline in the music itself -- big_chief.abc's
+// "[V:1] ... | [V:2] ... |", one per source line -- as opposed to
+// honky_tonk_town_riffs.abc's own repeated whole-line "V: 1" / "V: 2"
+// switches (matched separately in extractVoiceBody below).
+const INLINE_VOICE_SWITCH = /\[V:\s*([^\]\s]+)\]/g;
+
+// Split one body line into the runs it hands to each voice as `[V:n]`
+// switches inline through it (there's normally just one, at the very start,
+// but the general case can carry several). Returns `content` -- the pieces
+// of the line that belong to `startVoice` before the first switch has run,
+// then to whichever id `[V:n]` steps into as it does -- narrowed to only
+// the runs that end up on `targetId`, and `endVoice`, the id active once the
+// line ends (carried into the next line by the caller).
+function extractInlineVoiceLine(line, targetId, startVoice) {
+  let voice = startVoice;
+  let pos = 0;
+  let content = "";
+  INLINE_VOICE_SWITCH.lastIndex = 0;
+  let m;
+  while ((m = INLINE_VOICE_SWITCH.exec(line)) !== null) {
+    if (voice === targetId) content += line.slice(pos, m.index);
+    voice = m[1];
+    pos = m.index + m[0].length;
+  }
+  if (voice === targetId) content += line.slice(pos);
+  return { content, endVoice: voice };
+}
+
+// Pull just `targetId`'s own music out of a tune whose body interleaves
+// several voices' bars, either as repeated whole-line "V: 1" / "V: 2" /
+// "V: 3" switches (honky_tonk_town_riffs.abc) or inline "[V:1] ... [V:2] ..."
+// markers (big_chief.abc) -- this is what buildVoiceBody uses as the
+// template for the comping voice's own bar-for-bar pattern, so it must carry
+// only the target voice's barlines, never another voice's.
+function extractVoiceBody(text, targetId) {
+  const lines = text.split("\n");
+  const kIdx = lastKLineIndex(lines);
+  let current = null;
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const decl = /^V:\s*(\S+)/.exec(line);
+    if (decl) {
+      current = decl[1];
+      continue;
+    }
+    if (i <= kIdx) continue;
+    if (line.includes("[V:")) {
+      const { content, endVoice } = extractInlineVoiceLine(line, targetId, current);
+      current = endVoice;
+      if (content) out.push(content);
+    } else if (current === targetId) {
+      out.push(line);
+    }
+  }
+  return out.join("\n");
 }
 
 // Drop lyric / part / directive / stray-metadata lines so they can't be
@@ -1063,17 +1138,26 @@ function countChords(fragment) {
      song   - the ABCjs parseOnly tune (concert pitch).
      pattern- a COMPING_PATTERNS value.
 
-   The sheet's Mixer panel depends on melody staying V:1 and comping V:2
-   below, two different ways: lib/audio-mix.js's computeVoicesOff mutes by
-   ABCjs voice index (SynthController's own `voicesOff` option), and its
-   injectMixerAudio stamps each voice's %%MIDI program (Voice picker) right
-   after the body's exact "...\nV:1\n<melody>\nV:2\n<comping>\n" markers —
-   a reordered voice split would mute, or re-voice, the wrong one.
+   `chords`/`song` are always read from the tune's first voice (parseChordScheme
+   and the key lookup below both key off `staff[0]`), so the generated pattern
+   always tracks whatever V:1 is doing — the tune's only melody line for an
+   ordinary tune, or the first declared voice of a multi-voice chart, whether
+   its voices are woven line-by-line via repeated whole-line "V: 1" / "V: 2"
+   switches (honky_tonk_town_riffs.abc's Root line) or inline "[V:1] ... |
+   [V:2] ... |" markers (big_chief.abc's Trumpet line) — see extractVoiceBody.
+   The comping voice is appended as voice N+1, one past however many voices
+   (N) the tune already declares (N=1, with no "V:" of its own, for an
+   ordinary tune) — never a hardcoded V:2 — so lib/audio-mix.js's
+   resolveMixerVoices (which already models this general N+1 shape) and this
+   generator now agree. Its own doc comment covers the two different ways the
+   Mixer panel depends on that: computeVoicesOff mutes by ABCjs voice index,
+   and injectMixerAudio scopes each voice's %%MIDI program (Voice picker) to
+   right after that voice's own first declaration line.
 
    Returns { abc, palette }, or null when comping can't apply (no chords, an
-   unsupported meter, an already multi-voiced tune, no K: line):
-     abc     - the augmented ABC (melody as V:1, one block-chord comping voice
-               as V:2)
+   unsupported meter, no K: line):
+     abc     - the augmented ABC (all the tune's own voices untouched, plus one
+               new block-chord comping voice appended as N+1)
      palette - one entry per chord onset ABCjs will draw in the comping voice,
                in reading order: the voice key (black / gold / red) of each
                notehead bottom-to-top. The voices never cross so every entry is
@@ -1086,7 +1170,6 @@ export function buildCompingTune(text, chords, song, pattern) {
   if (!pat) return null;
   if (!chords || !chords.length) return null;
   if (!song || !song.lines || !song.lines[0] || !song.lines[0].staff) return null;
-  if (/^V:/m.test(text) || /\[V:/.test(text)) return null;
 
   const meter = readMeter(text);
   if (!meter) return null;
@@ -1099,6 +1182,21 @@ export function buildCompingTune(text, chords, song, pattern) {
   const keyScale = keyScaleNotes(key);
   const keySig = keySignature(keyScale);
   const bassClef = /clef\s*=\s*bass/.test(split.kLine);
+
+  const voiceIds = findVoiceIds(text);
+  const explicitVoices = voiceIds.length > 0;
+  const newVoiceId = String((explicitVoices ? voiceIds.length : 1) + 1);
+  // The body a tune with its own voices interleaves per system -- repeated
+  // whole-line "V: 1" / "V: 2" / "V: 3" switches (honky_tonk_town_riffs.abc)
+  // or inline "[V:1] ... [V:2] ..." markers (big_chief.abc) -- must be
+  // narrowed to just V:1's own bars before it can serve as buildVoiceBody's
+  // bar-for-bar template below; a tune that only ever declared its one voice
+  // once (in the header, before K:) already has a body that's entirely that
+  // voice's.
+  const bodyHasVoiceSwitches = /^V:\s*\S+/m.test(split.body) || /\[V:/.test(split.body);
+  const patternSourceBody = explicitVoices && bodyHasVoiceSwitches
+    ? extractVoiceBody(text, voiceIds[0])
+    : split.body;
 
   const voiced = voiceLead(extractChordNotes(chords));
 
@@ -1147,7 +1245,7 @@ export function buildCompingTune(text, chords, song, pattern) {
   // through pickup / intro / tail bars without drawing anything.
   const restToken = "x" + formatDuration(8, lnum, lden);
   const compBody = buildVoiceBody(
-    split.body, compBars, leadingRestBars, restToken, lnum, lden,
+    patternSourceBody, compBars, leadingRestBars, restToken, lnum, lden,
   ).trim();
   // buildVoiceBody consumes compBars in order (leading/tail bars use the plain
   // rest), so the drawn chord onsets are compPalettes flattened in bar order.
@@ -1167,20 +1265,34 @@ export function buildCompingTune(text, chords, song, pattern) {
     headerOut.push(line);
   }
   headerOut.push("L:" + lnum + "/" + lden);
-  // %%staves (not %%score) so ABCjs draws the barlines connecting the melody
-  // staff to the comping staff — they read as one system. The bracket [ ]
-  // groups them.
-  headerOut.push("%%staves [1 2]");
-  headerOut.push("V:1");
   // Stacked R / 3 / 5 label at the staff's left, naming the chord tones the
   // three notehead colours pick out (root / third / fifth, bottom to top).
-  headerOut.push('V:2 name="R\\n3\\n5"' + clefSuffix);
-  headerOut.push(split.kLine);
-
-  const melodyBody = split.body.trimEnd();
-  const abc =
-    headerOut.join("\n") +
-    "\nV:1\n" + melodyBody +
-    "\nV:2\n" + compBody + "\n";
+  const compingVoiceLine = "V:" + newVoiceId + ' name="R\\n3\\n5"' + clefSuffix;
+  const existingBody = split.body.trimEnd();
+  let abc;
+  if (explicitVoices) {
+    // The tune already declares its own voice(s) — inside the body itself
+    // for honky_tonk_town_riffs.abc, which puts them right after K:. Leave
+    // all of that untouched and simply append the new voice, declaring it
+    // (name="...") the first and only time it's used, same as any of the
+    // tune's own voices would.
+    headerOut.push(split.kLine);
+    abc =
+      headerOut.join("\n") +
+      "\n" + existingBody +
+      "\n" + compingVoiceLine + "\n" + compBody + "\n";
+  } else {
+    // %%staves (not %%score) so ABCjs draws the barlines connecting the
+    // melody staff to the comping staff — they read as one system. The
+    // bracket [ ] groups them.
+    headerOut.push("%%staves [1 2]");
+    headerOut.push("V:1");
+    headerOut.push(compingVoiceLine);
+    headerOut.push(split.kLine);
+    abc =
+      headerOut.join("\n") +
+      "\nV:1\n" + existingBody +
+      "\nV:2\n" + compBody + "\n";
+  }
   return { abc, palette };
 }
