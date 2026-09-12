@@ -62,6 +62,16 @@ function fitLiveChordGrid(chordId) {
   }
 }
 
+// Box the part markers now, and again once MuseJazzText has loaded — the
+// first render can measure a marker's box under a fallback face (undersized,
+// clipping the glyph's ascender through the top edge).
+function stylePartMarkersWhenReady(notationEl) {
+  stylePartMarkers(notationEl);
+  if (document.fonts && document.fonts.status !== "loaded") {
+    document.fonts.ready.then(() => stylePartMarkers(notationEl));
+  }
+}
+
 function updateInstrumentFooter() {
   const select = byId("instrument");
   const footer = byId("instrumentText");
@@ -282,7 +292,7 @@ export function createSheet(ctx) {
     notationEl.querySelectorAll(".abcjs-title").forEach((node) => {
       node.setAttribute("display", "none");
     });
-    stylePartMarkers(notationEl);
+    stylePartMarkersWhenReady(notationEl);
 
     const chordEl = byId(chordId);
     renderChordTable(displayChords, chordEl);

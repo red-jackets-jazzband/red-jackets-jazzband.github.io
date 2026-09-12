@@ -5,16 +5,18 @@ const SVGNS = "http://www.w3.org/2000/svg";
 
 /*
   Draw a thin square outline around every part marker (an ABC `P:` field), so
-  the black letter reads as a labelled section box. Skips markers already boxed
-  (a resize re-run would otherwise stack rectangles).
+  the black letter reads as a labelled section box. Reuses (and re-measures)
+  an existing box rather than skipping it, so a re-run — e.g. once the
+  MuseJazzText face `partsfont` uses has actually finished loading, see the
+  document.fonts.ready re-run in sheet.js — corrects a box that was first
+  drawn against fallback-font metrics (undersized, clipping the glyph's
+  ascender through the top edge) instead of stacking a second rectangle.
 */
 export function stylePartMarkers(container) {
   if (!container) return;
   const padX = 3;
   const padY = 1;
   container.querySelectorAll("text.abcjs-part").forEach((txt) => {
-    const prev = txt.previousSibling;
-    if (prev && prev.classList && prev.classList.contains("abcjs-part-bg")) return;
     let bbox;
     try {
       bbox = txt.getBBox();
@@ -22,8 +24,10 @@ export function stylePartMarkers(container) {
       // getBBox throws for a not-yet-laid-out node — nothing to outline.
       return;
     }
-    const rect = document.createElementNS(SVGNS, "rect");
-    rect.setAttribute("class", "abcjs-part-bg");
+    const prev = txt.previousSibling;
+    const reuse = prev && prev.classList && prev.classList.contains("abcjs-part-bg");
+    const rect = reuse ? prev : document.createElementNS(SVGNS, "rect");
+    if (!reuse) rect.setAttribute("class", "abcjs-part-bg");
     rect.setAttribute("x", bbox.x - padX);
     rect.setAttribute("y", bbox.y - padY);
     rect.setAttribute("width", bbox.width + 2 * padX);
@@ -31,7 +35,7 @@ export function stylePartMarkers(container) {
     rect.setAttribute("fill", "none");
     rect.setAttribute("stroke", "#000");
     rect.setAttribute("stroke-width", "1");
-    txt.parentNode.insertBefore(rect, txt);
+    if (!reuse) txt.parentNode.insertBefore(rect, txt);
   });
 }
 

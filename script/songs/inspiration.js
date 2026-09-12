@@ -229,6 +229,11 @@ export function createInspiration(ctx) {
   let loopEnabled = false;
   let loopPollId = null;
   let loopDragging = null; // "a" | "b" | null
+  // Whether a pointer is currently dragging the timeline's own played-so-far
+  // bar (as opposed to an A/B handle) to scrub playback — see initLoopBar's
+  // pointer handlers. Kept distinct from loopDragging so the loop poll's
+  // "!loopDragging" guard doesn't need to know about scrubbing separately.
+  let scrubbing = false;
   // The timeline's current zoomed window (seconds) — [0, duration] at 1x.
   // Only ever moved explicitly: changeZoom() re-centers it on the playhead
   // when the zoom level changes, and a drag nearing its edge pans it (see
@@ -479,7 +484,7 @@ export function createInspiration(ctx) {
   function loopTick() {
     if (!player || !playerReady) return;
     let t = player.getCurrentTime();
-    if (loopEnabled && !loopDragging) {
+    if (loopEnabled && !loopDragging && !scrubbing) {
       const span = normalizeLoop(loopA, loopB, LOOP_MIN_GAP);
       if (span) {
         const rate = player.getPlaybackRate ? player.getPlaybackRate() : 1;
@@ -729,6 +734,7 @@ export function createInspiration(ctx) {
     loopB = null;
     loopEnabled = false;
     loopDragging = null;
+    scrubbing = false;
     overviewDragging = null;
     shareResumeAt = null;
     zoomLevel = ZOOM_LEVELS[0];
@@ -796,6 +802,46 @@ export function createInspiration(ctx) {
 
   // ---- wiring ----------------------------------------------------
 
+  // Dragging an A/B handle on the zoomed timeline: moves whichever marker
+  // is being dragged, clamped against the other one, panning the view if
+  // the drag nears its edge.
+  function dragLoopHandle(track, e) {
+    const dur = playerDuration();
+    if (dur <= 0) return;
+    const frac = trackFraction(track, e);
+    // Pan before mapping frac -> time, so a drag held at the edge scrolls
+    // the window under a stationary pointer instead of getting stuck once
+    // the visible track runs out.
+    maybePanZoomWindow(frac, dur);
+    const span = viewEnd - viewStart;
+    let otherTime;
+    if (loopDragging === "a") {
+      otherTime = loopB === null ? viewEnd : loopB;
+    } else {
+      otherTime = loopA === null ? viewStart : loopA;
+    }
+    const otherFrac = timeToViewFraction(otherTime, viewStart, viewEnd);
+    const clamped = clampHandleDrag(frac, otherFrac, loopDragging, span > 0 ? LOOP_MIN_GAP / span : 0);
+    const time = viewFractionToTime(clamped, viewStart, viewEnd);
+    if (loopDragging === "a") loopA = time;
+    else loopB = time;
+    updateLoopUI();
+  }
+
+  // Dragging the track's own background (the played-so-far bar) scrubs
+  // playback: the playhead follows the pointer live, panning the view if
+  // the drag nears its edge, same as dragLoopHandle above.
+  function scrubToPointer(track, e) {
+    if (!player || !playerReady) return;
+    const dur = playerDuration();
+    if (dur <= 0) return;
+    const frac = trackFraction(track, e);
+    maybePanZoomWindow(frac, dur);
+    const t = viewFractionToTime(frac, viewStart, viewEnd);
+    player.seekTo(t, true);
+    updatePlayhead(t);
+  }
+
   function initLoopBar() {
     on("inspirationPlayToggle", "click", togglePlayPause);
     on("inspirationSetA", "click", () => setLoopMarker("a"));
@@ -817,6 +863,8 @@ export function createInspiration(ctx) {
         return;
       }
       if (!player || !playerReady || viewEnd <= viewStart) return;
+      scrubbing = true;
+      track.setPointerCapture(e.pointerId);
       const t = viewFractionToTime(trackFraction(track, e), viewStart, viewEnd);
       player.seekTo(t, true);
       // The loop poll (which normally drives the played-bar position) only
@@ -826,34 +874,23 @@ export function createInspiration(ctx) {
       updatePlayhead(t);
     });
     track.addEventListener("pointermove", (e) => {
-      if (!loopDragging) return;
-      const dur = playerDuration();
-      if (dur <= 0) return;
-      const frac = trackFraction(track, e);
-      // Pan before mapping frac -> time, so a drag held at the edge scrolls
-      // the window under a stationary pointer instead of getting stuck once
-      // the visible track runs out.
-      maybePanZoomWindow(frac, dur);
-      const span = viewEnd - viewStart;
-      let otherTime;
-      if (loopDragging === "a") {
-        otherTime = loopB === null ? viewEnd : loopB;
-      } else {
-        otherTime = loopA === null ? viewStart : loopA;
-      }
-      const otherFrac = timeToViewFraction(otherTime, viewStart, viewEnd);
-      const clamped = clampHandleDrag(frac, otherFrac, loopDragging, span > 0 ? LOOP_MIN_GAP / span : 0);
-      const time = viewFractionToTime(clamped, viewStart, viewEnd);
-      if (loopDragging === "a") loopA = time;
-      else loopB = time;
-      updateLoopUI();
+      if (loopDragging) dragLoopHandle(track, e);
+      else if (scrubbing) scrubToPointer(track, e);
     });
-    track.addEventListener("pointerup", (e) => {
-      if (!loopDragging) return;
+    const endTrackDrag = (e) => {
+      if (!loopDragging && !scrubbing) return;
       loopDragging = null;
+      scrubbing = false;
       if (track.hasPointerCapture(e.pointerId)) track.releasePointerCapture(e.pointerId);
       updateLoopUI();
-    });
+    };
+    track.addEventListener("pointerup", endTrackDrag);
+    // A pointercancel (e.g. the browser reclaiming the gesture for scroll
+    // or a system gesture) never fires pointerup, so without this handler
+    // scrubbing/loopDragging would stay stuck true and the loop poll's
+    // "!loopDragging && !scrubbing" guard (see its own comment above) would
+    // never let playback resume driving the played-bar again.
+    track.addEventListener("pointercancel", endTrackDrag);
   }
 
   /*

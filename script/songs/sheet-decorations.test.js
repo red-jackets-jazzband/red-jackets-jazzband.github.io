@@ -7,6 +7,8 @@ import {
   COMPING_FN_FILL,
 } from "./sheet-decorations.js";
 
+const PART_BOX_SELECTOR = "rect.abcjs-part-bg";
+
 function inDom(fn) {
   const page = mountPage({ html: "<div id='notation'></div>" });
   try {
@@ -25,10 +27,30 @@ test("stylePartMarkers boxes each part marker exactly once", () => {
       t.getBBox = () => ({ x: 1, y: 2, width: 10, height: 8 });
     }
     stylePartMarkers(container);
-    assert.equal(container.querySelectorAll("rect.abcjs-part-bg").length, 2);
+    assert.equal(container.querySelectorAll(PART_BOX_SELECTOR).length, 2);
     // idempotent — a resize re-run must not stack rectangles
     stylePartMarkers(container);
-    assert.equal(container.querySelectorAll("rect.abcjs-part-bg").length, 2);
+    assert.equal(container.querySelectorAll(PART_BOX_SELECTOR).length, 2);
+  });
+});
+
+test("stylePartMarkers re-measures an existing box instead of skipping it", () => {
+  inDom((container) => {
+    container.innerHTML = "<svg><text class='abcjs-part'>A</text></svg>";
+    const txt = container.querySelector("text");
+    // First pass: measured under a fallback font (undersized box).
+    txt.getBBox = () => ({ x: 1, y: 2, width: 10, height: 8 });
+    stylePartMarkers(container);
+    const rect = container.querySelector(PART_BOX_SELECTOR);
+    assert.equal(rect.getAttribute("width"), "16");
+
+    // Re-run once the real (wider) font has loaded: same rect node, new size.
+    txt.getBBox = () => ({ x: 0, y: 1, width: 20, height: 16 });
+    stylePartMarkers(container);
+    assert.equal(container.querySelectorAll(PART_BOX_SELECTOR).length, 1);
+    assert.equal(container.querySelector(PART_BOX_SELECTOR), rect);
+    assert.equal(rect.getAttribute("width"), "26");
+    assert.equal(rect.getAttribute("y"), "0");
   });
 });
 
