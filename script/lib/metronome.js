@@ -121,15 +121,19 @@ export function scheduleClicks({
   let beat = beatIndex;
 
   /*
-    A throttled timer — a backgrounded tab is the common case — can leave
-    nextNoteTime long behind currentTime by the time this next runs. Jump
-    straight to the first beat at/after currentTime instead of letting the
-    loop below push one click per beat that's already gone by: every one of
-    those would start "now" (a past `time` just means "as soon as possible"
-    to Web Audio's own scheduling), so an unbridged gap would otherwise
-    flood the page with a burst of near-simultaneous clicks.
+    A throttled timer — a backgrounded tab is the common case, but ordinary
+    main-thread jank around a song switch (ABCjs re-engraving the new sheet)
+    is enough on its own — can leave nextNoteTime behind currentTime by the
+    time this next runs. Only jump straight to the first beat at/after
+    currentTime once at least a whole beat has actually gone missing: below
+    that, `time` is still within the schedule-ahead horizon, so the loop
+    below schedules it as-is (Web Audio starts a past `time` "as soon as
+    possible", same as it would with no gap at all) — a few milliseconds of
+    ordinary scheduling lag isn't the flood of already-gone-by beats this
+    jump exists to skip, and treating it as one silently drops the very next
+    click and knocks the beat count out of phase for no reason.
   */
-  if (time < currentTime) {
+  if (currentTime - time >= secondsPerBeat) {
     const missedBeats = Math.ceil((currentTime - time) / secondsPerBeat);
     time += missedBeats * secondsPerBeat;
     beat = (beat + missedBeats) % beats;

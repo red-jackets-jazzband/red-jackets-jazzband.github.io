@@ -88,22 +88,33 @@ function initPrintLink() {
   });
 }
 
+// True when Space should be left to the browser's own key handling instead of
+// toggling play/pause: a text field, a contentEditable, or a button/link
+// (so Space still activates the focused control instead of double-toggling).
+// A focused song-list row (library-tab.js's <a class="song-list-item">) is
+// exempted from the button/link skip: anchors don't natively respond to Space
+// anyway, so without this a highlighted row just ate the keypress silently
+// instead of starting playback.
+function ownsSpacebar(t) {
+  if (!t) return false;
+  if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT"
+    || t.isContentEditable) {
+    return true;
+  }
+  const activator = t.closest && t.closest("button, a, [role=button]");
+  return Boolean(activator) && !activator.classList.contains("song-list-item");
+}
+
 /*
   Spacebar toggles play/pause while a sheet is open, matching every audio
-  player's convention. Skipped when the caret is in a text field or the focus
-  is on a button/link (so Space still activates the focused control instead of
-  double-toggling), and preventDefault stops the page from scrolling.
+  player's convention. preventDefault stops the page from scrolling.
 */
 function initSpacebarPlayPause(ctx) {
   document.addEventListener("keydown", (e) => {
     if (e.key !== " " && e.key !== "Spacebar") return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (!document.body.classList.contains("rj-sheet-active")) return;
-    const t = e.target;
-    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT"
-      || t.isContentEditable || (t.closest && t.closest("button, a, [role=button]")))) {
-      return;
-    }
+    if (ownsSpacebar(e.target)) return;
     e.preventDefault();
     ctx.audio.playPause();
   });

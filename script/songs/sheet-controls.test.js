@@ -112,6 +112,13 @@ test("Spacebar toggles play/pause while the sheet is open", () => {
     pressSpace(document.getElementById("songSearch"));
     pressSpace(document.getElementById("playPauseBtn"));
     assert.equal(calls.playPause, 1);
+
+    // a focused song-list row still starts playback rather than eating the key
+    const row = document.createElement("a");
+    row.className = "song-list-item";
+    document.getElementById("songList").append(row);
+    pressSpace(row);
+    assert.equal(calls.playPause, 2);
   } finally {
     cleanup();
   }

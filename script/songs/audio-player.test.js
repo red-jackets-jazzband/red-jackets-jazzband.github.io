@@ -59,6 +59,46 @@ test("stepTempo with no native tempo steps from the default bpm", () => {
   }
 });
 
+// audio-player.js's cursorControl.onEvent is where ABCjs reports real
+// playback crossing into a new measure (ev.measureStart) — the one honest
+// phase reference the Metronome's own independent clock ever gets.
+test("a measureStart event tells the Metronome a real bar line just passed, but only while actually playing", async () => {
+  const page = mountPage();
+  const barStarts = [];
+  const ctx = makeCtx({
+    state: { tempoOverrideBpm: null, compingActive: false },
+    metronome: {
+      init: () => {}, refresh: () => {}, onPlaybackChange: () => {},
+      onBarStart: () => barStarts.push(1),
+    },
+  });
+  const audio = createAudioPlayer(ctx);
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+
+    // Not playing yet (e.g. setWarp's own internal seek on a never-played
+    // sheet) — a measureStart here isn't real playback crossing a bar.
+    withAbcjs(abcjs, () => abcjs.calls.synthControllers.at(-1)._cursorControl.onEvent({ measureStart: true }));
+    assert.equal(barStarts.length, 0, "not forwarded while paused/never played");
+
+    audio.playPause();
+    await flush();
+    assert.equal(audio.isPlaying, true);
+
+    withAbcjs(abcjs, () => abcjs.calls.synthControllers.at(-1)._cursorControl.onEvent({ measureStart: true }));
+    assert.equal(barStarts.length, 1, "forwarded once real playback is running");
+
+    // An ordinary event with no measureStart flag is just a note, not a bar
+    // line — shouldn't trigger a resync check at all.
+    withAbcjs(abcjs, () => abcjs.calls.synthControllers.at(-1)._cursorControl.onEvent({ elements: [] }));
+    assert.equal(barStarts.length, 1, "non-bar events don't forward");
+  } finally {
+    page.cleanup();
+  }
+});
+
 test("initForTune's setTune passes voicesOff computed from ctx.state.mixerVoices (melody + comping)", async () => {
   const { ctx, audio, cleanup } = setup({
     mixerVoices: [
@@ -211,6 +251,7 @@ function setupWithMetronomeSpy() {
       init: () => {},
       refresh: () => {},
       onPlaybackChange: (playing, fromStart) => calls.push([playing, fromStart]),
+      onBarStart: () => {},
     },
   });
   const audio = createAudioPlayer(ctx);

@@ -226,6 +226,25 @@ test("scheduleClicks catches up a clock left far behind currentTime (e.g. a thro
   assert.equal(result.beatIndex, 1);
 });
 
+test("a sub-beat scheduling lag (ordinary jitter, not a throttled/backgrounded clock) still schedules the due click instead of being caught up away", () => {
+  // Only 15ms behind on a 0.5s beat -- exactly the kind of gap ordinary
+  // main-thread jank (e.g. re-engraving a freshly switched song) can cause
+  // between start()'s nextNoteTime and the first scheduling tick actually
+  // running. This must NOT trip the catch-up branch above: doing so would
+  // silently drop the click that's actually due right now and knock
+  // beatIndex a whole beat out of phase for no reason.
+  const result = scheduleClicks({
+    currentTime: 0.045,
+    nextNoteTime: 0.03,
+    beatIndex: 0,
+    beatsInMeasure: 4,
+    secondsPerBeat: 0.5,
+    scheduleAheadSeconds: 0.1,
+  });
+  assert.deepEqual(result.clicks, [{ time: 0.03, accent: false }]);
+  assert.equal(result.beatIndex, 1);
+});
+
 test("scheduleClicks's catch-up preserves the beat-index/accent phase, not just the clock", () => {
   const result = scheduleClicks({
     currentTime: 10,

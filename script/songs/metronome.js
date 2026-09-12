@@ -124,6 +124,14 @@ function playClick(audioCtx, noiseBuffer, time) {
   scheduling tick (never snapshotted), so a Tempo-stepper nudge or a new tune
   takes effect on the very next click with no extra wiring.
 */
+
+// Where the clock should land "right now" with no delay — used both by a
+// phase-guessing start() and by onBarStart()'s own correction, so the two
+// always anchor a fresh beat 1 the same way.
+function anchorNow(audio) {
+  return audio.currentTime + 0.05 - CLICK_ADVANCE_SECONDS;
+}
+
 export function createMetronome(ctx) {
   let audioCtx = null;
   let noiseBuffer = null;
@@ -180,8 +188,10 @@ export function createMetronome(ctx) {
   // mid-tune pause, or the metronome toggle itself being flipped on while
   // the sheet is already playing, ticks immediately and unphased instead:
   // there's no way to know the real current position, so counting from
-  // "beat 1 now" is the same simplification already documented above for a
-  // mid-measure resume, just applied a beat sooner.
+  // "beat 1 now" is the honest guess. That guess is often wrong — the sheet
+  // could be anywhere in the measure — but onBarStart() below re-anchors the
+  // clock to real playback at *every* bar line regardless, not just to fix
+  // this one guess, so it's corrected at the very next bar either way.
   function start(fromStart) {
     const audio = ensureAudioContext();
     if (!audio) return; // no Web Audio support — the toggle just does nothing audible
@@ -199,19 +209,15 @@ export function createMetronome(ctx) {
       // the clock's very first beat instead (see pickupStartBeatIndex).
       beatIndex = introBars > 0 ? 0 : pickupStartBeatIndex(pickupBeats, beats);
     }
-    nextNoteTime = audio.currentTime + 0.05 - CLICK_ADVANCE_SECONDS + delay;
+    nextNoteTime = anchorNow(audio) + delay;
     timerId = setInterval(tick, LOOKAHEAD_INTERVAL_MS);
     running = true;
   }
 
-  function stop() {
-    if (timerId !== null) clearInterval(timerId);
-    timerId = null;
-    running = false;
-    // Cut off any click already scheduled inside the lookahead window —
-    // otherwise pausing (or toggling off) mid-window still lets it sound.
-    // .stop() on a node whose own scheduled stop already elapsed throws;
-    // that's just it finishing on its own, nothing to do about it.
+  // Cuts off any click already scheduled inside the lookahead window.
+  // .stop() on a node whose own scheduled stop already elapsed throws;
+  // that's just it finishing on its own, nothing to do about it.
+  function cancelScheduledVoices() {
     scheduledVoices.forEach((source) => {
       try {
         source.stop();
@@ -220,6 +226,15 @@ export function createMetronome(ctx) {
       }
     });
     scheduledVoices = [];
+  }
+
+  function stop() {
+    if (timerId !== null) clearInterval(timerId);
+    timerId = null;
+    running = false;
+    // Otherwise pausing (or toggling off) mid-window still lets a
+    // previously scheduled click sound.
+    cancelScheduledVoices();
   }
 
   // The one place that decides whether the click should be running right
@@ -236,6 +251,43 @@ export function createMetronome(ctx) {
     const shouldRun = ctx.state.metronomeEnabled && ctx.audio.isPlaying;
     if (shouldRun && !running) start(fromStart);
     else if (!shouldRun && running) stop();
+  }
+
+  /*
+    audio-player.js calls this every time the tune's own real playback
+    crosses into a new measure (its cursorControl.onEvent, gated on
+    ev.measureStart), passing along that measure's own index — the one
+    honest phase reference this metronome's independent clock ever gets,
+    since it otherwise free-runs on its own AudioContext with no link to
+    ABCjs's SynthController. Re-anchors to beat 1 on *every* bar line at or
+    past the tune's own chordless intro (ctx.audio.chordOffset — the same
+    "leading chordless bars" count comping.js rests through), not just to
+    correct a known phase-guess (a toggle enabled mid-playback, a resume from
+    a mid-tune pause, or a tempo change re-priming ABCjs's MIDI buffer): two
+    independent clocks drift against each other continuously, not just at
+    those moments, so resyncing only when something is known to have gone
+    wrong would let ordinary clock drift compound silently between
+    corrections. Snapping straight to beat 1 here — rather than trying to
+    compute which beat "now" actually falls inside the new measure — is
+    deliberate: the very next bar line is itself always beat 1, so there's
+    nothing to compute.
+
+    A bar still inside the intro (measureIdx < chordOffset) is left alone
+    instead: resyncing there would immediately erase the very delay start()
+    computed to skip that intro (introDelaySeconds), making the click track
+    tick right through a rubato passage with no chords under it. An unknown
+    measureIdx (ABCjs didn't tag this event, or there's no intro to worry
+    about — chordOffset 0) always resyncs, same as before.
+  */
+  function onBarStart(measureIdx) {
+    if (!running || !audioCtx) return;
+    const introBars = ctx.audio.chordOffset || 0;
+    if (Number.isFinite(measureIdx) && measureIdx < introBars) return;
+    // A click already queued from before this re-anchor would otherwise
+    // still sound at its old, now-stale time once the clock jumps.
+    cancelScheduledVoices();
+    beatIndex = 0;
+    nextNoteTime = anchorNow(audioCtx);
   }
 
   function updateToggleVisual() {
@@ -273,6 +325,7 @@ export function createMetronome(ctx) {
     onPlaybackChange(playing, fromStart) {
       syncRunning(fromStart);
     },
+    onBarStart,
   };
 }
 
