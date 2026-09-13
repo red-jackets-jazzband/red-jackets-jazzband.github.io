@@ -17,8 +17,10 @@ Blue Heaven,my_blue_heaven.abc
 Bourbon Street Parade,bourbon_street_parade.abc
 Bucket's gotta hole,buckets_got_a_hole.abc
 By and By,by_and_by.abc
+Canal Street Blues,canal_street_blues.abc
 Caravan,caravan.abc
 Careless Love,careless_love.abc
+C'est Magnifique,cest_magnifique.abc
 Chinatown,chinatown.abc
 Corrine Corrina,corrine_corrina.abc
 Daily Exercise,daily_exercise.abc
