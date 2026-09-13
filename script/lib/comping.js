@@ -1146,6 +1146,14 @@ function countChords(fragment) {
   return (String(fragment).match(/\[/g) || []).length;
 }
 
+// A voiced triple's chord identity, order-independent (voice-leading can
+// place the same chord in a different inversion than a naive repeat would).
+// `null` (a break slot) and "no single chord this bar" both map to `null`,
+// so either compares unequal to any real chord below.
+function chordKey(triple) {
+  return triple ? triple.map((v) => v.pc).sort().join(",") : null;
+}
+
 // ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
@@ -1257,6 +1265,19 @@ export function buildCompingTune(text, chords, song, pattern) {
       } else {
         const fn = bar % 2 === 0 ? pat.twobar1 : pat.twobar2;
         fragment = fn.apply(null, chordArgs(cb[0], keyScale));
+        // twobar1 templates that end in a bare tie (hold_over, whole_note)
+        // commit to holding the same chord into the next bar's first note.
+        // When that bar actually changes chord -- the far more common case,
+        // since the two-bar twobar1/twobar2 split is chosen by bar parity,
+        // not by where the chord scheme actually repeats -- a literal "-"
+        // ties into an unrelated pitch: abcjs still draws the arc, so it
+        // reads as a tangle of tie lines running into the wrong chord.
+        // Dropping the dash leaves a plain sustained whole bar instead.
+        if (bar % 2 === 0 && fragment.endsWith("-")) {
+          const next = voiced[bar + 1];
+          const continues = next && next.length === 1 && chordKey(next[0]) === chordKey(cb[0]);
+          if (!continues) fragment = fragment.slice(0, -1);
+        }
         const order = cb[0].map((v) => v.fn);
         barPalette = new Array(countChords(fragment)).fill(order);
       }

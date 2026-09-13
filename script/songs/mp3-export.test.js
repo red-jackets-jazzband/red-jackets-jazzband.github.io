@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountPage } from "../../../tests/helpers/dom.js";
 import { makeCtx } from "../../../tests/helpers/ctx.js";
-import { createAbcjsStub, withAbcjs } from "../../../tests/helpers/stubs.js";
-import { initWavExport } from "./wav-export.js";
+import { createAbcjsStub, withAbcjs, createLamejsStub } from "../../../tests/helpers/stubs.js";
+import { initMp3Export } from "./mp3-export.js";
 
 const flush = () => new Promise((resolve) => { setTimeout(resolve, 0); });
 const SPINNER_SELECTOR = ".fa-spinner";
@@ -29,6 +29,23 @@ function stubDownload() {
   };
 }
 
+// Unlike ABCJS (only ever touched synchronously, before exportMp3's first
+// await — see clickExport below), encodeMp3 reaches for the global lamejs
+// after synth.init()/prime() have resolved, so the stub needs to stay
+// installed across the whole test, not just the synchronous click.
+function stubLamejs() {
+  const stub = createLamejsStub();
+  const real = globalThis.lamejs;
+  globalThis.lamejs = stub;
+  return {
+    stub,
+    restore() {
+      if (real === undefined) delete globalThis.lamejs;
+      else globalThis.lamejs = real;
+    },
+  };
+}
+
 function setup(audioOverrides) {
   const page = mountPage();
   const ctx = makeCtx({
@@ -47,17 +64,18 @@ function setup(audioOverrides) {
 // synth is ready), so a test simulating that state enables it first — a
 // disabled button's click() is a no-op, same as in a real browser.
 function clickExport(ctx, abcjs) {
-  initWavExport(ctx);
-  const btn = document.getElementById("exportWavBtn");
+  initMp3Export(ctx);
+  const btn = document.getElementById("exportMp3Btn");
   btn.disabled = false;
   withAbcjs(abcjs, () => btn.click());
   return btn;
 }
 
-test("clicking Export WAV renders through a fresh CreateSynth and downloads a .wav named for the song file", async () => {
+test("clicking Export MP3 renders through a fresh CreateSynth and downloads a .mp3 named for the song file", async () => {
   const { ctx, cleanup } = setup();
   const abcjs = createAbcjsStub();
   const download = stubDownload();
+  const lamejs = stubLamejs();
   try {
     clickExport(ctx, abcjs);
     await flush();
@@ -68,19 +86,22 @@ test("clicking Export WAV renders through a fresh CreateSynth and downloads a .w
       visualObj: { metaText: {} }, millisecondsPerMeasure: 500, options: {},
     });
     assert.equal(download.clicked.length, 1);
-    assert.equal(download.clicked[0].download, "basin_street.wav");
-    assert.equal(download.created[0].type, "audio/wav");
+    assert.equal(download.clicked[0].download, "basin_street.mp3");
+    assert.equal(download.created[0].type, "audio/mpeg");
     assert.equal(download.revoked.length, 1);
+    assert.equal(lamejs.stub.calls.constructed.length, 1);
   } finally {
     download.restore();
+    lamejs.restore();
     cleanup();
   }
 });
 
-test("Export WAV shows a busy spinner and stays disabled mid-render, then resets", async () => {
+test("Export MP3 shows a busy spinner and stays disabled mid-render, then resets", async () => {
   const { ctx, cleanup } = setup();
   const abcjs = createAbcjsStub();
   const download = stubDownload();
+  const lamejs = stubLamejs();
   try {
     const btn = clickExport(ctx, abcjs);
     assert.ok(btn.querySelector(SPINNER_SELECTOR));
@@ -92,14 +113,16 @@ test("Export WAV shows a busy spinner and stays disabled mid-render, then resets
     assert.equal(btn.disabled, false);
   } finally {
     download.restore();
+    lamejs.restore();
     cleanup();
   }
 });
 
-test("Export WAV is a no-op when there's no tune to render (buildExportOptions returns null)", async () => {
+test("Export MP3 is a no-op when there's no tune to render (buildExportOptions returns null)", async () => {
   const { ctx, cleanup } = setup({ buildExportOptions: () => null });
   const abcjs = createAbcjsStub();
   const download = stubDownload();
+  const lamejs = stubLamejs();
   try {
     clickExport(ctx, abcjs);
     await flush();
@@ -108,15 +131,17 @@ test("Export WAV is a no-op when there's no tune to render (buildExportOptions r
     assert.equal(download.clicked.length, 0);
   } finally {
     download.restore();
+    lamejs.restore();
     cleanup();
   }
 });
 
-test("Export WAV keeps the initiating song's filename and leaves a superseding render's button alone", async () => {
+test("Export MP3 keeps the initiating song's filename and leaves a superseding render's button alone", async () => {
   const { ctx, cleanup } = setup();
   ctx.audio.renderGeneration = 1;
   const abcjs = createAbcjsStub();
   const download = stubDownload();
+  const lamejs = stubLamejs();
   try {
     const btn = clickExport(ctx, abcjs);
 
@@ -133,21 +158,23 @@ test("Export WAV keeps the initiating song's filename and leaves a superseding r
     // Downloaded under the song that was open when export started, not
     // whichever one is open now.
     assert.equal(download.clicked.length, 1);
-    assert.equal(download.clicked[0].download, "basin_street.wav");
+    assert.equal(download.clicked[0].download, "basin_street.mp3");
     // The button belongs to the newer render now; the superseded export's
     // finally must not stomp it back to idle.
     assert.equal(btn.disabled, true);
     assert.ok(btn.querySelector(SPINNER_SELECTOR));
   } finally {
     download.restore();
+    lamejs.restore();
     cleanup();
   }
 });
 
-test("Export WAV recovers (button re-enabled, no download) when the render produces no audio", async () => {
+test("Export MP3 recovers (button re-enabled, no download) when the render produces no audio", async () => {
   const { ctx, cleanup } = setup();
   const abcjs = createAbcjsStub({ exportAudioBuffer: null });
   const download = stubDownload();
+  const lamejs = stubLamejs();
   try {
     const btn = clickExport(ctx, abcjs);
     await flush();
@@ -158,6 +185,7 @@ test("Export WAV recovers (button re-enabled, no download) when the render produ
     assert.equal(btn.querySelector(SPINNER_SELECTOR), null);
   } finally {
     download.restore();
+    lamejs.restore();
     cleanup();
   }
 });

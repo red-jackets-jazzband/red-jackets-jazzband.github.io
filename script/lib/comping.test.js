@@ -656,8 +656,11 @@ test("buildCompingTune defaults to L:1/8 when the tune has no L: field at all", 
   const noUnit = TUNE.split("\n").filter((l) => !l.startsWith("L:")).join("\n");
   const out = withTonal(() => buildCompingTune(noUnit, CHORDS, fakeSong(), "whole_note"));
   assert.match(out.abc, /^L:1\/8$/m);
+  // CHORDS changes chord every bar, so twobar1's cross-bar tie never
+  // survives (see the L:1/4 test below) — the "8" itself, still present on
+  // every hit, is what this test is actually checking.
   const v2 = out.abc.split("\nV:2\n").pop();
-  assert.match(v2, /8-/); // whole_note's twobar1 at the default eighth-note unit
+  assert.match(v2, /8/); // whole_note's twobar1 at the default eighth-note unit
 });
 
 // The comping's K: line as an ABC key signature { letter: "^"|"_"|"" }.
@@ -951,13 +954,34 @@ test("buildCompingTune distributes three-plus chords in one bar evenly, one hit 
 
 test("buildCompingTune scales pattern durations to a L:1/4 tune", () => {
   const quarterTune = TUNE.replace("L:1/8", "L:1/4").replace(/C8/g, "C4").replace(/F8/, "F4").replace(/G8/, "G4");
+  // Bars 0-1 repeat the same chord, so twobar1's cross-bar tie is a genuine
+  // hold (unlike CHORDS above, which changes every bar and never ties).
+  const heldChords = [{ text: ["C"] }, { text: ["C"] }, { text: ["G7"] }, { text: ["C"] }];
   const out = withTonal(() =>
-    buildCompingTune(quarterTune, CHORDS, fakeSong(), "whole_note"),
+    buildCompingTune(quarterTune, heldChords, fakeSong(), "whole_note"),
   );
   assert.match(out.abc, /^L:1\/4$/m);
   // whole_note bar 1 is "n8-" in eighths -> "n4-" at L:1/4
   const v2 = out.abc.split("\nV:2\n").pop();
   assert.match(v2, /4-/);
+});
+
+// ---------------------------------------------------------------------------
+// hold_over / whole_note only tie across the barline into an *actual* hold
+// ---------------------------------------------------------------------------
+
+test("buildCompingTune doesn't tie a held bar into a different chord next door", () => {
+  // C holds for two bars (a real hold), then G7 and C each get one bar of
+  // their own -- an even bar (twobar1) followed by an odd bar (twobar2) whose
+  // chord differs, same shape as "We'll Understand It Better By and By"'s
+  // G7->C7 turnaround that first surfaced this as a rendering bug.
+  const chords = [{ text: ["C"] }, { text: ["C"] }, { text: ["G7"] }, { text: ["C"] }];
+  const tune = ["M:4/4", "L:1/4", "K:C", '"C" C4 | "C" C4 | "G7" G4 | "C" C4 |'].join("\n");
+  const out = withTonal(() => buildCompingTune(tune, chords, fakeSong(), "hold_over"));
+  const v2 = out.abc.split("\nV:2\n").pop();
+  const bars = v2.split("|").map((b) => b.trim()).filter(Boolean);
+  assert.match(bars[0], /-$/, "bar 0 holds into the repeated C in bar 1");
+  assert.doesNotMatch(bars[2], /-$/, "bar 2 (G7) must not tie into bar 3's different chord (C)");
 });
 
 // ---------------------------------------------------------------------------

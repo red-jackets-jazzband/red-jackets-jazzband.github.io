@@ -1,16 +1,16 @@
 import { byId, downloadBlob } from "../lib/dom.js";
-import { encodeWav } from "../lib/wav-encode.js";
+import { encodeMp3 } from "../lib/mp3-encode.js";
 
 const IDLE_ICON = '<span class="fa-solid fa-file-audio" aria-hidden="true"></span>';
 const BUSY_ICON = '<span class="fa-solid fa-spinner fa-spin" aria-hidden="true"></span>';
 
-// "basin_street.abc" -> "basin_street.wav" — keeps the exported file's name
+// "basin_street.abc" -> "basin_street.mp3" — keeps the exported file's name
 // in step with the source ABC rather than re-deriving one from the title.
-function wavFilename(songFile) {
-  return `${String(songFile || "song").replace(/\.abc$/i, "")}.wav`;
+function mp3Filename(songFile) {
+  return `${String(songFile || "song").replace(/\.abc$/i, "")}.mp3`;
 }
 
-async function exportWav(ctx, btn) {
+async function exportMp3(ctx, btn) {
   const built = ctx.audio.buildExportOptions();
   if (!built) return;
 
@@ -30,9 +30,9 @@ async function exportWav(ctx, btn) {
     await synth.prime();
     const buffer = synth.audioBuffers?.[0];
     if (!buffer) throw new Error("No audio rendered for this tune");
-    downloadBlob(wavFilename(song), new Blob([encodeWav(buffer)], { type: "audio/wav" }));
+    downloadBlob(mp3Filename(song), new Blob([encodeMp3(buffer)], { type: "audio/mpeg" }));
   } catch (err) {
-    console.warn("WAV export failed:", err);
+    console.warn("MP3 export failed:", err);
   } finally {
     if (ctx.audio.renderGeneration === generation) {
       btn.disabled = false;
@@ -42,16 +42,17 @@ async function exportWav(ctx, btn) {
 }
 
 /*
-  Wire the action cluster's Export WAV button, next to Print / iRealPro: it
+  Wire the action cluster's Export MP3 button, next to Print / iRealPro: it
   renders the current sheet — key, tempo, instrument, Mixer levels, all baked
   into the visualObj the same way the live player reads them (see
   audio-player.js's buildExportOptions) — through a fresh, offline
-  ABCJS.synth.CreateSynth() and downloads the result as a .wav file. The
-  button is enabled/disabled alongside Play/Stop/Mixer in audio-player.js's
+  ABCJS.synth.CreateSynth(), encodes the result with the vendored lamejs
+  encoder (lib/mp3-encode.js) and downloads it as an .mp3 file. The button is
+  enabled/disabled alongside Play/Stop/Mixer in audio-player.js's
   setButtonsDisabled, since export needs the same audio-capable tune.
 */
-export function initWavExport(ctx) {
-  const btn = byId("exportWavBtn");
+export function initMp3Export(ctx) {
+  const btn = byId("exportMp3Btn");
   if (!btn) return;
-  btn.addEventListener("click", () => exportWav(ctx, btn));
+  btn.addEventListener("click", () => exportMp3(ctx, btn));
 }

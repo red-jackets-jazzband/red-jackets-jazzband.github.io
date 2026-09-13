@@ -105,7 +105,7 @@ export function mount(parent, ...nodes) {
 
 // Save a Blob to disk via a throwaway object-URL anchor — the shared trigger
 // behind every "export as a file" button (setlist .txt export, the sheet's
-// Export WAV).
+// Export MP3).
 export function downloadBlob(filename, blob) {
   const url = URL.createObjectURL(blob);
   const link = el("a", { href: url, download: filename });

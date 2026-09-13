@@ -8,7 +8,7 @@ import { createSetlistPrint } from "./setlist-print.js";
 // Flushes any number of chained microtask hops (font-load promise ->
 // Promise.all -> refit -> readSettled is a few) — a macrotask boundary is the
 // simplest way to guarantee they've all run, same pattern used elsewhere in
-// this suite (audio-player.test.js, wav-export.test.js).
+// this suite (audio-player.test.js, mp3-export.test.js).
 const flush = () => new Promise((resolve) => { setTimeout(resolve, 0); });
 
 const ABC = {

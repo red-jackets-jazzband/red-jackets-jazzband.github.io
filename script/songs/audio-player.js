@@ -23,14 +23,14 @@ const SYNTH_PARAMS = {
 const PLAY_ICON = '<span class="fa-solid fa-play" aria-hidden="true"></span>';
 const PAUSE_ICON = '<span class="fa-solid fa-pause" aria-hidden="true"></span>';
 const LOADING_ICON = '<span class="fa-solid fa-spinner fa-spin" aria-hidden="true"></span>';
-// Mirrors wav-export.js's own IDLE_ICON: a render superseding an in-flight
+// Mirrors mp3-export.js's own IDLE_ICON: a render superseding an in-flight
 // export leaves that export's button stuck on its spinner (its own finally
 // block's generation guard skips the reset since it's no longer current), so
 // the new render's enable path below must restore it itself.
-const EXPORT_WAV_IDLE_ICON = '<span class="fa-solid fa-file-audio" aria-hidden="true"></span>';
+const EXPORT_MP3_IDLE_ICON = '<span class="fa-solid fa-file-audio" aria-hidden="true"></span>';
 
 function setButtonsDisabled(disabled) {
-  ["playPauseBtn", "stopBtn", "mixerBtn", "exportWavBtn"].forEach((id) => {
+  ["playPauseBtn", "stopBtn", "mixerBtn", "exportMp3Btn"].forEach((id) => {
     const btn = byId(id);
     if (btn) btn.disabled = disabled;
   });
@@ -109,8 +109,8 @@ export function createAudioPlayer(ctx) {
     repeatStart: undefined,
     repeatEnd: undefined,
     // Bumped on every initForTune() call (a new song, or a same-song
-    // re-render from a Key/Tempo/Comping change) so an in-flight Export WAV
-    // (songs/wav-export.js) can tell whether the sheet it started rendering
+    // re-render from a Key/Tempo/Comping change) so an in-flight Export MP3
+    // (songs/mp3-export.js) can tell whether the sheet it started rendering
     // is still the one on screen once its offline synth finally resolves.
     renderGeneration: 0,
   };
@@ -119,7 +119,7 @@ export function createAudioPlayer(ctx) {
   let highlightedChordCell = null;
 
   // The options for a fresh, offline ABCJS.synth.CreateSynth() render of the
-  // current tune (songs/wav-export.js) — everything synthParams() also feeds
+  // current tune (songs/mp3-export.js) — everything synthParams() also feeds
   // the live SynthController, plus a tempo. CreateSynth has no setWarp; its
   // only tempo knob is millisecondsPerMeasure, so the Tempo stepper's warp
   // percentage (100% = the tune's own Q:) is applied the same way setWarp
@@ -530,8 +530,8 @@ export function createAudioPlayer(ctx) {
         if (ctrl !== state.synthController) return;
         setLoadingVisible(false);
         setButtonsDisabled(false);
-        const exportBtn = byId("exportWavBtn");
-        if (exportBtn) exportBtn.innerHTML = EXPORT_WAV_IDLE_ICON;
+        const exportBtn = byId("exportMp3Btn");
+        if (exportBtn) exportBtn.innerHTML = EXPORT_MP3_IDLE_ICON;
         if (ctx.state.tempoOverrideBpm !== null) applyTempo();
       })
       .catch((err) => {
@@ -579,7 +579,7 @@ export function createAudioPlayer(ctx) {
     get pickupBeats() {
       return pickupBeatsOf(state.currentVisualObj);
     },
-    // songs/wav-export.js reads this before its offline synth's await chain
+    // songs/mp3-export.js reads this before its offline synth's await chain
     // and again after, to tell whether a newer render (a song switch, or a
     // same-song Key/Tempo/Comping re-render) has since superseded the export
     // it started.
