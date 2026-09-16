@@ -30,7 +30,8 @@ async function exportMp3(ctx, btn) {
     await synth.prime();
     const buffer = synth.audioBuffers?.[0];
     if (!buffer) throw new Error("No audio rendered for this tune");
-    downloadBlob(mp3Filename(song), new Blob([encodeMp3(buffer)], { type: "audio/mpeg" }));
+    const mp3 = encodeMp3(buffer, { repeatCount: built.repeatCount, restartFraction: built.restartFraction });
+    downloadBlob(mp3Filename(song), new Blob([mp3], { type: "audio/mpeg" }));
   } catch (err) {
     console.warn("MP3 export failed:", err);
   } finally {
@@ -46,8 +47,12 @@ async function exportMp3(ctx, btn) {
   renders the current sheet — key, tempo, instrument, Mixer levels, all baked
   into the visualObj the same way the live player reads them (see
   audio-player.js's buildExportOptions) — through a fresh, offline
-  ABCJS.synth.CreateSynth(), encodes the result with the vendored lamejs
-  encoder (lib/mp3-encode.js) and downloads it as an .mp3 file. The button is
+  ABCJS.synth.CreateSynth(), which always renders exactly one playthrough.
+  encodeMp3 (lib/mp3-encode.js) takes that single render straight through to
+  the vendored lamejs encoder, looping it into the Repeat stepper's own count
+  itself as it streams — skipping the tune's pickup on every pass but the
+  first, same as the live practice loop — rather than this file first
+  building a second, repeated copy of the raw audio. The button is
   enabled/disabled alongside Play/Stop/Mixer in audio-player.js's
   setButtonsDisabled, since export needs the same audio-capable tune.
 */

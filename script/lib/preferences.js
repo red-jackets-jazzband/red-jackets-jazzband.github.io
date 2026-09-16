@@ -20,6 +20,7 @@ export const PREF_KEYS = {
   mixerSwing: "rj.mixerSwing",
   metronomeEnabled: "rj.metronomeEnabled",
   highQualityAudio: "rj.highQualityAudio",
+  repeatCount: "rj.repeatCount",
 };
 
 // The raw Storage object, or null when it can't be reached. Callers that hand

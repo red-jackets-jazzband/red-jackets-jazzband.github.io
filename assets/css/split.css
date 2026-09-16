@@ -796,7 +796,8 @@ video.video {
   color: rgba(236,234,230,.4);
   white-space: nowrap;
 }
-#transpose {
+#transpose,
+#repeatCount {
   width: 100%;
   background: none;
   border: none;
@@ -807,7 +808,9 @@ video.video {
   -moz-appearance: textfield;
 }
 #transpose::-webkit-inner-spin-button,
-#transpose::-webkit-outer-spin-button {
+#transpose::-webkit-outer-spin-button,
+#repeatCount::-webkit-inner-spin-button,
+#repeatCount::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
@@ -3512,7 +3515,7 @@ body:has(#rjLibrary) .split-bio {
     justify-content would stretch that leftover gap between a line's own
     items instead — but there's nothing left in #sheetmenu's own direct flex
     flow for it to apply to any more (audio-loading is display:none outside
-    an active load, and compingSlot is display:none outside show-advanced):
+    an active load, and .sheet-adv-row is display:none outside show-advanced):
     Key+Tempo, and separately Play+Print/Export/iRealPro+Inspiration, are
     each pulled out of #sheetmenu's own flex flow into their own centered
     .sheet-adjust row below, since space-between would otherwise shove each
@@ -4351,11 +4354,12 @@ body:has(#rjLibrary) .split-bio {
    ============================================================
    The chevron button is a small pull-tab straddling the seam between
    #sheetmenu and the sheet paper below it — a drawer handle, not one of
-   the toolbar's own icon buttons. "Advanced" items (currently just the
-   comping dropdown, more later) sit on their own row inside #sheetmenu,
-   under the top toolbar, and stay hidden until the drawer is opened.
-   State lives on #sheetmenu.show-advanced, set/persisted by
-   initAdvancedToggle. */
+   the toolbar's own icon buttons. "Advanced" items (the Repeat stepper and
+   the comping dropdown) sit on their own row inside #sheetmenu, under the
+   top toolbar, and stay hidden until the drawer is opened — the Repeat
+   stepper isn't something you touch mid-song like Key/Tempo, so it moved
+   in here rather than crowding the always-visible toolbar. State lives on
+   #sheetmenu.show-advanced, set/persisted by initAdvancedToggle. */
 #sheetmenu:not(.show-advanced) .sheet-adv-item {
   display: none;
 }
@@ -4364,6 +4368,17 @@ body:has(#rjLibrary) .split-bio {
 .sheet-adv-item {
   flex: 0 0 100%;
   order: 1;
+}
+/* .sheet-adv-row groups the Repeat stepper with the comping dropdown on
+   that one row (rather than each claiming its own full-width line via
+   .sheet-adv-item, which only the row wrapper itself carries) — there's
+   plenty of width to spare next to the comping dropdown's own capped
+   280px, and Key/Tempo/Repeat are visually the same kind of control. */
+.sheet-adv-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 #compingSlot .dropdown {
   display: block;

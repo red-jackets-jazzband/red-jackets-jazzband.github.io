@@ -5,7 +5,7 @@ import { parseSongsParams, buildSongsHash } from "../lib/song-hash.js";
 import { getPersonalSetlist } from "../lib/setlists-store.js";
 import { humanizeSongFile } from "../lib/filename.js";
 import { readFile } from "./read-file.js";
-import { createAudioPlayer } from "./audio-player.js";
+import { createAudioPlayer, loadRepeatCountState } from "./audio-player.js";
 import { createSheet } from "./sheet.js";
 import {
   createMixer, loadMixerState, loadGchordPatternState, loadHighQualityAudioState, loadSwingState,
@@ -61,6 +61,7 @@ function createApp() {
       metronomeEnabled: loadMetronomeState(),
       highQualityAudio: loadHighQualityAudioState(),
       swing: loadSwingState(),
+      repeatCount: loadRepeatCountState(),
     },
     readFile,
     storage: safeStorage,

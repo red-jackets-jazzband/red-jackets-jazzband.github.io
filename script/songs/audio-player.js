@@ -4,6 +4,14 @@ import {
 } from "../lib/tempo.js";
 import { computeVoicesOff, percentToAbcjsSwing } from "../lib/audio-mix.js";
 import { beatsPerMeasure } from "../lib/metronome.js";
+import { readPref, writePref, PREF_KEYS } from "../lib/preferences.js";
+
+// The Repeat stepper's bounds: at least one playthrough (no repeat), capped
+// at 20 — enough for real practice loops without a runaway value ticking
+// away in the background if someone mistypes into the number field.
+export const REPEAT_COUNT_MIN = 1;
+export const REPEAT_COUNT_MAX = 20;
+const REPEAT_COUNT_DEFAULT = 1;
 
 // Two of the three classic MIDI.js soundfont sets (see lib/gm-voices.js's
 // doc comment for the third, MusyngKite's own sibling FluidR3_GM, not
@@ -69,6 +77,18 @@ function pickupBeatsOf(visualObj) {
   return visualObj.getPickupLength() / beatLength;
 }
 
+// Calls fn() and reports {ok: false} if it throws synchronously, instead of
+// letting that throw propagate — shared by tryRepeat()'s own seek() and
+// play() calls, since both need the same "warn and back out" recovery.
+function tryCall(fn) {
+  try {
+    return { ok: true, value: fn() };
+  } catch (err) {
+    console.warn("Repeat restart failed:", err);
+    return { ok: false };
+  }
+}
+
 /*
   Owns the sheet's audio: the ABCjs SynthController lifecycle, the transport
   buttons' visual state, note/chord-cell highlighting during playback, the
@@ -101,7 +121,14 @@ export function createAudioPlayer(ctx) {
     // what tells songs/metronome.js's start() whether a Play is resuming
     // mid-tune or genuinely beginning from position 0.
     pausedMidway: false,
+    // Playthroughs completed since the current Play sequence's fresh start —
+    // reset to 0 on a genuine fresh Play, a Stop, or loading a new tune; see
+    // tryRepeat()'s own doc comment for how this drives the Repeat stepper.
+    repeatsPlayed: 0,
     totalMs: 0,
+    // Set by buildTimingMap — see its own doc comment. undefined for a tune
+    // with no pickup (or before any tune has loaded).
+    firstBarMs: undefined,
     currentVisualObj: null,
     nativeQpm: null,
     transposeSemitones: 0,
@@ -124,6 +151,11 @@ export function createAudioPlayer(ctx) {
   // only tempo knob is millisecondsPerMeasure, so the Tempo stepper's warp
   // percentage (100% = the tune's own Q:) is applied the same way setWarp
   // applies it internally: scale the tune's native ms/measure by 100/warp%.
+  // Also hands over the Repeat stepper's own count and repeatRestartFraction
+  // (see its own doc comment) so mp3-export.js's repeatAudioBuffer can render
+  // the same practice loop — pickup skipped on every pass but the first —
+  // into the exported file, rather than the export always being a single
+  // playthrough regardless of what the sheet is set to loop.
   function exportSynthOptions() {
     const visualObj = state.currentVisualObj;
     if (!visualObj || typeof visualObj.millisecondsPerMeasure !== "function") return null;
@@ -132,6 +164,8 @@ export function createAudioPlayer(ctx) {
       visualObj,
       millisecondsPerMeasure: (visualObj.millisecondsPerMeasure() * 100) / warpPercent,
       options: synthParams(),
+      repeatCount: ctx.state.repeatCount,
+      restartFraction: repeatRestartFraction(),
     };
   }
 
@@ -163,6 +197,18 @@ export function createAudioPlayer(ctx) {
     btn.classList.toggle("playing", state.isPlaying);
   }
 
+  // Swaps the Repeat stepper's caption between its resting "repeats" label
+  // and live progress ("2 of 4") while a multi-repeat playthrough is
+  // actually running, so practicing on a loop shows where you are in it.
+  function updateRepeatLabel() {
+    const label = byId("repeatCountLabel");
+    if (!label) return;
+    const total = ctx.state.repeatCount;
+    label.textContent = state.isPlaying && total > 1
+      ? `${state.repeatsPlayed + 1} of ${total}`
+      : "repeats";
+  }
+
   // Every place playback starts/stops/pauses funnels through here — one spot
   // to keep the play button and the Metronome (songs/metronome.js, which only
   // ticks while the sheet is actually playing) both in step with it, instead
@@ -176,6 +222,7 @@ export function createAudioPlayer(ctx) {
     state.isPlaying = playing;
     state.isLoadingPlayback = false;
     updatePlayButton();
+    updateRepeatLabel();
     ctx.metronome.onPlaybackChange(playing, fromStart);
   }
 
@@ -248,6 +295,64 @@ export function createAudioPlayer(ctx) {
     ctx.metronome.onBarStart(ev.elements ? firstTaggedMeasure(ev.elements) : undefined);
   }
 
+  /*
+    Practicing on a loop: a tune that finishes naturally restarts from the
+    top instead of stopping, as long as fewer playthroughs have completed
+    than the Repeat stepper's count (ctx.state.repeatCount, always >= 1 —
+    see setRepeatCount). Only a *natural* finish loops this way — an
+    explicit Stop, or loading a new tune, always resets repeatsPlayed to 0,
+    so the next Play starts a fresh count.
+    sc.seek(...) + sc.play() mirrors what a fresh Play already does on a
+    stopped controller (isStarted is false once a tune finishes — see
+    playPause()'s own doc comment on that toggle) rather than reaching for
+    ABCjs's own isLooping/toggleLoop: that loops forever and skips the
+    onFinished callback entirely (confirmed by reading the vendored
+    SynthController source), leaving nothing here to count playthroughs from.
+  */
+  function tryRepeat() {
+    if (state.repeatsPlayed + 1 >= ctx.state.repeatCount) return false;
+    const sc = state.synthController;
+    if (!sc || typeof sc.seek !== "function" || typeof sc.play !== "function") return false;
+    clearHighlight();
+    if (!tryCall(() => sc.seek(repeatRestartFraction())).ok) return false;
+
+    // sc.play() can throw synchronously (before returning any promise to
+    // resolve/catch) as well as reject asynchronously, the same as in
+    // playPause() — guard both so a failed restart falls back to a clean
+    // stop instead of leaving state.isPlaying stuck true with nothing
+    // actually playing. Only commit repeatsPlayed/the label once play()
+    // is confirmed not to have thrown synchronously.
+    const played = tryCall(() => sc.play());
+    if (!played.ok) return false;
+
+    state.repeatsPlayed += 1;
+    updateRepeatLabel();
+    Promise.resolve(played.value).catch((err) => {
+      console.warn("Repeat restart failed:", err);
+      if (sc !== state.synthController) return;
+      setIsPlaying(false);
+      state.pausedMidway = false;
+      clearHighlight();
+    });
+    return true;
+  }
+
+  // Where a repeat restarts: the true top (fraction 0) for an ordinary tune,
+  // but a tune with a pickup/anacrusis instead restarts at the first double
+  // bar — state.firstBarMs, the offset of measureIdx 1 (the pickup itself is
+  // always measureIdx 0) — so the lead-in note(s) aren't replayed every time
+  // round the loop. This also keeps the chord-table cursor aligned with the
+  // chord schema on the restart: resolveChordCell maps straight off the same
+  // measureIdx the audio is actually at, pickup skipped or not, so it always
+  // lands on the same cell real (non-repeat) playback would.
+  function repeatRestartFraction() {
+    if (pickupBeatsOf(state.currentVisualObj) > 0
+      && state.firstBarMs !== undefined && state.totalMs > 0) {
+      return Math.max(0, Math.min(1, state.firstBarMs / state.totalMs));
+    }
+    return 0;
+  }
+
   const cursorControl = {
     onStart: clearHighlight,
     onEvent(ev) {
@@ -255,6 +360,7 @@ export function createAudioPlayer(ctx) {
       highlightEvent(ev);
     },
     onFinished() {
+      if (tryRepeat()) return;
       setIsPlaying(false);
       // A tune that played to the end restarts from position 0 next time,
       // same as an explicit Stop — the next Play is a fresh start again.
@@ -273,6 +379,13 @@ export function createAudioPlayer(ctx) {
     repeated section is visited twice — keep the first visit's values, and
     when a repeat brings us back to an already-tagged measure, snap the running
     measure counter back to that measure's stored index.
+
+    Also records state.firstBarMs — the ms offset where measureIdx first
+    reaches 1, i.e. the tune's first full bar after a pickup/anacrusis (the
+    partial first measure is always measureIdx 0). tryRepeat()'s own doc
+    comment explains what this feeds: restarting a practice loop at this
+    offset instead of 0 for a tune with a pickup, so the loop doesn't replay
+    the lead-in note(s) every time round.
   */
   function buildTimingMap(visualObj) {
     if (typeof ABCJS.TimingCallbacks !== "function") return;
@@ -285,10 +398,12 @@ export function createAudioPlayer(ctx) {
       let maxMs = 0;
       let measureIdx = 0;
       let seenFirstEvent = false;
+      let firstBarMs;
       for (const t of timings) {
         if (t.type !== "event" || !t.elements || t.milliseconds === undefined) continue;
         if (t.measureStart && seenFirstEvent) measureIdx += 1;
         seenFirstEvent = true;
+        if (measureIdx === 1 && firstBarMs === undefined) firstBarMs = t.milliseconds;
         if (t.milliseconds > maxMs) maxMs = t.milliseconds;
         const taggedIdx = firstTaggedMeasure(t.elements);
         if (taggedIdx !== undefined) {
@@ -298,6 +413,7 @@ export function createAudioPlayer(ctx) {
         tagElements(t.elements, t.milliseconds, measureIdx);
       }
       state.totalMs = maxMs + 500; // a little slack so the last note isn't at fraction 1
+      state.firstBarMs = firstBarMs;
     } catch (err) {
       console.warn("buildTimingMap error:", err);
     }
@@ -396,6 +512,9 @@ export function createAudioPlayer(ctx) {
     // reset pausedMidway to false; onFinished does too, since a tune that
     // played to the end also restarts from position 0 next time).
     const fromStart = starting && !state.pausedMidway;
+    // A fresh Play starts a new repeat count from 0 playthroughs completed —
+    // a resume/pause mid-loop must not reset progress through it.
+    if (fromStart) state.repeatsPlayed = 0;
     // A pause is "effectively instant" (see above), so mark it synchronously
     // rather than waiting on sc.play()'s own promise below — the *next*
     // play, whenever it comes, needs to already know it's resuming mid-tune,
@@ -442,6 +561,7 @@ export function createAudioPlayer(ctx) {
     }
     setIsPlaying(false);
     state.pausedMidway = false; // resetting to position 0 below — next Play is a fresh start
+    state.repeatsPlayed = 0;
     clearHighlight();
     setButtonsDisabled(true);
 
@@ -478,7 +598,9 @@ export function createAudioPlayer(ctx) {
     }
     setIsPlaying(false);
     state.pausedMidway = false; // a freshly (re)loaded tune's next Play is a fresh start
+    state.repeatsPlayed = 0;
     state.totalMs = 0;
+    state.firstBarMs = undefined;
     state.currentVisualObj = visualObj;
     // ABCjs's own getBpm(), not a raw read of metaText.tempo.bpm: a tune with
     // no Q: field at all has metaText.tempo undefined, but ABCjs's synth
@@ -548,6 +670,22 @@ export function createAudioPlayer(ctx) {
     notation.addEventListener("click", handleNotationClick);
   }
 
+  // Called from the Repeat stepper (sheet-controls.js): clamps and persists
+  // the chosen playthrough count, and syncs the field back to the clamped
+  // value (a manually typed out-of-range number is otherwise left showing
+  // whatever was typed, not what actually took effect).
+  function setRepeatCount(value) {
+    const parsed = Number(value);
+    const count = Number.isFinite(parsed)
+      ? Math.min(REPEAT_COUNT_MAX, Math.max(REPEAT_COUNT_MIN, Math.round(parsed)))
+      : REPEAT_COUNT_DEFAULT;
+    ctx.state.repeatCount = count;
+    writePref(PREF_KEYS.repeatCount, String(count));
+    const input = byId("repeatCount");
+    if (input) input.value = String(count);
+    updateRepeatLabel();
+  }
+
   return {
     set transposeSemitones(value) {
       state.transposeSemitones = value;
@@ -591,6 +729,7 @@ export function createAudioPlayer(ctx) {
       state.repeatEnd = end;
     },
     buildExportOptions: exportSynthOptions,
+    setRepeatCount,
     initForTune,
     setupNotationClickHandler,
     updateTempoLabel,
@@ -600,4 +739,15 @@ export function createAudioPlayer(ctx) {
     stop,
     TEMPO_BOUNDS: { min: TEMPO_MIN_BPM, max: TEMPO_MAX_BPM },
   };
+}
+
+// ctx.state.repeatCount's initial value, seeded from the persisted pref
+// (default 1 — no repeat) — built here for the same reason loadMetronomeState
+// lives in metronome.js: the persistence/defaulting logic sits next to the
+// module that owns the rest of this state.
+export function loadRepeatCountState() {
+  const raw = Number(readPref(PREF_KEYS.repeatCount));
+  return Number.isInteger(raw) && raw >= REPEAT_COUNT_MIN && raw <= REPEAT_COUNT_MAX
+    ? raw
+    : REPEAT_COUNT_DEFAULT;
 }

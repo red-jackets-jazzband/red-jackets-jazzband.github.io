@@ -58,13 +58,11 @@ function concatChunks(chunks) {
   return result;
 }
 
-export function encodeMp3(audioBuffer) {
-  const { numberOfChannels, sampleRate } = audioBuffer;
-  const stereo = numberOfChannels >= 2;
-  const left = toPcm16Array(resample(audioBuffer.getChannelData(0), sampleRate));
-  const right = stereo ? toPcm16Array(resample(audioBuffer.getChannelData(1), sampleRate)) : left;
-
-  const encoder = new lamejs.Mp3Encoder(2, TARGET_SAMPLE_RATE, KBPS);
+// Runs one segment's PCM through the encoder's own 1152-sample-frame
+// chunking, returning whatever encoded byte chunks it produced. Pulled out
+// of encodeMp3 so a repeat can feed the *same* encoder session (and its
+// internal frame carry-over) more than once without re-deriving this loop.
+function encodeSegment(encoder, left, right) {
   const chunks = [];
   for (let i = 0; i < left.length; i += SAMPLES_PER_ENCODE) {
     const leftChunk = left.subarray(i, i + SAMPLES_PER_ENCODE);
@@ -72,6 +70,55 @@ export function encodeMp3(audioBuffer) {
     const encoded = encoder.encodeBuffer(leftChunk, rightChunk);
     if (encoded.length > 0) chunks.push(encoded);
   }
+  return chunks;
+}
+
+/*
+  Encodes `audioBuffer` as an MP3, optionally looping it `repeatCount` times
+  so Export MP3 (songs/mp3-export.js) respects the sheet's Repeat stepper the
+  same way live playback's practice loop does. The first playthrough always
+  plays in full; every later one starts `restartFraction` of the way through
+  instead of at the very top — the export-side mirror of audio-player.js's
+  own repeat restart, which skips a tune's pickup/anacrusis on every pass but
+  the first (see its repeatRestartFraction doc comment). restartFraction is a
+  plain 0..1 fraction of the tune's own duration (not a sample count or a
+  time in seconds), so the same value the live player computes off its own
+  timing map applies here unchanged regardless of what tempo this render
+  happens to be at.
+
+  The repeated PCM is never materialized as one long buffer: `left`/`right`
+  (the whole render, resampled+converted once) are fed into the *same*
+  lamejs encoder session as many times as requested, the repeat tail as a
+  zero-copy `subarray` view rather than a copy — at 20 repeats of a several-
+  minute tune, concatenating first would mean allocating a Float32Array sized
+  for the *entire* looped duration up front (over a gigabyte for a long
+  stereo tune), which can freeze or crash the tab; encoding straight from the
+  one already-resampled render instead keeps peak memory to one playthrough's
+  PCM plus the (much smaller) encoded output.
+  `repeatCount` that isn't a real repeat count (missing, 1, or less) just
+  plays the render once, same as calling this with no options at all.
+*/
+/** @param {{ repeatCount?: number, restartFraction?: number }} [options] */
+export function encodeMp3(audioBuffer, options = {}) {
+  const { repeatCount, restartFraction = 0 } = options;
+  const { numberOfChannels, sampleRate } = audioBuffer;
+  const stereo = numberOfChannels >= 2;
+  const left = toPcm16Array(resample(audioBuffer.getChannelData(0), sampleRate));
+  const right = stereo ? toPcm16Array(resample(audioBuffer.getChannelData(1), sampleRate)) : left;
+
+  const encoder = new lamejs.Mp3Encoder(2, TARGET_SAMPLE_RATE, KBPS);
+  let chunks = encodeSegment(encoder, left, right);
+
+  const count = Number.isInteger(repeatCount) ? repeatCount : 1;
+  if (count > 1) {
+    const skip = Math.max(0, Math.min(left.length, Math.round(restartFraction * left.length)));
+    const leftTail = left.subarray(skip);
+    const rightTail = right.subarray(skip);
+    for (let r = 1; r < count; r += 1) {
+      chunks = chunks.concat(encodeSegment(encoder, leftTail, rightTail));
+    }
+  }
+
   const flushed = encoder.flush();
   if (flushed.length > 0) chunks.push(flushed);
 

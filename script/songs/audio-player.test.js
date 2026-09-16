@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mountPage } from "../../../tests/helpers/dom.js";
 import { makeCtx } from "../../../tests/helpers/ctx.js";
 import { createAbcjsStub, withAbcjs } from "../../../tests/helpers/stubs.js";
-import { createAudioPlayer } from "./audio-player.js";
+import { createAudioPlayer, loadRepeatCountState } from "./audio-player.js";
 
 const flush = () => new Promise((resolve) => { setTimeout(resolve, 0); });
 const SPINNER_SELECTOR = ".fa-spinner";
@@ -17,6 +17,49 @@ function setup(stateOverrides = {}) {
   });
   const audio = createAudioPlayer(ctx);
   return { page, ctx, audio, rerenders, cleanup: page.cleanup };
+}
+
+// A pickup note (measureIdx 0) followed by the first full bar (measureIdx 1)
+// at 500ms, then one more note at 1000ms — shared by every pickup-aware
+// repeat-restart test below; only the visualObj's own getPickupLength/
+// getBeatLength decide whether tryRepeat treats it as having a pickup to skip.
+const PICKUP_SHAPED_TIMINGS = [
+  { type: "event", elements: [[{}]], milliseconds: 0 }, // the pickup note
+  { type: "event", elements: [[{}]], milliseconds: 500, measureStart: true }, // first full bar
+  { type: "event", elements: [[{}]], milliseconds: 1000 },
+];
+
+// Boots a tune under stub audio for the repeat-loop tests below: init+flush
+// happens immediately, but the "Play" step is deferred to the returned
+// play() so a test needing to assert something in between (e.g. the Repeat
+// label's resting state before Play) still can. play() returns the current
+// SynthController stub each time it's called, since a Stop + fresh Play
+// swaps in a new one.
+async function setupPlayingTune(stateOverrides = {}, { visualObj = { metaText: {} }, noteTimings } = {}) {
+  const { audio, cleanup } = setup(stateOverrides);
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  if (noteTimings) abcjs._noteTimings = noteTimings;
+  withAbcjs(abcjs, () => audio.initForTune(visualObj));
+  await flush();
+  async function play() {
+    withAbcjs(abcjs, () => audio.playPause());
+    await flush();
+    return abcjs.calls.synthControllers.at(-1);
+  }
+  return {
+    audio, abcjs, cleanup, play,
+  };
+}
+
+// Boots a tune already sitting at the moment a repeat restart just fired —
+// shared by the pickup/no-pickup restart-fraction tests below.
+async function setupAtRepeatRestart(visualObj) {
+  const {
+    audio, abcjs, cleanup, play,
+  } = await setupPlayingTune({ repeatCount: 2 }, { visualObj, noteTimings: PICKUP_SHAPED_TIMINGS });
+  const sc = await play();
+  withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+  return { audio, abcjs, cleanup };
 }
 
 test("updateTempoLabel shows the override, else the tune's native tempo", () => {
@@ -242,20 +285,23 @@ test("playPause resumes on the first press after pausing (ABCjs play() is a togg
 // argument (threaded through to ctx.metronome.onPlaybackChange) is how it
 // knows the difference. These spy on that argument directly rather than on
 // any audible effect, since audio-player.js is what computes it.
-function setupWithMetronomeSpy() {
+function setupWithMetronomeSpy(stateOverrides = {}) {
   const page = mountPage();
   const calls = [];
+  const barStarts = [];
   const ctx = makeCtx({
-    state: { tempoOverrideBpm: null, compingActive: false },
+    state: { tempoOverrideBpm: null, compingActive: false, ...stateOverrides },
     metronome: {
       init: () => {},
       refresh: () => {},
       onPlaybackChange: (playing, fromStart) => calls.push([playing, fromStart]),
-      onBarStart: () => {},
+      onBarStart: (measureIdx) => barStarts.push(measureIdx),
     },
   });
   const audio = createAudioPlayer(ctx);
-  return { page, audio, calls, cleanup: page.cleanup };
+  return {
+    page, audio, calls, barStarts, cleanup: page.cleanup,
+  };
 }
 
 test("playPause reports fromStart:true only for a genuine first Play, never a pause or resume", async () => {
@@ -486,6 +532,43 @@ test("buildExportOptions scales millisecondsPerMeasure by the Tempo stepper's wa
   }
 });
 
+test("buildExportOptions carries the Repeat stepper's count and its own pickup-aware restart fraction", async () => {
+  const { audio, cleanup } = setup({ repeatCount: 4 });
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  abcjs._noteTimings = PICKUP_SHAPED_TIMINGS;
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({
+      metaText: {},
+      millisecondsPerMeasure: () => 500,
+      getPickupLength: () => 0.25, // a quarter-note pickup
+      getBeatLength: () => 0.25,
+    }));
+    await flush();
+
+    const built = audio.buildExportOptions();
+    assert.equal(built.repeatCount, 4);
+    // same fraction the live repeat restart seeks to: firstBarMs(500) / totalMs(1500)
+    assert.equal(built.restartFraction, 500 / 1500);
+  } finally {
+    cleanup();
+  }
+});
+
+test("buildExportOptions's restartFraction is 0 for a tune with no pickup", async () => {
+  const { audio, cleanup } = setup({ repeatCount: 3 });
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {}, millisecondsPerMeasure: () => 500 }));
+    await flush();
+
+    const built = audio.buildExportOptions();
+    assert.equal(built.repeatCount, 3);
+    assert.equal(built.restartFraction, 0);
+  } finally {
+    cleanup();
+  }
+});
+
 test("a torn-down controller's belated callback doesn't move the cursor once a newer one has taken over", async () => {
   const { audio, cleanup } = setup();
   const abcjs = createAbcjsStub({ audioSupported: true });
@@ -522,6 +605,214 @@ test("a torn-down controller's belated callback doesn't move the cursor once a n
     staleCursorControl.onFinished();
     assert.equal(audio.isPlaying, true);
   } finally {
+    cleanup();
+  }
+});
+
+test("loadRepeatCountState defaults to 1, reflects a persisted value, and rejects out-of-range/corrupt values", () => {
+  const page = mountPage();
+  try {
+    assert.equal(loadRepeatCountState(), 1);
+    window.localStorage.setItem("rj.repeatCount", "5");
+    assert.equal(loadRepeatCountState(), 5);
+    window.localStorage.setItem("rj.repeatCount", "999");
+    assert.equal(loadRepeatCountState(), 1); // out of range -> default
+    window.localStorage.setItem("rj.repeatCount", "banana");
+    assert.equal(loadRepeatCountState(), 1);
+  } finally {
+    window.localStorage.clear();
+    page.cleanup();
+  }
+});
+
+test("onFinished doesn't loop when repeatCount is 1 (the default)", async () => {
+  const {
+    audio, abcjs, cleanup, play,
+  } = await setupPlayingTune({ repeatCount: 1 });
+  try {
+    const sc = await play();
+    assert.equal(audio.isPlaying, true);
+
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+    assert.equal(audio.isPlaying, false);
+    assert.deepEqual(abcjs.calls.seek, []); // never restarted
+  } finally {
+    cleanup();
+  }
+});
+
+test("onFinished replays from the top while fewer playthroughs have completed than repeatCount, then stops", async () => {
+  const {
+    audio, abcjs, cleanup, play,
+  } = await setupPlayingTune({ repeatCount: 3 });
+  try {
+    const sc = await play();
+
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished()); // 1st playthrough done
+    assert.equal(audio.isPlaying, true, "loops instead of stopping");
+    assert.deepEqual(abcjs.calls.seek, [0]);
+
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished()); // 2nd playthrough done
+    assert.equal(audio.isPlaying, true, "loops again");
+    assert.deepEqual(abcjs.calls.seek, [0, 0]);
+
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished()); // 3rd (final) playthrough done
+    assert.equal(audio.isPlaying, false, "stops after the requested count");
+    assert.deepEqual(abcjs.calls.seek, [0, 0]); // no further restart
+  } finally {
+    cleanup();
+  }
+});
+
+test("onFinished recovers when the repeat restart's sc.play() throws synchronously", async () => {
+  const {
+    audio, abcjs, cleanup, play,
+  } = await setupPlayingTune({ repeatCount: 3 });
+  try {
+    const sc = await play();
+    sc.play = () => { throw new Error("boom"); };
+
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+    // The seek already happened, but the synchronous throw from play() must
+    // fall back to the same clean stop onFinished uses when repeats are
+    // exhausted, rather than leaving isPlaying stuck true.
+    assert.deepEqual(abcjs.calls.seek, [0]);
+    assert.equal(audio.isPlaying, false);
+    assert.equal(document.getElementById("repeatCountLabel").textContent, "repeats");
+  } finally {
+    cleanup();
+  }
+});
+
+test("onFinished restarts after the pickup (first double bar), not at the very top", async () => {
+  const { audio, abcjs, cleanup } = await setupAtRepeatRestart({
+    metaText: {},
+    getPickupLength: () => 0.25, // a quarter-note pickup
+    getBeatLength: () => 0.25, // quarter-note beat -> 1 beat of pickup
+  });
+  try {
+    assert.equal(audio.isPlaying, true);
+    // totalMs = maxMs(1000) + 500 slack = 1500; firstBarMs = 500 -> 500/1500
+    assert.equal(abcjs.calls.seek.at(-1), 500 / 1500);
+  } finally {
+    cleanup();
+  }
+});
+
+test("onFinished restarts at the very top for a tune with no pickup, even with the same noteTimings shape", async () => {
+  // No getPickupLength -> pickupBeatsOf is 0.
+  const { audio, abcjs, cleanup } = await setupAtRepeatRestart({ metaText: {} });
+  try {
+    assert.equal(audio.isPlaying, true);
+    assert.equal(abcjs.calls.seek.at(-1), 0);
+  } finally {
+    cleanup();
+  }
+});
+
+test("Stop resets the repeat count so the next Play starts a fresh loop", async () => {
+  const {
+    audio, abcjs, cleanup, play,
+  } = await setupPlayingTune({ repeatCount: 2 });
+  try {
+    let sc = await play();
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished()); // loops once (1 of 2 done)
+    assert.equal(audio.isPlaying, true);
+
+    withAbcjs(abcjs, () => audio.stop());
+    await flush();
+
+    sc = await play(); // fresh Play after Stop
+
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+    assert.equal(audio.isPlaying, true, "the reset count loops again rather than stopping early");
+  } finally {
+    cleanup();
+  }
+});
+
+test("updateRepeatLabel shows live progress while playing a multi-repeat loop", async () => {
+  const { abcjs, cleanup, play } = await setupPlayingTune({ repeatCount: 3 });
+  try {
+    assert.equal(document.getElementById("repeatCountLabel").textContent, "repeats");
+
+    const sc = await play();
+    assert.equal(document.getElementById("repeatCountLabel").textContent, "1 of 3");
+
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+    assert.equal(document.getElementById("repeatCountLabel").textContent, "2 of 3");
+
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+    assert.equal(document.getElementById("repeatCountLabel").textContent, "repeats"); // done
+  } finally {
+    cleanup();
+  }
+});
+
+// The metronome (songs/metronome.js) only starts/stops off setIsPlaying's
+// own onPlaybackChange notification (see its doc comment) and only resyncs
+// its click off a real measureStart event (notifyMetronomeBarStart). A
+// repeat restart (tryRepeat) deliberately never calls setIsPlaying — the
+// tune never really "stopped" from the metronome's perspective, so its click
+// should tick straight through the loop boundary uninterrupted — but real
+// playback does still need to keep reporting bar lines afterwards so the
+// click stays in phase. These two things are what this test checks.
+test("a repeat restart doesn't interrupt the metronome, and it still resyncs on the next real bar line", async () => {
+  const { audio, calls, barStarts, cleanup } = setupWithMetronomeSpy({ repeatCount: 2 });
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+    calls.length = 0; // drop initForTune's own setIsPlaying(false)
+
+    audio.playPause(); // first Play, from position 0
+    await flush();
+    assert.deepEqual(calls, [[true, true]]);
+
+    const sc = abcjs.calls.synthControllers.at(-1);
+    // Mirrors real ABCjs: a natural finish sets isStarted false internally
+    // before invoking cursorControl.onFinished (see tryRepeat's own doc
+    // comment) — the stub doesn't simulate that step itself, so it's set
+    // here to match what notifyMetronomeBarStart's isStarted guard sees for
+    // real once tryRepeat's own sc.play() resumes it.
+    sc.isStarted = false;
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished()); // loops (1 of 2 done)
+    assert.equal(audio.isPlaying, true);
+
+    // The loop restart itself must not look like a stop/start cycle to the
+    // metronome — no extra onPlaybackChange entry beyond the original Play.
+    assert.deepEqual(calls, [[true, true]]);
+    // tryRepeat's own sc.play() already resumed the controller synchronously.
+    assert.equal(sc.isStarted, true);
+
+    // Real playback crossing the next bar line after the restart must still
+    // reach the metronome so its click stays in phase with the loop.
+    withAbcjs(abcjs, () => sc._cursorControl.onEvent({ measureStart: true, elements: [] }));
+    assert.deepEqual(barStarts, [undefined]); // no tagged measure on this bare event, but it fired
+  } finally {
+    cleanup();
+  }
+});
+
+test("setRepeatCount clamps to [1, 20], persists, and syncs the field", async () => {
+  const { ctx, audio, cleanup } = setup();
+  try {
+    audio.setRepeatCount(999);
+    assert.equal(ctx.state.repeatCount, 20);
+    assert.equal(document.getElementById("repeatCount").value, "20");
+    assert.equal(window.localStorage.getItem("rj.repeatCount"), "20");
+
+    audio.setRepeatCount(-5);
+    assert.equal(ctx.state.repeatCount, 1);
+
+    audio.setRepeatCount("not a number");
+    assert.equal(ctx.state.repeatCount, 1);
+
+    audio.setRepeatCount(4.6);
+    assert.equal(ctx.state.repeatCount, 5); // rounded
+  } finally {
+    window.localStorage.clear();
     cleanup();
   }
 });

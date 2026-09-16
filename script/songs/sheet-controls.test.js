@@ -6,13 +6,16 @@ import { initSheetControls, clearBookletPrintState } from "./sheet-controls.js";
 
 function setup(overrides = {}) {
   const page = mountPage();
-  const calls = { rerender: 0, tempo: [], playPause: 0, mixerToggle: 0 };
+  const calls = {
+    rerender: 0, tempo: [], playPause: 0, mixerToggle: 0, repeatCount: [],
+  };
   const ctx = makeCtx({
     sheet: { rerender: () => { calls.rerender += 1; } },
     audio: {
       transposeSemitones: 0,
       chordOffset: 0,
       setRepeatBoundaries: () => {},
+      setRepeatCount: (v) => calls.repeatCount.push(v),
       initForTune: () => {},
       setupNotationClickHandler: () => {},
       updateTempoLabel: () => {},
@@ -58,6 +61,47 @@ test("the Tempo buttons step the audio player by ±TEMPO_STEP", () => {
     assert.deepEqual(calls.tempo, [4, -4]);
   } finally {
     cleanup();
+  }
+});
+
+test("the Repeat stepper buttons clamp #repeatCount and call ctx.audio.setRepeatCount", () => {
+  const { calls, cleanup } = setup();
+  try {
+    const input = document.getElementById("repeatCount");
+    input.value = "20";
+    document.getElementById("repeatUpBtn").dispatchEvent(new window.Event("click"));
+    assert.equal(input.value, "20"); // clamped at max
+    document.getElementById("repeatDownBtn").dispatchEvent(new window.Event("click"));
+    assert.equal(input.value, "19");
+    assert.deepEqual(calls.repeatCount, ["20", "19"]);
+  } finally {
+    cleanup();
+  }
+});
+
+test("the Repeat stepper's field is seeded from ctx.state.repeatCount on init", () => {
+  const page = mountPage();
+  const ctx = makeCtx({
+    state: { repeatCount: 4 },
+    audio: {
+      transposeSemitones: 0,
+      chordOffset: 0,
+      setRepeatBoundaries: () => {},
+      setRepeatCount: () => {},
+      initForTune: () => {},
+      setupNotationClickHandler: () => {},
+      updateTempoLabel: () => {},
+      stepTempo: () => {},
+      playPause: () => {},
+      stop: () => {},
+    },
+    mixer: { init: () => {}, refresh: () => {}, toggle: () => {} },
+  });
+  try {
+    initSheetControls(ctx);
+    assert.equal(document.getElementById("repeatCount").value, "4");
+  } finally {
+    page.cleanup();
   }
 });
 

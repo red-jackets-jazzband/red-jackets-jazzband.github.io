@@ -44,13 +44,16 @@ export function printWithTitle(title) {
   window.print();
 }
 
-// Nudge the Key stepper's underlying #transpose value by one semitone and
-// dispatch an "input" event, reusing the listeners that re-render the chart
-// (and, for a personal setlist, write the offset back into the setlist row).
-function stepTranspose(delta) {
-  const input = byId("transpose");
+// Nudge a stepper field's numeric value by delta and dispatch an "input"
+// event, reusing whichever listener re-renders/persists that field — the Key
+// stepper's #transpose (re-renders the chart and, for a personal setlist,
+// writes the offset back into the setlist row) and the Repeat stepper's
+// #repeatCount (ctx.audio.setRepeatCount does the clamping and persisting)
+// both follow this same nudge-and-dispatch pattern.
+function stepNumericField(id, delta, fallback) {
+  const input = byId(id);
   if (!input) return;
-  const next = Number(input.value || 0) + delta;
+  const next = Number(input.value || fallback) + delta;
   input.value = Math.max(Number(input.min), Math.min(Number(input.max), next));
   input.dispatchEvent(new Event("input", { bubbles: true }));
 }
@@ -127,10 +130,15 @@ function initSpacebarPlayPause(ctx) {
 */
 export function initSheetControls(ctx) {
   on("transpose", "input", () => ctx.sheet.rerender());
-  on("keyUpBtn", "click", () => stepTranspose(1));
-  on("keyDownBtn", "click", () => stepTranspose(-1));
+  on("keyUpBtn", "click", () => stepNumericField("transpose", 1, 0));
+  on("keyDownBtn", "click", () => stepNumericField("transpose", -1, 0));
   on("tempoUpBtn", "click", () => ctx.audio.stepTempo(TEMPO_STEP));
   on("tempoDownBtn", "click", () => ctx.audio.stepTempo(-TEMPO_STEP));
+  const repeatCountInput = byId("repeatCount");
+  if (repeatCountInput) repeatCountInput.value = String(ctx.state.repeatCount);
+  on("repeatCount", "input", () => ctx.audio.setRepeatCount(byId("repeatCount").value));
+  on("repeatUpBtn", "click", () => stepNumericField("repeatCount", 1, 1));
+  on("repeatDownBtn", "click", () => stepNumericField("repeatCount", -1, 1));
   on("playPauseBtn", "click", () => ctx.audio.playPause());
   on("stopBtn", "click", () => ctx.audio.stop());
   on("mixerBtn", "click", () => ctx.mixer.toggle());
