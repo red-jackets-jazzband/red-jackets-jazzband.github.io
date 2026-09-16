@@ -63,13 +63,23 @@ test("buildBooklet lays out front matter, per-song blocks and the stage list", a
     assert.equal(bookletRenders[0].notationId, "setlistPrintNotation-1");
     assert.equal(bookletRenders[0].titlePrefix, "1. ");
 
-    // stage list: per-set numbering, a "Set 2" row, tempo filled from Q:
-    const stageRows = [...container.querySelectorAll(".setlist-stage-table tbody tr")];
-    assert.deepEqual(
-      stageRows.filter((r) => r.querySelector(".stage-c-num")).map((r) => r.querySelector(".stage-c-num").textContent),
-      ["1.", "2.", "1."],
-    );
-    assert.ok(stageRows.some((r) => r.querySelector("th") && r.querySelector("th").textContent === "Set 2"));
+    // stage list: one <tbody class="setlist-stage-set-body"> per set — the
+    // print break boundary — each holding its own "Set N" heading row and
+    // that set's song rows, not one flat list of rows.
+    const setBodies = [...container.querySelectorAll(".setlist-stage-table .setlist-stage-set-body")];
+    assert.equal(setBodies.length, 2);
+
+    const rowsOf = (body) => [...body.querySelectorAll("tr")];
+    const numsOf = (body) => rowsOf(body)
+      .filter((r) => r.querySelector(".stage-c-num"))
+      .map((r) => r.querySelector(".stage-c-num").textContent);
+
+    assert.equal(rowsOf(setBodies[0])[0].querySelector("th").textContent, "Set 1");
+    assert.deepEqual(numsOf(setBodies[0]), ["1.", "2."]);
+
+    assert.equal(rowsOf(setBodies[1])[0].querySelector("th").textContent, "Set 2");
+    assert.deepEqual(numsOf(setBodies[1]), ["1."]);
+
     assert.equal(document.getElementById("setlistStageTempo-1").textContent, "120");
     assert.equal(document.getElementById("setlistStageConcert-2").textContent, "G"); // F + 2
   } finally {

@@ -3088,6 +3088,11 @@ body.setlist-dragging {
 .setlist-stage-table thead th.stage-c-song {
   text-align: left;
 }
+.setlist-stage-table thead th.stage-c-concert,
+.setlist-stage-table thead th.stage-c-instr,
+.setlist-stage-table thead th.stage-c-tempo {
+  text-align: center;
+}
 .setlist-stage-table tbody td {
   padding: 4px 0 4px 34px;
   vertical-align: baseline;
@@ -3107,7 +3112,7 @@ body.setlist-dragging {
 .setlist-stage-table td.stage-c-concert,
 .setlist-stage-table td.stage-c-instr,
 .setlist-stage-table td.stage-c-tempo {
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -3123,6 +3128,16 @@ body.setlist-dragging {
 }
 .setlist-stage-table tbody tr.setlist-stage-set-row:first-child th {
   padding-top: 2px;
+}
+/* Prefer a page break between sets over splitting one set's rows across two
+   pages — a soft preference (unlike the booklet forms' forced pageBreakBefore
+   between sets), since a short "Print setlist" should still fit on one page
+   when it can. */
+@media print {
+  .setlist-stage-set-body {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }
 .printLogo {
   display: block;
