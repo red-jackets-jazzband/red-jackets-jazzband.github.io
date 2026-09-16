@@ -12,6 +12,7 @@ const ARIA_PRESSED = "aria-pressed";
 const TRUMPET_STRIP_ID = "mixerVoiceStrip-trumpet";
 const SOUSAPHONE_STRIP_ID = "mixerVoiceStrip-sousaphone";
 const VOICE_ROWS_SELECTOR = "#mixerVoicesList .mixer-strip--voice";
+const SOUSAPHONE_VOLUME_KEY = "rj.mixerVoice.sousaphone.volume";
 
 function setup(mixerState = {}, stateOverrides = {}) {
   const page = mountPage();
@@ -653,7 +654,7 @@ test("before any song is open, the voices list is empty (no strips)", () => {
   }
 });
 
-test("syncVoices builds one strip per resolved voice, titled from its label, same shape as Bass/Chords minus a working fader", () => {
+test("syncVoices builds one strip per resolved voice, titled from its label, same shape as Bass/Chords — Mute, Voice and Volume all real", () => {
   const { ctx, mixer, cleanup } = setup();
   try {
     mixer.syncVoices(FUNKIN_VOICES);
@@ -664,13 +665,16 @@ test("syncVoices builds one strip per resolved voice, titled from its label, sam
     assert.equal(rows[0].querySelector(".mixer-strip-label").textContent, "Trumpet");
     assert.equal(rows[1].id, SOUSAPHONE_STRIP_ID);
     assert.equal(rows[1].querySelector(".mixer-strip-label").textContent, "Sousaphone");
-    // Mute + Voice picker real, fader locked (same reasoning as Melody/Comping before this generalisation).
-    assert.equal(rows[0].querySelector('input[type="range"]').disabled, true);
+    // Mute, Voice picker and volume fader are all real and enabled.
+    const range = rows[0].querySelector('input[type="range"]');
+    assert.equal(range.disabled, false);
+    assert.equal(range.value, "100");
+    assert.equal(rows[0].querySelector(".mixer-readout").textContent, "100%");
     assert.equal(rows[0].querySelector(".mixer-voice-select").disabled, false);
 
-    assert.deepEqual(ctx.state.mixerVoices.map((v) => [v.id, v.label, v.muted, v.program]), [
-      ["1", "Trumpet", false, null],
-      ["2", "Sousaphone", false, null],
+    assert.deepEqual(ctx.state.mixerVoices.map((v) => [v.id, v.label, v.muted, v.program, v.volume]), [
+      ["1", "Trumpet", false, null, 100],
+      ["2", "Sousaphone", false, null, 100],
     ]);
   } finally {
     window.localStorage.clear();
@@ -818,6 +822,136 @@ test("syncVoices seeds each voice's mute/program from its own persisted rj.mixer
     // The other voice, with no persisted prefs, keeps the plain defaults.
     assert.equal(ctx.state.mixerVoices[0].muted, false);
     assert.equal(ctx.state.mixerVoices[0].program, null);
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
+test("a voice row's volume fader updates its readout/fill live, debounces the re-render, and persists under a slug key", (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const { ctx, mixer, rerenders, cleanup } = setup();
+  try {
+    mixer.syncVoices(FUNKIN_VOICES);
+    const range = document.querySelector(`#${SOUSAPHONE_STRIP_ID} input[type="range"]`);
+    range.value = "30";
+    range.dispatchEvent(new window.Event("input"));
+
+    assert.equal(ctx.state.mixerVoices[1].volume, 30);
+    assert.equal(document.querySelector(`#${SOUSAPHONE_STRIP_ID} .mixer-readout`).textContent, "30%");
+    assert.equal(document.querySelector(`#${SOUSAPHONE_STRIP_ID} .mixer-fader-fill`).style.width, "30%");
+    assert.equal(rerenders.length, 0); // debounced, not yet applied
+
+    t.mock.timers.tick(300);
+    assert.equal(rerenders.length, 1);
+    assert.equal(window.localStorage.getItem(SOUSAPHONE_VOLUME_KEY), "30");
+
+    // The other voice's own level is untouched.
+    assert.equal(ctx.state.mixerVoices[0].volume, 100);
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
+test("releasing a voice row's volume fader (change) applies immediately without waiting for the debounce", () => {
+  const { ctx, mixer, rerenders, cleanup } = setup();
+  try {
+    mixer.syncVoices(FUNKIN_VOICES);
+    const range = document.querySelector(`#${SOUSAPHONE_STRIP_ID} input[type="range"]`);
+    range.value = "15";
+    range.dispatchEvent(new window.Event("input"));
+    range.dispatchEvent(new window.Event("change"));
+    assert.equal(ctx.state.mixerVoices[1].volume, 15);
+    assert.equal(rerenders.length, 1);
+    assert.equal(window.localStorage.getItem(SOUSAPHONE_VOLUME_KEY), "15");
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
+test("dragging a channel fader and then a voice fader within the same debounce window persists both, not just the second one", (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const { ctx, mixer, rerenders, cleanup } = setup();
+  try {
+    mixer.syncVoices(FUNKIN_VOICES);
+
+    // Bass fader starts a debounced apply...
+    const bassRange = document.getElementById("mixerBassRange");
+    bassRange.value = "42";
+    bassRange.dispatchEvent(new window.Event("input"));
+
+    // ...then, before it settles, a voice fader interrupts it (e.g. two
+    // simultaneous touches on the mobile bottom-sheet Mixer) and shares the
+    // same applyTimer, cancelling and rescheduling it.
+    const voiceRange = document.querySelector(`#${SOUSAPHONE_STRIP_ID} input[type="range"]`);
+    voiceRange.value = "30";
+    voiceRange.dispatchEvent(new window.Event("input"));
+
+    t.mock.timers.tick(300);
+    assert.equal(rerenders.length, 1);
+    // Both controls' changes must survive, even though only the voice
+    // fader's own "input" handler fired after the Bass fader's.
+    assert.equal(ctx.state.mixer.bassVolume, 42);
+    assert.equal(window.localStorage.getItem("rj.mixerBassVolume"), "42");
+    assert.equal(ctx.state.mixerVoices[1].volume, 30);
+    assert.equal(window.localStorage.getItem(SOUSAPHONE_VOLUME_KEY), "30");
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
+test("syncVoices flushes a still-pending fader change before replacing the voice list (a different song opened mid-drag)", (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const { ctx, mixer, rerenders, cleanup } = setup();
+  try {
+    mixer.syncVoices(FUNKIN_VOICES);
+
+    // Drag the Sousaphone fader but don't release it (no "change" event, no
+    // tick past the debounce) -- its new value only lives in
+    // ctx.state.mixerVoices so far, not yet in localStorage.
+    const voiceRange = document.querySelector(`#${SOUSAPHONE_STRIP_ID} input[type="range"]`);
+    voiceRange.value = "20";
+    voiceRange.dispatchEvent(new window.Event("input"));
+    assert.equal(window.localStorage.getItem(SOUSAPHONE_VOLUME_KEY), null);
+
+    // A different song opens (sheet.js's engrave() -> syncInstrumentVoices()
+    // -> here) before that debounce ever fires, replacing the voice list
+    // outright -- the old Sousaphone object (and the drag's pending change)
+    // would otherwise be dropped along with it.
+    mixer.syncVoices([{ id: "1", index: 0, label: "Root" }, { id: "2", index: 1, label: "Third" }]);
+
+    // The interrupted drag's change was flushed to storage before the
+    // replacement, and flushing it didn't itself trigger a re-engrave (this
+    // already runs inside one).
+    assert.equal(window.localStorage.getItem(SOUSAPHONE_VOLUME_KEY), "20");
+    assert.equal(rerenders.length, 0);
+
+    // The debounce timer that would have fired against the *old* voice list
+    // is defused -- letting it run confirms nothing throws and nothing new
+    // gets persisted a second time.
+    t.mock.timers.tick(300);
+    assert.equal(rerenders.length, 0);
+
+    assert.deepEqual(ctx.state.mixerVoices.map((v) => v.label), ["Root", "Third"]);
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
+test("syncVoices seeds each voice's volume from its own persisted rj.mixerVoice.<slug>.volume pref, defaulting to 100 when unset", () => {
+  const { ctx, mixer, cleanup } = setup();
+  try {
+    window.localStorage.setItem(SOUSAPHONE_VOLUME_KEY, "40");
+    mixer.syncVoices(FUNKIN_VOICES);
+    assert.equal(ctx.state.mixerVoices[1].volume, 40);
+    assert.equal(document.querySelector(`#${SOUSAPHONE_STRIP_ID} input[type="range"]`).value, "40");
+    assert.equal(document.querySelector(`#${SOUSAPHONE_STRIP_ID} .mixer-readout`).textContent, "40%");
+    // The other voice, with no persisted volume, defaults to full.
+    assert.equal(ctx.state.mixerVoices[0].volume, 100);
   } finally {
     window.localStorage.clear();
     cleanup();

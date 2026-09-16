@@ -152,7 +152,9 @@ function withSyncedMixerVoices(ctx) {
     const sig = voices.map((v) => `${v.id}:${v.label}`).join("|");
     if (sig === lastSig) return; // same rebuild-skip behaviour as the real mixer.js
     lastSig = sig;
-    ctx.state.mixerVoices = voices.map((v) => ({ ...v, muted: false, program: null }));
+    ctx.state.mixerVoices = voices.map((v) => ({
+      ...v, muted: false, program: null, volume: 100,
+    }));
   };
 }
 

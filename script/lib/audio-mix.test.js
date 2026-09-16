@@ -4,8 +4,13 @@ import {
   MIDI_VOLUME_MAX, DEFAULT_PROGRAM, percentToMidiVolume, injectMixerAudio, computeVoicesOff,
   GCHORD_PATTERNS, DEFAULT_GCHORD_PATTERN_VALUE, resolveGchordPattern,
   ABCJS_SWING_MIN, ABCJS_SWING_MAX, percentToAbcjsSwing,
-  parseVoiceList, resolveMixerVoices,
+  parseVoiceList, resolveMixerVoices, percentToBeatStress, beatStressLine,
 } from "./audio-mix.js";
+
+// Every injectMixerAudio test below leaves voiceVolumes unset (defaults to
+// 100%, i.e. today's untouched abcjs beat defaults), so this is the exact
+// %%MIDI beat line to expect trailing every %%MIDI program line.
+const DEFAULT_BEAT_LINE = "%%MIDI beat 105 95 85 1";
 
 test("percentToMidiVolume follows a cubic taper: finer resolution low, full range at the top", () => {
   assert.equal(percentToMidiVolume(0), 0);
@@ -21,6 +26,25 @@ test("percentToMidiVolume follows a cubic taper: finer resolution low, full rang
   assert.equal(percentToMidiVolume(undefined), 0);
 });
 
+test("percentToBeatStress scales abcjs's own default beat-stress triple, reproducing it exactly at 100%", () => {
+  assert.deepEqual(percentToBeatStress(100), [105, 95, 85]);
+  assert.deepEqual(percentToBeatStress(0), [0, 0, 0]);
+  assert.deepEqual(percentToBeatStress(50), [13, 12, 11]); // round(v * 0.5^3) per default value
+  assert.deepEqual(percentToBeatStress(-20), [0, 0, 0]);
+  assert.deepEqual(percentToBeatStress(500), [105, 95, 85]);
+  assert.deepEqual(percentToBeatStress(undefined), [0, 0, 0]);
+  // monotonic on every one of the three values as the fader rises
+  const triples = [0, 10, 25, 50, 75, 90, 100].map(percentToBeatStress);
+  for (let i = 1; i < triples.length; i++) {
+    for (let k = 0; k < 3; k++) assert.ok(triples[i][k] >= triples[i - 1][k]);
+  }
+});
+
+test("beatStressLine formats percentToBeatStress's triple as a ready-to-splice %%MIDI beat line", () => {
+  assert.equal(beatStressLine(100), "%%MIDI beat 105 95 85 1");
+  assert.equal(beatStressLine(0), "%%MIDI beat 0 0 0 1");
+});
+
 test("DEFAULT_PROGRAM carries the expected hardcoded GM program for Bass/Chords only", () => {
   assert.deepEqual(DEFAULT_PROGRAM, { bass: 32, chords: 26 });
 });
@@ -28,10 +52,12 @@ test("DEFAULT_PROGRAM carries the expected hardcoded GM program for Bass/Chords 
 const NO_COMPING_TUNE = ["X:1", "T:Test", "M:4/4", "L:1/8", "K:C", '"C" C8 |'].join("\n");
 const onlyMelody = (program) => new Map([["1", program]]);
 
-test("injectMixerAudio (ordinary tune, no chords) stamps one tune-wide %%MIDI program (no V: line to scope to)", () => {
+test("injectMixerAudio (ordinary tune, no chords) stamps one tune-wide %%MIDI program + %%MIDI beat (no V: line to scope to)", () => {
   const out = injectMixerAudio(NO_COMPING_TUNE, { hasChords: false, bassPercent: 0, chordsPercent: 0, voicePrograms: onlyMelody(56) });
   const lines = out.split("\n");
-  assert.equal(lines[lines.indexOf("K:C") - 1], "%%MIDI program 56");
+  const kIndex = lines.indexOf("K:C");
+  assert.equal(lines[kIndex - 2], "%%MIDI program 56");
+  assert.equal(lines[kIndex - 1], DEFAULT_BEAT_LINE);
   assert.doesNotMatch(out, /%%MIDI (gchord|bassprog|chordprog|bassvol|chordvol|vol)\b/);
   assert.ok(out.includes('"C" C8 |'));
 });
@@ -103,8 +129,8 @@ test("injectMixerAudio omits accompaniment directives entirely when the tune has
     hasChords: false, bassPercent: 70, chordsPercent: 20, voicePrograms: onlyMelody(56),
   });
   assert.doesNotMatch(out, /%%MIDI (gchord|bassprog|chordprog|bassvol|chordvol)/);
-  // nothing else got spliced in before K: besides the one melody program line
-  assert.equal(out, NO_COMPING_TUNE.replace("K:C", "%%MIDI program 56\nK:C"));
+  // nothing else got spliced in before K: besides the one melody program+beat pair
+  assert.equal(out, NO_COMPING_TUNE.replace("K:C", `%%MIDI program 56\n${DEFAULT_BEAT_LINE}\nK:C`));
 });
 
 test("computeVoicesOff for a single voice: mute is a full mute (true), the same as before per-voice channels existed", () => {
@@ -252,11 +278,11 @@ test("resolveMixerVoices never folds Comping into the Melody-numbering scheme, e
   assert.deepEqual(out.map((v) => v.label), ["Melody 1", "Melody 2", "Comping"]);
 });
 
-test("injectMixerAudio (multi-voice) stamps each voice's own program right after its first declaration", () => {
+test("injectMixerAudio (multi-voice) stamps each voice's own program + beat right after its first declaration", () => {
   const programs = new Map([["1", 56], ["2", 58]]);
   const out = injectMixerAudio(FUNKIN_HEADER, { hasChords: false, bassPercent: 0, chordsPercent: 0, voicePrograms: programs });
-  assert.match(out, /name="Trumpet" \+12 " \n%%MIDI program 56\n/);
-  assert.match(out, /name="Sousaphone" middle=d " \n%%MIDI program 58$/);
+  assert.match(out, new RegExp(`name="Trumpet" \\+12 " \\n%%MIDI program 56\\n${DEFAULT_BEAT_LINE}\\n`));
+  assert.match(out, new RegExp(`name="Sousaphone" middle=d " \\n%%MIDI program 58\\n${DEFAULT_BEAT_LINE}$`));
 });
 
 test("injectMixerAudio (multi-voice) only stamps a voice present in the map, and only at its first declaration", () => {
@@ -280,15 +306,46 @@ test("injectMixerAudio (comping) stamps melody + comping right after their own *
   // the whole tune, melody included) instead of giving each voice its own.
   assert.match(out, /%%staves \[1 2\]\nV:1\nV:2 name="5\\n3\\nR"\n%%MIDI gchord/);
   assert.match(out, /%%MIDI chordvol 0\nK:C/);
-  // each program is stamped right after that voice's own *body* switch instead
-  assert.match(out, /\nV:1\n%%MIDI program 56\n"C" C8 \|/);
-  assert.match(out, /\nV:2\n%%MIDI program 0\n\[CEG\]8 \|/);
+  // each program + beat pair is stamped right after that voice's own *body* switch instead
+  assert.match(out, new RegExp(`\\nV:1\\n%%MIDI program 56\\n${DEFAULT_BEAT_LINE}\\n"C" C8 \\|`));
+  assert.match(out, new RegExp(`\\nV:2\\n%%MIDI program 0\\n${DEFAULT_BEAT_LINE}\\n\\[CEG\\]8 \\|`));
+});
+
+test("injectMixerAudio scopes each voice's own %%MIDI beat volume independently via voiceVolumes", () => {
+  const out = injectMixerAudio(FUNKIN_HEADER, {
+    hasChords: false,
+    bassPercent: 0,
+    chordsPercent: 0,
+    voicePrograms: new Map([["1", 56], ["2", 58]]),
+    voiceVolumes: new Map([["1", 30], ["2", 100]]),
+  });
+  assert.match(out, new RegExp(`name="Trumpet" \\+12 " \\n%%MIDI program 56\\n${beatStressLine(30)}\\n`));
+  assert.match(out, new RegExp(`name="Sousaphone" middle=d " \\n%%MIDI program 58\\n${DEFAULT_BEAT_LINE}$`));
+});
+
+test("injectMixerAudio still emits a full-volume %%MIDI beat line for a voice missing from voiceVolumes, rather than omitting it", () => {
+  // Regression guard for the leak this feature is built around: abcjs's own
+  // flattener carries stressBeat1/Down/Up across voices rather than
+  // resetting them per voice (see beatStressLine's doc comment in
+  // lib/audio-mix.js), so a voice with no %%MIDI beat line of its own would
+  // silently inherit whichever level the previous voice's stream last set.
+  // Every resolved voice must get an explicit line — this only asserts the
+  // untouched voice (id "2", absent from voiceVolumes) still gets its own
+  // default-100% line rather than being skipped.
+  const out = injectMixerAudio(FUNKIN_HEADER, {
+    hasChords: false,
+    bassPercent: 0,
+    chordsPercent: 0,
+    voicePrograms: new Map([["1", 56], ["2", 58]]),
+    voiceVolumes: new Map([["1", 30]]),
+  });
+  assert.match(out, new RegExp(`name="Sousaphone" middle=d " \\n%%MIDI program 58\\n${DEFAULT_BEAT_LINE}$`));
 });
 
 test("a native multi-voice chart with a real V: declaration always finds a scoping point (never falls back to the tune-wide line)", () => {
   const abc = ["X:1", "T:Test", "K:C", "V:1", '"C" C8 |'].join("\n");
   const out = injectMixerAudio(abc, { hasChords: false, bassPercent: 0, chordsPercent: 0, voicePrograms: new Map([["1", 56]]) });
-  assert.match(out, /\nV:1\n%%MIDI program 56\n"C" C8 \|/);
+  assert.match(out, new RegExp(`\\nV:1\\n%%MIDI program 56\\n${DEFAULT_BEAT_LINE}\\n"C" C8 \\|`));
   assert.doesNotMatch(out, /%%MIDI program 56\nK:/);
 });
 
@@ -304,13 +361,13 @@ test("injectMixerAudio (short_dressed_gal.abc's shape: header names, but voices 
   // them would land in the tune's one shared slot and the second would
   // silently win for both voices, the exact bug this shape hit in practice.
   assert.match(out, /name="Clarinet"\nV:2 name="Trumpet"\nK:Bb\n/);
-  // each program is scoped off a real "V:<id>" line inserted right before
-  // that voice's own first inline switch -- confirmed against ABCjs's own
-  // generated MIDI bytes: trailing the directive off the inline marker
-  // itself (even split onto its own line) silently drops the second one
-  // instead of scoping it, unlike a genuine bare V: declaration line.
-  assert.match(out, /K:Bb\nV:1\n%%MIDI program 71\n\[V:1\] "Bb" f d2 f2 \|\n/);
-  assert.match(out, /V:2\n%%MIDI program 56\n\[V:2\] d B2 d2 \|$/);
+  // each program + beat pair is scoped off a real "V:<id>" line inserted
+  // right before that voice's own first inline switch -- confirmed against
+  // ABCjs's own generated MIDI bytes: trailing the directive off the inline
+  // marker itself (even split onto its own line) silently drops the second
+  // one instead of scoping it, unlike a genuine bare V: declaration line.
+  assert.match(out, new RegExp(`K:Bb\\nV:1\\n%%MIDI program 71\\n${DEFAULT_BEAT_LINE}\\n\\[V:1\\] "Bb" f d2 f2 \\|\\n`));
+  assert.match(out, new RegExp(`V:2\\n%%MIDI program 56\\n${DEFAULT_BEAT_LINE}\\n\\[V:2\\] d B2 d2 \\|$`));
 });
 
 test("injectMixerAudio splits a line at each chosen inline marker's own boundary when several switches share one line", () => {
@@ -324,7 +381,10 @@ test("injectMixerAudio splits a line at each chosen inline marker's own boundary
   const out = injectMixerAudio(abc, {
     hasChords: false, bassPercent: 0, chordsPercent: 0, voicePrograms: new Map([["1", 71], ["2", 56]]),
   });
-  assert.match(out, /K:Bb\nV:1\n%%MIDI program 71\n\[V:1\] f d2 f2 \nV:2\n%%MIDI program 56\n\[V:2\] d B2 d2 \|$/);
+  assert.match(out, new RegExp(
+    `K:Bb\\nV:1\\n%%MIDI program 71\\n${DEFAULT_BEAT_LINE}\\n\\[V:1\\] f d2 f2 \\n`
+    + `V:2\\n%%MIDI program 56\\n${DEFAULT_BEAT_LINE}\\n\\[V:2\\] d B2 d2 \\|$`,
+  ));
 });
 
 test("injectMixerAudio keeps notes ahead of a chosen inline marker on their own line, and leaves a later marker for an already-scoped voice untouched", () => {
@@ -335,6 +395,6 @@ test("injectMixerAudio keeps notes ahead of a chosen inline marker on their own 
   const out = injectMixerAudio(abc, {
     hasChords: false, bassPercent: 0, chordsPercent: 0, voicePrograms: new Map([["1", 71], ["2", 56]]),
   });
-  assert.match(out, /\nV:1\n%%MIDI program 71\n"C" C4 \n/);
-  assert.match(out, /\nV:2\n%%MIDI program 56\n\[V:2\] E4 \[V:1\] C4 \|$/);
+  assert.match(out, new RegExp(`\\nV:1\\n%%MIDI program 71\\n${DEFAULT_BEAT_LINE}\\n"C" C4 \\n`));
+  assert.match(out, new RegExp(`\\nV:2\\n%%MIDI program 56\\n${DEFAULT_BEAT_LINE}\\n\\[V:2\\] E4 \\[V:1\\] C4 \\|$`));
 });

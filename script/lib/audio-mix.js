@@ -14,18 +14,43 @@ import { nextVoiceId } from "./voice-id.js";
 //     own melody line, one of a chart's own several named voices (Trumpet +
 //     Sousaphone, ...), or the generated Comping voice — and those get real
 //     MUTE (through computeVoicesOff — SynthController's own `voicesOff`
-//     option, unrelated to any text directive) and real VOICE (a per-voice
+//     option, unrelated to any text directive), real VOICE (a per-voice
 //     %%MIDI program line, same text-injection idea as Bass/Chords' program
-//     lines) — but NOT working VOLUME: a generic %%MIDI vol on an ordinary
-//     voice was tried first, exactly mirroring the proven bassvol/chordvol
-//     approach, and does nothing audible — it appears to only feed ABCjs's
-//     separate "export as .mid file" path, never the live SynthController
-//     buffer. Their volume fader is `disabled` in the UI (songs/mixer.js /
-//     content/songs.md) rather than pretending to work. Fixing that for real
-//     means either finding a genuine per-voice live-gain hook this file
-//     doesn't know about yet, or priming a separate SynthController per
-//     channel through its own Web Audio GainNode and mixing them by hand —
-//     a real audio-engine change that needs a real browser to verify.
+//     lines), and — now — real VOLUME too, via a per-voice %%MIDI beat line
+//     rather than %%MIDI vol. A generic %%MIDI vol on an ordinary voice was
+//     tried first, exactly mirroring the proven bassvol/chordvol approach,
+//     and does nothing audible worth building on: reading abcjs's own
+//     flattener (synth/abc_midi_flattener.js) shows why — a "vol"/"volinc"
+//     directive only overrides the *single next note* (`nextVolume` is
+//     consumed and reset to `undefined` the moment one note reads it), so a
+//     one-off %%MIDI vol line at the top of a voice audibly touches one note
+//     and then reverts. %%MIDI beat ⟨b1⟩ ⟨b2⟩ ⟨b3⟩ ⟨mod⟩ is different: abc2midi
+//     defines it as the volumes abcjs assigns to a bar's first/other-strong/
+//     weak notes, but the same flattener stores those three numbers in
+//     module state (`stressBeat1`/`stressBeatDown`/`stressBeatUp`) that stays
+//     in effect for every subsequent note until changed again — i.e. a real,
+//     persistent, per-voice gain, not a one-shot. Setting all three numbers
+//     equal turns it into a flat volume for that voice. Confirmed empirically
+//     (this project's own standard — see the rest of this file): rendering
+//     the same voice offline via ABCJS.synth.CreateSynth (the exact engine
+//     SynthController also primes for live playback) with only the %%MIDI
+//     beat value changed produces an RMS/peak amplitude that scales linearly
+//     with it, and scoping it per voice via a real body "V:<id>" declaration
+//     (the same insertion point injectPerVoiceLines already uses for
+//     %%MIDI program) gives each voice an independent level.
+//     One real gotcha the same test surfaced: `stressBeat1`/`stressBeatDown`/
+//     `stressBeatUp` are shared, tune-wide closure state in abcjs's
+//     flattener, reset once per flatten() call but *not* between voices — a
+//     voice with no %%MIDI beat line of its own silently inherits whatever
+//     level the previous voice's stream last set, rather than falling back to
+//     abcjs's own default (105/95/85). So every resolved voice must get an
+//     explicit %%MIDI beat line, including one left at "100%" — never only
+//     the ones a user actually moved off default — or an untouched voice can
+//     end up as loud (or as quiet) as whichever voice happens to render
+//     immediately before it. percentToBeatStress handles this by always
+//     returning three numbers, scaling abcjs's own defaults down towards
+//     silence rather than inventing a different baseline, so 100% reproduces
+//     today's untouched sound exactly.
 //
 // See resolveMixerVoices' own doc comment for how "every other channel"
 // above is modelled: one flat list of N voices (however many the tune's own
@@ -103,6 +128,37 @@ export function percentToMidiVolume(percent) {
   return Math.round(MIDI_VOLUME_MAX * (clamped / 100) ** VOLUME_CURVE_EXPONENT);
 }
 
+// abcjs's own default %%MIDI beat volumes (synth/abc_midi_flattener.js's
+// stressBeat1/stressBeatDown/stressBeatUp) — the first note of a bar, other
+// "strong" notes, and everything else, in that order. Scaling these three
+// down together (rather than collapsing a voice to one flat number) keeps a
+// voice's natural downbeat/upbeat accent at any fader position, and 100%
+// reproduces this exact triple, so an untouched voice sounds byte-for-byte
+// like it did before per-voice volume existed.
+const DEFAULT_BEAT_STRESS = [105, 95, 85];
+
+// A resolved voice's own %%MIDI beat modulus parameter (which notes within a
+// bar count as "strong") is irrelevant once all three volumes are scaled by
+// the same ratio, but abc2midi's syntax still requires four integers — 1 is
+// as good as any.
+const BEAT_MODULUS = 1;
+
+// Map a 0-100 mixer percentage to abcjs's three %%MIDI beat volumes (see
+// DEFAULT_BEAT_STRESS), scaled by the same cubic taper as every other fader
+// here for a consistent feel, and clamped to MIDI's 0-127 range.
+export function percentToBeatStress(percent) {
+  const clamped = Math.max(0, Math.min(100, Number(percent) || 0));
+  const ratio = (clamped / 100) ** VOLUME_CURVE_EXPONENT;
+  return DEFAULT_BEAT_STRESS.map((v) => Math.max(0, Math.min(MIDI_VOLUME_MAX, Math.round(v * ratio))));
+}
+
+// The %%MIDI beat line itself, ready to splice into ABC text — its own
+// function so callers never have to remember BEAT_MODULUS or the param order.
+export function beatStressLine(percent) {
+  const [b1, b2, b3] = percentToBeatStress(percent);
+  return `%%MIDI beat ${b1} ${b2} ${b3} ${BEAT_MODULUS}`;
+}
+
 // Splice `lines` in, each its own line, right before the tune's K: field
 // (the header's closing field in every .abc file here), found by a plain
 // scan rather than a regex over arbitrary text.
@@ -163,7 +219,7 @@ function accompanimentLines(hasChords, {
 // a line -- not just at the very start -- so a line can carry notes before
 // the marker (a voice switch mid-system) or more than one marker (several
 // short switches on one line). Shared by parseVoiceList, hasVoiceDeclaration
-// and injectVoicePrograms below so all three agree on what counts as one.
+// and injectPerVoiceLines below so all three agree on what counts as one.
 const INLINE_VOICE_MARKER = /\[V:\s*([^\]\s]+)\]/g;
 
 export function parseVoiceList(abcText) {
@@ -239,21 +295,28 @@ export function resolveMixerVoices(rawVoices, compingActive) {
 }
 
 /*
-  Insert `%%MIDI program <n>` right after each voice's own declaration line
-  (matched the same way parseVoiceList finds it) -- but a *body* declaration
-  (after the tune's K: line) whenever the voice has one there, never a header
-  one, even though a header declaration is what most tunes hit first: ABCjs's
-  own parser only scopes a %%MIDI directive to "the voice it trails" when it
+  Insert each voice's own list of raw %%MIDI directive lines (in the order
+  given — the id -> string[] map from injectMixerAudio, one entry per voice
+  that has anything to stamp; %%MIDI program and %%MIDI beat both go through
+  this same one scoping pass, since they need to land at exactly the same
+  point in the text) right after that voice's own declaration line (matched
+  the same way parseVoiceList finds it) -- but a *body* declaration (after
+  the tune's K: line) whenever the voice has one there, never a header one,
+  even though a header declaration is what most tunes hit first: ABCjs's own
+  parser only scopes a %%MIDI directive to "the voice it trails" when it
   reads it *inside* the tune body, once real music has started. One that
   trails a V: line still in the header (before K:) — where a comping-
   augmented ordinary tune's "V:1" / "V:2 name=..." pair, and most multi-voice
   charts' own voice declarations, normally live — instead lands in the tune's
-  single shared `formatting.midi.program` slot, not a per-voice one; every
-  such header directive overwrites the last, so whichever voice's line comes
-  last in the header silently wins the *entire tune's* program, melody
-  included (confirmed by decoding actual generated MIDI bytes: two different
+  single shared `formatting.midi.program` slot (or, for %%MIDI beat, its
+  tune-wide stress state), not a per-voice one; every such header directive
+  overwrites the last, so whichever voice's line comes last in the header
+  silently wins for the *entire tune*, melody included (confirmed for
+  %%MIDI program by decoding actual generated MIDI bytes: two different
   header-trailing %%MIDI program lines emitted one Program Change, on the
-  same channel, at the second line's value only).
+  same channel, at the second line's value only — see beatStressLine's own
+  doc comment in this file for the equivalent %%MIDI beat finding, from
+  rendered audio rather than MIDI bytes).
 
   Priority per voice id, highest wins ties broken by first occurrence: a
   real body "V:<id>" declaration line (bodyDecl) > a body-only inline
@@ -297,7 +360,7 @@ export function resolveMixerVoices(rawVoices, compingActive) {
   the marker itself — reproduces the "two lines added, nothing else split"
   shape above even when the marker isn't already alone on its line.
 */
-function injectVoicePrograms(text, programsById) {
+function injectPerVoiceLines(text, linesById) {
   const lines = text.split("\n");
   const kIndex = lines.findIndex((l) => l.startsWith("K:"));
   const PRIORITY = { header: 0, inline: 1, bodyDecl: 2 };
@@ -320,21 +383,22 @@ function injectVoicePrograms(text, programsById) {
     }
   });
 
-  // Header/bodyDecl insertions just append a line after the declaration, one
-  // per line (a declaration line names exactly one voice); inline insertions
-  // may share a line with other markers, so those are grouped per line and
-  // sorted left to right to split that line at each chosen marker in turn.
+  // Header/bodyDecl insertions just append the voice's directive lines after
+  // the declaration, one group per line (a declaration line names exactly
+  // one voice); inline insertions may share a line with other markers, so
+  // those are grouped per line and sorted left to right to split that line
+  // at each chosen marker in turn.
   const appendAfter = new Map();
   const inlineByLine = new Map();
   chosen.forEach(({ kind, location }, id) => {
-    const program = programsById.get(id);
-    if (program === undefined) return;
+    const directiveLines = linesById.get(id);
+    if (directiveLines === undefined) return;
     if (kind === "inline") {
       const list = inlineByLine.get(location.lineIndex) ?? [];
-      list.push({ id, col: location.col, program });
+      list.push({ id, col: location.col, directiveLines });
       inlineByLine.set(location.lineIndex, list);
     } else {
-      appendAfter.set(location.lineIndex, program);
+      appendAfter.set(location.lineIndex, directiveLines);
     }
   });
   inlineByLine.forEach((list) => list.sort((a, b) => a.col - b.col));
@@ -342,17 +406,17 @@ function injectVoicePrograms(text, programsById) {
   return lines
     .flatMap((line, lineIndex) => {
       const after = appendAfter.get(lineIndex);
-      if (after !== undefined) return [line, `%%MIDI program ${after}`];
+      if (after !== undefined) return [line, ...after];
 
       const markers = inlineByLine.get(lineIndex);
       if (!markers) return [line];
 
       const out = [];
       let segmentStart = 0;
-      markers.forEach(({ id, col, program }) => {
+      markers.forEach(({ id, col, directiveLines }) => {
         const prefix = line.slice(segmentStart, col);
         if (prefix !== "") out.push(prefix);
-        out.push(`V:${id}`, `%%MIDI program ${program}`);
+        out.push(`V:${id}`, ...directiveLines);
         segmentStart = col;
       });
       out.push(line.slice(segmentStart));
@@ -364,8 +428,8 @@ function injectVoicePrograms(text, programsById) {
 // True once `text` declares at least one voice of its own — a real "V:<id>"
 // line (wherever it falls relative to K:) or a body-only "[V:<id>]" inline
 // switch (short_dressed_gal.abc's shape), anywhere in its line — i.e.
-// whether injectVoicePrograms above has anything to attach a scoped
-// %%MIDI program line to at all.
+// whether injectPerVoiceLines above has anything to attach a scoped
+// directive to at all.
 const HEADER_VOICE_DECLARATION = /^V:\s*\S+/m;
 
 function hasVoiceDeclaration(text) {
@@ -374,22 +438,27 @@ function hasVoiceDeclaration(text) {
 
 /*
   Stamp Bass/Chords' full accompaniment directives, and every other voice's
-  Voice (program only — see the file doc comment for why not volume), into
-  the ABC text about to be handed to ABCJS.renderAbc, so whatever gets
-  rendered is exactly what plays — there's no separate "audio-only" reparse,
-  which would desync the playback cursor from the visible notation (ABCjs
-  ties cursor highlighting to the actual rendered visualObj, not a freshly
-  parsed twin of it).
+  Voice + Volume (via beatStressLine's %%MIDI beat scaling — see the file doc
+  comment for why not a plain %%MIDI vol), into the ABC text about to be
+  handed to ABCJS.renderAbc, so whatever gets rendered is exactly what plays
+  — there's no separate "audio-only" reparse, which would desync the
+  playback cursor from the visible notation (ABCjs ties cursor highlighting
+  to the actual rendered visualObj, not a freshly parsed twin of it).
 
   `voicePrograms` (id -> program) comes from resolveMixerVoices' resolved
-  list — always at least one entry. Most tunes end up with a real "V:<id>"
-  declaration in the text to scope each program to (either the tune's own,
-  or the "V:1"/"V:2" pair buildCompingTune always emits once Comping is on —
-  see its own doc comment). The one tune shape with no such line at all is an
-  ordinary single-voice tune with Comping off and no V: declaration of its
-  own (the vast majority of songs here): there's nothing to scope a program
-  to, so this falls back to one tune-wide %%MIDI program line before K:,
-  exactly as if the whole tune were voice 1.
+  list — always at least one entry. `voiceVolumes` (id -> 0-100 percent) is
+  its volume counterpart; a voice missing from it (an older caller, or a test
+  that doesn't care about volume) defaults to 100 — full, today's untouched
+  level — rather than being skipped, since the file doc comment's cross-voice
+  %%MIDI beat leak means every voice needs an explicit line one way or
+  another. Most tunes end up with a real "V:<id>" declaration in the text to
+  scope each voice's lines to (either the tune's own, or the "V:1"/"V:2" pair
+  buildCompingTune always emits once Comping is on — see its own doc
+  comment). The one tune shape with no such line at all is an ordinary
+  single-voice tune with Comping off and no V: declaration of its own (the
+  vast majority of songs here): there's nothing to scope to, so this falls
+  back to one tune-wide %%MIDI program + %%MIDI beat pair before K:, exactly
+  as if the whole tune were voice 1.
 */
 export function injectMixerAudio(abcText, {
   hasChords,
@@ -397,6 +466,7 @@ export function injectMixerAudio(abcText, {
   chordsPercent, chordsProgram = DEFAULT_PROGRAM.chords,
   gchordPattern = resolveGchordPattern(DEFAULT_GCHORD_PATTERN_VALUE),
   voicePrograms,
+  voiceVolumes = new Map(),
 }) {
   const withAccompaniment = insertLinesBeforeKeyLine(
     abcText, accompanimentLines(hasChords, {
@@ -404,12 +474,18 @@ export function injectMixerAudio(abcText, {
     }),
   );
 
+  const linesById = new Map();
+  voicePrograms.forEach((program, id) => {
+    const volumePercent = voiceVolumes.get(id) ?? 100;
+    linesById.set(id, [`%%MIDI program ${program}`, beatStressLine(volumePercent)]);
+  });
+
   if (hasVoiceDeclaration(withAccompaniment)) {
-    return injectVoicePrograms(withAccompaniment, voicePrograms);
+    return injectPerVoiceLines(withAccompaniment, linesById);
   }
 
-  const [[, onlyProgram]] = voicePrograms;
-  return insertLinesBeforeKeyLine(withAccompaniment, [`%%MIDI program ${onlyProgram}`]);
+  const [[, onlyLines]] = linesById;
+  return insertLinesBeforeKeyLine(withAccompaniment, onlyLines);
 }
 
 // ABCjs's live synth reads a tune-wide `swing` init option directly (not a

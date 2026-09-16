@@ -205,6 +205,21 @@ export function createSheet(ctx) {
     return map;
   }
 
+  // Builds the id -> 0-100 volume percent map injectMixerAudio needs to stamp
+  // each resolved voice's %%MIDI beat line (lib/audio-mix.js's
+  // beatStressLine) — the fader's real, working per-voice volume control.
+  // Every voice in ctx.state.mixerVoices already carries a numeric `volume`
+  // (songs/mixer.js's syncVoices seeds it at 100 for a voice with no
+  // persisted level yet), so there's no null-coalescing needed here the way
+  // voiceProgramMap needs for its own null sentinel.
+  function voiceVolumeMap() {
+    const map = new Map();
+    ctx.state.mixerVoices.forEach((v) => {
+      map.set(v.id, v.volume);
+    });
+    return map;
+  }
+
   // Live sheet only (kept out of engrave() itself so its own branches don't
   // push engrave's cyclomatic complexity over the lint gate): resolve the
   // tune's own voice declarations (lib/audio-mix.js's parseVoiceList) plus
@@ -229,8 +244,9 @@ export function createSheet(ctx) {
   }
 
   // Live sheet only: stamp the mixer's Bass/Chords levels and every
-  // resolved voice's Voice into the ABC text before it's parsed, so the one
-  // visualObj that gets rendered is exactly what plays — see lib/audio-mix.js.
+  // resolved voice's Voice + Volume into the ABC text before it's parsed, so
+  // the one visualObj that gets rendered is exactly what plays — see
+  // lib/audio-mix.js.
   function resolveRenderText(comping, hasChords, isBooklet) {
     if (isBooklet) return comping.renderText;
     return injectMixerAudio(comping.renderText, {
@@ -241,6 +257,7 @@ export function createSheet(ctx) {
       chordsProgram: mixerProgram("chords"),
       gchordPattern: resolveGchordPattern(ctx.state.gchordPattern),
       voicePrograms: voiceProgramMap(),
+      voiceVolumes: voiceVolumeMap(),
     });
   }
 

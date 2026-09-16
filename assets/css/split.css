@@ -1103,13 +1103,6 @@ video.video {
   border-color: var(--rj-gold);
   color: #ece6e6;
 }
-/* Every resolved voice strip: Mute and Voice are real; volume isn't (see
-   lib/audio-mix.js's doc comment for why) — their fader is permanently
-   dimmed (and `disabled` in the markup) rather than left interactive with
-   no audible effect. */
-.mixer-strip--volume-locked .mixer-fader-track {
-  opacity: .4;
-}
 /* #mixerVoicesSection wraps the tune's resolved voice strips (songs/
    mixer.js's rebuildVoiceStrips) — a plain block, not a .mixer-strip itself,
    so it needs its own top margin next to its neighbours (.mixer-strip +
