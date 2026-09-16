@@ -116,11 +116,58 @@ export const PATTERNS = {
     twobar2: (n, nd, nu) => `${n} ${nd} z ${nu} z ${n}3`,
     half: (n, nd, nu) => `${n} ${nd} z ${nu}`,
   },
+  // Charleston: the classic two-note kick — a held chord on beat 1 (a dotted
+  // quarter, 3 slots) answered by a short stab on the "and" of beat 2, then
+  // silence through beats 3-4. Same figure every bar.
+  charleston: {
+    twobar1: (n) => `${n}3 ${n} z4`,
+    twobar2: (n) => `${n}3 ${n} z4`,
+    half: (n) => `${n}2 ${n} z`,
+  },
+  // Reverse Charleston: the same kick, placed in the back half of the bar
+  // instead of the front — silence through beats 1-2, then the held-chord +
+  // stab landing on beat 3 and the "and" of beat 4.
+  reverse_charleston: {
+    twobar1: (n) => `z4 ${n}3 ${n}`,
+    twobar2: (n) => `z4 ${n}3 ${n}`,
+    half: (n) => `z ${n}2 ${n}`,
+  },
+  // Son clave, 3-2: bar 1 is the "three side" (tresillo — hits on beat 1,
+  // the "and" of 2, and beat 4), bar 2 the "two side" (hits on beat 2 and
+  // the "and" of 3), each chord held until the next clave stroke.
+  clave_3_2: {
+    twobar1: (n) => `${n}3 ${n}3 ${n}2`,
+    twobar2: (n) => `z2 ${n}3 ${n}3`,
+    half: (n) => `${n}3 ${n}`,
+  },
+  // Son clave, 2-3: the same two bars in the opposite order — the "two
+  // side" first, then the "three side".
+  clave_2_3: {
+    twobar1: (n) => `z2 ${n}3 ${n}3`,
+    twobar2: (n) => `${n}3 ${n}3 ${n}2`,
+    half: (n) => `z2 ${n}2`,
+  },
+  // Three hit: a rhythm-section "kick" figure — three quick stabs on beats
+  // 1, the "and" of 1, and 2, then held silence through the rest of the bar.
+  three_hit: {
+    twobar1: (n) => `${n} ${n} ${n} z z4`,
+    twobar2: (n) => `${n} ${n} ${n} z z4`,
+    half: (n) => `${n} ${n} z2`,
+  },
+  // I Got a Woman: the gospel/R&B push figure — three separate quarter-note
+  // hits (no ties) on beat 2 and the "and" of beat 3 of bar 1, then landing
+  // on beat 1 of bar 2, silent otherwise. The two-bar phrase then repeats.
+  i_got_a_woman: {
+    twobar1: (n) => `z2 ${n}2 z ${n}2 z`,
+    twobar2: (n) => `${n}2 z6`,
+    half: (n) => `z ${n}2 z`,
+  },
 };
 
 const GROUP_BASE = "Base patterns";
 const GROUP_STEP_DOWN = "Step down";
 const GROUP_STEP_UP_DOWN = "Step up & down";
+const GROUP_TRADITIONAL = "Named grooves";
 
 // Ordered list for the sheet's <select>, grouped like the prototype's optgroups.
 export const COMPING_PATTERNS = [
@@ -139,6 +186,12 @@ export const COMPING_PATTERNS = [
   { value: "full_walk", label: "Full walk", group: GROUP_STEP_UP_DOWN },
   { value: "third_approach", label: "Third approach", group: GROUP_STEP_UP_DOWN },
   { value: "step_neighbor", label: "Step neighbor", group: GROUP_STEP_UP_DOWN },
+  { value: "charleston", label: "Charleston", group: GROUP_TRADITIONAL },
+  { value: "reverse_charleston", label: "Reverse Charleston", group: GROUP_TRADITIONAL },
+  { value: "clave_3_2", label: "3-2 clave", group: GROUP_TRADITIONAL },
+  { value: "clave_2_3", label: "2-3 clave", group: GROUP_TRADITIONAL },
+  { value: "three_hit", label: "3 hit", group: GROUP_TRADITIONAL },
+  { value: "i_got_a_woman", label: "I Got a Woman", group: GROUP_TRADITIONAL },
 ];
 
 const PATTERN_LABEL = COMPING_PATTERNS.reduce((acc, p) => {
