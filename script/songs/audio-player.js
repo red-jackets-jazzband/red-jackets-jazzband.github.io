@@ -140,6 +140,12 @@ export function createAudioPlayer(ctx) {
     // (songs/mp3-export.js) can tell whether the sheet it started rendering
     // is still the one on screen once its offline synth finally resolves.
     renderGeneration: 0,
+    // Bumped on every explicit stop() — see tryRepeat()'s own doc comment for
+    // why this exists: an onFinished-triggered repeat restart is deferred a
+    // macrotask, and a Stop pressed in that window reuses the *same*
+    // SynthController (just reset via setTune), so the restart's own
+    // `sc !== state.synthController` guard can't tell a Stop happened.
+    stopToken: 0,
   };
 
   let highlighted = [];
@@ -295,6 +301,16 @@ export function createAudioPlayer(ctx) {
     ctx.metronome.onBarStart(ev.elements ? firstTaggedMeasure(ev.elements) : undefined);
   }
 
+  // Shared by every way a repeat restart can fail to actually get audio
+  // going again — falls back to the same clean stop onFinished uses when
+  // repeats are exhausted, rather than leaving state.isPlaying stuck true
+  // with nothing actually playing.
+  function stopAfterFailedRepeat() {
+    setIsPlaying(false);
+    state.pausedMidway = false;
+    clearHighlight();
+  }
+
   /*
     Practicing on a loop: a tune that finishes naturally restarts from the
     top instead of stopping, as long as fewer playthroughs have completed
@@ -308,32 +324,75 @@ export function createAudioPlayer(ctx) {
     ABCjs's own isLooping/toggleLoop: that loops forever and skips the
     onFinished callback entirely (confirmed by reading the vendored
     SynthController source), leaving nothing here to count playthroughs from.
+
+    The seek+play is deferred a macrotask (setTimeout 0) rather than run
+    synchronously from onFinished — confirmed empirically (instrumenting the
+    real vendored SynthController in a browser) that calling sc.play() inline
+    here races the *same* Timer's own cleanup for the playthrough that just
+    ended: ABCJS's Timer.doTiming() detects "reached the end" and calls this
+    onFinished synchronously, but only *after* onFinished returns does it
+    queue `shouldStop(...).then(() => timer.stop())` for that finished
+    playthrough. That queued stop() still resets the Timer's isRunning flag
+    to false once it runs — and since it's the same Timer instance a
+    synchronous restart here just re-armed (via the repeat's own
+    timer.start()), that reset can land *after* the repeat's restart and
+    silently kill its own "reached the end" detection: the repeat's audio
+    genuinely keeps playing, but ABCJS never calls onFinished again, so the
+    UI (and this loop) gets stuck showing that playthrough forever. A
+    setTimeout(0) reliably runs after that pending microtask has settled, so
+    the repeat's timer.start() is the last thing to touch isRunning.
+
+    An explicit Stop pressed in that same deferred window is a second race
+    this guards against, separately from the `sc !== state.synthController`
+    check above: stop() resets and reuses the *same* SynthController (via
+    setTune) rather than swapping in a new one, so that identity check alone
+    can't tell a Stop happened — without state.stopToken, this callback would
+    still seek+play right after a Stop, silently resuming audio the user just
+    told to stop. stopTokenAtSchedule is captured before the setTimeout, and
+    stop() bumps state.stopToken, so a Stop in between makes the two disagree.
   */
   function tryRepeat() {
     if (state.repeatsPlayed + 1 >= ctx.state.repeatCount) return false;
     const sc = state.synthController;
     if (!sc || typeof sc.seek !== "function" || typeof sc.play !== "function") return false;
     clearHighlight();
-    if (!tryCall(() => sc.seek(repeatRestartFraction())).ok) return false;
 
-    // sc.play() can throw synchronously (before returning any promise to
-    // resolve/catch) as well as reject asynchronously, the same as in
-    // playPause() — guard both so a failed restart falls back to a clean
-    // stop instead of leaving state.isPlaying stuck true with nothing
-    // actually playing. Only commit repeatsPlayed/the label once play()
-    // is confirmed not to have thrown synchronously.
-    const played = tryCall(() => sc.play());
-    if (!played.ok) return false;
-
-    state.repeatsPlayed += 1;
-    updateRepeatLabel();
-    Promise.resolve(played.value).catch((err) => {
-      console.warn("Repeat restart failed:", err);
+    const stopTokenAtSchedule = state.stopToken;
+    setTimeout(() => {
       if (sc !== state.synthController) return;
-      setIsPlaying(false);
-      state.pausedMidway = false;
-      clearHighlight();
-    });
+      if (state.stopToken !== stopTokenAtSchedule) return;
+      if (!tryCall(() => sc.seek(repeatRestartFraction())).ok) {
+        stopAfterFailedRepeat();
+        return;
+      }
+
+      // sc.play() can throw synchronously (before returning any promise to
+      // resolve/catch) as well as reject asynchronously, the same as in
+      // playPause() — guard both so a failed restart falls back to a clean
+      // stop instead of leaving state.isPlaying stuck true with nothing
+      // actually playing. Only commit repeatsPlayed/the label once play()
+      // is confirmed not to have thrown synchronously.
+      const played = tryCall(() => sc.play());
+      if (!played.ok) {
+        stopAfterFailedRepeat();
+        return;
+      }
+
+      state.repeatsPlayed += 1;
+      updateRepeatLabel();
+      Promise.resolve(played.value).catch((err) => {
+        console.warn("Repeat restart failed:", err);
+        // Same two-part guard as above, not just the controller identity
+        // check: this rejection can land well after it was attached (a real
+        // async failure), by which time a Stop + fresh Play may have already
+        // reused this exact controller for a genuinely new playthrough — the
+        // stopToken check is what tells a stale rejection from *this*
+        // failed restart apart from that new one.
+        if (sc !== state.synthController) return;
+        if (state.stopToken !== stopTokenAtSchedule) return;
+        stopAfterFailedRepeat();
+      });
+    }, 0);
     return true;
   }
 
@@ -554,6 +613,10 @@ export function createAudioPlayer(ctx) {
 
   function stop() {
     if (!state.synthController || !state.currentVisualObj) return;
+    // Invalidates a repeat restart that's mid-flight in tryRepeat()'s own
+    // deferred setTimeout — see its doc comment for why a plain
+    // `sc !== state.synthController` check can't catch a Stop on its own.
+    state.stopToken += 1;
     try {
       state.synthController.pause();
     } catch {

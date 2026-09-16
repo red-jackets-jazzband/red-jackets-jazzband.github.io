@@ -59,6 +59,7 @@ async function setupAtRepeatRestart(visualObj) {
   } = await setupPlayingTune({ repeatCount: 2 }, { visualObj, noteTimings: PICKUP_SHAPED_TIMINGS });
   const sc = await play();
   withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+  await flush(); // the restart itself is deferred a macrotask — see tryRepeat's doc comment
   return { audio, abcjs, cleanup };
 }
 
@@ -649,14 +650,17 @@ test("onFinished replays from the top while fewer playthroughs have completed th
     const sc = await play();
 
     withAbcjs(abcjs, () => sc._cursorControl.onFinished()); // 1st playthrough done
+    await flush(); // the restart is deferred a macrotask — see tryRepeat's doc comment
     assert.equal(audio.isPlaying, true, "loops instead of stopping");
     assert.deepEqual(abcjs.calls.seek, [0]);
 
     withAbcjs(abcjs, () => sc._cursorControl.onFinished()); // 2nd playthrough done
+    await flush();
     assert.equal(audio.isPlaying, true, "loops again");
     assert.deepEqual(abcjs.calls.seek, [0, 0]);
 
     withAbcjs(abcjs, () => sc._cursorControl.onFinished()); // 3rd (final) playthrough done
+    await flush();
     assert.equal(audio.isPlaying, false, "stops after the requested count");
     assert.deepEqual(abcjs.calls.seek, [0, 0]); // no further restart
   } finally {
@@ -673,6 +677,7 @@ test("onFinished recovers when the repeat restart's sc.play() throws synchronous
     sc.play = () => { throw new Error("boom"); };
 
     withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+    await flush(); // the restart is deferred a macrotask — see tryRepeat's doc comment
     // The seek already happened, but the synchronous throw from play() must
     // fall back to the same clean stop onFinished uses when repeats are
     // exhausted, rather than leaving isPlaying stuck true.
@@ -717,6 +722,7 @@ test("Stop resets the repeat count so the next Play starts a fresh loop", async 
   try {
     let sc = await play();
     withAbcjs(abcjs, () => sc._cursorControl.onFinished()); // loops once (1 of 2 done)
+    await flush(); // the restart is deferred a macrotask — see tryRepeat's doc comment
     assert.equal(audio.isPlaying, true);
 
     withAbcjs(abcjs, () => audio.stop());
@@ -725,7 +731,72 @@ test("Stop resets the repeat count so the next Play starts a fresh loop", async 
     sc = await play(); // fresh Play after Stop
 
     withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+    await flush();
     assert.equal(audio.isPlaying, true, "the reset count loops again rather than stopping early");
+  } finally {
+    cleanup();
+  }
+});
+
+// The race this guards: onFinished's tryRepeat() defers its seek+play a
+// macrotask (see its own doc comment), and Stop pressed in that window
+// resets+reuses the *same* SynthController (via setTune) rather than
+// swapping in a new one — so the restart's own `sc !== state.synthController`
+// guard can't tell a Stop happened, and without state.stopToken the deferred
+// callback would still seek+play right after Stop, resuming audio the user
+// just told to stop.
+test("Stop pressed while a repeat restart is mid-flight doesn't resume playback", async () => {
+  const {
+    audio, abcjs, cleanup, play,
+  } = await setupPlayingTune({ repeatCount: 2 });
+  try {
+    const sc = await play();
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished()); // schedules the deferred restart
+    withAbcjs(abcjs, () => audio.stop()); // ...before that setTimeout(0) has run
+    await flush();
+
+    assert.equal(audio.isPlaying, false);
+    assert.deepEqual(abcjs.calls.seek, [], "the repeat restart's own seek must never have run");
+    assert.equal(sc.isStarted, false, "the repeat restart's sc.play() must not have resumed it");
+    assert.equal(document.getElementById("repeatCountLabel").textContent, "repeats");
+  } finally {
+    cleanup();
+  }
+});
+
+// A second instance of the same race, caught by CodeRabbit on the fix above:
+// the deferred restart's own async sc.play() rejection handler had the same
+// `sc !== state.synthController` guard but not the stopToken one. A Stop
+// followed by a fresh Play reuses the *same* SynthController (stop() resets
+// it via setTune rather than swapping in a new one), so if the *earlier*
+// repeat restart's play() promise rejects only after that fresh Play has
+// already started, the identity check alone can't tell the rejection is
+// stale — it would call stopAfterFailedRepeat() and stop the genuinely new
+// playthrough the user is now listening to.
+test("a stale repeat-restart rejection doesn't stop a fresh Play that already reused the same controller", async () => {
+  const {
+    audio, abcjs, cleanup, play,
+  } = await setupPlayingTune({ repeatCount: 2 });
+  try {
+    const sc = await play();
+    let rejectRepeatPlay;
+    sc.play = () => new Promise((_resolve, reject) => { rejectRepeatPlay = reject; });
+
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished()); // schedules the deferred restart
+    await flush(); // the restart's own setTimeout(0) fires: seek + play (left pending)
+    assert.equal(typeof rejectRepeatPlay, "function");
+
+    withAbcjs(abcjs, () => audio.stop());
+    await flush();
+    sc.play = () => { sc.isStarted = !sc.isStarted; return Promise.resolve(); }; // restore for the fresh Play below
+    await play(); // fresh Play, reusing the same stub controller
+    assert.equal(audio.isPlaying, true);
+
+    // The *earlier* repeat restart's play() promise finally rejects late.
+    rejectRepeatPlay(new Error("boom"));
+    await flush();
+
+    assert.equal(audio.isPlaying, true, "the stale rejection must not stop the genuinely-new playthrough");
   } finally {
     cleanup();
   }
@@ -740,10 +811,13 @@ test("updateRepeatLabel shows live progress while playing a multi-repeat loop", 
     assert.equal(document.getElementById("repeatCountLabel").textContent, "1 of 3");
 
     withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+    await flush(); // the restart is deferred a macrotask — see tryRepeat's doc comment
     assert.equal(document.getElementById("repeatCountLabel").textContent, "2 of 3");
 
     withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+    await flush();
     withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+    await flush();
     assert.equal(document.getElementById("repeatCountLabel").textContent, "repeats"); // done
   } finally {
     cleanup();
@@ -778,6 +852,7 @@ test("a repeat restart doesn't interrupt the metronome, and it still resyncs on 
     // real once tryRepeat's own sc.play() resumes it.
     sc.isStarted = false;
     withAbcjs(abcjs, () => sc._cursorControl.onFinished()); // loops (1 of 2 done)
+    await flush(); // the restart is deferred a macrotask — see tryRepeat's doc comment
     assert.equal(audio.isPlaying, true);
 
     // The loop restart itself must not look like a stop/start cycle to the
