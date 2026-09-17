@@ -49,6 +49,7 @@ Gotta woman,gotta_woman.abc
 Grazing in the Grass,grazing_in_the_grass.abc
 Happy Birthday,happy_birthday.abc
 Happy Feet Blues,happy_feet_blues.abc
+High Society,high_society.abc
 Home Sweet Home,home_sweet_home.abc
 Honky Tonk Town,honky_tonk_town.abc
 I Wanna Be Like You,be_like_you.abc
