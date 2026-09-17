@@ -12,6 +12,13 @@ function forceReflow(element) {
   return element.offsetWidth;
 }
 
+// A part title longer than a short code (e.g. "Chorus", "Sous Intro") is cut
+// down to its first letter for the badge — see renderChordTable's doc
+// comment for why. "A", "B2", "Bridge" -> "A", "B2", "B".
+function partBadgeText(title) {
+  return title.length > 2 ? title.slice(0, 1) : title;
+}
+
 /*
   Render the chord grid above the staff from a per-measure chord array (the
   same array shape parseChordScheme produces, optionally already converted to
@@ -21,6 +28,21 @@ function forceReflow(element) {
   (left-to-right, top-to-bottom), and how many columns they wrap into is a CSS
   variable that can change at narrow widths. The cell order and count must stay
   exactly this sequence — playback highlighting looks cells up by flat index.
+
+  A measure carrying `part` (an ABC `P:` field's title, from parseChordScheme)
+  is the first measure of that section — it gets a small black-square
+  `.chordPartMarker` badge in the cell's top-left corner, the chord-table
+  equivalent of stylePartMarkers' boxed letter above the staff. Unlike that
+  notation-view box, this one is a pure overlay on top of the chord grid: the
+  chord text itself is never resized, shifted or padded to make room for it
+  (a real song's cells are already tight — an 8-column layout's narrower
+  cells, or a two-chord measure like "F7,N.C.", have no spare margin to give
+  up). That's also why the badge shows at most one letter (partBadgeText): the
+  tune's own `P:` title can be a whole word ("Chorus", "Sous Intro"), and a
+  word-length badge did visibly overlap a real first chord (Bill Bailey's
+  "verse"/"F") once actually rendered — confirmed by rendering several real
+  songs' own ABC files, not just guessed. A short code ("A", "B2", ...) is
+  already small enough and is kept as-is.
 */
 export function renderChordTable(chords, container) {
   if (!container) return;
@@ -37,6 +59,9 @@ export function renderChordTable(chords, container) {
     const chordDiv = el("div", { class: "chordDiv", html: String(measure.text) });
     const cell = el("div", { class: "chordCell" }, chordDiv);
 
+    if (measure.part !== undefined) {
+      cell.append(el("span", { class: "chordPartMarker", text: partBadgeText(measure.part) }));
+    }
     if (measure.doubeThinBarLeft !== undefined) cell.classList.add("chordCellDoubleThinBarLeft");
     if (measure.doubeThinBarRight !== undefined) cell.classList.add("chordCellDoubleThinBarRight");
 

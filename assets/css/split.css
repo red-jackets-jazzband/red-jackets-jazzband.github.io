@@ -3703,11 +3703,39 @@ body:has(#rjLibrary) .split-bio {
 }
 
 .chordCell {
+  position: relative;
   border-width: 1px;
   border-style: solid;
   border-color: #000000;
   min-width: 0;
   overflow: hidden;
+}
+
+/* A small boxed section letter ("A", "B", ...) from the tune's own ABC `P:`
+   field, pinned to the top-left corner of the cell holding that section's
+   first chord — the chord-table equivalent of stylePartMarkers' boxed letter
+   above the staff (sheet-decorations.js). Its text is capped at one or two
+   characters (chord-table.js's partBadgeText), so it always stays this
+   small — it's a pure overlay and never reserves space from the chord grid
+   around it (see renderChordTable's doc comment). */
+.chordPartMarker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-width: 12px;
+  padding: 0 2px;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  font-family: "Montserrat", sans-serif;
+  font-size: 10px;
+  line-height: 14px;
+  text-align: center;
+  white-space: nowrap;
+  /* Without this, printing drops the black background by default (to save
+     ink) and leaves only white-on-white text — same fix as .text-block /
+     .setlist-titlepage-instrument's own black-box-white-letter badges. */
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 /* Screen-only, same reasoning as .abcjs-current-note above: a chord cell

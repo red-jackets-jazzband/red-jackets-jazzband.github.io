@@ -31,7 +31,9 @@ export function replaceAccidentalWithUtf8Char(note) {
 }
 
 // Reads the chords from an abcjs tune (parsed intermediate format) into a
-// list of measures, each `{ text: [chordStrings...], leftRepeat?, ... }`.
+// list of measures, each `{ text: [chordStrings...], leftRepeat?, part?, ... }`.
+// `part` (an ABC `P:` field's title, e.g. "A") is set on the first measure of
+// that section — the chord table boxes it there — and is otherwise absent.
 //
 // By default, measures inside a second-or-later ("[2", "[3", ...) repeat
 // ending are dropped: the chord table (and its repeat-boundary highlighting)
@@ -115,8 +117,32 @@ class ChordSchemeParser {
     }
   }
 
+  /*
+    A new named part is always a hard boundary — musically it can never be a
+    continuation of an still-open numbered ending from the previous section,
+    even when the token stream says otherwise. abcjs can carry a repeat's
+    `inAlternativeEnding` state right through a part boundary: e.g. Bei Mir
+    bist du Schön's intro closes its own second ending on the *Chorus's*
+    first bar (a bare pickup note before the Chorus's own barline), so the
+    "part" element for "Chorus" arrives while the parser still thinks it's
+    inside the intro's dropped ending — silently discarding the marker
+    (confirmed by rendering the real ABC file: the Chorus badge just never
+    appeared). Forcibly closing the ending here, and flushing whatever was
+    still pending from it as its own (untagged) measure first, keeps that
+    leftover content correctly attributed to the old section instead of
+    being mislabeled as the new part's own first bar.
+  */
+  handlePart(element) {
+    this.inAlternativeEnding = false;
+    this.flushMeasure();
+    // "P: Chorus" (a space after the colon) parses with that leading space
+    // still in the title.
+    this.currentMeasure.part = element.title.trim();
+  }
+
   handleElement(element) {
     if (element.el_type === "note") this.noteOrRestInMeasure = true;
+    if (element.el_type === "part") this.handlePart(element);
     if (element.el_type === "bar") this.handleBar(element);
     this.handleChord(element);
   }
@@ -166,6 +192,12 @@ export function simplifyBlues(chords) {
 
 // Checks if `chords` is `count` bars repeated N times with identical
 // content each time, and if so collapses it down to just `count` bars.
+//
+// This intentionally collapses away a later repeat's own part marker too
+// (e.g. Happy Feet Blues' A/B/C are the same 12-bar blues played three
+// times with different melodies each time — a single "A"-labelled 12-bar
+// grid is the useful chart, not the same scheme shown three times over just
+// because each pass has its own part letter).
 export function simplifySong(chords, count) {
   if (chords.length === 0 || chords.length % count !== 0) {
     return chords;
