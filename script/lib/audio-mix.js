@@ -78,26 +78,46 @@ export const DEFAULT_PROGRAM = {
   per-channel controls). Each `pattern` string is built from abcjs's own
   synth-side gchord alphabet (its source, not abc2midi's — the two parsers
   accept different letters): "b" plays the chord's root bass note and the
-  full chord together, "f" the root alone, "c" the chord alone, "z" a rest.
-  One letter is one pulse of the tune's basic note length; abcjs stretches
-  or repeats the string to fill each bar. "jazz" is the pattern this file
-  hardcoded before the picker existed (ABCjs's own "jazz" example,
+  full chord together, "f" the root alone, "c" the chord alone, "z" a rest,
+  and "g"/"h"/"i"/"j" pluck a single chord tone each — root/3rd/5th/7th, in
+  that order ("do"/"mi"/"sol"/"ti" in abcjs's own source, see chord-track.js's
+  parseGChord) — rather than the whole chord at once, for a broken-chord/
+  arpeggiated texture the block-chord letters above can't produce. One letter
+  is one pulse of the tune's basic note length; abcjs stretches or repeats
+  the string to fill each bar. "jazz" is the pattern this file hardcoded
+  before the picker existed (ABCjs's own "jazz" example,
   https://examples.abcjs.net/accompaniment) — kept as the default `value` so
   an untouched picker changes nothing audible. `pattern: null` ("Default")
   means "emit no %%MIDI gchord line at all" — hasChords still gets bassprog/
   chordprog/bassvol/chordvol (see accompanimentLines), just whichever
   built-in pattern abc2midi/abcjs falls back to on its own.
-  As with the Bass/Chords GM program defaults above, the non-jazz patterns
-  here are a reasonable rhythmic guess from reading the gchord alphabet, not
-  yet confirmed by ear in a real browser.
+  As with the Bass/Chords GM program defaults above, every non-jazz pattern
+  here is a reasonable rhythmic guess from reading the gchord alphabet, not
+  yet confirmed by ear in a real browser. Picked to match this band's own
+  repertoire rather than a generic rhythm-section grab-bag: New Orleans
+  trad jazz/dixieland (two-beat, Charleston, banjo roll), brass band
+  (second line), and calypso, the one non-jazz genre this band's book
+  actually draws on — no bossa nova or reggae, which don't fit either.
+    - "second-line" is the tresillo (3+3+2 eighth-notes) under nearly every
+      New Orleans brass-band street beat — root+chord on beat 1, a chord
+      stab on the "and" of 2, root again on beat 4, silence elsewhere.
+    - "calypso" leads with a full root+chord downbeat (unlike reggae's own
+      "one drop", which skips beat 1 in the bass entirely) then answers on
+      every off-beat "and" — the classic mento/calypso guitar skank.
+    - "arpeggio" (labelled Banjo Roll below) reuses the same broken-chord
+      "g"/"h"/"i"/"j" letters for the rolled, one-tone-per-pulse texture a
+      trad-jazz tenor banjo plays under a verse.
 */
 export const GCHORD_PATTERNS = [
   { value: "default", label: "Default", pattern: null },
   { value: "jazz", label: "Jazz (root+chord, chord)", pattern: "bzczbzcz" },
-  { value: "two-beat", label: "Two-beat (root, chord)", pattern: "fzczfzcz" },
+  { value: "two-beat", label: "New Orleans Two-beat (root, chord)", pattern: "fzczfzcz" },
   { value: "four-beat", label: "Four-beat (root+chord each beat)", pattern: "bzbzbzbz" },
   { value: "waltz", label: "Waltz (root, chord, chord)", pattern: "fzczcz" },
-  { value: "latin", label: "Latin/Calypso (root, off-beat chords)", pattern: "fczczczc" },
+  { value: "charleston", label: "Charleston (dixieland kick)", pattern: "bzzczzzz" },
+  { value: "second-line", label: "Second Line (brass band tresillo)", pattern: "bzzczzfz" },
+  { value: "calypso", label: "Calypso (downbeat + off-beat chords)", pattern: "bczczczc" },
+  { value: "arpeggio", label: "Banjo Roll (trad jazz, rolled chord)", pattern: "gzhzizjz" },
 ];
 
 export const DEFAULT_GCHORD_PATTERN_VALUE = "jazz";

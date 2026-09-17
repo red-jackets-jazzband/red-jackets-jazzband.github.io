@@ -162,6 +162,26 @@ export const PATTERNS = {
     twobar2: (n) => `${n}2 z6`,
     half: (n) => `z ${n}2 z`,
   },
+  // Honky Tonk Riff: the syncopated left-hand riff figure from "Down in
+  // Honky Tonk Town" — four punchy off-beat stabs on the beat in bar 1,
+  // answered in bar 2 by the same four stabs shifted a half-beat later. In
+  // the source riff that second bar's own second hit is a quick lower
+  // neighbor sliding up into the chord (its "G/4B/2" grace note) rather
+  // than a flat repeat, so this pattern plays that hit as `nd` — not a
+  // single grace note on one voice, but the file's usual whole-triad,
+  // planed-one-diatonic-step-down token (see the "Rhythm patterns" doc
+  // comment above), resolving up into the next stab's `n`. Concretely: if
+  // `n` this beat is Cm in a Bb-major tune, `nd` plays a Bb-shaped voicing
+  // (Cm's C-Eb-G planed down one scale step along Bb major's Bb-C-D-Eb-F-
+  // G-A gives Bb-D-F) — the same "whole chord, one step away" relationship
+  // every other stepwise pattern here uses, just resolving upward instead
+  // of down. A two-bar call-and-response rather than one bar repeated, same
+  // shape as the walk-down/full-walk patterns above.
+  honky_tonk_riff: {
+    twobar1: (n) => `${n} z ${n} z ${n} z ${n} z`,
+    twobar2: (n, nd) => `z ${n} ${nd} ${n} z ${n} z ${n}`,
+    half: (n) => `${n} z ${n} z`,
+  },
 };
 
 const GROUP_BASE = "Base patterns";
@@ -170,7 +190,16 @@ const GROUP_STEP_UP_DOWN = "Step up & down";
 const GROUP_TRADITIONAL = "Named grooves";
 
 // Ordered list for the sheet's <select>, grouped like the prototype's optgroups.
+// Named grooves leads the list so the clave/Charleston feels are the first
+// options a musician sees, ahead of the more generic base/step patterns.
 export const COMPING_PATTERNS = [
+  { value: "charleston", label: "Charleston", group: GROUP_TRADITIONAL },
+  { value: "reverse_charleston", label: "Reverse Charleston", group: GROUP_TRADITIONAL },
+  { value: "clave_3_2", label: "3-2 clave", group: GROUP_TRADITIONAL },
+  { value: "clave_2_3", label: "2-3 clave", group: GROUP_TRADITIONAL },
+  { value: "three_hit", label: "3 hit", group: GROUP_TRADITIONAL },
+  { value: "i_got_a_woman", label: "I Got a Woman", group: GROUP_TRADITIONAL },
+  { value: "honky_tonk_riff", label: "Honky Tonk Riff", group: GROUP_TRADITIONAL },
   { value: "on_2_and_4", label: "On 2 and 4", group: GROUP_BASE },
   { value: "hold_over", label: "Hold over", group: GROUP_BASE },
   { value: "hit_and_hold", label: "Hit and hold", group: GROUP_BASE },
@@ -186,12 +215,6 @@ export const COMPING_PATTERNS = [
   { value: "full_walk", label: "Full walk", group: GROUP_STEP_UP_DOWN },
   { value: "third_approach", label: "Third approach", group: GROUP_STEP_UP_DOWN },
   { value: "step_neighbor", label: "Step neighbor", group: GROUP_STEP_UP_DOWN },
-  { value: "charleston", label: "Charleston", group: GROUP_TRADITIONAL },
-  { value: "reverse_charleston", label: "Reverse Charleston", group: GROUP_TRADITIONAL },
-  { value: "clave_3_2", label: "3-2 clave", group: GROUP_TRADITIONAL },
-  { value: "clave_2_3", label: "2-3 clave", group: GROUP_TRADITIONAL },
-  { value: "three_hit", label: "3 hit", group: GROUP_TRADITIONAL },
-  { value: "i_got_a_woman", label: "I Got a Woman", group: GROUP_TRADITIONAL },
 ];
 
 const PATTERN_LABEL = COMPING_PATTERNS.reduce((acc, p) => {
