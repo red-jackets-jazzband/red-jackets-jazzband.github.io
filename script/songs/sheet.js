@@ -10,6 +10,8 @@ import { guessGmProgram } from "../lib/gm-voices.js";
 import { renderChordTable, scanRepeatBoundaries, fitChordTable } from "./chord-table.js";
 import { stylePartMarkers, applyCompingColors } from "./sheet-decorations.js";
 import { updateIrealProLink } from "./irealpro-link.js";
+import { updateInspirationExtLinks } from "./inspiration-links.js";
+import { parseInspirationLinks, firstYoutubeUrl } from "../lib/inspiration-links.js";
 
 const LIVE_TARGETS = { notationId: "notation", chordId: "chordtable", titleId: "songtitle" };
 
@@ -290,7 +292,9 @@ export function createSheet(ctx) {
     const renderText = resolveRenderText(comping, chords.length > 0, isBooklet);
 
     if (addLink) {
-      ctx.inspiration.updateLink(song.metaText.url, song.metaText.title);
+      const inspirationLinks = parseInspirationLinks(song.metaText.url);
+      ctx.inspiration.updateLink(firstYoutubeUrl(inspirationLinks), song.metaText.title);
+      updateInspirationExtLinks(inspirationLinks);
       updateIrealProLink(song, chords);
     }
 

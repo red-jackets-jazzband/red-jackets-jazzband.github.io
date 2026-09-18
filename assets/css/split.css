@@ -644,13 +644,18 @@ video.video {
   it's actually playing.
 */
 /*
-  .sheet-actions (Print / Export WAV / iRealPro) shares this same pill shell
-  — see the comment above its own rule further down.
+  .sheet-actions (Print / Export WAV / iRealPro) and #inspirationSlot (the
+  YouTube "Inspiration" button plus any Spotify/SoundCloud/SecondHandSongs
+  links — see songs/inspiration-links.js) each share this same pill shell —
+  two separate pills, not one: #inspirationSlot never gets Print/Export
+  MP3/iRealPro's own buttons, and .sheet-actions never grows an Inspiration
+  link of its own.
 */
 /* Shares its shell (height, border, radius) with .sheet-stepper below. */
 .sheet-transport,
 .sheet-actions,
-.sheet-stepper {
+.sheet-stepper,
+#inspirationSlot {
   flex: none;
   display: flex;
   align-items: stretch;
@@ -663,8 +668,10 @@ video.video {
 .sheet-transport .sheet-play-btn,
 .sheet-transport .sheet-icon-btn,
 .sheet-actions .sheet-icon-btn,
+#inspirationSlot .sheet-icon-btn,
 #sheetmenu .sheet-transport .sheet-icon-btn,
-#sheetmenu .sheet-actions .sheet-icon-btn {
+#sheetmenu .sheet-actions .sheet-icon-btn,
+#sheetmenu #inspirationSlot .sheet-icon-btn {
   box-sizing: border-box;
   width: 42px;
   height: 100%;
@@ -672,7 +679,8 @@ video.video {
   border-radius: 0;
 }
 #sheetmenu .sheet-transport > * + *,
-#sheetmenu .sheet-actions > * + * {
+#sheetmenu .sheet-actions > * + *,
+#sheetmenu #inspirationSlot > * + * {
   border-left: 1px solid rgba(255,255,255,.1);
 }
 .sheet-transport .sheet-play-btn {
@@ -816,20 +824,22 @@ video.video {
 }
 
 /*
-  Runtime mount point for the Inspiration button — a bare <div> (not a
-  <span>: a lone inline element on its own line in songs.md gets wrapped
-  in a <p> by Goldmark, and that <p>'s margin threw the button ~10px
-  above the sibling 44px controls). Centered flex so the mounted button
-  lines up with everything else in #sheetmenu. Empty (no F: field on the
-  current tune, so inspiration.js never appends a button) collapses out of
-  #sheetmenu's flex flow entirely — otherwise, as a zero-width flex item, it
-  still counted for #sheetmenu's own `gap`, silently doubling the visible
-  space between Play and the Print/Export/iRealPro pill on either side of it.
+  Runtime mount point for the Inspiration pill — a bare <div> (not a <span>:
+  a lone inline element on its own line in songs.md gets wrapped in a <p> by
+  Goldmark, and that <p>'s margin threw its contents ~10px above the sibling
+  44px controls). Its own display/height/border/radius come from the shared
+  pill shell rule above (`.sheet-transport, .sheet-actions, .sheet-stepper,
+  #inspirationSlot`) — this is its own separate pill, never folded into the
+  Print/Export MP3/iRealPro one in #sheetActions. Holds the YouTube
+  "Inspiration" button (inspiration.js's updateLink) plus, when the tune has
+  them, flush Spotify/SoundCloud/SecondHandSongs icon buttons
+  (inspiration-links.js's updateInspirationExtLinks) — in that order, divided
+  by the same hairlines as the other pills. Empty (no F: field at all on the
+  current tune) collapses out of #sheetmenu's flex flow entirely — otherwise,
+  as a zero-width flex item, it still counted for #sheetmenu's own `gap`,
+  silently doubling the visible space between Play and the Print/Export/
+  iRealPro pill on either side of it.
 */
-#inspirationSlot {
-  display: flex;
-  align-items: center;
-}
 #inspirationSlot:empty {
   display: none;
 }
@@ -839,11 +849,11 @@ video.video {
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
-  height: 44px;
+  height: 100%;
   padding: 0 14px;
   background: #2f2f2f;
-  border: 1px solid rgba(255,255,255,.11);
-  border-radius: 8px;
+  border: none;
+  border-radius: 0;
   color: rgba(236,234,230,.72) !important;
   font: 600 12px/1 "Montserrat", sans-serif;
   text-decoration: none !important;
@@ -861,6 +871,16 @@ video.video {
   background: var(--rj-gold);
   color: #222222 !important;
 }
+/*
+  Beats the `#sheetmenu .sheet-inspiration-link { border: 1px solid ... }`
+  re-assertion further down (for the theme's `.split-bio a` underline fix —
+  see that rule's own comment) the same way `#sheetmenu .sheet-actions
+  .sheet-icon-btn` already beats it for Print/iRealPro: flush inside its
+  pill, no border of its own.
+*/
+#sheetmenu #inspirationSlot .sheet-inspiration-link {
+  border: none;
+}
 
 /*
   Print / Export WAV / iRealPro: one bordered pill of flush 42px icon
@@ -869,12 +889,14 @@ video.video {
   them. iRealPro is appended here at runtime by updateIrealProLink. These
   replace the old "More" overflow menu.
 */
-.sheet-actions .sheet-icon-btn {
+.sheet-actions .sheet-icon-btn,
+#inspirationSlot .sheet-icon-btn {
   color: rgba(236,234,230,.72);
   text-decoration: none;
 }
 @media (hover: hover) {
-  .sheet-actions .sheet-icon-btn:hover {
+  .sheet-actions .sheet-icon-btn:hover,
+  #inspirationSlot .sheet-icon-btn:hover {
     color: #222222;
   }
 }
@@ -1228,11 +1250,13 @@ video.video {
 #sheetmenu .sheet-inspiration-link {
   border: 1px solid rgba(255,255,255,.11);
 }
-#sheetmenu .sheet-actions .sheet-icon-btn {
+#sheetmenu .sheet-actions .sheet-icon-btn,
+#sheetmenu #inspirationSlot .sheet-icon-btn {
   color: rgba(236,234,230,.72);
 }
 @media (hover: hover) {
-  #sheetmenu .sheet-actions .sheet-icon-btn:hover:not(:disabled) {
+  #sheetmenu .sheet-actions .sheet-icon-btn:hover:not(:disabled),
+  #sheetmenu #inspirationSlot .sheet-icon-btn:hover:not(:disabled) {
     color: #222222;
   }
 }
