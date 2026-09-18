@@ -173,65 +173,52 @@
   <div id="compingSlot" class="sheet-comping"></div>
   </div>
   <dialog id="mixerPanel" class="mixer-panel" aria-label="Mixer">
-    <div class="mixer-head">
-      <h3 class="mixer-head-title">Mixer</h3>
-      <button type="button" id="mixerCloseBtn" class="mixer-close" aria-label="Close mixer"><span class="fa-solid fa-xmark" aria-hidden="true"></span></button>
+    <div id="mixerSectionAccompaniment" class="mixer-section">
+      <div class="mixer-section-title">Auto-accompaniment</div>
+      <div class="mixer-strip mixer-strip--pattern" id="mixerStripPattern">
+        <select id="mixerGchordPatternSelect" class="mixer-voice-select mixer-pattern-select" aria-label="Accompaniment pattern"></select>
+      </div>
+      <div class="mixer-strip" id="mixerStripBass">
+        <span class="mixer-strip-label">Bass</span>
+        <select id="mixerBassVoiceSelect" class="mixer-voice-select" aria-label="Bass voice"></select>
+        <div class="mixer-fader-track">
+          <div class="mixer-fader-fill" id="mixerBassFill"></div>
+          <input type="range" id="mixerBassRange" min="0" max="100" value="100" aria-label="Bass volume">
+        </div>
+        <span class="mixer-readout" id="mixerBassReadout">100%</span>
+        <button type="button" id="mixerBassMuteBtn" class="mixer-mute-btn" aria-pressed="false" title="Mute bass" aria-label="Mute bass"><span class="fa-solid fa-volume-high" aria-hidden="true"></span></button>
+      </div>
+      <div class="mixer-strip" id="mixerStripChords">
+        <span class="mixer-strip-label">Chords</span>
+        <select id="mixerChordsVoiceSelect" class="mixer-voice-select" aria-label="Chords voice"></select>
+        <div class="mixer-fader-track">
+          <div class="mixer-fader-fill" id="mixerChordsFill"></div>
+          <input type="range" id="mixerChordsRange" min="0" max="100" value="100" aria-label="Chords volume">
+        </div>
+        <span class="mixer-readout" id="mixerChordsReadout">100%</span>
+        <button type="button" id="mixerChordsMuteBtn" class="mixer-mute-btn" aria-pressed="false" title="Mute chords" aria-label="Mute chords"><span class="fa-solid fa-volume-high" aria-hidden="true"></span></button>
+      </div>
     </div>
-    <!-- Populated by songs/mixer.js's syncVoices/rebuildVoiceStrips — one
-         strip per the tune's resolved voice (lib/audio-mix.js's
-         resolveMixerVoices): an ordinary tune's own Melody, a chart's own
-         named staves (Trumpet + Sousaphone, ...), plus Comping appended when
-         it's on. Always at least one strip once a song is open; see
-         mixer.js's own doc comment. -->
-    <div id="mixerVoicesSection" class="mixer-voices-section">
+    <!-- #mixerVoicesList is populated by songs/mixer.js's syncVoices/
+         rebuildVoiceStrips — one strip per the tune's resolved voice
+         (lib/audio-mix.js's resolveMixerVoices): an ordinary tune's own
+         Melody, a chart's own named staves (Trumpet + Sousaphone, ...), plus
+         Comping appended when it's on. Always at least one strip once a song
+         is open; see mixer.js's own doc comment. -->
+    <div id="mixerVoicesSection" class="mixer-section mixer-voices-section">
+      <div class="mixer-section-title">Voices</div>
       <div id="mixerVoicesList"></div>
     </div>
-    <div class="mixer-strip" id="mixerStripBass">
-      <span class="mixer-swatch mixer-swatch--bass" aria-hidden="true"></span>
-      <span class="mixer-strip-label">Bass</span>
-      <div class="mixer-fader-track">
-        <div class="mixer-fader-fill" id="mixerBassFill"></div>
-        <input type="range" id="mixerBassRange" min="0" max="100" value="100" aria-label="Bass volume">
-      </div>
-      <span class="mixer-readout" id="mixerBassReadout">100%</span>
-      <button type="button" id="mixerBassMuteBtn" class="mixer-mute-btn" aria-pressed="false" title="Mute bass" aria-label="Mute bass"><span class="fa-solid fa-volume-high" aria-hidden="true"></span></button>
-      <select id="mixerBassVoiceSelect" class="mixer-voice-select" aria-label="Bass voice"></select>
-    </div>
-    <div class="mixer-strip" id="mixerStripChords">
-      <span class="mixer-swatch mixer-swatch--chords" aria-hidden="true"></span>
-      <span class="mixer-strip-label">Chords</span>
-      <div class="mixer-fader-track">
-        <div class="mixer-fader-fill" id="mixerChordsFill"></div>
-        <input type="range" id="mixerChordsRange" min="0" max="100" value="100" aria-label="Chords volume">
-      </div>
-      <span class="mixer-readout" id="mixerChordsReadout">100%</span>
-      <button type="button" id="mixerChordsMuteBtn" class="mixer-mute-btn" aria-pressed="false" title="Mute chords" aria-label="Mute chords"><span class="fa-solid fa-volume-high" aria-hidden="true"></span></button>
-      <select id="mixerChordsVoiceSelect" class="mixer-voice-select" aria-label="Chords voice"></select>
-    </div>
-    <div class="mixer-strip mixer-strip--pattern" id="mixerStripPattern">
-      <span class="mixer-swatch mixer-swatch--pattern" aria-hidden="true"></span>
-      <span class="mixer-strip-label">Pattern</span>
-      <select id="mixerGchordPatternSelect" class="mixer-voice-select" aria-label="Accompaniment pattern"></select>
-    </div>
     <div class="mixer-strip mixer-strip--swing" id="mixerStripSwing">
-      <span class="mixer-swatch mixer-swatch--swing" aria-hidden="true"></span>
       <span class="mixer-strip-label">Swing</span>
       <div class="mixer-fader-track">
         <div class="mixer-fader-fill" id="mixerSwingFill"></div>
-        <input type="range" id="mixerSwingRange" min="0" max="100" value="0" aria-label="Swing amount">
+        <input type="range" id="mixerSwingRange" min="0" max="100" value="40" aria-label="Swing amount">
       </div>
-      <span class="mixer-readout" id="mixerSwingReadout">Off</span>
-    </div>
-    <div class="mixer-strip mixer-strip--toggles">
-      <div class="mixer-toggle-item" id="mixerStripMetronome">
-        <span class="mixer-swatch mixer-swatch--metronome" aria-hidden="true"></span>
-        <span class="mixer-strip-label">Metronome</span>
-        <button type="button" id="mixerMetronomeToggleBtn" class="mixer-mute-btn mixer-metronome-toggle" aria-pressed="false" title="Enable metronome" aria-label="Enable metronome"><span class="fa-solid fa-toggle-off" aria-hidden="true"></span></button>
-      </div>
-      <div class="mixer-toggle-item" id="mixerStripQuality">
-        <span class="mixer-swatch mixer-swatch--quality" aria-hidden="true"></span>
-        <span class="mixer-strip-label">High quality</span>
-        <button type="button" id="mixerHighQualityToggleBtn" class="mixer-mute-btn mixer-metronome-toggle" aria-pressed="false" title="Enable high quality audio" aria-label="Enable high quality audio"><span class="fa-solid fa-toggle-off" aria-hidden="true"></span></button>
+      <span class="mixer-readout" id="mixerSwingReadout">40%</span>
+      <div class="mixer-toggle-group">
+        <button type="button" id="mixerMetronomeToggleBtn" class="mixer-mute-btn mixer-metronome-toggle" aria-pressed="false" title="Enable metronome" aria-label="Enable metronome"><span class="fa-solid fa-drum" aria-hidden="true"></span></button>
+        <button type="button" id="mixerHighQualityToggleBtn" class="mixer-mute-btn mixer-metronome-toggle" aria-pressed="false" title="Enable high quality audio" aria-label="Enable high quality audio"><span class="fa-solid fa-wave-square" aria-hidden="true"></span></button>
       </div>
     </div>
   </dialog>

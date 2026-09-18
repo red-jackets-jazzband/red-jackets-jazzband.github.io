@@ -902,134 +902,127 @@ video.video {
 }
 
 /*
-  Mixer panel (#mixerPanel): the Melody / Bass / Chords / Comping channel
-  strips that pop up from the transport cluster's Mixer button. It's a native
-  <dialog> (for real dialog accessibility semantics) toggled via its own
-  `open` attribute (songs/mixer.js's setOpen), never shown modally (no
-  showModal()/::backdrop — this is a plain popover, not a modal), so `inset:
-  auto` and `margin: 0` below undo the two UA defaults
-  (`dialog { inset: 0; margin: auto; }`) that would otherwise fight the
-  `position: fixed` + top/right placement this file and songs/mixer.js
-  together compute; `border`/`padding`/`background` are already overridden by
-  this rule's own higher-specificity class selector, so those UA defaults
-  need no explicit reset. `position: fixed`, not absolute — #rj-sheet clips
-  overflow (its rounded-card corners), so an absolutely-positioned popover
-  nested in #sheetmenu would be cut off wherever it overflowed that card;
-  fixed escapes that entirely, same as #inspirationPanel above. songs/mixer.js
-  sets `top`/`right` from the button's own rect on open; the sub-1024px media
-  query below overrides those inline coordinates (with !important, since
-  inline style otherwise always wins over a stylesheet) to dock it as a
-  bottom sheet instead. That bottom sheet also caps its own height and
-  scrolls internally (see the media query) — the panel has grown a strip at a
-  time (Metronome, Quality, Pattern, Swing) since this dock was first written
-  for four short channel strips, and a mobile browser's own bottom chrome
-  (URL bar / tab strip) can eat into the visible viewport below the
-  `bottom: 0` edge, hiding whatever doesn't fit without a scroll of its own.
+  Mixer panel (#mixerPanel): the Auto-accompaniment (Pattern/Bass/Chords) and
+  Voices groups, plus the Swing/Metronome/Quality row, that pop up from the
+  transport cluster's Mixer button. It's a native <dialog> (for real dialog
+  accessibility semantics) toggled via its own `open` attribute (songs/
+  mixer.js's setOpen), never shown modally (no showModal()/::backdrop — this
+  is a plain popover, not a modal), so `inset: auto` and `margin: 0` below
+  undo the two UA defaults (`dialog { inset: 0; margin: auto; }`) that would
+  otherwise fight the `position: fixed` + top/right placement this file and
+  songs/mixer.js together compute; `border`/`padding`/`background` are
+  already overridden by this rule's own higher-specificity class selector, so
+  those UA defaults need no explicit reset. `position: fixed`, not absolute —
+  #rj-sheet clips overflow (its rounded-card corners), so an absolutely-
+  positioned popover nested in #sheetmenu would be cut off wherever it
+  overflowed that card; fixed escapes that entirely, same as #inspirationPanel
+  above. songs/mixer.js sets `top`/`right` from the button's own rect on
+  open; the sub-1024px media query below overrides those inline coordinates
+  (with !important, since inline style otherwise always wins over a
+  stylesheet) to dock it as a bottom sheet instead. That bottom sheet also
+  caps its own height and scrolls internally (see the media query) — the
+  panel has grown a strip at a time (Metronome, Quality, Pattern, Swing)
+  since this dock was first written for four short channel strips, and a
+  mobile browser's own bottom chrome (URL bar / tab strip) can eat into the
+  visible viewport below the `bottom: 0` edge, hiding whatever doesn't fit
+  without a scroll of its own.
 */
 .mixer-panel {
   position: fixed;
   inset: auto;
   margin: 0;
   z-index: 20;
-  width: 300px;
+  width: 340px;
   max-width: calc(100vw - 24px);
   background: #222222;
   color: #ece6e6;
   border: 1px solid rgba(255,255,255,.14);
   border-radius: 12px;
   box-shadow: 0 18px 44px rgba(0,0,0,.6);
-  padding: 14px 16px 16px;
+  padding: 16px 18px 18px;
   font-family: "Montserrat", sans-serif;
 }
-.mixer-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-.mixer-head-title {
-  flex: 1;
-  font: 700 13px/1 "Montserrat", sans-serif;
-  color: #ece6e6;
-  margin: 0;
-}
-.mixer-close {
-  flex: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  background: none;
-  border: none;
-  color: rgba(236,234,230,.5);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  font-size: 11px;
-}
-.mixer-close:hover {
-  background: #2f2f2f;
-  color: #ece6e6;
-}
+/*
+  Every strip below — Pattern, Bass, Chords, a resolved voice, Swing — is the
+  same fixed 5-column grid: label, Voice, fader, readout, Mute. songs/
+  mixer.js's buildVoiceStrip emits a voice row's children in this exact order
+  so a runtime-built strip lines up with this file's static Bass/Chords/Swing
+  markup without either one needing to know about the other's DOM shape. Mute
+  sits at the strip's right edge, right next to the readout it silences,
+  rather than beside the label — mirroring Swing's own trailing toggle group.
+  Pattern (just one full-width select, no channel of its own to mute/pick a
+  Voice for) and Swing (a fader plus two toggle buttons instead of a Voice
+  picker) each override grid-template-columns below rather than leaving empty
+  cells in the shared template.
+*/
 .mixer-strip {
-  display: flex;
+  display: grid;
+  grid-template-columns: 58px minmax(60px, 90px) 1fr 30px 28px;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  column-gap: 8px;
 }
 .mixer-strip + .mixer-strip {
   margin-top: 10px;
 }
-.mixer-swatch {
-  flex: none;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.35) inset;
+/* Grid items default to a content-based min-width that ignores the column
+   track's own size, so a long voice name or option label would otherwise
+   push its column wider than the grid allows instead of eliding — collapse
+   that back to the track's actual width so the ellipsis rules below (and on
+   .mixer-voice-select) can take over. */
+.mixer-strip > * {
+  min-width: 0;
 }
-.mixer-swatch--bass {
-  background: #8a6244;
+.mixer-section-title {
+  font: 700 10px/1 "Montserrat", sans-serif;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: rgba(236,234,230,.45);
+  margin: 0 0 10px;
 }
-.mixer-swatch--chords {
-  background: var(--rj-body);
-}
-/*
-  Voice strips (songs/mixer.js's buildVoiceStrip, one per the tune's resolved
-  voices — an ordinary tune's own Melody, a chart's own named staves like
-  Trumpet + Sousaphone, or Comping) have no established colour coding the way
-  Bass/Chords do above — these just cycle by list position so 2-4 voices on
-  one tune stay visually distinguishable.
-*/
-.mixer-swatch--voice-0 {
-  background: #7fa6c9;
-}
-.mixer-swatch--voice-1 {
-  background: #c98a7f;
-}
-.mixer-swatch--voice-2 {
-  background: #9fc97f;
-}
-.mixer-swatch--voice-3 {
-  background: #c9b17f;
+/* Auto-accompaniment and Voices are visually separate groups; Swing (not
+   wrapped in a .mixer-section — it's a single row, not a headed group) reads
+   as a third group the same way once it follows one. :not(.is-inactive) on
+   the earlier sibling matters here specifically: a chordless tune hides the
+   whole Auto-accompaniment section (updateAccompanimentSectionGate), and
+   without this guard Voices would still inherit a divider/top-gap measured
+   against a section that's no longer actually there. */
+.mixer-section:not(.is-inactive) + .mixer-section,
+.mixer-section:not(.is-inactive) + .mixer-strip--swing {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,.08);
 }
 .mixer-strip-label {
-  flex: 0 0 46px;
   font: 600 11px/1.2 "Montserrat", sans-serif;
   color: #ece6e6;
   white-space: nowrap;
-}
-/* A resolved voice's own name can run longer than the fixed Bass/Chords
-   labels above ("Sousaphone" vs "Bass") — let it size to its text instead of
-   the fixed 46px column, but still clip with an ellipsis rather than push
-   the Voice picker/mute button off the panel. */
-.mixer-strip--voice .mixer-strip-label {
-  flex: 0 1 auto;
-  max-width: 96px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.mixer-strip-label-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+}
+/* Comping's subtitle (songs/mixer.js's buildVoiceLabel) — describes what the
+   voice actually plays, since "Comping" alone doesn't say it's chordal fills
+   the way "Trumpet"/"Bass" say what they are. */
+.mixer-strip-sublabel {
+  font: 500 9px/1 "Montserrat", sans-serif;
+  color: rgba(236,234,230,.42);
+}
+/* Comping is always the last row of #mixerVoicesList once its pattern picker
+   is on (lib/audio-mix.js's resolveMixerVoices appends it) — set apart from
+   the tune's own voices above it the same way the Voices group itself is set
+   apart from Auto-accompaniment above (.mixer-section + .mixer-section). */
+.mixer-strip--comping {
+  margin-top: 14px !important;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
 .mixer-fader-track {
   position: relative;
-  flex: 1 1 90px;
   height: 6px;
   border-radius: 3px;
   background: #2f2f2f;
@@ -1041,6 +1034,27 @@ video.video {
   border-radius: 3px;
   background: var(--rj-gold);
   pointer-events: none;
+}
+/* A muted channel/voice still remembers its level (the fader keeps its own
+   position/value), but shouldn't read as "live" the way an unmuted one does
+   — grey the fill and thumb out rather than leaving them full gold/lit while
+   nothing is actually sounding. songs/mixer.js's updateStripVisual/
+   updateVoiceRowVisual put .is-muted on the whole strip, not just the mute
+   button, specifically so this can key off it. */
+.mixer-strip.is-muted .mixer-fader-fill {
+  background: rgba(236,234,230,.25);
+}
+.mixer-strip.is-muted .mixer-fader-track input[type="range"]::-webkit-slider-thumb {
+  background: rgba(236,234,230,.4);
+}
+.mixer-strip.is-muted .mixer-fader-track input[type="range"]::-moz-range-thumb {
+  background: rgba(236,234,230,.4);
+}
+/* The readout keeps showing the fader's own percentage even muted (no
+   "Muted" text swap) — grey it out the same as the fill/thumb above so it
+   still reads as "not live" without changing what it says. */
+.mixer-strip.is-muted .mixer-readout {
+  color: rgba(236,234,230,.4);
 }
 .mixer-fader-track input[type="range"] {
   position: absolute;
@@ -1059,12 +1073,16 @@ video.video {
 .mixer-fader-track input[type="range"]::-moz-range-track {
   background: transparent;
 }
+/* The thumb is deliberately not gold like the fill — a distinct colour reads
+   as "the handle you drag" at a glance, separate from "the level you've set"
+   (the fill). --rj-body (the site's third accent, already used for the old
+   Chords swatch) rather than an ad-hoc colour outside the palette. */
 .mixer-fader-track input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: #ece6e6;
+  background: var(--rj-body);
   box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.5);
 }
 .mixer-fader-track input[type="range"]::-moz-range-thumb {
@@ -1072,21 +1090,18 @@ video.video {
   height: 15px;
   border: none;
   border-radius: 50%;
-  background: #ece6e6;
+  background: var(--rj-body);
 }
 .mixer-readout {
-  flex: none;
-  min-width: 38px;
   text-align: right;
-  font: 700 11px/1 "Montserrat", sans-serif;
+  font: 700 12px/1 "Montserrat", sans-serif;
   font-variant-numeric: tabular-nums;
-  color: rgba(236,234,230,.6);
+  color: #ece6e6;
 }
 .mixer-mute-btn {
-  flex: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
   background: #2f2f2f;
   border: 1px solid rgba(255,255,255,.11);
   color: rgba(236,234,230,.55);
@@ -1104,103 +1119,123 @@ video.video {
   color: #fff;
 }
 /* The per-channel GM-instrument picker (populated from lib/gm-voices.js by
-   songs/mixer.js's buildVoiceOptions) — its own row under the fader, indented
-   to align with the label above it. */
+   songs/mixer.js's buildVoiceOptions) — its own grid column, the same size
+   and shape as the Mute button beside it, rather than a second row under the
+   fader. */
 .mixer-voice-select {
-  flex: 0 0 100%;
-  margin-left: 54px;
-  max-width: calc(100% - 54px);
-  font: 600 9px/1.6 "Montserrat", sans-serif;
+  box-sizing: border-box;
+  height: 28px;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* line-height matches the content-box height (28px minus the 1px border on
+     each side) so a native <select>'s single line of text centres vertically
+     instead of riding at the top — border-box makes that content height
+     independent of the border width set below. */
+  font: 600 9px/26px "Montserrat", sans-serif;
   letter-spacing: .02em;
   text-transform: uppercase;
-  color: rgba(236,234,230,.7);
+  color: var(--rj-gold);
   background: #2f2f2f;
   border: 1px solid rgba(255,255,255,.18);
-  border-radius: 5px;
-  padding: 2px 6px;
+  border-radius: 6px;
+  padding: 0 6px;
   cursor: pointer;
+  color-scheme: dark;
 }
 .mixer-voice-select:hover,
 .mixer-voice-select:focus {
   border-color: var(--rj-gold);
-  color: #ece6e6;
+  color: var(--rj-gold);
 }
-/* #mixerVoicesSection wraps the tune's resolved voice strips (songs/
-   mixer.js's rebuildVoiceStrips) — a plain block, not a .mixer-strip itself,
-   so it needs its own top margin next to its neighbours (.mixer-strip +
-   .mixer-strip only fires between two direct .mixer-strip siblings, not
-   through this wrapper) and something to space its own first child from the
-   strip above it. */
-.mixer-strip + .mixer-voices-section,
-.mixer-voices-section + .mixer-strip {
-  margin-top: 10px;
+/* Pattern (songs/mixer.js's wirePattern, lib/audio-mix.js's GCHORD_PATTERNS)
+   is the one full-width, no-channel-of-its-own picker in Auto-accompaniment —
+   sized like the sheet's own Instrument/Comping dropdowns rather than the
+   compact per-row Voice pickers it otherwise shares option/checkmark/picker-
+   icon styling with (see the #instrument/#comping/.mixer-voice-select group
+   further down this file). */
+.mixer-strip--pattern {
+  grid-template-columns: 1fr;
+}
+.mixer-pattern-select {
+  height: 40px;
+  font-size: 11px;
+  line-height: 38px;
+  padding: 0 14px;
 }
 /* Bass/Chords need chord symbols to build an accompaniment from — a gated
-   channel with nothing to mix hides the whole strip (swatch, label, fader,
-   mute, Voice, readout) rather than leaving a dead control visible (see
-   songs/mixer.js's updateGate). */
+   channel with nothing to mix hides the whole strip (label, Mute, Voice,
+   fader, readout) rather than leaving a dead control visible (see songs/
+   mixer.js's updateGate). */
 .mixer-strip.is-inactive {
   display: none;
 }
+/* A chordless tune (songs/mixer.js's updateAccompanimentSectionGate) hides
+   the entire Auto-accompaniment section, title included — Bass/Chords/
+   Pattern already hide themselves individually above, but a tune with none
+   of the three live would otherwise leave the section title floating over
+   an empty group. */
+.mixer-section.is-inactive {
+  display: none;
+}
 /*
-  Metronome: not a channel like Bass/Chords above it — no volume fader, no
-  Voice picker, nothing to gate on the current tune (see songs/mixer.js's
-  CHANNELS / GATE_STATE_KEY, neither of which lists it) — just a toggle
-  button, real on/off, wired by songs/metronome.js.
+  Metronome and Quality (songs/metronome.js, songs/mixer.js's wireQuality) are
+  not channels — no fader, no Voice picker, nothing to gate on the current
+  tune — so they ride along on Swing's own row as two icon-only toggle
+  buttons rather than claiming a row of their own. Joined into one pill
+  (.mixer-toggle-group) rather than two separate boxes with a gap between —
+  the same divided-segment shell #sheetmenu's own Play/Stop/Mixer transport
+  and Print/Export/iRealPro actions use (.sheet-transport/.sheet-actions in
+  this file). .is-active is the on state, the same gold-fill cue the rest of
+  the panel and #sheetmenu both use for "this is engaged".
 */
-.mixer-swatch--metronome {
-  background: rgba(236,234,230,.5);
+.mixer-toggle-group {
+  display: flex;
+  align-items: stretch;
+  height: 28px;
+  background: #2f2f2f;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.mixer-toggle-group .mixer-mute-btn {
+  /* .mixer-toggle-group sits in the swing strip's 60px grid column and, as a
+     grid item, stretches to that full width — wider than the two buttons'
+     own 28px+28px content size. Without flex:1 they'd stay flex-start-
+     packed at their content width, leaving a few px of the group's own
+     background uncovered between the second button and the container's
+     right (rounded) edge — visible as the active button's gold fill
+     stopping short of the rounded corner instead of filling it. */
+  flex: 1;
+  height: 100%;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+.mixer-toggle-group > * + * {
+  border-left: 1px solid rgba(255,255,255,.1);
 }
 .mixer-metronome-toggle.is-active {
   background: var(--rj-gold);
-  border-color: var(--rj-gold);
   color: #222222;
 }
-/*
-  Quality: also not a channel (see the metronome comment above) — a toggle
-  between the default FatBoy soundfont and the richer, much larger MusyngKite
-  set (songs/audio-player.js's synthParams, songs/mixer.js's wireQuality).
-  Reuses .mixer-metronome-toggle's on/off look — same kind of control, just a
-  different setting.
-*/
-.mixer-swatch--quality {
-  background: #7fa6c9;
+/* The divider border above sits on top of an .is-active button's own gold
+   fill (border-box), leaving a grey sliver down its edge — drop the divider
+   on either side of the active button so its fill reads as solid. */
+.mixer-toggle-group > .mixer-metronome-toggle.is-active + *,
+.mixer-toggle-group > * + .mixer-metronome-toggle.is-active {
+  border-left: none;
 }
 /*
-  Metronome and Quality share one row (they're both a single toggle button
-  with no fader/Voice picker to wrap onto a second line) — two independent
-  swatch+label+toggle groups spread across the strip's width, rather than
-  the label-then-control layout every other strip uses.
+  Swing (songs/audio-player.js's synthParams, lib/audio-mix.js's
+  percentToAbcjsSwing) is the panel's bottom-most row: its own fader/readout
+  (no Mute, no Voice picker, no gate — it's always live) plus the Metronome/
+  Quality pill. label + fader + readout + the joined toggle pill, in place of
+  the shared template's Mute/Voice columns.
 */
-.mixer-strip--toggles {
-  justify-content: space-between;
-}
-.mixer-toggle-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-/*
-  Pattern: also not a channel (see the metronome comment above) — a single
-  <select> choosing the Bass/Chords auto-accompaniment's %%MIDI gchord rhythm
-  (songs/mixer.js, lib/audio-mix.js's GCHORD_PATTERNS). Reuses the Voice
-  pickers' .mixer-voice-select look (same indented full-width row under the
-  label) and the Bass/Chords gate's .is-inactive styling above, since it
-  needs chord symbols to do anything just like they do.
-*/
-.mixer-swatch--pattern {
-  background: var(--rj-gold);
-}
-/*
-  Swing: also not a channel (see the metronome comment above) — the panel's
-  bottom-most control, a tune-wide fader feeding ABCjs's own `swing` synth
-  init option (songs/audio-player.js's synthParams, lib/audio-mix.js's
-  percentToAbcjsSwing) rather than baked into the ABC text like the channel
-  faders above it. Reuses the plain .mixer-fader-track/.mixer-readout look
-  (no mute button, no Voice picker, no gate — it's always live).
-*/
-.mixer-swatch--swing {
-  background: #6fae8a;
+.mixer-strip--swing {
+  grid-template-columns: 58px 1fr 30px 60px;
 }
 .mixer-backdrop {
   position: fixed;

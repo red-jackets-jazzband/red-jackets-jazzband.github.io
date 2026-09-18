@@ -296,11 +296,6 @@ export function createMetronome(ctx) {
     const enabled = ctx.state.metronomeEnabled;
     btn.classList.toggle("is-active", enabled);
     btn.setAttribute("aria-pressed", enabled ? "true" : "false");
-    const icon = btn.querySelector(".fa-solid");
-    if (icon) {
-      icon.classList.toggle("fa-toggle-on", enabled);
-      icon.classList.toggle("fa-toggle-off", !enabled);
-    }
     const label = `${enabled ? "Disable" : "Enable"} metronome`;
     btn.title = label;
     btn.setAttribute("aria-label", label);

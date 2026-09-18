@@ -38,7 +38,7 @@ test("init renders the toggle off by default", () => {
     const btn = document.getElementById("mixerMetronomeToggleBtn");
     assert.equal(btn.classList.contains("is-active"), false);
     assert.equal(btn.getAttribute("aria-pressed"), "false");
-    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-toggle-off"), true);
+    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-drum"), true);
     assert.equal(btn.title, "Enable metronome");
   } finally {
     cleanup();
@@ -54,7 +54,7 @@ test("clicking the toggle flips ctx.state.metronomeEnabled, persists it, and upd
     assert.equal(window.localStorage.getItem("rj.metronomeEnabled"), "1");
     assert.equal(btn.classList.contains("is-active"), true);
     assert.equal(btn.getAttribute("aria-pressed"), "true");
-    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-toggle-on"), true);
+    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-drum"), true);
     assert.equal(btn.title, "Disable metronome");
 
     btn.click();
@@ -213,7 +213,7 @@ test("init reflects an already-enabled ctx.state.metronomeEnabled on the button 
     const btn = document.getElementById("mixerMetronomeToggleBtn");
     assert.equal(btn.classList.contains("is-active"), true);
     assert.equal(btn.getAttribute("aria-pressed"), "true");
-    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-toggle-on"), true);
+    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-drum"), true);
     assert.equal(btn.title, "Disable metronome");
   } finally {
     page.cleanup();

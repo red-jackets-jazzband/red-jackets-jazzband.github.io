@@ -9,6 +9,7 @@ import { GM_VOICES, guessGmProgram } from "../lib/gm-voices.js";
 import { GCHORD_PATTERNS, DEFAULT_PROGRAM } from "../lib/audio-mix.js";
 
 const ARIA_PRESSED = "aria-pressed";
+const IS_INACTIVE = "is-inactive";
 const TRUMPET_STRIP_ID = "mixerVoiceStrip-trumpet";
 const SOUSAPHONE_STRIP_ID = "mixerVoiceStrip-sousaphone";
 const VOICE_ROWS_SELECTOR = "#mixerVoicesList .mixer-strip--voice";
@@ -67,7 +68,7 @@ test("mixer.toggle() opens and closes the panel, updating the button and aria st
   }
 });
 
-test("Escape closes an open panel; the backdrop and close button do too", () => {
+test("Escape closes an open panel; the backdrop does too", () => {
   const { mixer, cleanup } = setup();
   try {
     mixer.toggle();
@@ -76,10 +77,6 @@ test("Escape closes an open panel; the backdrop and close button do too", () => 
 
     mixer.toggle();
     document.getElementById("mixerBackdrop").dispatchEvent(new window.Event("click"));
-    assert.equal(document.getElementById("mixerPanel").open, false);
-
-    mixer.toggle();
-    document.getElementById("mixerCloseBtn").dispatchEvent(new window.Event("click"));
     assert.equal(document.getElementById("mixerPanel").open, false);
   } finally {
     cleanup();
@@ -229,7 +226,8 @@ test("the Bass mute button flips state, updates the button (icon + label include
     assert.equal(icon.classList.contains("fa-volume-high"), false);
     assert.equal(btn.title, "Unmute bass");
     assert.equal(btn.getAttribute("aria-label"), "Unmute bass");
-    assert.equal(document.getElementById("mixerBassReadout").textContent, "Muted");
+    assert.equal(document.getElementById("mixerBassReadout").textContent, "100%");
+    assert.equal(document.getElementById("mixerStripBass").classList.contains("is-muted"), true);
     assert.equal(rerenders.length, 1);
     assert.equal(window.localStorage.getItem("rj.mixerBassMuted"), "1");
 
@@ -250,7 +248,7 @@ test("the Bass mute button flips state, updates the button (icon + label include
 
 function inactiveFlags() {
   return ["Bass", "Chords"].map(
-    (cap) => document.getElementById(`mixerStrip${cap}`).classList.contains("is-inactive"),
+    (cap) => document.getElementById(`mixerStrip${cap}`).classList.contains(IS_INACTIVE),
   );
 }
 
@@ -299,7 +297,8 @@ test("refresh() redraws each strip's fill/readout/mute button and the Quality to
     mixer.refresh();
     assert.equal(document.getElementById("mixerBassFill").style.width, "77%");
     assert.equal(document.getElementById("mixerBassReadout").textContent, "77%");
-    assert.equal(document.getElementById("mixerChordsReadout").textContent, "Muted");
+    assert.equal(document.getElementById("mixerChordsReadout").textContent, "100%");
+    assert.equal(document.getElementById("mixerStripChords").classList.contains("is-muted"), true);
     assert.equal(document.getElementById("mixerHighQualityToggleBtn").classList.contains("is-active"), true);
   } finally {
     cleanup();
@@ -506,13 +505,28 @@ test("refresh() gates the Pattern picker on hasChords, same as Bass/Chords", () 
   try {
     ctx.state.hasChords = false;
     mixer.refresh();
-    assert.equal(document.getElementById("mixerStripPattern").classList.contains("is-inactive"), true);
+    assert.equal(document.getElementById("mixerStripPattern").classList.contains(IS_INACTIVE), true);
     assert.equal(document.getElementById("mixerGchordPatternSelect").disabled, true);
 
     ctx.state.hasChords = true;
     mixer.refresh();
-    assert.equal(document.getElementById("mixerStripPattern").classList.contains("is-inactive"), false);
+    assert.equal(document.getElementById("mixerStripPattern").classList.contains(IS_INACTIVE), false);
     assert.equal(document.getElementById("mixerGchordPatternSelect").disabled, false);
+  } finally {
+    cleanup();
+  }
+});
+
+test("refresh() hides the whole Auto-accompaniment section (title included) on a chordless tune", () => {
+  const { ctx, mixer, cleanup } = setup();
+  try {
+    ctx.state.hasChords = false;
+    mixer.refresh();
+    assert.equal(document.getElementById("mixerSectionAccompaniment").classList.contains(IS_INACTIVE), true);
+
+    ctx.state.hasChords = true;
+    mixer.refresh();
+    assert.equal(document.getElementById("mixerSectionAccompaniment").classList.contains(IS_INACTIVE), false);
   } finally {
     cleanup();
   }
@@ -554,10 +568,10 @@ test("releasing the Swing fader (change) applies immediately without waiting for
   releaseFaderAppliesImmediately({ rangeId: "mixerSwingRange", storageKey: "rj.mixerSwing", value: 60 });
 });
 
-test("loadSwingState defaults to 0 (off), reads back a persisted, clamped value", () => {
+test("loadSwingState defaults to 40, reads back a persisted, clamped value", () => {
   const page = mountPage();
   try {
-    assert.equal(loadSwingState(), 0);
+    assert.equal(loadSwingState(), 40);
     window.localStorage.setItem("rj.mixerSwing", "150"); // clamped
     assert.equal(loadSwingState(), 100);
   } finally {
@@ -566,11 +580,11 @@ test("loadSwingState defaults to 0 (off), reads back a persisted, clamped value"
   }
 });
 
-test("loadSwingState falls back to off on a corrupted (non-numeric) stored value", () => {
+test("loadSwingState falls back to the default on a corrupted (non-numeric) stored value", () => {
   const page = mountPage();
   try {
     window.localStorage.setItem("rj.mixerSwing", "invalid");
-    assert.equal(loadSwingState(), 0);
+    assert.equal(loadSwingState(), 40);
   } finally {
     window.localStorage.clear();
     page.cleanup();
@@ -587,7 +601,7 @@ test("clicking the Quality toggle flips ctx.state.highQualityAudio, persists it,
     assert.equal(ctx.state.highQualityAudio, true);
     assert.equal(btn.classList.contains("is-active"), true);
     assert.equal(btn.getAttribute(ARIA_PRESSED), "true");
-    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-toggle-on"), true);
+    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-wave-square"), true);
     assert.equal(btn.title, "Disable high quality audio");
     assert.equal(rerenders.length, 1);
     assert.equal(window.localStorage.getItem("rj.highQualityAudio"), "1");
@@ -596,8 +610,7 @@ test("clicking the Quality toggle flips ctx.state.highQualityAudio, persists it,
     assert.equal(ctx.state.highQualityAudio, false);
     assert.equal(btn.classList.contains("is-active"), false);
     assert.equal(btn.getAttribute(ARIA_PRESSED), "false");
-    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-toggle-on"), false);
-    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-toggle-off"), true);
+    assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-wave-square"), true);
     assert.equal(btn.title, "Enable high quality audio");
     assert.equal(rerenders.length, 2);
     assert.equal(window.localStorage.getItem("rj.highQualityAudio"), "0");
@@ -772,7 +785,8 @@ test("a voice row's mute button toggles state, updates its own row (icon/label/r
     assert.equal(muteBtn.getAttribute(ARIA_PRESSED), "true");
     assert.equal(icon.classList.contains("fa-volume-xmark"), true);
     assert.equal(muteBtn.title, "Unmute Sousaphone");
-    assert.equal(document.querySelector(`#${SOUSAPHONE_STRIP_ID} .mixer-readout`).textContent, "Muted");
+    assert.equal(document.querySelector(`#${SOUSAPHONE_STRIP_ID} .mixer-readout`).textContent, "100%");
+    assert.equal(document.getElementById(SOUSAPHONE_STRIP_ID).classList.contains("is-muted"), true);
     assert.equal(window.localStorage.getItem("rj.mixerVoice.sousaphone.muted"), "1");
     assert.equal(rerenders.length, 1);
 
@@ -818,7 +832,7 @@ test("syncVoices seeds each voice's mute/program from its own persisted rj.mixer
     assert.equal(document.querySelector(`#${SOUSAPHONE_STRIP_ID} .mixer-voice-select`).value, "58");
     const muteBtn = document.querySelector(`#${SOUSAPHONE_STRIP_ID} .mixer-mute-btn`);
     assert.equal(muteBtn.classList.contains("is-muted"), true);
-    assert.equal(document.querySelector(`#${SOUSAPHONE_STRIP_ID} .mixer-readout`).textContent, "Muted");
+    assert.equal(document.querySelector(`#${SOUSAPHONE_STRIP_ID} .mixer-readout`).textContent, "100%");
     // The other voice, with no persisted prefs, keeps the plain defaults.
     assert.equal(ctx.state.mixerVoices[0].muted, false);
     assert.equal(ctx.state.mixerVoices[0].program, null);
@@ -966,7 +980,7 @@ test("refresh() also redraws voice rows from current state (not just Bass/Chords
     mixer.refresh();
     const muteBtn = document.querySelector(`#${SOUSAPHONE_STRIP_ID} .mixer-mute-btn`);
     assert.equal(muteBtn.classList.contains("is-muted"), true);
-    assert.equal(document.querySelector(`#${SOUSAPHONE_STRIP_ID} .mixer-readout`).textContent, "Muted");
+    assert.equal(document.querySelector(`#${SOUSAPHONE_STRIP_ID} .mixer-readout`).textContent, "100%");
   } finally {
     window.localStorage.clear();
     cleanup();

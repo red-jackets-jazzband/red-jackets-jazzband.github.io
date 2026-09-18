@@ -28,17 +28,9 @@ const GATE_STATE_KEY = { bass: "hasChords", chords: "hasChords" };
 // tune-wide fader next to Pattern, feeding ABCjs's own `swing` synth option
 // (see lib/audio-mix.js's percentToAbcjsSwing doc comment) rather than
 // anything baked into the ABC text. No gate: it's audible on any tune with
-// eighth notes, chords or not.
-const SWING_DEFAULT_PERCENT = 0;
-
-// Voice strips (see syncVoices) have no established colour coding the way
-// Bass/Chords do — this just cycles a handful of distinct swatch colours
-// (split.css) by list position so 2-4 voices on one tune (Trumpet +
-// Sousaphone, or an ordinary tune's Melody + Comping) are still visually
-// distinguishable at a glance.
-const VOICE_SWATCH_CLASSES = [
-  "mixer-swatch--voice-0", "mixer-swatch--voice-1", "mixer-swatch--voice-2", "mixer-swatch--voice-3",
-];
+// eighth notes, chords or not. Defaults on (a moderate 40%, not full) rather
+// than off, since most of this band's repertoire is swung, not straight.
+const SWING_DEFAULT_PERCENT = 40;
 
 function clampPercent(value) {
   const n = Number(value);
@@ -158,10 +150,6 @@ function buildGchordPatternOptions(select) {
   second line, so they sit side by side instead of stacking like every
   strip above them.
 */
-function readoutText(percent, muted) {
-  return muted ? "Muted" : `${percent}%`;
-}
-
 // A Voice picker's stored program is `null` until a listener explicitly
 // overrides it (see mixerProgram/voiceProgramMap in sheet.js, which resolve
 // that same null the same way at render time) — this is only about what the
@@ -218,13 +206,29 @@ function voiceListSignature(voices) {
   return voices.map((v) => `${v.id}|${v.label}`).join("|");
 }
 
+// Comping is always literally "Comping" (see resolveMixerVoices' own doc
+// comment — never folded into the Melody-numbering scheme), so a plain label
+// match is enough to give it its "fills" subtitle and the extra breathing
+// room that sets it apart from the tune's own voices above it (split.css's
+// .mixer-strip--comping).
+function buildVoiceLabel(voice) {
+  const nameSpan = el("span", { class: "mixer-strip-label", text: voice.label, attrs: { title: voice.label } });
+  if (voice.label !== "Comping") return nameSpan;
+  return el("div", { class: "mixer-strip-label-wrap" }, [
+    nameSpan,
+    el("span", { class: "mixer-strip-sublabel", text: "fills" }),
+  ]);
+}
+
 // One channel strip for one of the tune's resolved voices (lib/audio-mix.js's
 // resolveMixerVoices — an ordinary tune's Melody, a chart's own named staves,
 // or Comping), built with `el()` rather than static markup since the count
 // and labels vary per song. Returns the strip plus the sub-elements
-// rebuildVoiceStrips/updateVoiceRowVisual need.
+// rebuildVoiceStrips/updateVoiceRowVisual need. Element order (label, Voice,
+// fader, readout, mute) matches the Bass/Chords/Swing strips in
+// content/songs.md so the shared .mixer-strip grid (split.css) lines every
+// row's columns up regardless of whether it's static markup or built here.
 function buildVoiceStrip(voice) {
-  const swatchClass = VOICE_SWATCH_CLASSES[voice.index % VOICE_SWATCH_CLASSES.length];
   const fill = el("div", { class: "mixer-fader-fill", style: { width: `${voice.volume}%` } });
   const range = el("input", {
     type: "range",
@@ -233,7 +237,7 @@ function buildVoiceStrip(voice) {
     value: String(voice.volume),
     attrs: { "aria-label": `${voice.label} volume` },
   });
-  const readout = el("span", { class: "mixer-readout", text: readoutText(voice.volume, voice.muted) });
+  const readout = el("span", { class: "mixer-readout", text: `${voice.volume}%` });
   const muteIcon = el("span", { class: "fa-solid fa-volume-high", attrs: { "aria-hidden": "true" } });
   const muteBtn = el("button", {
     type: "button",
@@ -248,16 +252,16 @@ function buildVoiceStrip(voice) {
   });
   buildVoiceOptions(select);
 
+  const stripClass = voice.label === "Comping" ? "mixer-strip mixer-strip--voice mixer-strip--comping" : "mixer-strip mixer-strip--voice";
   const strip = el("div", {
     id: `mixerVoiceStrip-${voice.slug}`,
-    class: "mixer-strip mixer-strip--voice",
+    class: stripClass,
   }, [
-    el("span", { class: `mixer-swatch ${swatchClass}`, attrs: { "aria-hidden": "true" } }),
-    el("span", { class: "mixer-strip-label", text: voice.label, attrs: { title: voice.label } }),
+    buildVoiceLabel(voice),
+    select,
     el("div", { class: "mixer-fader-track" }, [fill, range]),
     readout,
     muteBtn,
-    select,
   ]);
 
   return {
@@ -277,10 +281,14 @@ function persistVoiceState(v) {
 // Same reasoning as persistVoiceState above: only reads its own destructured
 // argument, no ctx or other createMixer-local state.
 function updateVoiceRowVisual({
-  v, fill, readout, muteBtn, muteIcon,
+  v, strip, fill, readout, muteBtn, muteIcon,
 }) {
+  // .is-muted on the whole strip, not just the mute button — see
+  // updateStripVisual's own comment (same reasoning, split.css greys the
+  // fader for either kind of row the same way).
+  strip.classList.toggle("is-muted", v.muted);
   fill.style.width = `${v.volume}%`;
-  readout.textContent = readoutText(v.volume, v.muted);
+  readout.textContent = `${v.volume}%`;
   muteBtn.classList.toggle("is-muted", v.muted);
   muteBtn.setAttribute("aria-pressed", v.muted ? "true" : "false");
   muteIcon.classList.toggle("fa-volume-xmark", v.muted);
@@ -440,11 +448,17 @@ export function createMixer(ctx) {
     const muted = m[`${channel}Muted`];
     const ids = elementIds(channel);
 
+    // .is-muted on the whole strip (not just the mute button) so the fader
+    // itself can grey out too (split.css) — a muted fader still shows its
+    // last level, but shouldn't read as "live" the way an unmuted one does.
+    const strip = byId(ids.strip);
+    if (strip) strip.classList.toggle("is-muted", muted);
+
     const fill = byId(ids.fill);
     if (fill) fill.style.width = `${percent}%`;
 
     const readout = byId(ids.readout);
-    if (readout) readout.textContent = readoutText(percent, muted);
+    if (readout) readout.textContent = `${percent}%`;
 
     const muteBtn = byId(ids.muteBtn);
     if (muteBtn) {
@@ -490,6 +504,16 @@ export function createMixer(ctx) {
     if (select) select.disabled = inactive;
   }
 
+  // updateGate/updatePatternGate above already hide Bass/Chords/Pattern
+  // individually, but a chordless tune (e.g. a funk groove with no chord
+  // symbols at all) would otherwise leave the "Auto-accompaniment" section
+  // title sitting over an empty group with nothing under it — hide the whole
+  // section, title included, the same way.
+  function updateAccompanimentSectionGate() {
+    const section = byId("mixerSectionAccompaniment");
+    if (section) section.classList.toggle("is-inactive", !ctx.state.hasChords);
+  }
+
   // Quality is a third non-channel control, next to Metronome: a real toggle
   // (songs/audio-player.js's synthParams reads ctx.state.highQualityAudio to
   // pick FatBoy vs the much richer/heavier MusyngKite soundfont) rather than
@@ -501,11 +525,6 @@ export function createMixer(ctx) {
     const enabled = ctx.state.highQualityAudio;
     btn.classList.toggle("is-active", enabled);
     btn.setAttribute("aria-pressed", enabled ? "true" : "false");
-    const icon = btn.querySelector(".fa-solid");
-    if (icon) {
-      icon.classList.toggle("fa-toggle-on", enabled);
-      icon.classList.toggle("fa-toggle-off", !enabled);
-    }
     const label = `${enabled ? "Disable" : "Enable"} high quality audio`;
     btn.title = label;
     btn.setAttribute("aria-label", label);
@@ -527,6 +546,7 @@ export function createMixer(ctx) {
       updateGate(channel);
     });
     updatePatternGate();
+    updateAccompanimentSectionGate();
     updateQualityToggleVisual();
     updateSwingVisual();
     voiceRows.forEach(updateVoiceRowVisual);
@@ -641,7 +661,6 @@ export function createMixer(ctx) {
     wireQuality();
     wireSwing();
 
-    on("mixerCloseBtn", "click", () => setOpen(false));
     on("mixerBackdrop", "click", () => setOpen(false));
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && open) setOpen(false);
@@ -705,14 +724,14 @@ export function loadHighQualityAudioState() {
   return readPref(PREF_KEYS.highQualityAudio) === "1";
 }
 
-// ctx.state.swing's initial value, seeded from the persisted pref — off
-// (straight eighths) by default, same reasoning as every other new control
-// here: nothing should suddenly sound different the first time this ships.
+// ctx.state.swing's initial value, seeded from the persisted pref — defaults
+// to SWING_DEFAULT_PERCENT (see its own doc comment) rather than 0, since a
+// first-time listener should hear this band's own feel, not straight eighths.
 export function loadSwingState() {
   const stored = readPref(PREF_KEYS.mixerSwing);
   const n = Number(stored);
   // clampPercent's own not-a-number fallback is 100 — right for a volume
   // fader's "missing means full volume" default, wrong here: a corrupted
-  // rj.mixerSwing value should fall back to off, not maximum swing.
+  // rj.mixerSwing value should fall back to the default swing, not maximum.
   return stored === null || !Number.isFinite(n) ? SWING_DEFAULT_PERCENT : clampPercent(n);
 }
