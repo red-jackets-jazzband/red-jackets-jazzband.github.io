@@ -1,5 +1,6 @@
 import { byId, el, clear } from "../lib/dom.js";
 import { walkSetlist } from "../lib/setlist-walk.js";
+import { splitIndexIntoColumns } from "../lib/setlist-index-columns.js";
 import { extractKeyFromAbc, setlistTransposeSteps, formatSetlistKeyLabel } from "../lib/music-theory.js";
 import {
   instrumentTransposes, instrumentLabel, exportInstrumentLine, resolvedExportSongMeta,
@@ -24,13 +25,19 @@ function setTextContent(id, value) {
   if (node) node.textContent = value || "";
 }
 
+// Same as setTextContent, but for the index's key spans, which exist twice
+// over (once per INDEX_LAYOUTS entry below) and so can't carry a unique id.
+function setTextContentAll(selector, value) {
+  document.querySelectorAll(selector).forEach((node) => { node.textContent = value || ""; });
+}
+
 // ---- per-song meta, filled once each .abc has loaded --------------
 
 function fillSongMeta(n, meta) {
   setTextContent(`setlistStageConcert-${n}`, meta.concert);
   setTextContent(`setlistStageInstr-${n}`, meta.instrument);
   setTextContent(`setlistStageTempo-${n}`, meta.bpm ? String(meta.bpm) : "");
-  setTextContent(`setlistIndexKey-${n}`, meta.instrument);
+  setTextContentAll(`[data-index-key="${n}"]`, meta.instrument);
 }
 
 // ---- the cover page (personal setlist `desc`) --------------------
@@ -169,30 +176,48 @@ export function createSetlistPrint(ctx) {
 
   // ---- front matter for the chordbook / songbook forms ---------------
 
+  function indexRow(entry) {
+    return el("li", { value: entry.displayNumber }, el("span", { class: "setlist-booklet-index-row" }, [
+      el("span", { class: "setlist-booklet-index-name", text: ctx.songName(entry.item.file) }),
+      el("span", { class: "setlist-booklet-index-leader" }),
+      el("span", { class: "setlist-booklet-index-key", dataset: { indexKey: entry.songCount } }),
+    ]));
+  }
+
+  // "Print songbook" wants a 2-column index, "Print chordbook" a 3-column
+  // one (it's a wider landscape sheet) — and both forms share this one
+  // front-matter DOM, built once up front rather than per print(). So each
+  // layout gets its own column div, shown/hidden by the export-mode-* body
+  // class in split.css, rather than trying to reflow one shared index.
+  //
+  // The column split itself is done in JS (splitIndexIntoColumns), not via a
+  // CSS `columns` layout — see that module's doc comment for why: Chromium's
+  // own multi-column balancing can misalign the columns' top edges when the
+  // content has break-inside:avoid groups in it, which a whole "Set N" list
+  // needs to stay unsplit. Hand-rolling the split trades a little of the
+  // browser's height-balancing finesse for a layout that simply can't do
+  // that, since each column is just an ordinary stack of blocks.
+  const INDEX_LAYOUTS = [
+    { columns: 2, class: "setlist-booklet-index--wide" },
+    { columns: 3, class: "setlist-booklet-index--chordbook" },
+  ];
+
+  function indexGroupEls(group) {
+    const ol = el("ol", {}, group.entries.map((entry) => indexRow(entry)));
+    return group.heading ? [el("div", { class: "setlist-booklet-index-heading", text: group.heading }), ol] : [ol];
+  }
+
+  function indexColumnEl(groups) {
+    return el("div", { class: "setlist-booklet-index-col" }, groups.flatMap((group) => indexGroupEls(group)));
+  }
+
+  function indexColumnsEl(entries, hasDividers, columnCount, modifierClass) {
+    const columns = splitIndexIntoColumns(entries, hasDividers, columnCount);
+    return el("div", { class: `setlist-booklet-index ${modifierClass}` }, columns.map((groups) => indexColumnEl(groups)));
+  }
+
   function frontMatter(name, songs) {
-    const index = el("div", { class: "setlist-booklet-index" });
-    let ol = el("ol");
-
-    const { entries } = walkSetlist(songs);
-    if (entries[0] && entries[0].kind === "set-heading" && entries[0].index === undefined) {
-      index.append(el("div", { class: "setlist-booklet-index-heading", text: "Set 1" }));
-    }
-    index.append(ol);
-
-    entries.forEach((entry) => {
-      if (entry.kind === "set-heading" && entry.index !== undefined) {
-        index.append(el("div", { class: "setlist-booklet-index-heading", text: entry.label }));
-        ol = el("ol");
-        index.append(ol);
-        return;
-      }
-      if (entry.kind !== "song") return;
-      ol.append(el("li", { value: entry.displayNumber }, [
-        el("span", { class: "setlist-booklet-index-name", text: ctx.songName(entry.item.file) }),
-        el("span", { class: "setlist-booklet-index-key", id: `setlistIndexKey-${entry.songCount}` }),
-      ]));
-    });
-
+    const { entries, hasDividers } = walkSetlist(songs);
     const when = new Date().toLocaleDateString(undefined, {
       year: "numeric", month: "long", day: "numeric",
     });
@@ -204,7 +229,7 @@ export function createSetlistPrint(ctx) {
         el("div", { text: exportInstrumentLine(instrument()) }),
         el("div", { text: when }),
       ]),
-      index,
+      ...INDEX_LAYOUTS.map((layout) => indexColumnsEl(entries, hasDividers, layout.columns, layout.class)),
     ]);
   }
 

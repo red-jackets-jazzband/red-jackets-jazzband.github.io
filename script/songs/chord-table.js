@@ -43,6 +43,19 @@ function partBadgeText(title) {
   "verse"/"F") once actually rendered — confirmed by rendering several real
   songs' own ABC files, not just guessed. A short code ("A", "B2", ...) is
   already small enough and is kept as-is.
+
+  A marker whose measure falls in the grid's leftmost column sits right on
+  the table's own outer edge if inset the normal way, so it gets
+  `chordPartMarker--outsideLeft` instead, which split.css hangs outside the
+  cell to its left rather than inset inside it.
+
+  A part marker exists to distinguish one section of the table from
+  another, so it's suppressed when the table only ever has one (e.g. Bill
+  Bailey's chordless "intro" never reaches this array at all — parseChordScheme
+  only tags/keeps a measure once a chord shows up — leaving "verse" as the
+  only section on the whole table): a lone marker doesn't label anything a
+  reader couldn't already tell from there being nothing else. Same reasoning
+  simplifySong already applies to a marker that survives a repeat collapse.
 */
 export function renderChordTable(chords, container) {
   if (!container) return;
@@ -52,15 +65,25 @@ export function renderChordTable(chords, container) {
   // 16-bar check to match against).
   const measures = simplifySong(simplifySong(simplifyBlues(chords), 8), 16);
   const cols = measures.length >= LONG_SCHEME_BAR_THRESHOLD ? 8 : 4;
+  const hasMultipleParts = measures.filter((measure) => measure.part !== undefined).length > 1;
 
   const grid = el("div", { class: "chordGrid", style: { "--chord-cols": String(cols) } });
 
-  for (const measure of measures) {
+  measures.forEach((measure, index) => {
     const chordDiv = el("div", { class: "chordDiv", html: String(measure.text) });
     const cell = el("div", { class: "chordCell" }, chordDiv);
 
-    if (measure.part !== undefined) {
-      cell.append(el("span", { class: "chordPartMarker", text: partBadgeText(measure.part) }));
+    if (hasMultipleParts && measure.part !== undefined) {
+      // A marker in the grid's leftmost column has no cell to its own left to
+      // overlap, so it hangs outside the table instead of inset over the
+      // chord text — chordPartMarker--outsideLeft, styled in split.css.
+      const outsideLeft = index % cols === 0;
+      cell.append(
+        el("span", {
+          class: outsideLeft ? "chordPartMarker chordPartMarker--outsideLeft" : "chordPartMarker",
+          text: partBadgeText(measure.part),
+        }),
+      );
     }
     if (measure.doubeThinBarLeft !== undefined) cell.classList.add("chordCellDoubleThinBarLeft");
     if (measure.doubeThinBarRight !== undefined) cell.classList.add("chordCellDoubleThinBarRight");
@@ -78,7 +101,7 @@ export function renderChordTable(chords, container) {
     }
 
     grid.append(cell);
-  }
+  });
 
   clear(container).append(grid);
 }

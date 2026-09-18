@@ -15,6 +15,7 @@ function inDom(fn) {
 const bar = (text, extra = {}) => ({ text, ...extra });
 
 const CHORD_GRID_SELECTOR = ".chordGrid";
+const PART_MARKER_SELECTOR = ".chordPartMarker";
 
 test("renderChordTable lays cells out in reading order with 4 columns", () => {
   inDom((container) => {
@@ -43,8 +44,28 @@ test("renderChordTable boxes a part's first chord with its letter, top-left corn
     renderChordTable([bar(["C"], { part: "A" }), bar(["F"]), bar(["G"], { part: "B" })], container);
     const cells = [...container.querySelectorAll(".chordCell")];
     assert.deepEqual(
-      cells.map((cell) => cell.querySelector(".chordPartMarker")?.textContent),
+      cells.map((cell) => cell.querySelector(PART_MARKER_SELECTOR)?.textContent),
       ["A", undefined, "B"],
+    );
+  });
+});
+
+test("renderChordTable hangs a leftmost-column part marker outside the cell instead of inset", () => {
+  inDom((container) => {
+    renderChordTable(
+      [
+        bar(["C"], { part: "A" }), // column 1, row 1: outside-left
+        bar(["F"]),
+        bar(["G"]),
+        bar(["C"], { part: "B" }), // column 4, row 1: inset as normal
+        bar(["D"], { part: "C" }), // column 1, row 2: outside-left again
+      ],
+      container,
+    );
+    const markers = [...container.querySelectorAll(PART_MARKER_SELECTOR)];
+    assert.deepEqual(
+      markers.map((m) => m.classList.contains("chordPartMarker--outsideLeft")),
+      [true, false, true],
     );
   });
 });
@@ -57,7 +78,7 @@ test("renderChordTable shrinks a word-length part title to its first letter, but
       bar(["C7"], { part: "B" }),
     ], container);
     assert.deepEqual(
-      [...container.querySelectorAll(".chordPartMarker")].map((m) => m.textContent),
+      [...container.querySelectorAll(PART_MARKER_SELECTOR)].map((m) => m.textContent),
       ["C", "A2", "B"],
     );
   });
@@ -127,6 +148,40 @@ test("renderChordTable collapses an exactly-repeating 16-bar scheme", () => {
     );
     renderChordTable(song, container);
     assert.equal(container.querySelectorAll(".chordCell").length, 16);
+  });
+});
+
+test("renderChordTable drops the part marker when a fold collapses different-named parts together", () => {
+  inDom((container) => {
+    // Just a Closer Walk With Thee: Verse and Chorus have identical chords,
+    // so the 16-bar scheme collapses to 8 — but the surviving "Verse"
+    // marker shouldn't be shown, since it no longer just labels the Verse.
+    const verse = Array.from({ length: 8 }, (_, i) => bar([`C${i}`]));
+    verse[0] = bar(verse[0].text, { part: "Verse" });
+    const chorus = verse.map((m) => bar(m.text.slice(), m.part ? { part: "Chorus" } : {}));
+    renderChordTable(verse.concat(chorus), container);
+    assert.deepEqual(
+      [...container.querySelectorAll(".chordDiv")].map((d) => d.textContent),
+      verse.map((m) => String(m.text)),
+    );
+    assert.deepEqual(
+      [...container.querySelectorAll(PART_MARKER_SELECTOR)].map((m) => m.textContent),
+      [],
+    );
+  });
+});
+
+test("renderChordTable suppresses a part marker when it's the only part in the table (e.g. Bill Bailey)", () => {
+  inDom((container) => {
+    // Bill Bailey's chordless intro never makes it into the chords array
+    // (parseChordScheme only starts keeping measures once a chord shows up),
+    // so "verse" ends up as the only part on the whole table — nothing left
+    // for it to distinguish itself from.
+    renderChordTable([bar(["C"], { part: "verse" }), bar(["F"]), bar(["G"])], container);
+    assert.deepEqual(
+      [...container.querySelectorAll(PART_MARKER_SELECTOR)].map((m) => m.textContent),
+      [],
+    );
   });
 });
 

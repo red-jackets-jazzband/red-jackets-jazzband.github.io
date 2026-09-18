@@ -4,6 +4,7 @@ import { mountPage } from "../../../tests/helpers/dom.js";
 import { createInspiration } from "./inspiration.js";
 
 const SAMPLE_URL = "https://youtu.be/abcdefghijk";
+const SPOTIFY_URL = "https://open.spotify.com/track/2EYjaK8Koe0q7PcK1MlB4S";
 const ARIA_PRESSED = "aria-pressed";
 
 function inDom(fn) {
@@ -55,7 +56,7 @@ async function openLoopPanel(window, overrides = {}) {
   const events = mockYouTubePlayer(window, overrides);
   const insp = createInspiration();
   insp.init();
-  insp.updateLink(SAMPLE_URL, "X");
+  insp.updateLink({ youtube: SAMPLE_URL }, "X");
   document.getElementById("inspirationLink").dispatchEvent(new window.Event("click"));
   await new Promise((resolve) => { setTimeout(resolve, 0); });
   events.ready();
@@ -109,7 +110,7 @@ function startResizeDrag(window) {
 test("updateLink creates the Inspiration button for a tune with a reference", () => {
   inDom(() => {
     const insp = createInspiration();
-    insp.updateLink(SAMPLE_URL, "Louis Armstrong");
+    insp.updateLink({ youtube: SAMPLE_URL }, "Louis Armstrong");
     const btn = document.getElementById("inspirationLink");
     assert.ok(btn);
     assert.equal(btn.textContent, "Inspiration");
@@ -122,8 +123,8 @@ test("updateLink creates the Inspiration button for a tune with a reference", ()
 test("updateLink updates the existing button in place, without duplicating it", () => {
   inDom(() => {
     const insp = createInspiration();
-    insp.updateLink("https://youtu.be/one11111111", "One");
-    insp.updateLink("https://youtu.be/two22222222", "Two");
+    insp.updateLink({ youtube: "https://youtu.be/one11111111" }, "One");
+    insp.updateLink({ youtube: "https://youtu.be/two22222222" }, "Two");
     assert.equal(document.querySelectorAll("#inspirationLink").length, 1);
     assert.equal(document.getElementById("inspirationLink").dataset.url, "https://youtu.be/two22222222");
   });
@@ -132,17 +133,171 @@ test("updateLink updates the existing button in place, without duplicating it", 
 test("updateLink(undefined) removes the button for a tune without a reference", () => {
   inDom(() => {
     const insp = createInspiration();
-    insp.updateLink(SAMPLE_URL, "X");
+    insp.updateLink({ youtube: SAMPLE_URL }, "X");
     insp.updateLink(undefined);
     assert.equal(document.getElementById("inspirationLink"), null);
   });
+});
+
+test("updateLink with only a Spotify source creates the button and opens straight to the Spotify tab, switcher hidden", () => {
+  inDom(() => {
+    const insp = createInspiration();
+    insp.init();
+    insp.updateLink({ spotify: SPOTIFY_URL }, "X");
+    const btn = document.getElementById("inspirationLink");
+    assert.ok(btn);
+    assert.equal(btn.dataset.spotifyUrl, SPOTIFY_URL);
+    assert.equal(btn.dataset.url, "");
+
+    btn.dispatchEvent(new window.Event("click"));
+    assert.equal(document.getElementById("inspirationPanel").hidden, false);
+    // A single-source tune has nothing to switch between.
+    assert.equal(document.getElementById("inspirationTabs").hidden, true);
+    assert.equal(document.getElementById("inspirationSpotifyBox").hidden, false);
+    assert.equal(document.getElementById("inspirationVideoBox").hidden, true);
+    assert.equal(
+      document.getElementById("inspirationSpotifyFrame").getAttribute("src"),
+      "https://open.spotify.com/embed/track/2EYjaK8Koe0q7PcK1MlB4S?utm_source=generator&theme=0",
+    );
+    assert.equal(document.getElementById("inspirationExpandBtn").getAttribute("href"), SPOTIFY_URL);
+  });
+});
+
+test("updateLink(undefined) removes the button even for a Spotify-only tune", () => {
+  inDom(() => {
+    const insp = createInspiration();
+    insp.updateLink({ spotify: SPOTIFY_URL }, "X");
+    insp.updateLink(undefined);
+    assert.equal(document.getElementById("inspirationLink"), null);
+  });
+});
+
+test("a tune with both YouTube and Spotify shows the tab switcher, defaulting to the YouTube tab", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    const events = mockYouTubePlayer(window);
+    const insp = createInspiration();
+    insp.init();
+    insp.updateLink({ youtube: SAMPLE_URL, spotify: SPOTIFY_URL }, "X");
+    document.getElementById("inspirationLink").dispatchEvent(new window.Event("click"));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    events.ready();
+
+    assert.equal(document.getElementById("inspirationTabs").hidden, false);
+    assert.equal(document.getElementById("inspirationTabYoutube").getAttribute(ARIA_PRESSED), "true");
+    assert.equal(document.getElementById("inspirationTabSpotify").getAttribute(ARIA_PRESSED), "false");
+    assert.equal(document.getElementById("inspirationVideoBox").hidden, false);
+    assert.equal(document.getElementById("inspirationSpotifyBox").hidden, true);
+    assert.equal(document.getElementById("inspirationLoopBar").hidden, false);
+  } finally {
+    delete window.YT;
+    page.cleanup();
+  }
+});
+
+// Regression test: the header's own pointerdown handler (initDrag) starts
+// dragging the whole panel unless the pointer landed on one of its icon
+// buttons — the tab buttons live in that same header and were initially
+// missed by that guard, so a pointerdown on one silently started a drag
+// instead of ever reaching its click handler (confirmed manually in a real
+// browser: clicking the Spotify tab did nothing until this was fixed).
+test("a pointerdown on a tab button doesn't start dragging the panel header", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    const events = mockYouTubePlayer(window);
+    const insp = createInspiration();
+    insp.init();
+    insp.updateLink({ youtube: SAMPLE_URL, spotify: SPOTIFY_URL }, "X");
+    document.getElementById("inspirationLink").dispatchEvent(new window.Event("click"));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    events.ready();
+
+    const panel = document.getElementById("inspirationPanel");
+    document.getElementById("inspirationTabSpotify").dispatchEvent(
+      new window.PointerEvent("pointerdown", { pointerId: 1, clientX: 0, bubbles: true }),
+    );
+    assert.equal(panel.classList.contains("dragging"), false);
+    assert.equal(panel.style.left, "");
+  } finally {
+    delete window.YT;
+    page.cleanup();
+  }
+});
+
+test("switching to the Spotify tab pauses YouTube and hides the LoopTube toolbar; switching back resumes without reloading", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    const loaded = [];
+    const paused = [];
+    const events = mockYouTubePlayer(window, {
+      loadVideoById: (id) => loaded.push(id),
+      pauseVideo: () => paused.push(true),
+    });
+    const insp = createInspiration();
+    insp.init();
+    insp.updateLink({ youtube: SAMPLE_URL, spotify: SPOTIFY_URL }, "X");
+    document.getElementById("inspirationLink").dispatchEvent(new window.Event("click"));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    events.ready();
+    events.state({ data: 1 }); // PLAYING
+
+    document.getElementById("inspirationTabSpotify").dispatchEvent(new window.Event("click"));
+
+    assert.deepEqual(paused, [true]);
+    assert.equal(document.getElementById("inspirationVideoBox").hidden, true);
+    assert.equal(document.getElementById("inspirationSpotifyBox").hidden, false);
+    assert.equal(document.getElementById("inspirationLoopBar").hidden, true);
+    assert.equal(document.getElementById("inspirationTabSpotify").getAttribute(ARIA_PRESSED), "true");
+    assert.equal(
+      document.getElementById("inspirationSpotifyFrame").getAttribute("src"),
+      "https://open.spotify.com/embed/track/2EYjaK8Koe0q7PcK1MlB4S?utm_source=generator&theme=0",
+    );
+
+    document.getElementById("inspirationTabYoutube").dispatchEvent(new window.Event("click"));
+
+    assert.equal(document.getElementById("inspirationVideoBox").hidden, false);
+    assert.equal(document.getElementById("inspirationSpotifyBox").hidden, true);
+    assert.equal(document.getElementById("inspirationLoopBar").hidden, false);
+    assert.deepEqual(loaded, []); // never reloaded — same video, just re-shown
+    assert.equal(document.getElementById("inspirationSpotifyFrame").dataset.loadedUrl, undefined);
+  } finally {
+    delete window.YT;
+    page.cleanup();
+  }
+});
+
+test("closing the panel stops both a playing YouTube video and a loaded Spotify embed", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    const stopped = [];
+    const events = mockYouTubePlayer(window, { stopVideo: () => stopped.push(true) });
+    const insp = createInspiration();
+    insp.init();
+    insp.updateLink({ youtube: SAMPLE_URL, spotify: SPOTIFY_URL }, "X");
+    document.getElementById("inspirationLink").dispatchEvent(new window.Event("click"));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    events.ready();
+    document.getElementById("inspirationTabSpotify").dispatchEvent(new window.Event("click"));
+
+    document.getElementById("inspirationCloseBtn").dispatchEvent(new window.Event("click"));
+
+    assert.deepEqual(stopped, [true]);
+    assert.equal(document.getElementById("inspirationSpotifyFrame").dataset.loadedUrl, undefined);
+  } finally {
+    delete window.YT;
+    page.cleanup();
+  }
 });
 
 test("opening the panel marks the Inspiration button active, closing it clears that", () => {
   inDom(() => {
     const insp = createInspiration();
     insp.init();
-    insp.updateLink(SAMPLE_URL, "X");
+    insp.updateLink({ youtube: SAMPLE_URL }, "X");
     const btn = document.getElementById("inspirationLink");
 
     btn.dispatchEvent(new window.Event("click"));
@@ -159,13 +314,13 @@ test("updateLink recreating the button while the panel is already open marks it 
   inDom(() => {
     const insp = createInspiration();
     insp.init();
-    insp.updateLink(SAMPLE_URL, "X");
+    insp.updateLink({ youtube: SAMPLE_URL }, "X");
     document.getElementById("inspirationLink").dispatchEvent(new window.Event("click"));
 
     // Simulate navigating to a song without a reference (button removed)
     // while the panel keeps playing, then back to one that has one.
     insp.updateLink(undefined);
-    insp.updateLink("https://youtu.be/zyxwvutsrqp", "Y");
+    insp.updateLink({ youtube: "https://youtu.be/zyxwvutsrqp" }, "Y");
 
     const btn = document.getElementById("inspirationLink");
     assert.equal(btn.classList.contains("active"), true);
@@ -201,7 +356,7 @@ test("closePanel drops a pending video id so a late onReady can't play into a hi
     };
     const insp = createInspiration();
     insp.init();
-    insp.updateLink("https://youtu.be/aaaaaaaaaaa", "A");
+    insp.updateLink({ youtube: "https://youtu.be/aaaaaaaaaaa" }, "A");
     const btn = document.getElementById("inspirationLink");
 
     // Open once: no player yet, so the frame src is set and the player is
@@ -275,7 +430,7 @@ test("a shared A/B link opens the video with the loop already set", async () => 
     const insp = createInspiration();
     insp.init();
     insp.applyShareState({ a: 12, b: 30 });
-    insp.updateLink(SAMPLE_URL, "X");
+    insp.updateLink({ youtube: SAMPLE_URL }, "X");
 
     assert.equal(document.getElementById("inspirationPanel").hidden, false);
     assert.equal(

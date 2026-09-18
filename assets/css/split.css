@@ -1435,6 +1435,37 @@ video.video {
   background: var(--rj-gold);
   color: #222222 !important;
 }
+/* Source switcher (YouTube/Spotify), only shown when a tune has both — see
+   songs/inspiration.js's updateTabsUI. Same icon-button footprint as the
+   header's other icon buttons, but the "active" one (whichever tab is
+   currently showing) stays gold at rest rather than just on hover. */
+.inspiration-panel-tabs {
+  flex: none;
+  display: flex;
+  gap: 4px;
+}
+.inspiration-panel-tab {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: #262626;
+  color: rgba(236,234,230,.5);
+  font-size: 12px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.inspiration-panel-tab.active {
+  background: var(--rj-gold);
+  color: #222222;
+}
+@media (hover: hover) {
+  .inspiration-panel-tab:not(.active):hover {
+    color: rgba(236,234,230,.85);
+  }
+}
 .inspiration-panel-video {
   position: relative;
   width: 100%;
@@ -1448,6 +1479,19 @@ video.video {
   height: 100%;
   border: 0;
   display: block;
+}
+/* Spotify's own embed widget draws its own play/pause/seek bar at a fixed
+   height (see lib/spotify.js's spotifyEmbedHeight) rather than a 16:9 video
+   frame, so this sits beside .inspiration-panel-video as a plain,
+   width-driven box instead of sharing its aspect-ratio layout. */
+.inspiration-panel-spotify {
+  width: 100%;
+  background: #000000;
+}
+.inspiration-panel-spotify iframe {
+  display: block;
+  width: 100%;
+  border: 0;
 }
 
 /* LoopTube toolbar (A/B loop + slowdown), docked under the video */
@@ -1982,37 +2026,75 @@ video.video {
     font: 400 15px/1.45 "MuseJazzText", "Georgia", serif;
     color: #444;
   }
+  /* Two layouts share this DOM — "wide" (2 columns, for the songbook/setlist
+     forms) and "chordbook" (3, for the wider landscape sheet) — each column
+     split already decided in JS (setlist-print.js's indexColumnsEl, backed
+     by lib/setlist-index-columns.js) rather than via a CSS `columns` layout:
+     a flex row of plain block columns can't misalign its columns' top edges
+     the way Chromium's own column-balancing was found to (see that module's
+     doc comment). Only the active layout for the current export mode is
+     shown; the other stays in the DOM but display:none. */
   .setlist-booklet-index {
+    display: flex;
     max-width: 640px;
     margin: 0 auto;
-    columns: 2;
-    column-gap: 44px;
+    gap: 44px;
     font-family: "MuseJazzText", "Georgia", serif;
+  }
+  .setlist-booklet-index-col {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .setlist-booklet-index--chordbook {
+    display: none;
   }
   .setlist-booklet-index-heading {
     font: 400 15px "MuseJazzText", "Georgia", serif;
     letter-spacing: .08em;
     margin: 0 0 4px;
-    break-after: avoid;
+    padding-bottom: 2px;
+    border-bottom: 1px solid #000;
+  }
+  .setlist-booklet-index-col > .setlist-booklet-index-heading:not(:first-child) {
+    margin-top: 14px;
   }
   .setlist-booklet-index ol {
-    margin: 0 0 12px;
+    margin: 0;
     padding-left: 2em;
     font: 400 15px/1.5 "MuseJazzText", "Georgia", serif;
     list-style: decimal;
   }
   .setlist-booklet-index li {
     list-style: decimal;
-    break-inside: avoid;
+  }
+  /* Name flush left, key flush right, joined by a dotted leader — the classic
+     table-of-contents line, so a page of keys reads as one clean right-hand
+     column instead of trailing each title by an inconsistent amount. */
+  .setlist-booklet-index-row {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
   }
   .setlist-booklet-index-name {
     padding-left: 4px;
+    flex: 0 1 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .setlist-booklet-index-leader {
+    flex: 1 1 auto;
+    min-width: 8px;
+    margin-bottom: 4px;
+    border-bottom: 1px dotted #999;
+  }
+  .setlist-booklet-index-row:has(.setlist-booklet-index-key:empty) .setlist-booklet-index-leader {
+    visibility: hidden;
   }
   .setlist-booklet-index-key {
+    flex: 0 0 auto;
     white-space: nowrap;
-  }
-  .setlist-booklet-index-key:not(:empty)::before {
-    content: " — ";
+    text-align: right;
   }
 
   /* The cover blurb is a <p>, which the sitewide `p { color: gold }` catches. */
@@ -2092,10 +2174,13 @@ video.video {
   body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-fm-meta {
     margin: 6px 0 12px;
   }
-  body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-index {
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-index--wide {
+    display: none;
+  }
+  body.export-mode-chordbook #setlistPrintBooklet .setlist-booklet-index--chordbook {
+    display: flex;
     max-width: none;
-    columns: 3;
-    column-gap: 48px;
+    gap: 48px;
   }
   body.export-mode-chordbook #setlistPrintBooklet .notation {
     display: none !important;
@@ -3776,6 +3861,12 @@ body:has(#rjLibrary) .split-bio {
   border-color: #000000;
   min-width: 0;
   overflow: hidden;
+  /* chordPartMarker--outsideLeft reads this to hang flush with the cell's
+     true outer edge — see its own comment for why the border matters. Kept
+     in sync with border-left-width below (1px here; medium/thick further
+     down resolve to 3px/5px, the standard CSS keyword-to-px mapping every
+     evergreen browser already uses to paint them). */
+  --chord-cell-border-left: 1px;
 }
 
 /* A small boxed section letter ("A", "B", ...) from the tune's own ABC `P:`
@@ -3787,7 +3878,16 @@ body:has(#rjLibrary) .split-bio {
    around it (see renderChordTable's doc comment). */
 .chordPartMarker {
   position: absolute;
-  top: 0;
+  /* A position:absolute child's containing block is its relative ancestor's
+     *padding* box, not its border box — top:0 therefore lands flush with the
+     inside face of .chordCell's own 1px border-top, one pixel short of the
+     cell's true outer edge. Invisible on an interior row (masked by the
+     border of the row above it, which already occupies that pixel), but a
+     visible gap on a table's first row, where there's no border above to
+     hide it. -1px cancels the border-top the same way
+     --chord-cell-border-left already cancels border-left on the outsideLeft
+     variant below. */
+  top: -1px;
   left: 0;
   min-width: 12px;
   padding: 0 2px;
@@ -3805,6 +3905,30 @@ body:has(#rjLibrary) .split-bio {
   print-color-adjust: exact;
 }
 
+/* A marker on a measure in the grid's leftmost column (chord-table.js) would
+   otherwise sit right on the table's own outer edge; hang it outside the
+   cell to the left instead, so it never crowds that column's chord text.
+   .chordCell's own overflow:hidden (which clips oversized chord text) would
+   otherwise clip this badge too, since it's a positioned child of the cell
+   it hangs outside of — :has() lifts that clip on just this cell.
+
+   `right: 100%` alone lines the badge up with the padding edge, i.e. just
+   inside the border — flush for a hairline 1px border, but a repeat/double
+   bar's thicker border-left (chordCellLeftRepeat, chordCellDoubleThinBarLeft
+   below) then leaves the badge sitting on top of that border instead of
+   outside it, so it reads as misaligned against a plain cell's badge one row
+   up (e.g. Basin Street, where Part A/B's first measure is also a left
+   repeat). Adding --chord-cell-border-left pushes it out past whatever that
+   cell's own border-left actually is, so every marker's outer edge lines up
+   regardless of which border style the cell happens to carry. */
+.chordPartMarker--outsideLeft {
+  left: auto;
+  right: calc(100% + var(--chord-cell-border-left));
+}
+.chordCell:has(> .chordPartMarker--outsideLeft) {
+  overflow: visible;
+}
+
 /* Screen-only, same reasoning as .abcjs-current-note above: a chord cell
    shouldn't print gold just because playback happened to be paused on it. */
 @media screen {
@@ -3819,19 +3943,42 @@ body:has(#rjLibrary) .split-bio {
   overflow: hidden;
 }
 
+/* border-*-radius on these four: Firefox drops a cell's 1px solid border-top
+   (or border-bottom) entirely — across the cell's *whole* width, not just
+   near the corner — wherever it meets a `double`-style side border of a
+   different width at the same corner, e.g. the plain 1px top border of the
+   grid's very first cell (P:A's opening measure) vanishing above the boxed
+   part-marker badge. Confirmed by rendering the real chord grid in Firefox:
+   forcing that side's border-style to solid (or its width to match) makes
+   the top border reappear, so it's this specific style/width mismatch at
+   the corner, not the grid, the badge, or print scaling. A 1px corner
+   radius — imperceptible at this size — makes Firefox miter the corner
+   instead of dropping a whole side, without changing any border's visible
+   width. Only the corners each class's own double border actually touches
+   need it; applied everywhere the class applies (not just the table's
+   first/last row where a vanished border would otherwise show through)
+   since a redundant radius elsewhere is invisible. */
 .chordCellDoubleThinBarRight {
   border-right-style: double;
   border-right-width: medium;
+  border-top-right-radius: 1px;
+  border-bottom-right-radius: 1px;
 }
 
 .chordCellDoubleThinBarLeft {
   border-left-style: double;
   border-left-width: medium;
+  --chord-cell-border-left: 3px;
+
+  border-top-left-radius: 1px;
+  border-bottom-left-radius: 1px;
 }
 
 .chordCellRightRepeat {
   border-right-width: thick;
   border-right-style: double;
+  border-top-right-radius: 1px;
+  border-bottom-right-radius: 1px;
 }
 
 .chordRightRepeatSign {
@@ -3843,6 +3990,10 @@ body:has(#rjLibrary) .split-bio {
 .chordCellLeftRepeat {
   border-left-width: thick;
   border-left-style: double;
+  --chord-cell-border-left: 5px;
+
+  border-top-left-radius: 1px;
+  border-bottom-left-radius: 1px;
 }
 
 .chordLeftRepeatSign {

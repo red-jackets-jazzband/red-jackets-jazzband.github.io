@@ -3,6 +3,26 @@
 
 const SVGNS = "http://www.w3.org/2000/svg";
 
+const STROKE_WIDTH = 1;
+
+// oneSvgPerLine gives every system its own <svg>, windowed onto the tune's
+// shared coordinate space by a viewBox cropped tight to that line's content —
+// tight enough that a part marker sitting at the very top of its line (no
+// note/lyric above it to pad the crop, e.g. a P: field on the tune's first
+// line, or right after a line break) leaves our added rect no room: its top
+// edge, and the stroke's own half-width either side of it, lands above the
+// viewBox's own top and the wrapping div's `overflow: hidden` cuts it off —
+// rendering as a box missing its top edge. Clamp the top down to just inside
+// the viewBox instead of letting it float off the crop.
+function clampTopToViewBox(txt, y) {
+  const svg = txt.ownerSVGElement;
+  if (!svg?.hasAttribute("viewBox")) return y;
+  const viewBox = svg.viewBox.baseVal;
+  if (!viewBox) return y;
+  const minY = viewBox.y + STROKE_WIDTH / 2;
+  return Math.max(y, minY);
+}
+
 /*
   Draw a thin square outline around every part marker (an ABC `P:` field), so
   the black letter reads as a labelled section box. Reuses (and re-measures)
@@ -28,13 +48,15 @@ export function stylePartMarkers(container) {
     const reuse = prev && prev.classList && prev.classList.contains("abcjs-part-bg");
     const rect = reuse ? prev : document.createElementNS(SVGNS, "rect");
     if (!reuse) rect.setAttribute("class", "abcjs-part-bg");
+    const bottom = bbox.y + bbox.height + padY;
+    const y = clampTopToViewBox(txt, bbox.y - padY);
     rect.setAttribute("x", bbox.x - padX);
-    rect.setAttribute("y", bbox.y - padY);
+    rect.setAttribute("y", y);
     rect.setAttribute("width", bbox.width + 2 * padX);
-    rect.setAttribute("height", bbox.height + 2 * padY);
+    rect.setAttribute("height", bottom - y);
     rect.setAttribute("fill", "none");
     rect.setAttribute("stroke", "#000");
-    rect.setAttribute("stroke-width", "1");
+    rect.setAttribute("stroke-width", String(STROKE_WIDTH));
     if (!reuse) txt.parentNode.insertBefore(rect, txt);
   });
 }

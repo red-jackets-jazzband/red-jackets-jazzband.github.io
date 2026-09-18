@@ -1,8 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  classifyInspirationUrl, parseInspirationLinks, firstLinkPerType, firstYoutubeUrl, OTHER_LINK_TYPE,
+  classifyInspirationUrl, parseInspirationLinks, firstLinkPerType, firstYoutubeUrl, firstSpotifyUrl,
+  OTHER_LINK_TYPE,
 } from "./inspiration-links.js";
+
+const YOUTUBE_URL = "https://youtu.be/aaa";
+const SPOTIFY_URL = "https://open.spotify.com/track/1";
 
 test("classifyInspirationUrl recognizes youtube hosts", () => {
   assert.equal(classifyInspirationUrl("https://www.youtube.com/watch?v=abc"), "youtube");
@@ -57,27 +61,40 @@ test("parseInspirationLinks returns an empty array for a tune with no F: field",
 
 test("firstLinkPerType keeps only the first link of each type, in order", () => {
   const links = [
-    { url: "https://youtu.be/aaa", type: "youtube" },
-    { url: "https://open.spotify.com/track/1", type: "spotify" },
+    { url: YOUTUBE_URL, type: "youtube" },
+    { url: SPOTIFY_URL, type: "spotify" },
     { url: "https://open.spotify.com/track/2", type: "spotify" },
     { url: "https://soundcloud.com/x/y", type: "soundcloud" },
   ];
   assert.deepEqual(firstLinkPerType(links), [
-    { url: "https://youtu.be/aaa", type: "youtube" },
-    { url: "https://open.spotify.com/track/1", type: "spotify" },
+    { url: YOUTUBE_URL, type: "youtube" },
+    { url: SPOTIFY_URL, type: "spotify" },
     { url: "https://soundcloud.com/x/y", type: "soundcloud" },
   ]);
 });
 
 test("firstYoutubeUrl returns the tune's YouTube link's url", () => {
   const links = [
-    { url: "https://open.spotify.com/track/1", type: "spotify" },
-    { url: "https://youtu.be/aaa", type: "youtube" },
+    { url: SPOTIFY_URL, type: "spotify" },
+    { url: YOUTUBE_URL, type: "youtube" },
   ];
-  assert.equal(firstYoutubeUrl(links), "https://youtu.be/aaa");
+  assert.equal(firstYoutubeUrl(links), YOUTUBE_URL);
 });
 
 test("firstYoutubeUrl returns undefined (not null) when there's no YouTube link", () => {
-  assert.equal(firstYoutubeUrl([{ url: "https://open.spotify.com/track/1", type: "spotify" }]), undefined);
+  assert.equal(firstYoutubeUrl([{ url: SPOTIFY_URL, type: "spotify" }]), undefined);
   assert.equal(firstYoutubeUrl([]), undefined);
+});
+
+test("firstSpotifyUrl returns the tune's Spotify link's url", () => {
+  const links = [
+    { url: YOUTUBE_URL, type: "youtube" },
+    { url: SPOTIFY_URL, type: "spotify" },
+  ];
+  assert.equal(firstSpotifyUrl(links), SPOTIFY_URL);
+});
+
+test("firstSpotifyUrl returns undefined (not null) when there's no Spotify link", () => {
+  assert.equal(firstSpotifyUrl([{ url: YOUTUBE_URL, type: "youtube" }]), undefined);
+  assert.equal(firstSpotifyUrl([]), undefined);
 });

@@ -4,7 +4,6 @@ import { firstLinkPerType, OTHER_LINK_TYPE } from "../lib/inspiration-links.js";
 const BUTTON_ID_PREFIX = "inspirationExtLink-";
 
 const LINK_META = {
-  spotify: { icon: "fa-brands fa-spotify", label: "Listen on Spotify" },
   soundcloud: { icon: "fa-brands fa-soundcloud", label: "Listen on SoundCloud" },
   // SecondHandSongs tracks a song's own history of cover/original versions —
   // there's no brand glyph for it in Font Awesome's free set, so this reads
@@ -15,22 +14,25 @@ const LINK_META = {
 
 /*
   Icon-only external links in the Inspiration pill (#inspirationSlot, next to
-  the YouTube "Inspiration" button, kept separate from the Print/Export
-  MP3/iReal Pro pill in #sheetActions) for a tune's non-YouTube F: field
-  references — Spotify, SoundCloud, SecondHandSongs, or anything else a URL
-  classifies as. Each just opens the target site in a new tab; only a
-  YouTube reference gets the docked LoopTube player in inspiration.js, since
-  that's the one platform with an embeddable IFrame API this project drives
-  directly. Rebuilt on every render from the current tune's `links` (already
-  parsed by sheet.js's engrave() via lib/inspiration-links.js), same as
-  irealpro-link.js's updateIrealProLink.
+  the "Inspiration" button, kept separate from the Print/Export MP3/iReal Pro
+  pill in #sheetActions) for a tune's F: field references that aren't one of
+  the two sources the docked panel itself can embed — SoundCloud,
+  SecondHandSongs, or anything else a URL classifies as. Each just opens the
+  target site in a new tab. YouTube and Spotify are excluded here: they get
+  the docked panel in inspiration.js instead (a full LoopTube toolbar for
+  YouTube's IFrame API, a plain embedded player for Spotify — see its own
+  doc comment). Rebuilt on every render from the current tune's `links`
+  (already parsed by sheet.js's engrave() via lib/inspiration-links.js),
+  same as irealpro-link.js's updateIrealProLink.
 */
 export function updateInspirationExtLinks(links) {
   const slot = byId("inspirationSlot");
   if (!slot) return;
   slot.querySelectorAll(`[id^="${BUTTON_ID_PREFIX}"]`).forEach((node) => node.remove());
 
-  const extLinks = firstLinkPerType(links).filter((link) => link.type !== "youtube");
+  const extLinks = firstLinkPerType(links).filter(
+    (link) => link.type !== "youtube" && link.type !== "spotify",
+  );
   for (const link of extLinks) {
     const meta = LINK_META[link.type];
     slot.append(el("a", {

@@ -54,6 +54,28 @@ test("stylePartMarkers re-measures an existing box instead of skipping it", () =
   });
 });
 
+// oneSvgPerLine crops each line's <svg> to a tight viewBox (see sheet.js);
+// a part marker sitting at the very top of its line (nothing above it to pad
+// the crop, e.g. a P: field on the tune's opening line) can otherwise get a
+// box whose top edge — and the stroke's own half-width past it — lands above
+// that viewBox and is clipped by the wrapping div's overflow:hidden, so the
+// box renders with its top edge missing.
+test("stylePartMarkers clamps the box's top edge inside a tightly-cropped line viewBox", () => {
+  inDom((container) => {
+    container.innerHTML =
+      "<svg viewBox='0 59 1000 173'><text class='abcjs-part'>Verse</text></svg>";
+    const txt = container.querySelector("text");
+    // bbox.y - padY (1) would be 58.5, just above the viewBox's own y=59.
+    txt.getBBox = () => ({ x: 90, y: 59.5, width: 49, height: 23 });
+    stylePartMarkers(container);
+    const rect = container.querySelector(PART_BOX_SELECTOR);
+    // Clamped to viewBox.y + half the 1px stroke width, not bbox.y - padY.
+    assert.equal(rect.getAttribute("y"), "59.5");
+    // The bottom edge stays put — only the top moved, so height shrinks to match.
+    assert.equal(rect.getAttribute("height"), String(59.5 + 23 + 1 - 59.5));
+  });
+});
+
 test("stylePartMarkers tolerates a missing container and getBBox throwing", () => {
   assert.doesNotThrow(() => stylePartMarkers(null));
   inDom((container) => {

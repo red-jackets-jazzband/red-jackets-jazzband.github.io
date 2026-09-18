@@ -20,13 +20,12 @@ const LINKS = parseInspirationLinks([
   "https://secondhandsongs.com/work/12345",
 ].join("\n"));
 
-test("updateInspirationExtLinks creates a button per non-YouTube link, in order", () => {
+test("updateInspirationExtLinks creates a button per link the docked panel doesn't embed, in order", () => {
   inDom(() => {
     updateInspirationExtLinks(LINKS);
     const slot = document.getElementById("inspirationSlot");
     const ids = [...slot.querySelectorAll('[id^="inspirationExtLink-"]')].map((n) => n.id);
     assert.deepEqual(ids, [
-      "inspirationExtLink-spotify",
       "inspirationExtLink-soundcloud",
       "inspirationExtLink-secondhandsongs",
     ]);
@@ -41,33 +40,34 @@ test("updateInspirationExtLinks never puts a link in the #sheetActions export pi
   });
 });
 
-test("updateInspirationExtLinks skips the YouTube link (handled by the docked panel instead)", () => {
+test("updateInspirationExtLinks skips the YouTube and Spotify links (handled by the docked panel instead)", () => {
   inDom(() => {
     updateInspirationExtLinks(LINKS);
     assert.equal(document.getElementById("inspirationExtLink-youtube"), null);
+    assert.equal(document.getElementById("inspirationExtLink-spotify"), null);
   });
 });
 
 test("updateInspirationExtLinks opens each link in a new tab without leaking window.opener", () => {
   inDom(() => {
     updateInspirationExtLinks(LINKS);
-    const spotify = document.getElementById("inspirationExtLink-spotify");
-    assert.equal(spotify.getAttribute("href"), "https://open.spotify.com/track/abc");
-    assert.equal(spotify.target, "_blank");
-    assert.equal(spotify.rel, "noopener noreferrer");
+    const soundcloud = document.getElementById("inspirationExtLink-soundcloud");
+    assert.equal(soundcloud.getAttribute("href"), "https://soundcloud.com/someone/a-track");
+    assert.equal(soundcloud.target, "_blank");
+    assert.equal(soundcloud.rel, "noopener noreferrer");
   });
 });
 
 test("updateInspirationExtLinks clears stale buttons on re-render for a tune with fewer links", () => {
   inDom(() => {
     updateInspirationExtLinks(LINKS);
-    updateInspirationExtLinks(parseInspirationLinks("https://open.spotify.com/track/xyz"));
+    updateInspirationExtLinks(parseInspirationLinks("https://soundcloud.com/someone/other-track"));
     const slot = document.getElementById("inspirationSlot");
     const ids = [...slot.querySelectorAll('[id^="inspirationExtLink-"]')].map((n) => n.id);
-    assert.deepEqual(ids, ["inspirationExtLink-spotify"]);
+    assert.deepEqual(ids, ["inspirationExtLink-soundcloud"]);
     assert.equal(
-      document.getElementById("inspirationExtLink-spotify").getAttribute("href"),
-      "https://open.spotify.com/track/xyz",
+      document.getElementById("inspirationExtLink-soundcloud").getAttribute("href"),
+      "https://soundcloud.com/someone/other-track",
     );
   });
 });

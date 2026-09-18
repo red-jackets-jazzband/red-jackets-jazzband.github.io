@@ -50,6 +50,35 @@ test("simplifySong collapses through a later repeat's own part marker", () => {
   const result = simplifySong(chords, 2);
   assert.equal(result.length, 2);
   assert.deepEqual(result.map((m) => m.text), pattern.map((m) => m.text));
+  assert.deepEqual(result.map((m) => m.part), [undefined, undefined]);
+});
+
+test("simplifySong also drops the surviving repeat's own part marker", () => {
+  // Just a Closer Walk With Thee: Verse and Chorus share identical chords
+  // (only the melody/lyrics differ), so the whole chart collapses to one
+  // block. Leaving the Verse's own "Verse" marker in place would make it
+  // look like the collapsed block is only the Verse, when it's standing in
+  // for both — so the surviving part marker is dropped too, not just the
+  // later repeat's.
+  const pattern = [measure(["Bb"]), measure(["F7"])];
+  const chords = pattern.concat(pattern.map((m) => ({ ...m })));
+  chords[0].part = "Verse";
+  chords[2].part = "Chorus";
+  const result = simplifySong(chords, 2);
+  assert.deepEqual(result.map((m) => m.part), [undefined, undefined]);
+});
+
+test("simplifySong keeps a part marker when the scheme appears only once", () => {
+  // length === count means there's nothing to fold — a lone "Verse" section
+  // that happens to be exactly 2 bars long isn't a repeat of itself, so its
+  // marker (and any repeat/double-bar signs) must survive untouched.
+  const chords = [measure(["Bb"]), measure(["F7"])];
+  chords[0].part = "Verse";
+  chords[0].leftRepeat = true;
+  const result = simplifySong(chords, 2);
+  assert.equal(result, chords);
+  assert.equal(result[0].part, "Verse");
+  assert.equal(result[0].leftRepeat, true);
 });
 
 test("simplifyBlues delegates to simplifySong with count=12", () => {

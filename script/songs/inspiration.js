@@ -1,5 +1,6 @@
 import { byId, on } from "../lib/dom.js";
 import { youtubeEmbedUrl, extractYouTubeId } from "../lib/youtube.js";
+import { extractSpotifyItem, spotifyEmbedUrl, spotifyEmbedHeight } from "../lib/spotify.js";
 import { PREF_KEYS, readPref, writePref } from "../lib/preferences.js";
 import {
   formatClock, normalizeLoop, clampHandleDrag, stepPlaybackRate, loopLeadSeconds, shouldLoopSeek,
@@ -170,7 +171,7 @@ function clampPanelIntoView(panel) {
 function initDrag(panel, header) {
   let drag = null;
   header.addEventListener("pointerdown", (e) => {
-    if (e.target.closest(".inspiration-panel-icon-btn")) return;
+    if (e.target.closest(".inspiration-panel-icon-btn, .inspiration-panel-tab")) return;
     const rect = panel.getBoundingClientRect();
     drag = { x: e.clientX, y: e.clientY, left: rect.left, top: rect.top };
     header.setPointerCapture(e.pointerId);
@@ -205,24 +206,111 @@ function setLinkActive(active) {
   btn.setAttribute("aria-expanded", active ? "true" : "false");
 }
 
+// A stable identity for a { youtube, spotify } source pair, so togglePanel
+// can tell "the same tune's button, clicked again" (close) apart from "a
+// different tune's button" (open fresh) — doesn't touch the panel/ctx state,
+// so it lives at module scope rather than nested inside createInspiration.
+function sourcesKey(sources) {
+  return `${sources.youtube || ""}|${sources.spotify || ""}`;
+}
+
+// Reflects which tab is current on the two tab buttons themselves (pressed
+// state + the gold .active look) — doesn't touch the panel/ctx state, so it
+// lives at module scope rather than nested inside createInspiration.
+function updateTabButtonsUi(tab) {
+  const ytTab = byId("inspirationTabYoutube");
+  const spTab = byId("inspirationTabSpotify");
+  if (ytTab) {
+    ytTab.classList.toggle("active", tab === "youtube");
+    ytTab.setAttribute("aria-pressed", tab === "youtube" ? "true" : "false");
+  }
+  if (spTab) {
+    spTab.classList.toggle("active", tab === "spotify");
+    spTab.setAttribute("aria-pressed", tab === "spotify" ? "true" : "false");
+  }
+}
+
+// Points the header's "open externally" link at whichever source the panel
+// is currently showing — doesn't touch the panel/ctx state, so it lives at
+// module scope rather than nested inside createInspiration.
+function setExpandLink(url, label) {
+  const expandLink = byId("inspirationExpandBtn");
+  if (!expandLink) return;
+  expandLink.href = url || "#";
+  expandLink.title = `Open on ${label}`;
+  expandLink.setAttribute("aria-label", `Open on ${label}`);
+}
+
+// Loads a track into the Spotify tab. A no-op if it's already showing this
+// exact url — Spotify's widget keeps its own playback position across
+// re-renders, and reassigning the same src would restart it. Doesn't touch
+// the panel/ctx state, so it lives at module scope rather than nested inside
+// createInspiration.
+function loadSpotify(url) {
+  const frame = byId("inspirationSpotifyFrame");
+  if (!frame || !url) return;
+  const item = extractSpotifyItem(url);
+  if (!item) return;
+  frame.height = String(spotifyEmbedHeight(item.type));
+  if (frame.dataset.loadedUrl === url) return;
+  frame.dataset.loadedUrl = url;
+  frame.src = spotifyEmbedUrl(url);
+}
+
+// Stops the Spotify tab's playback by clearing its src — the widget has no
+// scriptable pause here, so this is the one reliable way to silence it when
+// switching to the YouTube tab or closing the panel. Doesn't touch the
+// panel/ctx state, so it lives at module scope rather than nested inside
+// createInspiration.
+function stopSpotify() {
+  const frame = byId("inspirationSpotifyFrame");
+  if (!frame) return;
+  frame.src = "";
+  delete frame.dataset.loadedUrl;
+}
+
 /*
-  The Inspiration picture-in-picture panel: a docked, draggable YouTube player
-  that keeps playing across song navigation (until explicitly closed) instead
-  of leaving the page, plus a LoopTube toolbar under the video — a play/pause
-  toggle, A/B loop markers on a slim timeline, an endless A–B loop toggle (an
-  ~80 ms poll that seekTo's back to A just before B, since YouTube has no
-  native sub-range loop) and a playback-rate stepper. The toolbar reimplements
-  everything the native YouTube control bar offers (play/pause, seek, speed),
-  so the embed is loaded with controls=0 (see youtubeEmbedUrl) rather than
-  showing a redundant native bar under it. Driven through the YouTube IFrame
-  Player API; the pure range/rate/clock maths is in lib/looptube.js.
+  The Inspiration picture-in-picture panel: a docked, draggable player that
+  keeps playing across song navigation (until explicitly closed) instead of
+  leaving the page. A tune can carry two independent sources — a YouTube F:
+  link and a Spotify one — and the panel embeds whichever it has:
+
+  - YouTube gets the full LoopTube toolbar under the video — a play/pause
+    toggle, A/B loop markers on a slim timeline, an endless A–B loop toggle
+    (an ~80 ms poll that seekTo's back to A just before B, since YouTube has
+    no native sub-range loop) and a playback-rate stepper. The toolbar
+    reimplements everything the native YouTube control bar offers (play/
+    pause, seek, speed), so the embed is loaded with controls=0 (see
+    youtubeEmbedUrl) rather than showing a redundant native bar under it.
+    Driven through the YouTube IFrame Player API; the pure range/rate/clock
+    maths is in lib/looptube.js.
+  - Spotify gets a deliberately plain embed instead — Spotify's own widget
+    draws its own play/pause/seek bar, and (unlike YouTube's autoplaying,
+    freely-streamable video) a logged-out listener only ever gets a preview
+    anyway, so there's no LoopTube-style toolbar to build here.
+
+  When a tune has both, a small tab switcher in the header picks which one
+  is visible; only one plays at a time (switching tabs pauses/stops the
+  other, see selectTab). When it only has one, the switcher stays hidden and
+  the panel behaves exactly like a single-source player.
 */
 export function createInspiration(ctx) {
-  let panelUrl = null;
+  // The two sources the currently *open* panel is showing (not necessarily
+  // the sidebar's current song — see updateLink's own doc comment: browsing
+  // songs never touches an already-open panel). Set once per openPanel call;
+  // selectTab reads it to know what to load into whichever tab is chosen.
+  let currentSources = { youtube: null, spotify: null };
+  // Identifies which tune's panel is currently open, so a second click on
+  // the same tune's button closes it instead of reopening — see togglePanel.
+  let panelKey = null;
   let apiPromise = null;
   let player = null;
   let playerReady = false;
   let pendingVideoId = null;
+  // The YouTube video id currently loaded into the player, so switching back
+  // to the YouTube tab after visiting Spotify doesn't restart playback or
+  // wipe the A/B markers when it's still the same video — see loadYoutube.
+  let loadedYoutubeId = null;
   let loopA = null;
   let loopB = null;
   let isPlaying = false;
@@ -300,13 +388,19 @@ export function createInspiration(ctx) {
 
   /*
     Keep the sheet's Inspiration button in sync with the current tune: created
-    for a tune whose ABC has an F: field, removed for one without. It only
-    updates its own url/title — it never touches an already-open panel, so a
-    video someone is playing along to keeps going while they browse songs.
+    for a tune whose ABC has a YouTube and/or Spotify F: link, removed for one
+    with neither. It only updates its own url/title dataset — it never
+    touches an already-open panel, so a video someone is playing along to
+    keeps going while they browse songs. `sources` is { youtube, spotify },
+    either of which may be undefined — see lib/inspiration-links.js's
+    firstYoutubeUrl/firstSpotifyUrl, which is what sheet.js's engrave()
+    actually passes in.
   */
-  function updateLink(url, title) {
+  function updateLink(sources, title) {
+    const youtubeUrl = sources?.youtube;
+    const spotifyUrl = sources?.spotify;
     let btn = byId("inspirationLink");
-    if (url === undefined) {
+    if (!youtubeUrl && !spotifyUrl) {
       if (btn) btn.remove();
       pendingShare = null;
       return;
@@ -317,7 +411,10 @@ export function createInspiration(ctx) {
       btn.textContent = "Inspiration";
       btn.id = "inspirationLink";
       btn.className = "sheet-inspiration-link";
-      btn.addEventListener("click", () => togglePanel(btn.dataset.url, btn.dataset.title));
+      btn.addEventListener("click", () => togglePanel({
+        youtube: btn.dataset.url || undefined,
+        spotify: btn.dataset.spotifyUrl || undefined,
+      }, btn.dataset.title));
       const slot = byId("inspirationSlot");
       if (slot) slot.appendChild(btn);
       // The panel can already be open (playing along across a song change
@@ -327,14 +424,20 @@ export function createInspiration(ctx) {
       const panel = byId("inspirationPanel");
       setLinkActive(Boolean(panel && !panel.hidden));
     }
-    btn.dataset.url = url;
+    btn.dataset.url = youtubeUrl || "";
+    btn.dataset.spotifyUrl = spotifyUrl || "";
     btn.dataset.title = title || "";
 
     if (pendingShare) {
       const share = pendingShare;
       pendingShare = null;
-      openPanel(url, title);
-      applySharedLoop(share.a, share.b);
+      // A shared link's A/B markers only ever mean a YouTube loop (LoopTube
+      // is YouTube-only) — a tune with no YouTube source has nothing for
+      // them to apply to.
+      if (youtubeUrl) {
+        openPanel({ youtube: youtubeUrl, spotify: spotifyUrl }, title);
+        applySharedLoop(share.a, share.b);
+      }
     }
   }
 
@@ -383,28 +486,93 @@ export function createInspiration(ctx) {
 
   // ---- open / close -------------------------------------------------
 
-  function togglePanel(url, title) {
+  function togglePanel(sources, title) {
     const panel = byId("inspirationPanel");
     if (!panel) return;
-    if (!panel.hidden && panelUrl === url) closePanel();
-    else openPanel(url, title);
+    if (!panel.hidden && panelKey === sourcesKey(sources)) closePanel();
+    else openPanel(sources, title);
   }
 
-  function openPanel(url, title) {
+  function openPanel(sources, title) {
     const panel = byId("inspirationPanel");
-    const frame = byId("inspirationVideoFrame");
-    if (!panel || !frame) return;
-    const videoId = extractYouTubeId(url);
-    if (!videoId) return;
+    if (!panel) return;
+    const youtubeId = sources.youtube ? extractYouTubeId(sources.youtube) : null;
+    const spotifyItem = sources.spotify ? extractSpotifyItem(sources.spotify) : null;
+    if (!youtubeId && !spotifyItem) return;
+
+    currentSources = {
+      youtube: youtubeId ? sources.youtube : null,
+      spotify: spotifyItem ? sources.spotify : null,
+    };
+    panelKey = sourcesKey(sources);
 
     const titleEl = byId("inspirationPanelTitle");
     if (titleEl) titleEl.textContent = title || "Inspiration";
-    const expandLink = byId("inspirationExpandBtn");
-    if (expandLink) expandLink.href = url;
 
-    panelUrl = url;
     panel.hidden = false;
     setLinkActive(true);
+    updateTabsUI();
+    selectTab(currentSources.youtube ? "youtube" : "spotify");
+  }
+
+  // Which of the two panel tabs is currently shown/usable — hidden entirely
+  // (and pointless to show) unless the open panel's tune actually has both
+  // sources.
+  function updateTabsUI() {
+    const tabs = byId("inspirationTabs");
+    if (!tabs) return;
+    tabs.hidden = !(currentSources.youtube && currentSources.spotify);
+  }
+
+  // Switches which source is visible in the panel — the YouTube tab (video +
+  // LoopTube toolbar) or the Spotify tab (a plain embed, no toolbar). Only
+  // one ever plays at a time: switching away from a tab pauses/stops it
+  // rather than leaving it running out of sight.
+  function selectTab(tab) {
+    updateTabButtonsUi(tab);
+    if (tab === "youtube") showYoutubeTab();
+    else showSpotifyTab();
+  }
+
+  function showYoutubeTab() {
+    stopSpotify();
+    const spotifyBox = byId("inspirationSpotifyBox");
+    if (spotifyBox) spotifyBox.hidden = true;
+    const videoBox = byId("inspirationVideoBox");
+    if (videoBox) videoBox.hidden = false;
+    setExpandLink(currentSources.youtube, "YouTube");
+    loadYoutube(currentSources.youtube);
+  }
+
+  function showSpotifyTab() {
+    pauseYoutube();
+    const bar = byId("inspirationLoopBar");
+    if (bar) bar.hidden = true;
+    const videoBox = byId("inspirationVideoBox");
+    if (videoBox) videoBox.hidden = true;
+    const spotifyBox = byId("inspirationSpotifyBox");
+    if (spotifyBox) spotifyBox.hidden = false;
+    setExpandLink(currentSources.spotify, "Spotify");
+    loadSpotify(currentSources.spotify);
+  }
+
+  // Loads a video into the YouTube tab. A no-op beyond re-showing the
+  // LoopTube toolbar when it's the same video already loaded (switching back
+  // from the Spotify tab shouldn't restart playback or wipe the A/B
+  // markers) — otherwise this is the same load sequence openPanel always ran
+  // before the two tabs existed.
+  function loadYoutube(url) {
+    const frame = byId("inspirationVideoFrame");
+    if (!frame || !url) return;
+    const videoId = extractYouTubeId(url);
+    if (!videoId) return;
+    if (videoId === loadedYoutubeId) {
+      const bar = byId("inspirationLoopBar");
+      if (bar) bar.hidden = false;
+      updateLoopUI();
+      return;
+    }
+    loadedYoutubeId = videoId;
     stopLoopPoll();
     isPlaying = false;
     updatePlayToggleUI();
@@ -425,6 +593,13 @@ export function createInspiration(ctx) {
     loadIframeApi().then(attachPlayer);
   }
 
+  // Pauses (rather than stops) the YouTube player when switching away from
+  // its tab, so switching back resumes where it left off instead of
+  // restarting — the frame/player themselves are left alone, only playback.
+  function pauseYoutube() {
+    if (player && playerReady && isPlaying && player.pauseVideo) player.pauseVideo();
+  }
+
   function closePanel() {
     const panel = byId("inspirationPanel");
     if (!panel) return;
@@ -442,11 +617,14 @@ export function createInspiration(ctx) {
       const frame = byId("inspirationVideoFrame");
       if (frame) frame.src = "";
     }
+    loadedYoutubeId = null;
+    stopSpotify();
     isPlaying = false;
     updatePlayToggleUI();
     const bar = byId("inspirationLoopBar");
     if (bar) bar.hidden = true;
-    panelUrl = null;
+    panelKey = null;
+    currentSources = { youtube: null, spotify: null };
   }
 
   function onPlayerStateChange(e) {
@@ -1045,6 +1223,8 @@ export function createInspiration(ctx) {
     initOverview();
     on("inspirationCloseBtn", "click", closePanel);
     on("inspirationShareBtn", "click", copyShareLink);
+    on("inspirationTabYoutube", "click", () => { if (currentSources.youtube) selectTab("youtube"); });
+    on("inspirationTabSpotify", "click", () => { if (currentSources.spotify) selectTab("spotify"); });
     on("inspirationSizeBtn", "click", () => cyclePanelSize(panel));
     setPanelWidth(panel, readStoredWidth(), false);
     initDrag(panel, header);

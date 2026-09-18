@@ -195,42 +195,63 @@ export function simplifyBlues(chords) {
 //
 // This intentionally collapses away a later repeat's own part marker too
 // (e.g. Happy Feet Blues' A/B/C are the same 12-bar blues played three
-// times with different melodies each time — a single "A"-labelled 12-bar
-// grid is the useful chart, not the same scheme shown three times over just
-// because each pass has its own part letter).
+// times with different melodies each time — a single 12-bar grid is the
+// useful chart, not the same scheme shown three times over just because
+// each pass has its own part letter). Since `chords` is always the tune's
+// whole displayed scheme (renderChordTable never calls this on a slice), a
+// successful collapse always means the *entire* chart is now this one
+// repeated block, so whatever part marker(s) survived the collapse — even
+// the first repeat's own — no longer distinguish anything and are dropped
+// too (e.g. Just a Closer Walk With Thee's Verse/Chorus, which share
+// identical chords: collapsing them left a lone "V" badge that looked like
+// it labelled only the Verse, when it's really standing in for both).
+// Are two measures' chord texts identical, chord for chord?
+function chordTextsEqual(first, second) {
+  if (first.length !== second.length) {
+    return false;
+  }
+  for (let c = 0; c < first.length; c++) {
+    if (first[c] !== second[c]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Is `chords` really just its first `count` measures, repeated `repeats`
+// times with identical content each time?
+function chordsRepeat(chords, count, repeats) {
+  for (let i = 0; i < count; i++) {
+    const first = chords[i].text;
+    for (let r = 1; r < repeats; r++) {
+      const second = chords[i + count * r].text;
+      if (!chordTextsEqual(first, second)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 export function simplifySong(chords, count) {
   if (chords.length === 0 || chords.length % count !== 0) {
     return chords;
   }
 
   const repeats = chords.length / count;
+  if (repeats === 1) return chords;
 
-  // Check each measure in the scheme
-  for (let i = 0; i < count; i++) {
-    const first = chords[i].text;
-
-    for (let r = 1; r < repeats; r++) {
-      const second = chords[i + count * r].text;
-
-      // Are there the same amount of chords in the measure?
-      if (first.length !== second.length) {
-        return chords;
-      }
-
-      for (let c = 0; c < first.length; c++) {
-        if (first[c] !== second[c]) {
-          return chords;
-        }
-      }
-    }
+  if (!chordsRepeat(chords, count, repeats)) {
+    return chords;
   }
 
-  // It's a scheme that repeats! Dump any bars or repeats.
+  // It's a scheme that repeats! Dump any bars, repeats or part markers.
   for (let c = 0; c < count; c++) {
     delete chords[c].leftRepeat;
     delete chords[c].rightRepeat;
     delete chords[c].doubeThinBarLeft;
     delete chords[c].doubeThinBarRight;
+    delete chords[c].part;
   }
 
   return chords.slice(0, count);
