@@ -6,6 +6,7 @@ import {
 } from "../lib/export-meta.js";
 import { clearBookletPrintState, printWithTitle } from "./sheet-controls.js";
 import { buildTitlePage, fitTitlePage } from "./setlist-titlepage.js";
+import { firstYoutubeIdFromAbc, buildYoutubePlaylistUrl } from "../lib/setlist-listen.js";
 
 const NOADS_SETLIST_ID = "noads_songbook";
 
@@ -16,6 +17,7 @@ const bookletSetHeading = (text) =>
   el("div", { class: "setlist-booklet-set-heading pageBreakBefore", text });
 
 const instrument = () => (byId("instrument") ? byId("instrument").value : "concert_pitch");
+const noop = () => {};
 
 function setTextContent(id, value) {
   const node = byId(id);
@@ -61,6 +63,24 @@ export function createSetlistPrint(ctx) {
   let onBookletReady = null;
   let waitingMode = null;
 
+  // ---- "Listen": an ad-hoc YouTube playlist of the whole setlist -----
+
+  // Filled in setlist order (by songCount - 1) as each song's own read
+  // settles below, so the playlist always plays in setlist order regardless
+  // of which read lands first. Reset per buildBooklet, same as pendingReads.
+  let youtubeIds = [];
+  let listenUrl = null;
+  let onListenChange = noop;
+
+  function setListenChangeHandler(fn) {
+    onListenChange = typeof fn === "function" ? fn : noop;
+  }
+
+  function recomputeListenUrl() {
+    listenUrl = buildYoutubePlaylistUrl(youtubeIds);
+    onListenChange(listenUrl);
+  }
+
   // While a "Print …" click is held waiting for the booklet's song reads to
   // land, a small line under the buttons counts them in so the wait doesn't
   // look like a dead click.
@@ -81,6 +101,7 @@ export function createSetlistPrint(ctx) {
   function readSettled(seq) {
     if (seq !== bookletSeq) return;
     pendingReads -= 1;
+    if (pendingReads === 0) recomputeListenUrl();
     if (onBookletReady) {
       if (pendingReads === 0) {
         const ready = onBookletReady;
@@ -210,6 +231,7 @@ export function createSetlistPrint(ctx) {
           extraTransposeSteps: extra,
         });
         fillSongMeta(n, resolvedExportSongMeta(text, entry.item, instrument()));
+        youtubeIds[n - 1] = firstYoutubeIdFromAbc(text);
       }
       readSettled(seq);
     }, (status) => {
@@ -226,6 +248,9 @@ export function createSetlistPrint(ctx) {
     bookletSeq += 1;
     const seq = bookletSeq;
     pendingReads = 0;
+    youtubeIds = [];
+    listenUrl = null;
+    onListenChange(null);
     clear(container);
 
     container.append(el("div", { class: "setlist-view-title", text: name }));
@@ -293,5 +318,7 @@ export function createSetlistPrint(ctx) {
     printWithTitle([name, PRINT_MODE_LABELS[mode]].filter(Boolean).join(" — "));
   }
 
-  return { buildBooklet, print, PRINT_MODES };
+  return {
+    buildBooklet, print, PRINT_MODES, setListenChangeHandler, getListenUrl: () => listenUrl,
+  };
 }

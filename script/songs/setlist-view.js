@@ -829,6 +829,24 @@ export function createSetlistView(ctx) {
     });
   }
 
+  // "Listen" button, under the Print row: opens every song in the open
+  // setlist that has a YouTube F: link as one ad-hoc YouTube playlist (see
+  // lib/setlist-listen.js). Its enabled state tracks ctx.setlistPrint's own
+  // per-song reads (already fetching every setlist song's .abc to build the
+  // print booklet), so it's never clickable mid-load or with nothing to play.
+  function initListen() {
+    const btn = byId("listenYoutubeBtn");
+    if (!btn) return;
+    ctx.setlistPrint.setListenChangeHandler((url) => {
+      btn.disabled = !url;
+      btn.title = url ? "Open this setlist’s songs on YouTube" : "No YouTube links in this setlist";
+    });
+    on("listenYoutubeBtn", "click", () => {
+      const url = ctx.setlistPrint.getListenUrl();
+      if (url) window.open(url, "_blank", "noopener");
+    });
+  }
+
   function initControls() {
     on("setlistsBackBtn", "click", () => ctx.setlistHome.show());
     ctx.setlistModal.init();
@@ -840,6 +858,8 @@ export function createSetlistView(ctx) {
       ["printChordbookBtn", "chordbook"],
       ["printSongbookBtn", "songbook"],
     ].forEach(([id, mode]) => on(id, "click", () => ctx.setlistPrint.print(mode)));
+
+    initListen();
 
     // The booklet is engraved for whichever instrument the sheet is on; rebuild
     // it off-screen when the instrument changes so a later "Print …" is current.

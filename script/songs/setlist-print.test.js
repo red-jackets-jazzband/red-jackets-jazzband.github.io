@@ -12,7 +12,7 @@ import { createSetlistPrint } from "./setlist-print.js";
 const flush = () => new Promise((resolve) => { setTimeout(resolve, 0); });
 
 const ABC = {
-  "a.abc": "X:1\nT:Song A\nQ:1/4=120\nK:Bb\nB2|",
+  "a.abc": "X:1\nT:Song A\nQ:1/4=120\nF:https://www.youtube.com/watch?v=aaaaaaaaaaa\nK:Bb\nB2|",
   "b.abc": "X:1\nT:Song B\nQ:1/4=90\nK:F\nF2|",
 };
 
@@ -243,6 +243,33 @@ test("a personal-setlist desc adds a cover page", async () => {
     const cover = document.querySelector("#setlistPrintBooklet .setlist-cover");
     assert.ok(cover);
     assert.equal(cover.querySelector("p").textContent, "Our summer set");
+  } finally {
+    cleanup();
+  }
+});
+
+test("buildBooklet collects each song's YouTube F: link into a deduped watch_videos playlist URL", async () => {
+  const { print, settle, cleanup } = setup();
+  try {
+    const changes = [];
+    print.setListenChangeHandler((url) => changes.push(url));
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
+    await settle();
+    // a.abc appears twice in SONGS (see the fixture above) but contributes
+    // one id; b.abc has no F: field at all.
+    assert.equal(print.getListenUrl(), "https://www.youtube.com/watch_videos?video_ids=aaaaaaaaaaa");
+    assert.deepEqual(changes, [null, "https://www.youtube.com/watch_videos?video_ids=aaaaaaaaaaa"]);
+  } finally {
+    cleanup();
+  }
+});
+
+test("buildBooklet reports no listen URL once a setlist with no YouTube links has loaded", async () => {
+  const { print, settle, cleanup } = setup();
+  try {
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", [{ file: "b.abc", key: "" }], ""));
+    await settle();
+    assert.equal(print.getListenUrl(), null);
   } finally {
     cleanup();
   }

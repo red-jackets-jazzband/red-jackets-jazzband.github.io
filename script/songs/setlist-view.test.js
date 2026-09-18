@@ -620,3 +620,51 @@ test("renderOpen feeds the print booklet builder the same songs", () => {
     cleanup();
   }
 });
+
+// The "Listen" button under the Print row: initControls() registers a
+// listen-change handler with ctx.setlistPrint (the real setlist-print.js
+// calls it once its per-song reads settle) that keeps the button's enabled
+// state and title in step, and a click opens whatever URL getListenUrl()
+// currently reports.
+test("the Listen button tracks setlistPrint's listen-change callback and opens its URL", () => {
+  let listenChanged = null;
+  let currentUrl = null;
+  const opened = [];
+  const page = mountPage();
+  const originalOpen = window.open;
+  try {
+    const ctx = makeCtx({
+      setlistModal: { init: () => {} },
+      setlistPrint: {
+        buildBooklet: () => {},
+        print: () => {},
+        setListenChangeHandler: (fn) => { listenChanged = fn; },
+        getListenUrl: () => currentUrl,
+      },
+    });
+    const view = createSetlistView(ctx);
+    view.initControls();
+
+    const btn = document.getElementById("listenYoutubeBtn");
+    assert.equal(typeof listenChanged, "function");
+
+    window.open = (...args) => opened.push(args);
+    btn.click();
+    assert.equal(opened.length, 0, "disabled with no URL yet — nothing opened");
+
+    currentUrl = "https://www.youtube.com/watch_videos?video_ids=aaaaaaaaaaa";
+    listenChanged(currentUrl);
+    assert.equal(btn.disabled, false);
+    assert.match(btn.title, /Open/);
+
+    btn.click();
+    assert.deepEqual(opened, [[currentUrl, "_blank", "noopener"]]);
+
+    listenChanged(null);
+    assert.equal(btn.disabled, true);
+    assert.match(btn.title, /No YouTube links/);
+  } finally {
+    window.open = originalOpen;
+    page.cleanup();
+  }
+});

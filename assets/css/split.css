@@ -2446,6 +2446,10 @@ video.video {
 }
 .rj-library-print-btn {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 34px;
   padding: 0 6px;
   background: #2f2f2f;
@@ -2458,9 +2462,13 @@ video.video {
 .rj-library-print-btn + .rj-library-print-btn {
   border-left: 1px solid rgba(255,255,255,.1);
 }
-.rj-library-print-btn:hover {
+.rj-library-print-btn:hover:not(:disabled) {
   background: #383838;
   color: var(--rj-gold);
+}
+.rj-library-print-btn:disabled {
+  opacity: .35;
+  cursor: not-allowed;
 }
 /*
   Progress line shown while a "Print …" click waits for every song's .abc to
