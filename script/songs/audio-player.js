@@ -517,7 +517,7 @@ export function createAudioPlayer(ctx) {
   /*
     Apply the current tempo through SynthController.setWarp (a percentage of the
     tune's own Q: tempo). setTune's `qpm` option does not drive playback in
-    ABCjs 6.6.4 — go() reads millisecondsPerMeasure + warp — so the stepper has
+    ABCjs 6.7.0 — go() reads millisecondsPerMeasure + warp — so the stepper has
     to go through setWarp, which re-primes the MIDI buffer and resumes playback
     itself if it was running.
   */
