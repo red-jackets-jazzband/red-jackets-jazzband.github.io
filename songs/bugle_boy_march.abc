@@ -1,0 +1,28 @@
+X:1
+T:Bugle Boy March
+C:Traditional
+R:March
+M:4/4
+L:1/8
+K:Fmaj
+P:Intro
+C C||"F"F C F A F2 F F|A F A c A2 F A|c2 A F C2 C2|F2 C2 D2 E2||
+P:A
+|:z2 c2 c2 A2|A G F G A2 c2|z2 A2 A G F G|A8|
+z2 c2 c2 A2|A G F G A2 c2|"C7"z2 B2 B A G A|B8|
+z2 B2 B2 B2|B A G A B2 c2|"F"z2 A2 A2 A2|A G F G A4|
+"G7"G4 ^G4|A4 =B4|"C7"c3 G E2 G2|[1 c4 z4 :|[2 c2 c2 c2 c2||
+P:B
+|:"F"c8-|c2 c2 A3 F|"C7"G8-|G2 c2 c2 d2|
+"F"c8-|c2 c2 A3 F|"C7"G8-|G2 C2 D2 E2|
+"F"F6 F2|"F7"G4 A4|"Bb"B8|"Fdim"c4 d4|
+"F"A2 A4 F2|"C7"A4 G4|"F"F8-|[1 F2 c2 c2 c2 :|[2 F2 D2 _E2 =E2||
+P:C
+|:"Bb"F8|"Eb"G4 _e4|"Bb"d8|B6 F2|
+"F7"d4 c4|G4 A4|"Bb"B8-|"Bb7"B2 B2 c2 G2|
+"Eb"B6 A2|B4 G4|"Bb"F8|"G7"d8|
+"C7"d8|B8|"F7"c8-|c2 D2 _E2 =E2|
+"Bb"F8|"Eb"G4 _e4|"Bb"d8|B6 F2|
+"F7"d4 c4|G4 A4|"Bb"B8-|"Bb7"B2 B2 c2 G2|
+"Eb"B6 A2|"Ebm"B4 G4|"Bb"F4 f4|"G7"_e4 d4|
+"C7"G6 B2|"F7"A4 F4|"Bb"B8-|B8 :|]

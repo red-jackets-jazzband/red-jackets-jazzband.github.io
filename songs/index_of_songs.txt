@@ -16,6 +16,7 @@ Bill Bailey,bill_bailey.abc
 Blue Heaven,my_blue_heaven.abc
 Bourbon Street Parade,bourbon_street_parade.abc
 Bucket's gotta hole,buckets_got_a_hole.abc
+Bugle Boy March,bugle_boy_march.abc
 By and By,by_and_by.abc
 Canal Street Blues,canal_street_blues.abc
 Caravan,caravan.abc
@@ -52,6 +53,7 @@ Happy Feet Blues,happy_feet_blues.abc
 High Society,high_society.abc
 Home Sweet Home,home_sweet_home.abc
 Honky Tonk Town,honky_tonk_town.abc
+I Ain't Gonna Give Nobody None of My Jelly Roll,jelly_roll.abc
 I Wanna Be Like You,be_like_you.abc
 I wish I coulde shimmy like my sister kater,sister_kate.abc
 I'll fly away,ill_fly_away.abc
