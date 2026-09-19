@@ -1,29 +1,34 @@
+X:1
 T:High Society
 C:Porter Steele (1901)
 N:Traditional clarinet solo by Alphonse Picou
-N:Melody not transcribed yet - chords/form only, all rests
 R:Traditional
 M:4/4
-L:1/4
+L:1/8
 F:https://secondhandsongs.com/work/162343
 K:Bbmaj
-"Bb"z4 |"Cm"z4 |"Cm"z2"C7"z2 |"F7"z4 |
+"Bb"B4 A3 B | "Cm"c2 d2 e2 f2 | "Cm"ee d2 "C7"c2 B2 | "F7"A2 z2 f2 z2 |
 P:A
-"F7"z2"Ab7"z2 |"Cm"z2"F7"z2 |"Bb"z4 |z4 |"F7"z4 |z4 |"Bb"z4 |z4 |
-"Gm"z4 |"Cm"z2"Gm"z2 |"D7"z4 |"Gm"z4 |z4 |"Cm"z2"Gm"z2 |"C7"z4 |"F7"z4 |
-"F7"z4 |z4 |"Bb"z4 |z4 |"C7"z4 |z4 |"F7"z4 |z4 |
-"Bb"z4 |"D7"z4 |"Eb"z4 |"Gdim"z4 |"Bb"z4 |"F7"z4 |"Bb"z4 |z4 |
-"Bb7"z4 |z4 |z4 |z4 |
+"F7"FF F2 "Ab7"^F^F ^F2 | "Cm"GG G2 "F7"AA A2 | "Bb"B2 d2 z2 z A | c2 B2 F2 G2 |
+"F7"A2 e2 z2 z c | d2 c2 f2 d2 | "Bb"B2 d2 z2 z A | c2 B2 F2 ^F2 |
+"Gm"G4 D4 | "Cm"E4 "Gm"D4 | "D7"d^cde d=cAc | "Gm"BA B G4 z |
+g4 d4 | "Cm"e4 "Gm"d4 | "C7"c3 ^c d2 =e2 | "F7"f8 |
+"F7"F4 A2 c2 | e4 z2 F2 | "Bb"F4 B2 c2 | d6 B2 |
+"C7"G4 ^F2 G2 | d6 _d2 | "F7"c8- | c2 z2 f2 e2 |
+"Bb"d4 c2 B2 | "D7"c2 d4 c2 | "Eb"B4 A2 G2 | "Gdim"B4 A2 G2 |
+"Bb"F4 F2 A2 | "F7"c4 d4 | "Bb"B8- | B4 z4 |
+"Bb7"B2 B4 =B2 | c2 c4 ^c2 | d3 _d c2 =B2 | B2 z2 B2 z2 |
 P:B
-"Eb"z4 |z4 |z4 |z4 |z4 |"Eb"z2"Ab"z2 |"Eb"z4 |z4 |
-"Bb7"z4 |z4 |"Eb"z4 |z4 |"Bb"z4 |"F7"z4 |"Bb7"z4 |z4 |
-"Eb"z4 |z4 |z4 |z4 |z4 |"Eb"z2"Ab"z2 |"Eb"z4 |"Eb7"z4 |
-"Ab"z4 |"Fdim"z4 |"Eb"z4 |"C7"z4 |"F7"z4 |"Bb7"z4 |"Eb"z4 |z4 |
+"Eb"G8- | G4 B4 | e8- | e4 B4 |
+G6 ^F2 | "Eb"G4 "Ab"c4 | "Eb"B8- | B4 G4 |
+"Bb7"_A6 G2 | _A4 =A4 | "Eb"B8 | c4 e4 |
+"Bb"d8 | "F7"c8 | "Bb7"f8- | f4 B4 |
+"Eb"G8- | G4 B4 | e8- | e4 B4 |
+G6 ^F2 | "Eb"G4 "Ab"c4 | "Eb"B8- | "Eb7"B4 B2 =B2 |
+"Ab"c8 | "Fdim"d4 e4 | "Eb"g8- | "C7"g4 B2 =B2 |
+"F7"c8 | "Bb7"d8 | "Eb"e8- | e2 z2 e2 d2 |
 P:C
-"Cm"z4 |z4 |"G7"z4 |z4 |"Cm"z4 |z4 |"G7"z4 |z4 |
-"Fm"z4 |z4 |"Cm"z4 |z4 |"Ab"z4 |"Ab7"z4 |"G7"z4 |"Bb7"z4 |
-P:D
-"Eb"z4 |z4 |z4 |z4 |z4 |"Eb"z2"Ab"z2 |"Eb"z4 |z4 |
-"Bb7"z4 |z4 |"Eb"z4 |z4 |"F7"z4 |z4 |"Bb7"z4 |z4 |
-"Eb"z4 |z4 |z4 |z4 |z4 |"Eb"z2"Ab"z2 |"Eb"z4 |"Eb7"z4 |
-"Ab"z4 |"Fdim"z4 |"Eb"z4 |"C7"z4 |"F7"z4 |"Bb7"z4 |"Eb"z4 |z4 |]
+"Cm"c6 =B2 | c2 d2 e2 c2 | "G7"d2 =B2 G4- | G8 |
+"Cm"c6 =B2 | c2 d2 e2 f2 | "G7"g8- | g8 |
+"Fm"_a2 _a4 g2 | f2 g2 _a2 z2 | "Cm"g2 g4 f2 | e2 f2 g2 z2 |
+"Ab"e6 d2 | "Ab7"c3 d e2 f2 | "G7"g4 G4 | "Bb7"B8 |]
