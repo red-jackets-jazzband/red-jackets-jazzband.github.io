@@ -4881,6 +4881,11 @@ body.rj-sheet-fullscreen #rjSheet.rj-sheet {
   overflow-y: auto;
   border: none;
   border-radius: 0;
+  /* Still scrolls (wheel/touch/keys); only the bar itself is hidden. */
+  scrollbar-width: none;
+}
+body.rj-sheet-fullscreen #rjSheet.rj-sheet::-webkit-scrollbar {
+  display: none;
 }
 /* #sheetmenu is already position:relative — sticking it to the top of
    #rjSheet's own scroll box keeps Key/Tempo/Play/etc. in reach while a
@@ -4889,7 +4894,9 @@ body.rj-sheet-fullscreen #rjSheet.rj-sheet {
 body.rj-sheet-fullscreen #sheetmenu {
   position: sticky;
   top: 0;
-  z-index: 2;
+  /* Above .rj-sheet-fullscreen-btn (z-index 2, later in DOM) so the button
+     scrolls behind the toolbar rather than over it. */
+  z-index: 3;
 }
 @media (orientation: landscape) {
   body.rj-sheet-fullscreen .rj-songs-layout {
@@ -4908,5 +4915,51 @@ body.rj-sheet-fullscreen #sheetmenu {
   body.rj-sheet-fullscreen #rjSheet.rj-sheet {
     flex: 1;
     min-width: 0;
+  }
+}
+/*
+  Landscape phone (short viewport, e.g. 844x390). The 1024px stacking block
+  above still applies, which is built for a tall portrait screen: an 80vh hero
+  photo plus the page title stack above the sheet, and full screen pins a
+  ~180px toolbar over a viewport barely twice that tall next to a 300px
+  sidebar — leaving the staff a sliver at roughly half scale. Height, not
+  width, is what's scarce here, so spend it on the chart:
+   - once a sheet is open, drop the photo/title/language bar above it and
+     tighten the page gutters, so the sheet opens straight at the top;
+   - pack the toolbar into two lines instead of three (instrument picker
+     shares a line with Key/Tempo rather than owning a full-width row);
+   - in full screen, give the whole width to the sheet (the sidebar
+     returns with a portrait/tall landscape screen — swipe still steps
+     songs, and leaving full screen restores the list).
+*/
+@media (orientation: landscape) and (max-height: 500px) {
+  body.rj-sheet-active .fs-split .split-image,
+  body.rj-sheet-active .fs-split .split-intro {
+    display: none;
+  }
+  body.rj-sheet-active:has(#rjLibrary) .split-content-vertically-center {
+    padding: 8px 12px;
+  }
+  .sheet-status {
+    flex: 1 1 220px;
+  }
+  .sheet-adjust {
+    flex: 0 1 auto;
+  }
+  body.rj-sheet-fullscreen #rjLibrary.rj-library {
+    display: none;
+  }
+}
+
+/*
+  Mobile full screen: the sticky toolbar (see above) would sit over the chart
+  the whole time, on a screen with no height to spare. Let it scroll away with
+  the sheet instead — scroll back up to reach Key/Tempo/Play, scroll down for
+  the full-screen chart. Covers portrait phones/tablets (<=1024px wide) and
+  short landscape ones alike.
+*/
+@media (max-width: 1024px), (max-height: 500px) and (orientation: landscape) {
+  body.rj-sheet-fullscreen #sheetmenu {
+    position: relative;
   }
 }
