@@ -526,6 +526,7 @@ video.video {
   one continuous white surface.
 */
 .rj-sheet-paper {
+  position: relative;
   background-color: #ffffff;
   color: #000000;
   overflow: hidden;
@@ -1389,7 +1390,6 @@ video.video {
   gap: 9px;
   padding: 9px 8px 9px 12px;
   background: #1d1d1d;
-  border-bottom: 1px solid rgba(255,255,255,.08);
   cursor: grab;
   touch-action: none;
 }
@@ -1435,36 +1435,138 @@ video.video {
   background: var(--rj-gold);
   color: #222222 !important;
 }
-/* Source switcher (YouTube/Spotify), only shown when a tune has both — see
-   songs/inspiration.js's updateTabsUI. Same icon-button footprint as the
-   header's other icon buttons, but the "active" one (whichever tab is
-   currently showing) stays gold at rest rather than just on hover. */
-.inspiration-panel-tabs {
-  flex: none;
+/* Toolbar row under the header: the source switcher (YouTube/Spotify/
+   SoundCloud tabs, hidden unless a tune has more than one — see
+   songs/inspiration.js's updateTabsUI) on the left, the "open externally"
+   link pinned to the right via margin-left: auto on
+   .inspiration-panel-expand-btn. Unlike the tabs, the expand link is never
+   hidden (there's always somewhere to open once the panel has a source at
+   all), so this row — not .inspiration-panel-tabs itself — owns the
+   baseline/background that used to sit on the header: it's the one strip
+   that's always there to draw it. */
+.inspiration-panel-toolbar {
   display: flex;
-  gap: 4px;
+  align-items: flex-end;
+  gap: 3px;
+  padding: 8px 8px 0;
+  background: #1d1d1d;
+  border-bottom: 1px solid rgba(255,255,255,.08);
 }
+.inspiration-panel-expand-btn {
+  margin-bottom: 4px;
+  margin-left: auto;
+}
+/* Real folder tabs again, but with a rounded connector instead of the old
+   square-cornered bridge: the active tab still overlaps the toolbar's own
+   border-bottom by 1px (margin-bottom/padding-bottom below) so its #000
+   fill paints over the seam and reads as physically attached to the video/
+   embed box beneath (both are the same #000 — see .inspiration-panel-video
+   and .inspiration-panel-embed). What's new is the pair of ::before/::after
+   "feet" on the active tab (further down) that flare its bottom corners
+   outward into the toolbar surface beside it, rather than meeting it at a
+   sharp right angle — the classic connected-tab silhouette (rounded corner
+   growing out of a flat baseline). The gap is deliberately narrower than a
+   foot: the active tab's z-index (see .active below) already lifts it and
+   its feet above its plain, non-positioned-in-front neighbors, so a foot is
+   free to lap over part of the next tab's box — exactly what a real
+   browser's tab strip does — rather than needing to keep clear of it. */
+.inspiration-panel-tabs {
+  display: flex;
+  align-items: flex-end;
+  flex: 1;
+  min-width: 0;
+  gap: 6px;
+}
+/* display:flex above beats the UA [hidden] rule, same gotcha as the rest of
+   this file's [hidden] companions (see .inspiration-panel-tab[hidden] just
+   below for the full explanation). */
+.inspiration-panel-tabs[hidden] {
+  display: none;
+}
+/* Each brand's icon keeps its own real-world color (YouTube red, Spotify
+   green, SoundCloud orange) at all times, dimmed via opacity rather than
+   swapped to gray, so the available sources stay recognizable by color at a
+   glance and not just once selected. Sized (44px touch target, the standard
+   mobile minimum) so they're comfortably tappable, not just clickable. */
 .inspiration-panel-tab {
-  width: 26px;
-  height: 26px;
+  position: relative;
+  flex: none;
   display: grid;
   place-items: center;
-  border-radius: 6px;
-  background: #262626;
-  color: rgba(236,234,230,.5);
-  font-size: 12px;
+  min-width: 44px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 11px 11px 0 0;
+  background: rgba(255,255,255,.04);
+  font-size: 14px;
   border: none;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, transform 0.1s;
+}
+.inspiration-panel-tab .fa-brands {
+  opacity: .5;
+  transition: opacity 0.15s;
+}
+.inspiration-panel-tab .fa-youtube {
+  color: #ff0000;
+}
+.inspiration-panel-tab .fa-spotify {
+  color: #1db954;
+}
+.inspiration-panel-tab .fa-soundcloud {
+  color: #ff5500;
+}
+.inspiration-panel-tab.active .fa-brands {
+  opacity: 1;
 }
 .inspiration-panel-tab.active {
-  background: var(--rj-gold);
-  color: #222222;
+  z-index: 1;
+  margin-bottom: -1px;
+  padding-bottom: 1px;
+  background: #000000;
+}
+/* The flared feet themselves: a 14x14 box with a quarter-circle radial
+   gradient. The bit within 14px of the box's own outer corner stays
+   transparent (the toolbar's own background shows through there), and the
+   rest — the sliver hugging the tab's straight edge — is filled #000, the
+   same solid color as the tab. That's what reads as the tab curving
+   outward as it meets the baseline instead of squaring off. Wider than the
+   tabs' own 6px gap on purpose (see .inspiration-panel-tabs) — the active
+   tab's z-index keeps this drawn in front of whichever neighbor it laps
+   over. */
+.inspiration-panel-tab.active::before,
+.inspiration-panel-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+}
+.inspiration-panel-tab.active::before {
+  left: -14px;
+  background: radial-gradient(circle at top left, transparent 14px, #000000 14.5px);
+}
+.inspiration-panel-tab.active::after {
+  right: -14px;
+  background: radial-gradient(circle at top right, transparent 14px, #000000 14.5px);
+}
+/* The button's own `display: grid` above beats the browser's built-in
+   `[hidden] { display: none }` UA rule (author styles always win over UA
+   styles, regardless of specificity), so a tab the JS hides for a source
+   this tune doesn't have would otherwise still render. */
+.inspiration-panel-tab[hidden] {
+  display: none;
 }
 @media (hover: hover) {
   .inspiration-panel-tab:not(.active):hover {
-    color: rgba(236,234,230,.85);
+    background: rgba(255,255,255,.09);
   }
+  .inspiration-panel-tab:not(.active):hover .fa-brands {
+    opacity: .8;
+  }
+}
+.inspiration-panel-tab:not(.active):active {
+  transform: scale(0.94);
 }
 .inspiration-panel-video {
   position: relative;
@@ -1480,15 +1582,17 @@ video.video {
   border: 0;
   display: block;
 }
-/* Spotify's own embed widget draws its own play/pause/seek bar at a fixed
-   height (see lib/spotify.js's spotifyEmbedHeight) rather than a 16:9 video
-   frame, so this sits beside .inspiration-panel-video as a plain,
-   width-driven box instead of sharing its aspect-ratio layout. */
-.inspiration-panel-spotify {
+/* Spotify's and SoundCloud's own embed widgets each draw their own
+   play/pause/seek bar at a fixed height (see lib/spotify.js's
+   spotifyEmbedHeight and lib/soundcloud.js's SOUNDCLOUD_EMBED_HEIGHT) rather
+   than a 16:9 video frame, so this sits beside .inspiration-panel-video as a
+   plain, width-driven box instead of sharing its aspect-ratio layout —
+   shared by #inspirationSpotifyBox and #inspirationSoundcloudBox alike. */
+.inspiration-panel-embed {
   width: 100%;
   background: #000000;
 }
-.inspiration-panel-spotify iframe {
+.inspiration-panel-embed iframe {
   display: block;
   width: 100%;
   border: 0;
@@ -4693,4 +4797,116 @@ body:has(#rjLibrary) .split-bio {
 #notation svg g[class*="abcjs-note"]:hover path,
 #notation svg g[class*="abcjs-note"]:hover ellipse {
   fill: #c88800 !important;
+}
+
+/* ============================================================
+   Sheet "full screen" mode (songs/fullscreen.js)
+
+   #sheetFullscreenBtn lives inside .rj-sheet-paper itself (not the dark
+   #sheetmenu toolbar) as a small white pill hovering over the paper's own
+   top-right corner — subtle against the white sheet rather than another
+   dark toolbar icon, and out of the way of the notation/chord grid below
+   it. .hideOnprint keeps it off a printed chart the same way #sheetmenu
+   already is. It toggles body.rj-sheet-fullscreen. Deliberately CSS-only —
+   pinning .rj-songs-layout over the whole viewport — rather than the real
+   Fullscreen API (Element.requestFullscreen()): mobile browsers suspend
+   pinch-zoom for as long as a genuine fullscreen element is active, which
+   would defeat the point of a mode built for reading a dense chart up
+   close on a phone. With no requestFullscreen() call, the page's own
+   native pinch-zoom (nothing here sets user-scalable=no or
+   touch-action:none on the sheet) keeps working right through it.
+
+   Portrait has no room to spare for the library/setlist sidebar alongside
+   a lead sheet, so the sheet alone fills the screen there, same as the
+   narrow-viewport stacked layout elsewhere on this page. Landscape has
+   the width of the old side-by-side desktop layout to spare, so the
+   sidebar stays visible on the left — letting you keep browsing/switching
+   songs without ever leaving full screen.
+
+   z-index 10 is deliberately below the Mixer panel/backdrop (19/20), the
+   Inspiration panel (15) and any modal (40, the highest on this page) —
+   those should still be able to open and sit on top of a full-screen sheet,
+   not be trapped behind it.
+   ============================================================ */
+.rj-sheet-fullscreen-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,.8);
+  border: none;
+  border-radius: 9px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  color: #666666;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s, box-shadow 0.15s, color 0.15s;
+}
+@media (hover: hover) {
+  .rj-sheet-fullscreen-btn:hover {
+    background: #ffffff;
+    color: #333333;
+    box-shadow: 0 2px 6px rgba(0,0,0,.14);
+  }
+}
+body.rj-sheet-fullscreen .split-image,
+body.rj-sheet-fullscreen .split-intro {
+  display: none;
+}
+body.rj-sheet-fullscreen #sheetBackBtn.rj-sheet-back {
+  display: none;
+}
+body.rj-sheet-fullscreen .rj-songs-layout {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  width: 100vw;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  background: var(--rj-ground);
+  border-radius: 0;
+}
+body.rj-sheet-fullscreen #rjLibrary.rj-library {
+  display: none;
+}
+body.rj-sheet-fullscreen #rjSheet.rj-sheet {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  border: none;
+  border-radius: 0;
+}
+/* #sheetmenu is already position:relative — sticking it to the top of
+   #rjSheet's own scroll box keeps Key/Tempo/Play/etc. in reach while a
+   long chart scrolls underneath, satisfying "the sheet menu controls
+   should still be available" without a second, floating toolbar. */
+body.rj-sheet-fullscreen #sheetmenu {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+@media (orientation: landscape) {
+  body.rj-sheet-fullscreen .rj-songs-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+  }
+  body.rj-sheet-fullscreen #rjLibrary.rj-library {
+    display: flex;
+    width: 300px;
+    flex: none;
+    height: 100%;
+    border-radius: 0;
+    border-width: 0 1px 0 0;
+  }
+  body.rj-sheet-fullscreen #rjSheet.rj-sheet {
+    flex: 1;
+    min-width: 0;
+  }
 }

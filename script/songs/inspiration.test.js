@@ -5,7 +5,9 @@ import { createInspiration } from "./inspiration.js";
 
 const SAMPLE_URL = "https://youtu.be/abcdefghijk";
 const SPOTIFY_URL = "https://open.spotify.com/track/2EYjaK8Koe0q7PcK1MlB4S";
+const SOUNDCLOUD_URL = "https://soundcloud.com/someone/a-track";
 const ARIA_PRESSED = "aria-pressed";
+const ARIA_SELECTED = "aria-selected";
 
 function inDom(fn) {
   const page = mountPage();
@@ -151,7 +153,8 @@ test("updateLink with only a Spotify source creates the button and opens straigh
 
     btn.dispatchEvent(new window.Event("click"));
     assert.equal(document.getElementById("inspirationPanel").hidden, false);
-    // A single-source tune has nothing to switch between.
+    // A single Spotify source has nothing to switch between, and Spotify's
+    // own embed already shows its branding, so the switcher stays hidden.
     assert.equal(document.getElementById("inspirationTabs").hidden, true);
     assert.equal(document.getElementById("inspirationSpotifyBox").hidden, false);
     assert.equal(document.getElementById("inspirationVideoBox").hidden, true);
@@ -172,6 +175,121 @@ test("updateLink(undefined) removes the button even for a Spotify-only tune", ()
   });
 });
 
+test("updateLink with only a SoundCloud source creates the button and opens straight to the SoundCloud tab, switcher shown to identify the source", () => {
+  inDom(() => {
+    const insp = createInspiration();
+    insp.init();
+    insp.updateLink({ soundcloud: SOUNDCLOUD_URL }, "X");
+    const btn = document.getElementById("inspirationLink");
+    assert.ok(btn);
+    assert.equal(btn.dataset.soundcloudUrl, SOUNDCLOUD_URL);
+    assert.equal(btn.dataset.url, "");
+
+    btn.dispatchEvent(new window.Event("click"));
+    assert.equal(document.getElementById("inspirationPanel").hidden, false);
+    // A single SoundCloud source has nothing to switch between, but unlike
+    // Spotify's own branded widget, a bare SoundCloud waveform carries no
+    // visible indication of the source, so the tab still shows to label it.
+    assert.equal(document.getElementById("inspirationTabs").hidden, false);
+    assert.equal(document.getElementById("inspirationTabSoundcloud").hidden, false);
+    assert.equal(document.getElementById("inspirationTabSoundcloud").getAttribute(ARIA_SELECTED), "true");
+    assert.equal(document.getElementById("inspirationTabYoutube").hidden, true);
+    assert.equal(document.getElementById("inspirationTabSpotify").hidden, true);
+    assert.equal(document.getElementById("inspirationSoundcloudBox").hidden, false);
+    assert.equal(document.getElementById("inspirationVideoBox").hidden, true);
+    assert.equal(
+      document.getElementById("inspirationSoundcloudFrame").getAttribute("src"),
+      "https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fsomeone%2Fa-track&color=%23e29d0f&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false",
+    );
+    assert.equal(document.getElementById("inspirationExpandBtn").getAttribute("href"), SOUNDCLOUD_URL);
+  });
+});
+
+test("updateLink with only a YouTube source opens the panel with the tab switcher shown to identify the source", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    const events = mockYouTubePlayer(window);
+    const insp = createInspiration();
+    insp.init();
+    insp.updateLink({ youtube: SAMPLE_URL }, "X");
+    document.getElementById("inspirationLink").dispatchEvent(new window.Event("click"));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    events.ready();
+
+    // A single YouTube source has nothing to switch between, but a bare
+    // video embed (controls=0) carries no visible indication of the source,
+    // so the tab still shows to label it.
+    assert.equal(document.getElementById("inspirationTabs").hidden, false);
+    assert.equal(document.getElementById("inspirationTabYoutube").hidden, false);
+    assert.equal(document.getElementById("inspirationTabYoutube").getAttribute(ARIA_SELECTED), "true");
+    assert.equal(document.getElementById("inspirationTabSpotify").hidden, true);
+    assert.equal(document.getElementById("inspirationTabSoundcloud").hidden, true);
+  } finally {
+    delete window.YT;
+    page.cleanup();
+  }
+});
+
+test("updateLink(undefined) removes the button even for a SoundCloud-only tune", () => {
+  inDom(() => {
+    const insp = createInspiration();
+    insp.updateLink({ soundcloud: SOUNDCLOUD_URL }, "X");
+    insp.updateLink(undefined);
+    assert.equal(document.getElementById("inspirationLink"), null);
+  });
+});
+
+test("a tune with all three sources shows the tab switcher and can cycle through YouTube, Spotify and SoundCloud", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    const events = mockYouTubePlayer(window);
+    const insp = createInspiration();
+    insp.init();
+    insp.updateLink({ youtube: SAMPLE_URL, spotify: SPOTIFY_URL, soundcloud: SOUNDCLOUD_URL }, "X");
+    document.getElementById("inspirationLink").dispatchEvent(new window.Event("click"));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    events.ready();
+
+    assert.equal(document.getElementById("inspirationTabs").hidden, false);
+    assert.equal(document.getElementById("inspirationTabYoutube").getAttribute(ARIA_SELECTED), "true");
+
+    document.getElementById("inspirationTabSoundcloud").dispatchEvent(new window.Event("click"));
+    assert.equal(document.getElementById("inspirationTabSoundcloud").getAttribute(ARIA_SELECTED), "true");
+    assert.equal(document.getElementById("inspirationSoundcloudBox").hidden, false);
+    assert.equal(document.getElementById("inspirationSpotifyBox").hidden, true);
+    assert.equal(document.getElementById("inspirationVideoBox").hidden, true);
+    assert.equal(document.getElementById("inspirationLoopBar").hidden, true);
+
+    document.getElementById("inspirationTabSpotify").dispatchEvent(new window.Event("click"));
+    assert.equal(document.getElementById("inspirationTabSpotify").getAttribute(ARIA_SELECTED), "true");
+    assert.equal(document.getElementById("inspirationSpotifyBox").hidden, false);
+    assert.equal(document.getElementById("inspirationSoundcloudBox").hidden, true);
+  } finally {
+    delete window.YT;
+    page.cleanup();
+  }
+});
+
+test("closing the panel stops a loaded SoundCloud embed too", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    const insp = createInspiration();
+    insp.init();
+    insp.updateLink({ soundcloud: SOUNDCLOUD_URL }, "X");
+    document.getElementById("inspirationLink").dispatchEvent(new window.Event("click"));
+
+    document.getElementById("inspirationCloseBtn").dispatchEvent(new window.Event("click"));
+
+    assert.equal(document.getElementById("inspirationSoundcloudFrame").dataset.loadedUrl, undefined);
+    assert.equal(document.getElementById("inspirationSoundcloudFrame").getAttribute("src"), "");
+  } finally {
+    page.cleanup();
+  }
+});
+
 test("a tune with both YouTube and Spotify shows the tab switcher, defaulting to the YouTube tab", async () => {
   const page = mountPage();
   const { window } = page;
@@ -185,11 +303,18 @@ test("a tune with both YouTube and Spotify shows the tab switcher, defaulting to
     events.ready();
 
     assert.equal(document.getElementById("inspirationTabs").hidden, false);
-    assert.equal(document.getElementById("inspirationTabYoutube").getAttribute(ARIA_PRESSED), "true");
-    assert.equal(document.getElementById("inspirationTabSpotify").getAttribute(ARIA_PRESSED), "false");
+    assert.equal(document.getElementById("inspirationTabYoutube").getAttribute(ARIA_SELECTED), "true");
+    assert.equal(document.getElementById("inspirationTabSpotify").getAttribute(ARIA_SELECTED), "false");
     assert.equal(document.getElementById("inspirationVideoBox").hidden, false);
     assert.equal(document.getElementById("inspirationSpotifyBox").hidden, true);
     assert.equal(document.getElementById("inspirationLoopBar").hidden, false);
+    assert.equal(document.getElementById("inspirationTabYoutube").hidden, false);
+    assert.equal(document.getElementById("inspirationTabSpotify").hidden, false);
+    assert.equal(
+      document.getElementById("inspirationTabSoundcloud").hidden,
+      true,
+      "no SoundCloud source on this tune, so its tab button shouldn't show alongside YouTube/Spotify",
+    );
   } finally {
     delete window.YT;
     page.cleanup();
@@ -198,10 +323,11 @@ test("a tune with both YouTube and Spotify shows the tab switcher, defaulting to
 
 // Regression test: the header's own pointerdown handler (initDrag) starts
 // dragging the whole panel unless the pointer landed on one of its icon
-// buttons — the tab buttons live in that same header and were initially
-// missed by that guard, so a pointerdown on one silently started a drag
-// instead of ever reaching its click handler (confirmed manually in a real
-// browser: clicking the Spotify tab did nothing until this was fixed).
+// buttons. The tab strip now sits below the header rather than inside it,
+// so a pointerdown there can't reach that listener at all — kept as a guard
+// against a future refactor moving the tabs back into the header without
+// also adding them back to initDrag's bail-out selector (see
+// .inspiration-panel-icon-btn, .inspiration-panel-tab in inspiration.js).
 test("a pointerdown on a tab button doesn't start dragging the panel header", async () => {
   const page = mountPage();
   const { window } = page;
@@ -250,7 +376,7 @@ test("switching to the Spotify tab pauses YouTube and hides the LoopTube toolbar
     assert.equal(document.getElementById("inspirationVideoBox").hidden, true);
     assert.equal(document.getElementById("inspirationSpotifyBox").hidden, false);
     assert.equal(document.getElementById("inspirationLoopBar").hidden, true);
-    assert.equal(document.getElementById("inspirationTabSpotify").getAttribute(ARIA_PRESSED), "true");
+    assert.equal(document.getElementById("inspirationTabSpotify").getAttribute(ARIA_SELECTED), "true");
     assert.equal(
       document.getElementById("inspirationSpotifyFrame").getAttribute("src"),
       "https://open.spotify.com/embed/track/2EYjaK8Koe0q7PcK1MlB4S?utm_source=generator&theme=0",
@@ -263,6 +389,65 @@ test("switching to the Spotify tab pauses YouTube and hides the LoopTube toolbar
     assert.equal(document.getElementById("inspirationLoopBar").hidden, false);
     assert.deepEqual(loaded, []); // never reloaded — same video, just re-shown
     assert.equal(document.getElementById("inspirationSpotifyFrame").dataset.loadedUrl, undefined);
+  } finally {
+    delete window.YT;
+    page.cleanup();
+  }
+});
+
+// The autoplaying embed can genuinely be playing before the IFrame API's
+// onStateChange callback ever reports PLAYING back to us — switching tabs in
+// that window must still pause it rather than relying on our own (still
+// stale) isPlaying bookkeeping.
+test("switching to the Spotify tab pauses YouTube even before a PLAYING state event has arrived", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    const paused = [];
+    const events = mockYouTubePlayer(window, {
+      pauseVideo: () => paused.push(true),
+    });
+    const insp = createInspiration();
+    insp.init();
+    insp.updateLink({ youtube: SAMPLE_URL, spotify: SPOTIFY_URL }, "X");
+    document.getElementById("inspirationLink").dispatchEvent(new window.Event("click"));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    events.ready(); // player ready, but no onStateChange(PLAYING) yet
+
+    document.getElementById("inspirationTabSpotify").dispatchEvent(new window.Event("click"));
+
+    assert.deepEqual(paused, [true]);
+  } finally {
+    delete window.YT;
+    page.cleanup();
+  }
+});
+
+// Same race as above, but for the panel's own Play/Pause button: it decides
+// play vs. pause from getPlayerState() (when the mock supplies one), not the
+// possibly-stale isPlaying flag — clicking it while a just-autoplayed video
+// is already PLAYING, but before onStateChange has said so, must pause
+// rather than issue a no-op playVideo() that leaves it running.
+test("the play/pause button pauses a video that's already playing before its PLAYING state event has arrived", async () => {
+  const page = mountPage();
+  const { window } = page;
+  try {
+    const calls = [];
+    const events = mockYouTubePlayer(window, {
+      playVideo: () => calls.push("play"),
+      pauseVideo: () => calls.push("pause"),
+      getPlayerState: () => 1, // already PLAYING, even though onStateChange hasn't fired
+    });
+    const insp = createInspiration();
+    insp.init();
+    insp.updateLink({ youtube: SAMPLE_URL }, "X");
+    document.getElementById("inspirationLink").dispatchEvent(new window.Event("click"));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    events.ready(); // player ready, but no onStateChange(PLAYING) yet
+
+    document.getElementById("inspirationPlayToggle").dispatchEvent(new window.Event("click"));
+
+    assert.deepEqual(calls, ["pause"]);
   } finally {
     delete window.YT;
     page.cleanup();

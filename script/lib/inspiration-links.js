@@ -57,17 +57,22 @@ export function parseInspirationLinks(metaTextUrl) {
     .filter((link) => link.type !== null);
 }
 
-// The tune's YouTube and Spotify links (if any) among its already-classified
-// F: field links — the two sources inspiration.js's docked panel can embed
-// (YouTube with the full LoopTube toolbar, Spotify as a plain embedded
-// player — see its own doc comment). Undefined (not null) so both drop
-// straight into updateLink's own "no sources -> remove the button" contract.
+// The tune's YouTube, Spotify and SoundCloud links (if any) among its
+// already-classified F: field links — the three sources inspiration.js's
+// docked panel can embed (YouTube with the full LoopTube toolbar, Spotify
+// and SoundCloud as plain embedded players — see its own doc comment).
+// Undefined (not null) so all three drop straight into updateLink's own
+// "no sources -> remove the button" contract.
 export function firstYoutubeUrl(links) {
   return links.find((link) => link.type === "youtube")?.url;
 }
 
 export function firstSpotifyUrl(links) {
   return links.find((link) => link.type === "spotify")?.url;
+}
+
+export function firstSoundcloudUrl(links) {
+  return links.find((link) => link.type === "soundcloud")?.url;
 }
 
 // The first link of each type, in F: field order — one button per source

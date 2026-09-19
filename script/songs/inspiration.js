@@ -1,6 +1,7 @@
 import { byId, on } from "../lib/dom.js";
 import { youtubeEmbedUrl, extractYouTubeId } from "../lib/youtube.js";
 import { extractSpotifyItem, spotifyEmbedUrl, spotifyEmbedHeight } from "../lib/spotify.js";
+import { soundcloudEmbedUrl } from "../lib/soundcloud.js";
 import { PREF_KEYS, readPref, writePref } from "../lib/preferences.js";
 import {
   formatClock, normalizeLoop, clampHandleDrag, stepPlaybackRate, loopLeadSeconds, shouldLoopSeek,
@@ -206,27 +207,97 @@ function setLinkActive(active) {
   btn.setAttribute("aria-expanded", active ? "true" : "false");
 }
 
-// A stable identity for a { youtube, spotify } source pair, so togglePanel
-// can tell "the same tune's button, clicked again" (close) apart from "a
-// different tune's button" (open fresh) — doesn't touch the panel/ctx state,
-// so it lives at module scope rather than nested inside createInspiration.
-function sourcesKey(sources) {
-  return `${sources.youtube || ""}|${sources.spotify || ""}`;
+// The sources that get a deliberately plain iframe embed (own play/pause/
+// seek bar, no custom toolbar) rather than YouTube's LoopTube treatment —
+// see the doc comment on createInspiration. `embedUrl` doubles as this
+// source's own validity check (it returns null for an unparseable/
+// non-content link), so nothing else in this file needs to re-derive that
+// separately. `embedHeight`, when present, is recomputed on every load since
+// it can vary by content type (Spotify's track vs. album/playlist); null
+// means the iframe's own static height (set in content/songs.md) is enough.
+const PLAIN_EMBED_SOURCES = {
+  spotify: {
+    frameId: "inspirationSpotifyFrame",
+    boxId: "inspirationSpotifyBox",
+    tabId: "inspirationTabSpotify",
+    label: "Spotify",
+    embedUrl: spotifyEmbedUrl,
+    embedHeight: (url) => spotifyEmbedHeight(extractSpotifyItem(url).type),
+  },
+  soundcloud: {
+    frameId: "inspirationSoundcloudFrame",
+    boxId: "inspirationSoundcloudBox",
+    tabId: "inspirationTabSoundcloud",
+    label: "SoundCloud",
+    embedUrl: soundcloudEmbedUrl,
+    embedHeight: null,
+  },
+};
+const PLAIN_EMBED_KEYS = Object.keys(PLAIN_EMBED_SOURCES);
+// All embeddable source keys, YouTube first — this order is also the
+// priority defaultTab and sourcesKey below fall back to, and what a fresh
+// { youtube, spotify, soundcloud } source object should be keyed by.
+const TAB_KEYS = ["youtube", ...PLAIN_EMBED_KEYS];
+// Each tab key's own switcher button id, so updateTabsUI can hide the
+// individual buttons for sources this tune doesn't have (not just the
+// switcher as a whole — see its own doc comment).
+const TAB_IDS = {
+  youtube: "inspirationTabYoutube",
+  ...Object.fromEntries(PLAIN_EMBED_KEYS.map((key) => [key, PLAIN_EMBED_SOURCES[key].tabId])),
+};
+
+// A fresh { youtube, spotify, soundcloud } source triple with everything
+// unset — doesn't touch the panel/ctx state, so it lives at module scope
+// rather than nested inside createInspiration.
+function emptySources() {
+  return Object.fromEntries(TAB_KEYS.map((key) => [key, null]));
 }
 
-// Reflects which tab is current on the two tab buttons themselves (pressed
+// Validates and normalizes a { youtube, spotify, soundcloud } source triple,
+// dropping any entry that doesn't actually parse as that service's kind of
+// link — doesn't touch the panel/ctx state, so it lives at module scope
+// rather than nested inside createInspiration.
+function resolveSources(sources) {
+  const resolved = emptySources();
+  if (sources.youtube && extractYouTubeId(sources.youtube)) resolved.youtube = sources.youtube;
+  for (const key of PLAIN_EMBED_KEYS) {
+    const url = sources[key];
+    if (url && PLAIN_EMBED_SOURCES[key].embedUrl(url)) resolved[key] = url;
+  }
+  return resolved;
+}
+
+// Which tab a freshly opened panel defaults to: YouTube first (it's the
+// only one with the LoopTube toolbar), then whichever plain-embed source
+// comes first in TAB_KEYS — doesn't touch the panel/ctx state, so it lives
+// at module scope rather than nested inside createInspiration.
+function defaultTab(sources) {
+  return TAB_KEYS.find((key) => sources[key]);
+}
+
+// A stable identity for a { youtube, spotify, soundcloud } source triple, so
+// togglePanel can tell "the same tune's button, clicked again" (close) apart
+// from "a different tune's button" (open fresh) — doesn't touch the
+// panel/ctx state, so it lives at module scope rather than nested inside
+// createInspiration.
+function sourcesKey(sources) {
+  return TAB_KEYS.map((key) => sources[key] || "").join("|");
+}
+
+// Reflects which tab is current on the tab buttons themselves (selected
 // state + the gold .active look) — doesn't touch the panel/ctx state, so it
 // lives at module scope rather than nested inside createInspiration.
 function updateTabButtonsUi(tab) {
   const ytTab = byId("inspirationTabYoutube");
-  const spTab = byId("inspirationTabSpotify");
   if (ytTab) {
     ytTab.classList.toggle("active", tab === "youtube");
-    ytTab.setAttribute("aria-pressed", tab === "youtube" ? "true" : "false");
+    ytTab.setAttribute("aria-selected", tab === "youtube" ? "true" : "false");
   }
-  if (spTab) {
-    spTab.classList.toggle("active", tab === "spotify");
-    spTab.setAttribute("aria-pressed", tab === "spotify" ? "true" : "false");
+  for (const key of PLAIN_EMBED_KEYS) {
+    const el = byId(PLAIN_EMBED_SOURCES[key].tabId);
+    if (!el) continue;
+    el.classList.toggle("active", tab === key);
+    el.setAttribute("aria-selected", tab === key ? "true" : "false");
   }
 }
 
@@ -241,29 +312,30 @@ function setExpandLink(url, label) {
   expandLink.setAttribute("aria-label", `Open on ${label}`);
 }
 
-// Loads a track into the Spotify tab. A no-op if it's already showing this
-// exact url — Spotify's widget keeps its own playback position across
-// re-renders, and reassigning the same src would restart it. Doesn't touch
-// the panel/ctx state, so it lives at module scope rather than nested inside
-// createInspiration.
-function loadSpotify(url) {
-  const frame = byId("inspirationSpotifyFrame");
+// Loads a track/link into a plain-embed tab (Spotify or SoundCloud). A no-op
+// if it's already showing this exact url — both widgets keep their own
+// playback position across re-renders, and reassigning the same src would
+// restart it. Doesn't touch the panel/ctx state, so it lives at module scope
+// rather than nested inside createInspiration.
+function loadPlainEmbed(key, url) {
+  const source = PLAIN_EMBED_SOURCES[key];
+  const frame = byId(source.frameId);
   if (!frame || !url) return;
-  const item = extractSpotifyItem(url);
-  if (!item) return;
-  frame.height = String(spotifyEmbedHeight(item.type));
+  const embedUrl = source.embedUrl(url);
+  if (!embedUrl) return;
+  if (source.embedHeight) frame.height = String(source.embedHeight(url));
   if (frame.dataset.loadedUrl === url) return;
   frame.dataset.loadedUrl = url;
-  frame.src = spotifyEmbedUrl(url);
+  frame.src = embedUrl;
 }
 
-// Stops the Spotify tab's playback by clearing its src — the widget has no
-// scriptable pause here, so this is the one reliable way to silence it when
-// switching to the YouTube tab or closing the panel. Doesn't touch the
+// Stops a plain-embed tab's playback by clearing its src — neither widget
+// has a scriptable pause here, so this is the one reliable way to silence it
+// when switching to another tab or closing the panel. Doesn't touch the
 // panel/ctx state, so it lives at module scope rather than nested inside
 // createInspiration.
-function stopSpotify() {
-  const frame = byId("inspirationSpotifyFrame");
+function stopPlainEmbed(key) {
+  const frame = byId(PLAIN_EMBED_SOURCES[key].frameId);
   if (!frame) return;
   frame.src = "";
   delete frame.dataset.loadedUrl;
@@ -272,8 +344,9 @@ function stopSpotify() {
 /*
   The Inspiration picture-in-picture panel: a docked, draggable player that
   keeps playing across song navigation (until explicitly closed) instead of
-  leaving the page. A tune can carry two independent sources — a YouTube F:
-  link and a Spotify one — and the panel embeds whichever it has:
+  leaving the page. A tune can carry up to three independent sources — a
+  YouTube F: link, a Spotify one and a SoundCloud one — and the panel embeds
+  whichever it has:
 
   - YouTube gets the full LoopTube toolbar under the video — a play/pause
     toggle, A/B loop markers on a slim timeline, an endless A–B loop toggle
@@ -284,22 +357,27 @@ function stopSpotify() {
     youtubeEmbedUrl) rather than showing a redundant native bar under it.
     Driven through the YouTube IFrame Player API; the pure range/rate/clock
     maths is in lib/looptube.js.
-  - Spotify gets a deliberately plain embed instead — Spotify's own widget
-    draws its own play/pause/seek bar, and (unlike YouTube's autoplaying,
-    freely-streamable video) a logged-out listener only ever gets a preview
-    anyway, so there's no LoopTube-style toolbar to build here.
+  - Spotify and SoundCloud both get a deliberately plain embed instead —
+    each widget draws its own play/pause/seek bar, and (unlike YouTube's
+    autoplaying, freely-streamable video) a logged-out Spotify listener only
+    ever gets a preview anyway, so there's no LoopTube-style toolbar built
+    for either.
 
-  When a tune has both, a small tab switcher in the header picks which one
-  is visible; only one plays at a time (switching tabs pauses/stops the
-  other, see selectTab). When it only has one, the switcher stays hidden and
-  the panel behaves exactly like a single-source player.
+  When a tune has more than one, a small tab switcher in the header picks
+  which is visible; only one plays at a time (switching tabs pauses/stops
+  whichever else was active, see selectTab). When it only has one, the
+  switcher is normally hidden and the panel behaves exactly like a
+  single-source player — except a lone YouTube or SoundCloud source still
+  shows the (single, inert) tab, since neither embed otherwise carries any
+  visible indication of which service it's playing from, unlike Spotify's
+  own branded widget (see updateTabsUI).
 */
 export function createInspiration(ctx) {
-  // The two sources the currently *open* panel is showing (not necessarily
-  // the sidebar's current song — see updateLink's own doc comment: browsing
+  // The sources the currently *open* panel is showing (not necessarily the
+  // sidebar's current song — see updateLink's own doc comment: browsing
   // songs never touches an already-open panel). Set once per openPanel call;
   // selectTab reads it to know what to load into whichever tab is chosen.
-  let currentSources = { youtube: null, spotify: null };
+  let currentSources = emptySources();
   // Identifies which tune's panel is currently open, so a second click on
   // the same tune's button closes it instead of reopening — see togglePanel.
   let panelKey = null;
@@ -388,44 +466,58 @@ export function createInspiration(ctx) {
 
   /*
     Keep the sheet's Inspiration button in sync with the current tune: created
-    for a tune whose ABC has a YouTube and/or Spotify F: link, removed for one
-    with neither. It only updates its own url/title dataset — it never
-    touches an already-open panel, so a video someone is playing along to
-    keeps going while they browse songs. `sources` is { youtube, spotify },
-    either of which may be undefined — see lib/inspiration-links.js's
-    firstYoutubeUrl/firstSpotifyUrl, which is what sheet.js's engrave()
+    for a tune whose ABC has a YouTube, Spotify and/or SoundCloud F: link,
+    removed for one with none of the three. It only updates its own
+    url/title dataset — it never touches an already-open panel, so a video
+    someone is playing along to keeps going while they browse songs.
+    `sources` is { youtube, spotify, soundcloud }, any of which may be
+    undefined — see lib/inspiration-links.js's firstYoutubeUrl/
+    firstSpotifyUrl/firstSoundcloudUrl, which is what sheet.js's engrave()
     actually passes in.
   */
+  // Creates the Inspiration button the first time a tune with a reference
+  // needs one, wiring its click handler off its own dataset (so a stale
+  // closure never holds an old song's urls) — split out of updateLink below
+  // purely to keep that function's own branching within the complexity gate.
+  function ensureLinkButton() {
+    let btn = byId("inspirationLink");
+    if (btn) return btn;
+    btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = "Inspiration";
+    btn.id = "inspirationLink";
+    btn.className = "sheet-inspiration-link";
+    btn.addEventListener("click", () => togglePanel({
+      youtube: btn.dataset.url || undefined,
+      spotify: btn.dataset.spotifyUrl || undefined,
+      soundcloud: btn.dataset.soundcloudUrl || undefined,
+    }, btn.dataset.title));
+    const slot = byId("inspirationSlot");
+    if (slot) slot.appendChild(btn);
+    // The panel can already be open (playing along across a song change per
+    // updateLink's own doc comment) by the time this song's own button gets
+    // (re)created — reflect that straight away instead of waiting for the
+    // next open/close.
+    const panel = byId("inspirationPanel");
+    setLinkActive(Boolean(panel && !panel.hidden));
+    return btn;
+  }
+
   function updateLink(sources, title) {
     const youtubeUrl = sources?.youtube;
     const spotifyUrl = sources?.spotify;
-    let btn = byId("inspirationLink");
-    if (!youtubeUrl && !spotifyUrl) {
+    const soundcloudUrl = sources?.soundcloud;
+    if (!youtubeUrl && !spotifyUrl && !soundcloudUrl) {
+      const btn = byId("inspirationLink");
       if (btn) btn.remove();
       pendingShare = null;
       return;
     }
-    if (!btn) {
-      btn = document.createElement("button");
-      btn.type = "button";
-      btn.textContent = "Inspiration";
-      btn.id = "inspirationLink";
-      btn.className = "sheet-inspiration-link";
-      btn.addEventListener("click", () => togglePanel({
-        youtube: btn.dataset.url || undefined,
-        spotify: btn.dataset.spotifyUrl || undefined,
-      }, btn.dataset.title));
-      const slot = byId("inspirationSlot");
-      if (slot) slot.appendChild(btn);
-      // The panel can already be open (playing along across a song change
-      // per the doc comment above) by the time this song's own button gets
-      // (re)created — reflect that straight away instead of waiting for the
-      // next open/close.
-      const panel = byId("inspirationPanel");
-      setLinkActive(Boolean(panel && !panel.hidden));
-    }
+
+    const btn = ensureLinkButton();
     btn.dataset.url = youtubeUrl || "";
     btn.dataset.spotifyUrl = spotifyUrl || "";
+    btn.dataset.soundcloudUrl = soundcloudUrl || "";
     btn.dataset.title = title || "";
 
     if (pendingShare) {
@@ -435,7 +527,7 @@ export function createInspiration(ctx) {
       // is YouTube-only) — a tune with no YouTube source has nothing for
       // them to apply to.
       if (youtubeUrl) {
-        openPanel({ youtube: youtubeUrl, spotify: spotifyUrl }, title);
+        openPanel({ youtube: youtubeUrl, spotify: spotifyUrl, soundcloud: soundcloudUrl }, title);
         applySharedLoop(share.a, share.b);
       }
     }
@@ -496,14 +588,10 @@ export function createInspiration(ctx) {
   function openPanel(sources, title) {
     const panel = byId("inspirationPanel");
     if (!panel) return;
-    const youtubeId = sources.youtube ? extractYouTubeId(sources.youtube) : null;
-    const spotifyItem = sources.spotify ? extractSpotifyItem(sources.spotify) : null;
-    if (!youtubeId && !spotifyItem) return;
+    const resolved = resolveSources(sources);
+    if (!resolved.youtube && !resolved.spotify && !resolved.soundcloud) return;
 
-    currentSources = {
-      youtube: youtubeId ? sources.youtube : null,
-      spotify: spotifyItem ? sources.spotify : null,
-    };
+    currentSources = resolved;
     panelKey = sourcesKey(sources);
 
     const titleEl = byId("inspirationPanelTitle");
@@ -512,48 +600,72 @@ export function createInspiration(ctx) {
     panel.hidden = false;
     setLinkActive(true);
     updateTabsUI();
-    selectTab(currentSources.youtube ? "youtube" : "spotify");
+    selectTab(defaultTab(currentSources));
   }
 
-  // Which of the two panel tabs is currently shown/usable — hidden entirely
-  // (and pointless to show) unless the open panel's tune actually has both
-  // sources.
+  // Which panel tabs are currently shown/usable — each individual button is
+  // hidden unless this tune actually has that source (e.g. a YouTube +
+  // Spotify tune shows only those two, never a dead SoundCloud button). The
+  // switcher as a whole normally only earns its place once there's more than
+  // one source to switch between, but a lone YouTube or SoundCloud source
+  // still shows it (as a single, unclickable-elsewhere tab) so the source is
+  // never ambiguous — a bare video/waveform embed carries no branding of its
+  // own the way Spotify's widget already does, so without the tab label
+  // there'd be nothing on screen saying which service it came from.
   function updateTabsUI() {
     const tabs = byId("inspirationTabs");
     if (!tabs) return;
-    tabs.hidden = !(currentSources.youtube && currentSources.spotify);
+    const sourceCount = TAB_KEYS.filter((key) => currentSources[key]).length;
+    const soleSource = sourceCount === 1 ? TAB_KEYS.find((key) => currentSources[key]) : null;
+    tabs.hidden = sourceCount === 0 || (sourceCount === 1 && soleSource !== "youtube" && soleSource !== "soundcloud");
+    for (const key of TAB_KEYS) {
+      const btn = byId(TAB_IDS[key]);
+      if (btn) btn.hidden = !currentSources[key];
+    }
   }
 
   // Switches which source is visible in the panel — the YouTube tab (video +
-  // LoopTube toolbar) or the Spotify tab (a plain embed, no toolbar). Only
-  // one ever plays at a time: switching away from a tab pauses/stops it
+  // LoopTube toolbar) or a plain-embed tab (Spotify/SoundCloud, no toolbar).
+  // Only one ever plays at a time: switching away from a tab pauses/stops it
   // rather than leaving it running out of sight.
   function selectTab(tab) {
     updateTabButtonsUi(tab);
     if (tab === "youtube") showYoutubeTab();
-    else showSpotifyTab();
+    else showPlainEmbedTab(tab);
   }
 
   function showYoutubeTab() {
-    stopSpotify();
-    const spotifyBox = byId("inspirationSpotifyBox");
-    if (spotifyBox) spotifyBox.hidden = true;
+    for (const key of PLAIN_EMBED_KEYS) {
+      stopPlainEmbed(key);
+      const box = byId(PLAIN_EMBED_SOURCES[key].boxId);
+      if (box) box.hidden = true;
+    }
     const videoBox = byId("inspirationVideoBox");
     if (videoBox) videoBox.hidden = false;
     setExpandLink(currentSources.youtube, "YouTube");
     loadYoutube(currentSources.youtube);
   }
 
-  function showSpotifyTab() {
+  // Shows a plain-embed tab (Spotify or SoundCloud): pauses YouTube, stops
+  // whichever other plain-embed tab was showing (only one plays at a time),
+  // and loads this one's own source.
+  function showPlainEmbedTab(key) {
     pauseYoutube();
     const bar = byId("inspirationLoopBar");
     if (bar) bar.hidden = true;
     const videoBox = byId("inspirationVideoBox");
     if (videoBox) videoBox.hidden = true;
-    const spotifyBox = byId("inspirationSpotifyBox");
-    if (spotifyBox) spotifyBox.hidden = false;
-    setExpandLink(currentSources.spotify, "Spotify");
-    loadSpotify(currentSources.spotify);
+    for (const otherKey of PLAIN_EMBED_KEYS) {
+      if (otherKey === key) continue;
+      stopPlainEmbed(otherKey);
+      const otherBox = byId(PLAIN_EMBED_SOURCES[otherKey].boxId);
+      if (otherBox) otherBox.hidden = true;
+    }
+    const source = PLAIN_EMBED_SOURCES[key];
+    const box = byId(source.boxId);
+    if (box) box.hidden = false;
+    setExpandLink(currentSources[key], source.label);
+    loadPlainEmbed(key, currentSources[key]);
   }
 
   // Loads a video into the YouTube tab. A no-op beyond re-showing the
@@ -596,8 +708,14 @@ export function createInspiration(ctx) {
   // Pauses (rather than stops) the YouTube player when switching away from
   // its tab, so switching back resumes where it left off instead of
   // restarting — the frame/player themselves are left alone, only playback.
+  // Always calls pauseVideo() when the player exists, rather than gating on
+  // the `isPlaying` flag: that flag only flips once the IFrame API's
+  // onStateChange callback fires, so a video that autoplayed just before the
+  // tab switch (already playing, but not yet reflected in `isPlaying`) would
+  // otherwise keep playing out of sight. pauseVideo() is a no-op on an
+  // already-paused player, so calling it unconditionally is safe.
   function pauseYoutube() {
-    if (player && playerReady && isPlaying && player.pauseVideo) player.pauseVideo();
+    if (player && playerReady && player.pauseVideo) player.pauseVideo();
   }
 
   function closePanel() {
@@ -618,13 +736,13 @@ export function createInspiration(ctx) {
       if (frame) frame.src = "";
     }
     loadedYoutubeId = null;
-    stopSpotify();
+    for (const key of PLAIN_EMBED_KEYS) stopPlainEmbed(key);
     isPlaying = false;
     updatePlayToggleUI();
     const bar = byId("inspirationLoopBar");
     if (bar) bar.hidden = true;
     panelKey = null;
-    currentSources = { youtube: null, spotify: null };
+    currentSources = emptySources();
   }
 
   function onPlayerStateChange(e) {
@@ -894,9 +1012,23 @@ export function createInspiration(ctx) {
     btn.classList.toggle("playing", isPlaying);
   }
 
+  // Whether the player is actually playing right now. Prefers the IFrame
+  // API's own getPlayerState() over the cached `isPlaying` flag when it's
+  // available: `isPlaying` only updates once onStateChange fires, so right
+  // after an autoplaying load there's a window where the video is already
+  // playing but `isPlaying` still says otherwise (the same staleness
+  // pauseYoutube() above works around) — getPlayerState() asks the player
+  // directly instead of waiting for that event.
+  function currentlyPlaying() {
+    if (player?.getPlayerState && window.YT?.PlayerState) {
+      return player.getPlayerState() === window.YT.PlayerState.PLAYING;
+    }
+    return isPlaying;
+  }
+
   function togglePlayPause() {
     if (!player || !playerReady) return;
-    if (isPlaying) player.pauseVideo();
+    if (currentlyPlaying()) player.pauseVideo();
     else player.playVideo();
   }
 
@@ -1224,7 +1356,9 @@ export function createInspiration(ctx) {
     on("inspirationCloseBtn", "click", closePanel);
     on("inspirationShareBtn", "click", copyShareLink);
     on("inspirationTabYoutube", "click", () => { if (currentSources.youtube) selectTab("youtube"); });
-    on("inspirationTabSpotify", "click", () => { if (currentSources.spotify) selectTab("spotify"); });
+    for (const key of PLAIN_EMBED_KEYS) {
+      on(PLAIN_EMBED_SOURCES[key].tabId, "click", () => { if (currentSources[key]) selectTab(key); });
+    }
     on("inspirationSizeBtn", "click", () => cyclePanelSize(panel));
     setPanelWidth(panel, readStoredWidth(), false);
     initDrag(panel, header);

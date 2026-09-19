@@ -11,7 +11,7 @@ import { renderChordTable, scanRepeatBoundaries, fitChordTable } from "./chord-t
 import { stylePartMarkers, applyCompingColors } from "./sheet-decorations.js";
 import { updateIrealProLink } from "./irealpro-link.js";
 import { updateInspirationExtLinks } from "./inspiration-links.js";
-import { parseInspirationLinks, firstYoutubeUrl, firstSpotifyUrl } from "../lib/inspiration-links.js";
+import { parseInspirationLinks, firstYoutubeUrl, firstSpotifyUrl, firstSoundcloudUrl } from "../lib/inspiration-links.js";
 
 const LIVE_TARGETS = { notationId: "notation", chordId: "chordtable", titleId: "songtitle" };
 
@@ -296,6 +296,7 @@ export function createSheet(ctx) {
       ctx.inspiration.updateLink({
         youtube: firstYoutubeUrl(inspirationLinks),
         spotify: firstSpotifyUrl(inspirationLinks),
+        soundcloud: firstSoundcloudUrl(inspirationLinks),
       }, song.metaText.title);
       updateInspirationExtLinks(inspirationLinks);
       updateIrealProLink(song, chords);

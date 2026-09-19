@@ -1,12 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  classifyInspirationUrl, parseInspirationLinks, firstLinkPerType, firstYoutubeUrl, firstSpotifyUrl,
+  classifyInspirationUrl, parseInspirationLinks, firstLinkPerType,
+  firstYoutubeUrl, firstSpotifyUrl, firstSoundcloudUrl,
   OTHER_LINK_TYPE,
 } from "./inspiration-links.js";
 
 const YOUTUBE_URL = "https://youtu.be/aaa";
 const SPOTIFY_URL = "https://open.spotify.com/track/1";
+const SOUNDCLOUD_URL = "https://soundcloud.com/someone/a-track";
 
 test("classifyInspirationUrl recognizes youtube hosts", () => {
   assert.equal(classifyInspirationUrl("https://www.youtube.com/watch?v=abc"), "youtube");
@@ -97,4 +99,17 @@ test("firstSpotifyUrl returns the tune's Spotify link's url", () => {
 test("firstSpotifyUrl returns undefined (not null) when there's no Spotify link", () => {
   assert.equal(firstSpotifyUrl([{ url: YOUTUBE_URL, type: "youtube" }]), undefined);
   assert.equal(firstSpotifyUrl([]), undefined);
+});
+
+test("firstSoundcloudUrl returns the tune's SoundCloud link's url", () => {
+  const links = [
+    { url: YOUTUBE_URL, type: "youtube" },
+    { url: SOUNDCLOUD_URL, type: "soundcloud" },
+  ];
+  assert.equal(firstSoundcloudUrl(links), SOUNDCLOUD_URL);
+});
+
+test("firstSoundcloudUrl returns undefined (not null) when there's no SoundCloud link", () => {
+  assert.equal(firstSoundcloudUrl([{ url: YOUTUBE_URL, type: "youtube" }]), undefined);
+  assert.equal(firstSoundcloudUrl([]), undefined);
 });

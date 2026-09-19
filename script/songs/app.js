@@ -14,6 +14,7 @@ import { createMetronome, loadMetronomeState } from "./metronome.js";
 import { createInspiration } from "./inspiration.js";
 import { initSheetControls } from "./sheet-controls.js";
 import { initMp3Export } from "./mp3-export.js";
+import { createFullscreen } from "./fullscreen.js";
 import { createInstrumentDropdown, createCompingDropdown } from "./selects.js";
 import { createLibraryTab } from "./library-tab.js";
 import { createSetlistData } from "./setlist-data.js";
@@ -176,6 +177,7 @@ function createApp() {
   ctx.setlistPrint = createSetlistPrint(ctx);
   ctx.setlistView = createSetlistView(ctx);
   ctx.swipeNav = createSwipeNav(ctx);
+  ctx.fullscreen = createFullscreen();
 
   // A `sl=` band setlist can be deep-linked before its index has loaded; the
   // bootstrap parks the "open it" step here for the index fetch to run.
@@ -190,6 +192,7 @@ function createApp() {
     ctx.metronome.init();
     ctx.inspiration.init();
     ctx.swipeNav.init();
+    ctx.fullscreen.init();
   }
 
   // Open the setlist named by a `sl=` hash value — a personal one by id (from
