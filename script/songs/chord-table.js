@@ -19,6 +19,21 @@ function partBadgeText(title) {
   return title.length > 2 ? title.slice(0, 1) : title;
 }
 
+// Indices of the measures that start the section right after an intro — each
+// must begin a new grid row so the intro always sits on a line of its own
+// (Bugle Boy's 4-bar intro in an 8-column grid, say).
+function introRowBreaks(measures) {
+  const breaks = new Set();
+  let inIntro = false;
+  measures.forEach((measure, index) => {
+    if (measure.part === undefined) return;
+    const isIntro = /\bintro/i.test(measure.part);
+    if (inIntro && !isIntro) breaks.add(index);
+    inIntro = isIntro;
+  });
+  return breaks;
+}
+
 /*
   Render the chord grid above the staff from a per-measure chord array (the
   same array shape parseChordScheme produces, optionally already converted to
@@ -69,15 +84,25 @@ export function renderChordTable(chords, container) {
 
   const grid = el("div", { class: "chordGrid", style: { "--chord-cols": String(cols) } });
 
+  const rowStarts = introRowBreaks(measures);
+  // 0-based column the next cell lands in — tracked rather than derived from
+  // the index, since a forced row start shifts every cell after it.
+  let column = 0;
+
   measures.forEach((measure, index) => {
+    // Column 1 on the first cell after an intro starts a fresh row without
+    // adding filler cells (the flat cell order/count must stay intact).
+    const forceRowStart = rowStarts.has(index) && column !== 0;
+    if (forceRowStart) column = 0;
     const chordDiv = el("div", { class: "chordDiv", html: String(measure.text) });
     const cell = el("div", { class: "chordCell" }, chordDiv);
+    if (forceRowStart) cell.style.gridColumnStart = "1";
 
     if (hasMultipleParts && measure.part !== undefined) {
       // A marker in the grid's leftmost column has no cell to its own left to
       // overlap, so it hangs outside the table instead of inset over the
       // chord text — chordPartMarker--outsideLeft, styled in split.css.
-      const outsideLeft = index % cols === 0;
+      const outsideLeft = column === 0;
       cell.append(
         el("span", {
           class: outsideLeft ? "chordPartMarker chordPartMarker--outsideLeft" : "chordPartMarker",
@@ -101,6 +126,7 @@ export function renderChordTable(chords, container) {
     }
 
     grid.append(cell);
+    column = (column + 1) % cols;
   });
 
   clear(container).append(grid);

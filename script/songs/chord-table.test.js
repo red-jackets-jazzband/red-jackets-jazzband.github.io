@@ -16,6 +16,7 @@ const bar = (text, extra = {}) => ({ text, ...extra });
 
 const CHORD_GRID_SELECTOR = ".chordGrid";
 const PART_MARKER_SELECTOR = ".chordPartMarker";
+const CELL_SELECTOR = ".chordCell";
 
 test("renderChordTable lays cells out in reading order with 4 columns", () => {
   inDom((container) => {
@@ -42,7 +43,7 @@ test("renderChordTable shows a break (\"N.C.\") marker as plain text, alone or a
 test("renderChordTable boxes a part's first chord with its letter, top-left corner", () => {
   inDom((container) => {
     renderChordTable([bar(["C"], { part: "A" }), bar(["F"]), bar(["G"], { part: "B" })], container);
-    const cells = [...container.querySelectorAll(".chordCell")];
+    const cells = [...container.querySelectorAll(CELL_SELECTOR)];
     assert.deepEqual(
       cells.map((cell) => cell.querySelector(PART_MARKER_SELECTOR)?.textContent),
       ["A", undefined, "B"],
@@ -115,6 +116,40 @@ test("renderChordTable keeps 4 columns below 24 measures (e.g. Sister Kate's 18 
   });
 });
 
+test("renderChordTable gives an intro its own row, even in the 8-column layout (Bugle Boy)", () => {
+  inDom((container) => {
+    const intro = [bar(["F"], { part: "Intro" }), bar(["%"]), bar(["%"]), bar(["%"])];
+    const body = Array.from({ length: 24 }, (_, i) => bar([`C${i}`], i === 0 ? { part: "A" } : {}));
+    renderChordTable([...intro, ...body], container);
+    const cells = [...container.querySelectorAll(CELL_SELECTOR)];
+    assert.equal(cells.length, 28);
+    assert.equal(cells[4].style.gridColumnStart, "1");
+    assert.equal(cells[3].style.gridColumnStart, "");
+    assert.equal(
+      cells[4].querySelector(PART_MARKER_SELECTOR).classList.contains("chordPartMarker--outsideLeft"),
+      true,
+    );
+  });
+});
+
+test("renderChordTable starts a new row after a short intro, and leaves an intro that already fills its row alone", () => {
+  inDom((container) => {
+    renderChordTable(
+      [bar(["F"], { part: "Intro" }), bar(["C"]), bar(["G"], { part: "A" }), bar(["D"])],
+      container,
+    );
+    const cells = [...container.querySelectorAll(CELL_SELECTOR)];
+    assert.equal(cells[2].style.gridColumnStart, "1");
+  });
+  inDom((container) => {
+    renderChordTable(
+      [bar(["F"], { part: "Intro" }), bar(["C"]), bar(["G"]), bar(["D"]), bar(["E"], { part: "A" })],
+      container,
+    );
+    assert.equal(container.querySelectorAll(CELL_SELECTOR)[4].style.gridColumnStart, "");
+  });
+});
+
 test("renderChordTable marks repeats and double bars", () => {
   inDom((container) => {
     renderChordTable([
@@ -122,7 +157,7 @@ test("renderChordTable marks repeats and double bars", () => {
       bar(["F"], { doubeThinBarRight: true }),
       bar(["G"], { rightRepeat: true }),
     ], container);
-    const cells = container.querySelectorAll(".chordCell");
+    const cells = container.querySelectorAll(CELL_SELECTOR);
     assert.ok(cells[0].classList.contains("chordCellLeftRepeat"));
     assert.ok(cells[0].querySelector(".chordLeftRepeatSign"));
     assert.ok(cells[1].classList.contains("chordCellDoubleThinBarRight"));
@@ -135,7 +170,7 @@ test("renderChordTable collapses an exactly-repeating 8-bar scheme", () => {
   inDom((container) => {
     const eight = Array.from({ length: 8 }, (_, i) => bar([`C${i}`]));
     renderChordTable(eight.concat(eight.map((m) => bar(m.text.slice()))), container);
-    assert.equal(container.querySelectorAll(".chordCell").length, 8);
+    assert.equal(container.querySelectorAll(CELL_SELECTOR).length, 8);
   });
 });
 
@@ -147,7 +182,7 @@ test("renderChordTable collapses an exactly-repeating 16-bar scheme", () => {
       sixteen.map((m) => bar(m.text.slice())),
     );
     renderChordTable(song, container);
-    assert.equal(container.querySelectorAll(".chordCell").length, 16);
+    assert.equal(container.querySelectorAll(CELL_SELECTOR).length, 16);
   });
 });
 
