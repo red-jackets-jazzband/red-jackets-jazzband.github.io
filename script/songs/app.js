@@ -23,6 +23,7 @@ import { createSetlistModal } from "./setlist-modal.js";
 import { createSetlistPrint } from "./setlist-print.js";
 import { createSetlistView } from "./setlist-view.js";
 import { createSwipeNav } from "./swipe-nav.js";
+import { createTour } from "./tour.js";
 
 // The `.abc` filename -> its slug (basename), used in the `s=` hash param.
 function songSlug(file) {
@@ -178,6 +179,8 @@ function createApp() {
   ctx.setlistView = createSetlistView(ctx);
   ctx.swipeNav = createSwipeNav(ctx);
   ctx.fullscreen = createFullscreen();
+  ctx.tour = createTour(ctx);
+  ctx.openSetlistById = openSetlistById;
 
   // A `sl=` band setlist can be deep-linked before its index has loaded; the
   // bootstrap parks the "open it" step here for the index fetch to run.
@@ -290,6 +293,8 @@ function createApp() {
       initSheet();
       initSidebar();
       bootstrap(params);
+      // Last, so the tour sees the page as bootstrap left it.
+      ctx.tour.init();
     },
   };
 }

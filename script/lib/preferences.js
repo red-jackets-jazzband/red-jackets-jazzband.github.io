@@ -21,6 +21,7 @@ export const PREF_KEYS = {
   metronomeEnabled: "rj.metronomeEnabled",
   highQualityAudio: "rj.highQualityAudio",
   repeatCount: "rj.repeatCount",
+  tourLang: "rj.tourLang",
 };
 
 // The raw Storage object, or null when it can't be reached. Callers that hand

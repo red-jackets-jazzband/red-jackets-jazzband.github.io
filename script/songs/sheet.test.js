@@ -108,6 +108,31 @@ test("a booklet render's ABC text is untouched by the mixer (isBooklet skips inj
   }
 });
 
+test("a booklet render leaves the live sheet's state alone, so rerender() keeps the open song", () => {
+  const { ctx, abcjs, sheet, cleanup } = setup();
+  try {
+    document.getElementById("notation").insertAdjacentHTML(
+      "afterend",
+      "<div id='bk-n3'></div><div id='bk-c3'></div><div id='bk-t3'></div>",
+    );
+    const OTHER_TUNE = TUNE.replace("T:Test", "T:Booklet song");
+    withAbcjs(abcjs, () => {
+      sheet.render(TUNE);
+      ctx.state.compingActive = true;
+      sheet.renderIntoBooklet(OTHER_TUNE, { notationId: "bk-n3", chordId: "bk-c3", titleId: "bk-t3" });
+      assert.equal(ctx.state.currentSongText, TUNE);
+      assert.equal(ctx.state.compingActive, true, "a booklet song's comping state doesn't leak");
+      sheet.rerender();
+    });
+    assert.equal(abcjs.calls.renderAbc.at(-1).target, "notation");
+    const last = abcjs.calls.renderAbc.at(-1).abc;
+    assert.match(last, /T:Test\n/, "the live sheet re-engraves its own song");
+    assert.doesNotMatch(last, /Booklet song/);
+  } finally {
+    cleanup();
+  }
+});
+
 test("a booklet render ignores the Key stepper and never touches audio", () => {
   const { abcjs, audioCalls, sheet, cleanup } = setup();
   try {

@@ -263,6 +263,24 @@ export function createSheet(ctx) {
     });
   }
 
+  // What the live sheet is showing, for everything that reacts to it (audio,
+  // Mixer, rerender()). Booklet renders — a setlist's print pages, built in the
+  // background as soon as a setlist opens — must never write these: rerender()
+  // re-engraves currentSongText, so a booklet write would swap the last booklet
+  // song onto the live sheet the next time the drawer, comping or instrument
+  // changed.
+  function recordLiveText(isBooklet, abcText, audioTranspose) {
+    if (isBooklet) return;
+    ctx.audio.transposeSemitones = audioTranspose;
+    ctx.state.currentSongText = abcText;
+  }
+
+  function recordLiveTune(isBooklet, song, comping) {
+    if (isBooklet) return;
+    ctx.audio.chordOffset = computeChordOffset(song);
+    ctx.state.compingActive = comping.active;
+  }
+
   function engrave(text, opts) {
     const {
       notationId, chordId, titleId,
@@ -275,18 +293,15 @@ export function createSheet(ctx) {
     const { abcText, visual, audio } = resolveTranspose(
       text, instrumentValue, extraTransposeSteps, isBooklet,
     );
-    if (!isBooklet) ctx.audio.transposeSemitones = audio;
-    ctx.state.currentSongText = abcText;
+    recordLiveText(isBooklet, abcText, audio);
 
     const song = parseTune(abcText, visual);
     const chords = parseChordScheme(song);
     const displayChords = instrumentValue === "concert_+_roman"
       ? convertChordsToRoman(chords)
       : chords;
-    ctx.audio.chordOffset = computeChordOffset(song);
-
     const comping = applyComping(abcText, chords, isBooklet);
-    ctx.state.compingActive = comping.active;
+    recordLiveTune(isBooklet, song, comping);
     syncInstrumentVoices(text, comping.active, isBooklet);
 
     const renderText = resolveRenderText(comping, chords.length > 0, isBooklet);

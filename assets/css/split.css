@@ -4981,3 +4981,245 @@ body.rj-sheet-fullscreen #sheetmenu {
     position: relative;
   }
 }
+
+/* ============================================================
+   Guided tour (songs/tour.js): the "?" launcher in the library
+   sidebar and the spotlight overlay.
+   Everything sits above the modal (z-index 40).
+   ============================================================ */
+.rj-library-help-btn {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 7px;
+  color: rgba(230,228,224,.55);
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+#tourBtn[hidden] {
+  display: none;
+}
+@media (hover: hover) {
+  .rj-library-help-btn:hover {
+    color: var(--rj-gold);
+    border-color: rgba(226,157,15,.5);
+  }
+}
+
+.rj-tour {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  font-family: "Montserrat", sans-serif;
+  /* The root must not catch clicks itself, or the shield's hole would be
+     covered by it: only the shield and the card take pointer events. */
+  pointer-events: none;
+}
+#rjTour[hidden] {
+  display: none;
+}
+/* The dimmed page: clip-path (set inline) cuts a hole around the target. */
+.rj-tour-veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.74);
+  pointer-events: none;
+}
+/* Invisible, click-eating layer over the page; its own hole (interactive
+   steps only) lets clicks through to the real control. */
+.rj-tour-shield {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+.rj-tour-ring {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--rj-gold);
+  border-radius: 10px;
+  box-shadow: 0 0 0 4px rgba(226,157,15,.22);
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.rj-tour-ring[hidden] {
+  display: none;
+}
+.rj-tour.is-busy .rj-tour-ring {
+  opacity: 0;
+}
+.rj-tour-card {
+  position: absolute;
+  width: 360px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 14px 18px 14px;
+  background: #1b1b1b;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6);
+  color: #dedcd8;
+  pointer-events: auto;
+}
+/* Narrow screens: dock along the bottom edge instead of floating. */
+.rj-tour-card[data-placement="dock"],
+.rj-tour-card[data-placement="dock-top"] {
+  top: auto;
+  right: 8px;
+  bottom: 8px;
+  left: 8px;
+  width: auto;
+  max-width: none;
+  max-height: 56dvh;
+  overflow-y: auto;
+}
+/* ...or along the top, when the target is in the lower half of the screen. */
+.rj-tour-card[data-placement="dock-top"] {
+  top: 8px;
+  bottom: auto;
+}
+.rj-tour-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.rj-tour-progress {
+  flex: 1;
+  min-width: 0;
+  color: var(--rj-gold);
+  font: 700 10px "Montserrat", sans-serif;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.rj-tour-lang {
+  display: flex;
+  gap: 2px;
+}
+.rj-tour-lang-btn {
+  height: 22px;
+  padding: 0 6px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: rgba(230,228,224,.5);
+  font: 700 10px "Montserrat", sans-serif;
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+.rj-tour-lang-btn.is-active {
+  border-color: rgba(226,157,15,.6);
+  color: var(--rj-gold);
+}
+.rj-tour-close {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: rgba(230,228,224,.55);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.rj-tour-title {
+  margin: 0 0 8px;
+  color: #eceae6;
+  font: 700 16px/1.3 "Montserrat", sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.rj-tour-body {
+  font: 500 13px/1.55 "Montserrat", sans-serif;
+}
+.rj-tour-body p {
+  margin: 0 0 8px;
+}
+.rj-tour-body ul {
+  margin: 0 0 8px;
+  padding-left: 18px;
+}
+.rj-tour-body strong {
+  color: #eceae6;
+  font-weight: 700;
+}
+.rj-tour-body code {
+  padding: 1px 5px;
+  background: #2f2f2f;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.rj-tour-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0;
+}
+.rj-tour-dot {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  background: none;
+  border: 1px solid rgba(255,255,255,.35);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.rj-tour-dot.is-active {
+  background: var(--rj-gold);
+  border-color: var(--rj-gold);
+}
+.rj-tour-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rj-tour-spacer {
+  flex: 1;
+}
+.rj-tour-btn {
+  height: 34px;
+  padding: 0 14px;
+  background: #2f2f2f;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 7px;
+  color: #eceae6;
+  font: 600 12px "Montserrat", sans-serif;
+  cursor: pointer;
+}
+.rj-tour-btn:disabled {
+  opacity: .4;
+  cursor: default;
+}
+.rj-tour-btn--primary {
+  background: var(--rj-gold);
+  border-color: var(--rj-gold);
+  color: #1b1b1b;
+}
+.rj-tour-btn--quiet {
+  background: none;
+  border-color: transparent;
+  color: rgba(230,228,224,.6);
+}
+.rj-tour button:focus-visible {
+  outline: 2px solid var(--rj-gold);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rj-tour-ring {
+    transition: none;
+  }
+}
+@media print {
+  .rj-tour {
+    display: none !important;
+  }
+}

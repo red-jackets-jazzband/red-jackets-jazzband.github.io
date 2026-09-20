@@ -684,6 +684,8 @@ export function createMixer(ctx) {
     init,
     refresh,
     syncVoices,
+    setOpen,
+    isOpen: () => open,
     toggle() {
       setOpen(!open);
     },

@@ -492,6 +492,17 @@ export function createSetlistView(ctx) {
     });
   }
 
+  // Open the song at `idx` of the open setlist (its position, so a song listed
+  // twice comes back on the right row). False for a divider / out-of-range.
+  function openSongAtIndex(idx) {
+    const song = ctx.state.currentOpenSongs?.[idx];
+    if (!song || isSetlistDivider(song)) return false;
+    openSetlistSong(song, idx);
+    byId("songList")?.querySelector(`.setlist-song-row[data-setlist-index="${idx}"]`)
+      ?.scrollIntoView({ block: "nearest" });
+    return true;
+  }
+
   // Open the setlist song whose file matches `slug` (`s=` hash value), used
   // when a shared `sl=…&s=…` link lands on an open setlist. Returns whether a
   // matching row was found.
@@ -503,12 +514,7 @@ export function createSetlistView(ctx) {
     songs.forEach((item, i) => {
       if (idx === -1 && !isSetlistDivider(item) && item.file === target) idx = i;
     });
-    if (idx === -1) return false;
-    openSetlistSong(songs[idx], idx);
-    const row = byId("songList")
-      && byId("songList").querySelector(`.setlist-song-row[data-setlist-index="${idx}"]`);
-    if (row) row.scrollIntoView({ block: "nearest" });
-    return true;
+    return idx !== -1 && openSongAtIndex(idx);
   }
 
   // Open the previous / next song of the open setlist, skipping break dividers
@@ -879,6 +885,6 @@ export function createSetlistView(ctx) {
 
   return {
     openBand, openPersonal, refreshOpenPersonal, renderOpen,
-    highlightCurrent, stepSong, openSongInOpenSetlist, initControls,
+    highlightCurrent, stepSong, openSongInOpenSetlist, openSongAtIndex, initControls,
   };
 }
