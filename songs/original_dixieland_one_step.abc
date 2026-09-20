@@ -1,0 +1,21 @@
+X:1
+T:Original Dixieland One-Step
+C:Nick LaRocca (1917)
+R:One-step
+N:Key changes: Bb (A), Eb (B), Ab (C)
+N:Breaks: A bars 1-4, B bars 1-2 and 9-10
+M:4/4
+L:1/8
+K:Bbmaj
+P:A
+|:"Bb" "^Break"B2 F2 z4|d2 B2 z4|"F7"f4 c4|f2 F2 G2 B2|dc=Bc d2 c2|"Bb"cBAB c2 B2|"F7"F2 e2 d2 c2|[1 "Bb"B4 z4 :|[2 "Bb"B4 z F G2||
+P:B
+K:Eb
+"Bb7" "^Break"B2 A2 F2 D2|B,2 AA G2 F2|"Eb"E2 e2 d2 B2|c8|"Bb7"z2 e2 d2 B2|c8|"Eb"z2 e2 d2 B2|c4 z B2 G|
+"Bb7" "^Break"B2 A2 F2 D2|B,2 A2 G2 F2|"Eb"E2 e2 d2 B2|c8|"Ab"c4 "C7"G4|"Fm"A4 "Cdim"=A4|"Eb"B=ABc "Bb7"B_AGF|"Eb"E8||
+P:C
+K:Ab
+"Ab"z2 c2 c2 c2|=B c2 e- e4|"C7"z2 c2 c2 c2|=B c2 =e- e4|"F7"z2 c2 c2 c2|=B c2 f- f4|"Bb7"z2 c2 c2 c2|c B2 F- F4|
+"Eb7"z2 B2 B2 B2|=A B2 e- e4|"Ab"z2 c2 c2 c2|=B c2 e- e4|"Cm"z2 ef gf e2|"G7"z2 =de fe d2|"Cm"e4 "G7"=d4|"Eb7"d8|
+"Ab"z2 c2 c2 c2|=B c2 e- e4|"C7"z2 c2 c2 c2|=B c2 =e- e4|"F7"z2 c2 c2 c2|=B c2 f- f4|"Bb7"z2 c2 c2 c2|c B2 F- F4|
+"Db"B2 B2 B2 A2|"Fdim"=B8|"Ab"c2 c2 =B2 c2|"F7"^c8|"Bb7"c2 c2 c2 c2|"Eb7"e4 c2 B2|"Ab"A8-|A6 z2|]
