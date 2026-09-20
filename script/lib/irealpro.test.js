@@ -66,3 +66,27 @@ test("irealProFromAbc translates a break sharing a measure with a real chord", (
   assert.doesNotMatch(body, /N\.C\./);
   assert.match(body, /F7 ,n/);
 });
+
+test("irealProFromAbc marks the first measure of a part with an iRealPro rehearsal-letter token", () => {
+  const song = baseSong();
+  const chords = [{ text: ["Bb"], part: "A" }, { text: ["F7"] }, { text: ["Eb"], part: "Chorus" }];
+  const decoded = decodeURIComponent(irealProFromAbc(song, chords));
+  const body = decoded.split("=T44")[1];
+  assert.match(body, /^\*A\|Bb {3}\|F7 {3}\|\*CEb {3}Z/);
+});
+
+test("irealProFromAbc uses the part title's first letter, uppercased, for the rehearsal mark", () => {
+  const song = baseSong();
+  const chords = [{ text: ["C"], part: "verse" }];
+  const decoded = decodeURIComponent(irealProFromAbc(song, chords));
+  const body = decoded.split("=T44")[1];
+  assert.match(body, /^\*V\|C/);
+});
+
+test("irealProFromAbc omits the rehearsal mark for a measure with no part", () => {
+  const song = baseSong();
+  const chords = [{ text: ["C"] }];
+  const decoded = decodeURIComponent(irealProFromAbc(song, chords));
+  const body = decoded.split("=T44")[1];
+  assert.doesNotMatch(body, /\*/);
+});

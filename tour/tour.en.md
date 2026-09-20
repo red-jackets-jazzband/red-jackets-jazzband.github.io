@@ -32,7 +32,7 @@ Picking a song opens it here. We've opened *Bourbon Street Parade* for the tour.
 ## instrument: Choose your instrument
 setup: openDemoSong
 target: #instrument
-Pick your instrument and the sheet is transposed to fit it: concert pitch, **Concert + Roman** (concert pitch with a Roman numeral analysis added to the chord table), alto sax, B♭ clarinet or trumpet, tenor sax, trombone (bass clef) or sousaphone (bass clef). The page remembers your choice for next time. Playback always sounds at concert pitch, whatever instrument's part is on screen.
+Pick your instrument and the sheet is transposed to fit it: concert pitch, Concert + Roman (concert pitch with a Roman numeral analysis added to the chord table), alto sax, B♭ clarinet or trumpet, tenor sax, trombone (bass clef) or sousaphone (bass clef). The page remembers your choice for next time. Playback always sounds at concert pitch, whatever instrument's part is on screen.
 
 ## play: Play it
 setup: openDemoSong

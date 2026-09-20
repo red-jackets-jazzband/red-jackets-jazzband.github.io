@@ -205,7 +205,7 @@ export function createTour(ctx) {
       },
     }, [
       el("div", { class: "rj-tour-card-head" }, [progress, langs, closeBtn]),
-      title, body, dots,
+      el("div", { class: "rj-tour-scroll" }, [title, body, dots]),
       el("div", { class: "rj-tour-actions" }, [skip, el("span", { class: "rj-tour-spacer" }), back, next]),
     ]);
     const root = el("div", { id: "rjTour", class: "rj-tour", hidden: true }, [veil, shield, ring, card]);

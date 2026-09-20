@@ -5059,7 +5059,8 @@ body.rj-sheet-fullscreen #sheetmenu {
   width: 360px;
   max-width: calc(100vw - 16px);
   max-height: calc(100dvh - 16px);
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
   padding: 14px 18px 14px;
   background: #1b1b1b;
@@ -5079,7 +5080,6 @@ body.rj-sheet-fullscreen #sheetmenu {
   width: auto;
   max-width: none;
   max-height: 56dvh;
-  overflow-y: auto;
 }
 /* ...or along the top, when the target is in the lower half of the screen. */
 .rj-tour-card[data-placement="dock-top"] {
@@ -5087,10 +5087,20 @@ body.rj-sheet-fullscreen #sheetmenu {
   bottom: auto;
 }
 .rj-tour-card-head {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
+}
+/* The only part that scrolls: Back/Next (and the head) stay pinned in view
+   even when the copy is taller than the card's own max-height, so the
+   buttons are always reachable without having to find/scroll a small card
+   on a phone. */
+.rj-tour-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 .rj-tour-progress {
   flex: 1;
@@ -5178,9 +5188,11 @@ body.rj-sheet-fullscreen #sheetmenu {
   border-color: var(--rj-gold);
 }
 .rj-tour-actions {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-top: 12px;
 }
 .rj-tour-spacer {
   flex: 1;

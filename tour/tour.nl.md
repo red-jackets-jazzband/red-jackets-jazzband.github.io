@@ -24,7 +24,7 @@ Typ een deel van een titel om de lijst te filteren. Druk overal op **/** om naar
 Als je een nummer kiest, opent het hier. Voor de rondleiding hebben we *Bourbon Street Parade* voor je geopend. Eerst komt de akkoordentabel, daarna de notatie. Op een telefoon vult het leadsheet het hele scherm en brengt een **terug**-knop je terug naar de lijst.
 
 ## instrument: Kies je instrument
-Kies je instrument en het leadsheet wordt daarop getransponeerd: concert (C), **Concert + Roman** (concertstemming met een analyse in Romeinse cijfers in de akkoordentabel), altsax, Bb-klarinet of -trompet, tenorsax, trombone (bassleutel) of sousafoon (bassleutel). De pagina onthoudt je keuze voor de volgende keer. Het geluid klinkt altijd in concertstemming, welk instrument er ook op het scherm staat.
+Kies je instrument en het leadsheet wordt daarop getransponeerd: concert (C), Concert + Roman (concertstemming met een analyse in Romeinse cijfers in de akkoordentabel), altsax, Bb-klarinet of -trompet, tenorsax, trombone (bassleutel) of sousafoon (bassleutel). De pagina onthoudt je keuze voor de volgende keer. Het geluid klinkt altijd in concertstemming, welk instrument er ook op het scherm staat.
 
 ## play: Speel het af
 Met **Play** speel je het nummer af, en de noten lichten op in het leadsheet terwijl ze klinken. **Stop** stopt het afspelen. Druk op de **spatiebalk** om te spelen of te pauzeren zodra er een leadsheet open staat.

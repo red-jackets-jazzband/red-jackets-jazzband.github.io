@@ -24,7 +24,7 @@ Tippe einen Teil des Titels ein, um die Liste zu filtern. Drücke überall **/**
 Wenn du einen Song auswählst, öffnet er sich hier. Für die Tour haben wir *Bourbon Street Parade* für dich geöffnet. Zuerst kommt die Akkordtabelle, danach die Notation. Auf einem Handy füllt das Leadsheet den ganzen Bildschirm, und ein **Zurück**-Knopf bringt dich zur Liste.
 
 ## instrument: Wähle dein Instrument
-Wähle dein Instrument, und das Leadsheet wird dafür transponiert: Konzerttonhöhe, **Concert + Roman** (Konzerttonhöhe mit einer Analyse in römischen Ziffern in der Akkordtabelle), Altsaxofon, B-Klarinette oder -Trompete, Tenorsaxofon, Posaune (Bassschlüssel) oder Sousaphon (Bassschlüssel). Die Seite merkt sich deine Wahl für das nächste Mal. Die Wiedergabe klingt immer in Konzerttonhöhe, egal welches Instrument gerade angezeigt wird.
+Wähle dein Instrument, und das Leadsheet wird dafür transponiert: Konzerttonhöhe, Concert + Roman (Konzerttonhöhe mit einer Analyse in römischen Ziffern in der Akkordtabelle), Altsaxofon, B-Klarinette oder -Trompete, Tenorsaxofon, Posaune (Bassschlüssel) oder Sousaphon (Bassschlüssel). Die Seite merkt sich deine Wahl für das nächste Mal. Die Wiedergabe klingt immer in Konzerttonhöhe, egal welches Instrument gerade angezeigt wird.
 
 ## play: Abspielen
 Mit **Play** spielst du den Song ab, und die Noten leuchten im Leadsheet auf, während sie erklingen. **Stop** beendet die Wiedergabe. Drücke die **Leertaste**, um abzuspielen oder zu pausieren, sobald ein Leadsheet geöffnet ist.
