@@ -111,6 +111,7 @@ Old Kentucky Home,my_old_kentucky_home.abc
 Over in the Gloryland,gloryland.abc
 Paper Moon,paper_moon.abc
 Paul Barbarins Second Line,paul_barbarins_second_line.abc
+Petit Fleur,petit_fleur.abc
 Precious Lord Take My Hand,take_my_hand.abc
 Saint James Infirmary,st_james_infirmary.abc
 Saint Louis Blues,st_louis_blues.abc
