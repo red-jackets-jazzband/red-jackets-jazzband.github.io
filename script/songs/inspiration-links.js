@@ -4,11 +4,14 @@ import { firstLinkPerType, OTHER_LINK_TYPE } from "../lib/inspiration-links.js";
 const BUTTON_ID_PREFIX = "inspirationExtLink-";
 
 const LINK_META = {
-  // SecondHandSongs tracks a song's own history of cover/original versions —
-  // there's no brand glyph for it in Font Awesome's free set, so this reads
-  // as "history" rather than a lookalike brand mark.
-  secondhandsongs: { icon: "fa-solid fa-clock-rotate-left", label: "View on SecondHandSongs" },
-  [OTHER_LINK_TYPE]: { icon: "fa-solid fa-link", label: "More inspiration" },
+  // SecondHandSongs' own "S" mark (white on transparent), same treatment as
+  // the iReal Pro button in irealpro-link.js — a real brand mark rather than
+  // a lookalike Font Awesome glyph.
+  secondhandsongs: {
+    label: "View on SecondHandSongs",
+    html: '<img src="/images/secondhandsongs_mark_white.png" alt="" aria-hidden="true" class="secondhandsongs-logo">',
+  },
+  [OTHER_LINK_TYPE]: { label: "More inspiration", html: '<span class="fa-solid fa-link" aria-hidden="true"></span>' },
 };
 
 /*
@@ -41,7 +44,7 @@ export function updateInspirationExtLinks(links) {
       target: "_blank",
       rel: "noopener noreferrer",
       title: meta.label,
-      html: `<span class="${meta.icon}" aria-hidden="true"></span>`,
+      html: meta.html,
       attrs: { "aria-label": meta.label },
     }));
   }

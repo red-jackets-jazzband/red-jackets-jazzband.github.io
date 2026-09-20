@@ -1318,6 +1318,24 @@ video.video {
   }
 }
 
+/*
+  SecondHandSongs' own "S" mark (white on transparent), same treatment as
+  the iReal Pro logo above — dimmed at rest, flipped to solid black on the
+  gold hover fill.
+*/
+#inspirationExtLink-secondhandsongs .secondhandsongs-logo {
+  display: block;
+  width: 18px;
+  height: 22px;
+  opacity: .72;
+}
+@media (hover: hover) {
+  #inspirationExtLink-secondhandsongs:hover:not(:disabled) .secondhandsongs-logo {
+    opacity: 1;
+    filter: brightness(0);
+  }
+}
+
 /* ============================================================
    Inspiration picture-in-picture panel
    ============================================================ */
