@@ -281,7 +281,7 @@ export function createSheet(ctx) {
     const song = parseTune(abcText, visual);
     const chords = parseChordScheme(song);
     const displayChords = instrumentValue === "concert_+_roman"
-      ? convertChordsToRoman(chords, song)
+      ? convertChordsToRoman(chords)
       : chords;
     ctx.audio.chordOffset = computeChordOffset(song);
 

@@ -168,153 +168,58 @@ test("chordToRomanNumeral recognises every chord-quality suffix", () => {
   assert.equal(chordToRomanNumeral("C", "C", ""), "I"); // no suffix at all
 });
 
-function barsVoice(count) {
-  return Array.from({ length: count }, () => ({ el_type: "bar" }));
-}
-
-function songWithOneLine(key, voice) {
-  return { lines: [{ staff: [{ key, voices: [voice] }] }] };
-}
-
+// convertChordsToRoman reads each measure's own `.key` (stamped by
+// parseChordScheme as it walks the tune — see chords.test.js for coverage
+// of *that*, including mid-song key changes like Bugle Boy March's trio
+// section) rather than re-deriving it from a raw abcjs tune itself, so
+// these only need to exercise the roman-conversion side.
 test("convertChordsToRoman passes chords through unchanged when there's nothing to work with", () => {
-  assert.equal(convertChordsToRoman(null, { lines: [{}] }), null);
-  assert.equal(convertChordsToRoman(undefined, { lines: [{}] }), undefined);
-  assert.deepEqual(convertChordsToRoman([], { lines: [{}] }), []);
-  const chords = [{ text: ["F"] }];
-  assert.equal(convertChordsToRoman(chords, {}), chords); // no song.lines at all
-  assert.equal(convertChordsToRoman(chords, { lines: [] }), chords); // empty lines array
+  assert.equal(convertChordsToRoman(null), null);
+  assert.equal(convertChordsToRoman(undefined), undefined);
+  assert.deepEqual(convertChordsToRoman([]), []);
 });
 
-test("convertChordsToRoman converts each measure's chords using the key active at that bar", () => {
-  const song = songWithOneLine({ root: "Bb", acc: "", mode: "" }, barsVoice(2));
-  const chords = [{ text: ["F"] }, { text: ["Eb"] }];
-  const result = convertChordsToRoman(chords, song);
+test("convertChordsToRoman converts each measure's chords using its own stamped key", () => {
+  const chords = [
+    { text: ["F"], key: { root: "Bb", acc: "", mode: "" } },
+    { text: ["Eb"], key: { root: "Bb", acc: "", mode: "" } },
+  ];
+  const result = convertChordsToRoman(chords);
   assert.deepEqual(result.map((m) => m.text), [["V"], ["IV"]]);
 });
 
 test("convertChordsToRoman's key.acc is folded into the tonic before conversion", () => {
   // key root "B" + acc "b" -> "Bb", not literally the note B.
-  const song = songWithOneLine({ root: "B", acc: "b", mode: "" }, barsVoice(1));
-  const chords = [{ text: ["F"] }];
-  assert.deepEqual(convertChordsToRoman(chords, song)[0].text, ["V"]); // F is the 5th of Bb, not of B
+  const chords = [{ text: ["F"], key: { root: "B", acc: "b", mode: "" } }];
+  assert.deepEqual(convertChordsToRoman(chords)[0].text, ["V"]); // F is the 5th of Bb, not of B
 });
 
-test("convertChordsToRoman follows a key change mid-line at its own keySignature element", () => {
-  const song = songWithOneLine({ root: "Bb", acc: "", mode: "" }, [
-    { el_type: "bar" }, // measure 1 — still Bb
-    { el_type: "keySignature", key: { root: "C", acc: "", mode: "" } },
-    { el_type: "bar" }, // measure 2 — now C
-  ]);
-  const chords = [{ text: ["F"] }, { text: ["D"] }];
-  const result = convertChordsToRoman(chords, song);
+test("convertChordsToRoman follows a mid-song key change from one measure to the next", () => {
+  const chords = [
+    { text: ["F"], key: { root: "Bb", acc: "", mode: "" } },
+    { text: ["D"], key: { root: "C", acc: "", mode: "" } },
+  ];
+  const result = convertChordsToRoman(chords);
   assert.deepEqual(result.map((m) => m.text), [["V"], ["II"]]); // F/Bb=V, D/C=II
 });
 
-test("convertChordsToRoman propagates a line's key forward when a later line has none of its own", () => {
-  const song = {
-    lines: [
-      { staff: [{ key: { root: "Bb", acc: "", mode: "" }, voices: [barsVoice(1)] }] },
-      { staff: [{ key: null, voices: [barsVoice(1)] }] }, // inherits Bb
-    ],
-  };
-  const chords = [{ text: ["F"] }, { text: ["F"] }];
-  const result = convertChordsToRoman(chords, song);
-  assert.deepEqual(result.map((m) => m.text), [["V"], ["V"]]);
+test("convertChordsToRoman reads a measure's key.mode to pick the major/minor interval map", () => {
+  const major = [{ text: ["Eb"], key: { root: "C", acc: "", mode: "" } }];
+  assert.deepEqual(convertChordsToRoman(major)[0].text, ["♭III"]);
+  const minor = [{ text: ["Eb"], key: { root: "C", acc: "", mode: "min" } }];
+  assert.deepEqual(convertChordsToRoman(minor)[0].text, ["III"]);
 });
 
-test("convertChordsToRoman propagates the most recent key, not always the first line's", () => {
-  // A 3rd line with no key of its own must inherit the 2nd line's key (C),
-  // not fall back past it to the 1st line's (Bb) — a bug that a broken
-  // "always adopt this line's key, even when it has none" guard would
-  // produce while still coincidentally passing a simpler 2-line check.
-  const song = {
-    lines: [
-      { staff: [{ key: { root: "Bb", acc: "", mode: "" }, voices: [barsVoice(1)] }] },
-      { staff: [{ key: { root: "C", acc: "", mode: "" }, voices: [barsVoice(1)] }] },
-      { staff: [{ key: null, voices: [barsVoice(1)] }] },
-    ],
-  };
-  const chords = [{ text: ["F"] }, { text: ["F"] }, { text: ["F"] }];
-  const result = convertChordsToRoman(chords, song);
-  assert.deepEqual(result.map((m) => m.text), [["V"], ["IV"], ["IV"]]);
-});
-
-test("convertChordsToRoman ignores a malformed keySignature element (no key payload) instead of blanking the current key", () => {
-  const song = {
-    lines: [
-      { staff: [{ key: { root: "Bb", acc: "", mode: "" }, voices: [barsVoice(1)] }] },
-      {
-        staff: [{
-          key: { root: "C", acc: "", mode: "" },
-          voices: [[{ el_type: "keySignature" }, { el_type: "bar" }]],
-        }],
-      },
-    ],
-  };
-  const chords = [{ text: ["F"] }, { text: ["F"] }];
-  const result = convertChordsToRoman(chords, song);
-  assert.deepEqual(result.map((m) => m.text), [["V"], ["IV"]]); // 2nd line stays on its own key, C
-});
-
-test("convertChordsToRoman ignores a stray .key payload on a non-keySignature element", () => {
-  const song = songWithOneLine({ root: "Bb", acc: "", mode: "" }, [
-    { el_type: "note", key: { root: "D", acc: "", mode: "" } }, // not a real key change
-    { el_type: "bar" },
-  ]);
-  const chords = [{ text: ["F"] }];
-  const result = convertChordsToRoman(chords, song);
-  assert.deepEqual(result[0].text, ["V"]); // still Bb, the "note" element's .key is irrelevant
-});
-
-test("convertChordsToRoman only counts an actual bar element as a measure boundary", () => {
-  const song = songWithOneLine({ root: "Bb", acc: "", mode: "" }, [
-    { el_type: "junk" }, // must not itself count as a bar
-    { el_type: "keySignature", key: { root: "C", acc: "", mode: "" } },
-    { el_type: "bar" },
-  ]);
-  const chords = [{ text: ["F"] }];
-  const result = convertChordsToRoman(chords, song);
-  assert.deepEqual(result[0].text, ["IV"]); // the one real bar, after the key change to C
-});
-
-test("convertChordsToRoman reads a line's key.mode to pick the major/minor interval map", () => {
-  const majorSong = songWithOneLine({ root: "C", acc: "", mode: "" }, barsVoice(1));
-  assert.deepEqual(convertChordsToRoman([{ text: ["Eb"] }], majorSong)[0].text, ["♭III"]);
-  const minorSong = songWithOneLine({ root: "C", acc: "", mode: "min" }, barsVoice(1));
-  assert.deepEqual(convertChordsToRoman([{ text: ["Eb"] }], minorSong)[0].text, ["III"]);
-});
-
-test("convertChordsToRoman skips a line with no staff/voices at all rather than crashing", () => {
-  const song = {
-    lines: [
-      {}, // no staff — must be skipped, not treated as a bar-less line that errors
-      { staff: [{ key: { root: "C", acc: "", mode: "" }, voices: [barsVoice(1)] }] },
-    ],
-  };
+test("convertChordsToRoman falls back to C when a measure has no key stamped at all", () => {
   const chords = [{ text: ["G"] }];
-  const result = convertChordsToRoman(chords, song);
-  assert.deepEqual(result.map((m) => m.text), [["V"]]); // G/C=V, from the second line's one bar
-});
-
-test("convertChordsToRoman falls back to the song's first key when there are more chord measures than bars found", () => {
-  const song = songWithOneLine({ root: "Bb", acc: "", mode: "" }, []); // no bars at all
-  const chords = [{ text: ["F"] }];
-  const result = convertChordsToRoman(chords, song);
-  assert.deepEqual(result[0].text, ["V"]); // still resolved against Bb, not the hardcoded C default
-});
-
-test("convertChordsToRoman falls all the way back to C when nothing supplies a key at all", () => {
-  const song = songWithOneLine(null, []); // no key anywhere, no bars either
-  const chords = [{ text: ["G"] }];
-  const result = convertChordsToRoman(chords, song);
+  const result = convertChordsToRoman(chords);
   assert.deepEqual(result[0].text, ["V"]); // G is the 5th of the hardcoded C default
 });
 
 test("convertChordsToRoman keeps every other field on a measure object untouched", () => {
-  const song = songWithOneLine({ root: "C", acc: "", mode: "" }, barsVoice(1));
-  const chords = [{ text: ["G"], startChar: 12, endChar: 15 }];
-  const result = convertChordsToRoman(chords, song);
-  assert.deepEqual(result, [{ text: ["V"], startChar: 12, endChar: 15 }]);
+  const chords = [{ text: ["G"], key: { root: "C", acc: "", mode: "" }, startChar: 12, endChar: 15 }];
+  const result = convertChordsToRoman(chords);
+  assert.deepEqual(result, [{ text: ["V"], key: { root: "C", acc: "", mode: "" }, startChar: 12, endChar: 15 }]);
 });
 
 test("extractKeyFromAbc reads the tonic, ignoring the mode word", () => {

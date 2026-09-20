@@ -77,39 +77,21 @@ export function chordToRomanNumeral(chordStr, keyRoot, keyMode) {
   return accidental + roman;
 }
 
-export function convertChordsToRoman(chords, song) {
-  if (!chords || !chords.length || !song.lines || !song.lines[0]) return chords;
+// Each measure already carries the key active over it (parseChordScheme
+// stamps it while walking the tune, from the same K: fields abcjs itself
+// reports — the tune's one overall key for an ordinary song, or whichever
+// key most recently applied for one like Bugle Boy March that modulates key
+// center partway through, e.g. into its trio section). That's what makes a
+// mid-song key change land on the right measure here: parseChordScheme
+// already knows exactly which "bar" elements abcjs emits become a real
+// measure of the chord scheme and which don't (a dropped alternate ending,
+// says), so there's no need — and no way to get it wrong by drifting out of
+// sync — to re-derive that measure-to-key mapping a second time here.
+export function convertChordsToRoman(chords) {
+  if (!chords || !chords.length) return chords;
 
-  // Build a per-line key map so key changes mid-song are handled
-  const lineKeys = song.lines.map((line) => {
-    return (line.staff && line.staff[0] && line.staff[0].key) || null;
-  });
-
-  // Walk lines again to propagate: each line inherits the last known key
-  const resolvedKeys = [];
-  let lastKey = lineKeys[0] || { root: "C", acc: "", mode: "" };
-  for (let i = 0; i < lineKeys.length; i++) {
-    if (lineKeys[i] && lineKeys[i].root) lastKey = lineKeys[i];
-    resolvedKeys.push(lastKey);
-  }
-
-  // Count measures per line so we can map measure index → key
-  const measureKeyMap = [];
-  for (let li = 0; li < song.lines.length; li++) {
-    const line = song.lines[li];
-    if (!line.staff || !line.staff[0] || !line.staff[0].voices) continue;
-    const voice = line.staff[0].voices[0] || [];
-    const lineKey = resolvedKeys[li];
-    let currentKey = lineKey;
-    for (let j = 0; j < voice.length; j++) {
-      const el = voice[j];
-      if (el.el_type === "keySignature" && el.key && el.key.root) currentKey = el.key;
-      if (el.el_type === "bar") measureKeyMap.push(currentKey);
-    }
-  }
-
-  return chords.map((measure, idx) => {
-    const key = measureKeyMap[idx] || resolvedKeys[0] || { root: "C", acc: "", mode: "" };
+  return chords.map((measure) => {
+    const key = measure.key || { root: "C", acc: "", mode: "" };
     const keyRoot = key.root + (key.acc || "");
     const keyMode = key.mode || "";
     const romanText = measure.text.map((chordStr) => {

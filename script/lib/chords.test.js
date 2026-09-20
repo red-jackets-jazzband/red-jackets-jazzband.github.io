@@ -396,3 +396,103 @@ test("parseChordScheme returns an empty list when no valid chords were found", (
   };
   assert.deepEqual(parseChordScheme(song), []);
 });
+
+// Each measure is stamped with the key active over it — read by
+// convertChordsToRoman's Roman-numeral display — from the same K: fields
+// abcjs itself reports, the same way Bugle Boy March's Part C modulates key
+// center partway through the tune.
+function lineOf(key, voice) {
+  return { staff: [{ key, voices: [voice] }] };
+}
+
+test("parseChordScheme stamps every measure with its line's key", () => {
+  const song = {
+    lines: [lineOf({ root: "Bb", acc: "", mode: "" }, [
+      { el_type: "note", chord: [{ name: "F" }] },
+      { el_type: "bar", type: "bar_thin" },
+    ])],
+  };
+  const chords = parseChordScheme(song);
+  assert.deepEqual(chords[0].key, { root: "Bb", acc: "", mode: "" });
+});
+
+test("parseChordScheme follows a key change at its own mid-line keySignature element", () => {
+  const song = {
+    lines: [lineOf({ root: "Bb", acc: "", mode: "" }, [
+      { el_type: "note", chord: [{ name: "F" }] },
+      { el_type: "bar", type: "bar_thin" }, // measure 1 — still Bb
+      { el_type: "keySignature", key: { root: "C", acc: "", mode: "" } },
+      { el_type: "note", chord: [{ name: "D" }] },
+      { el_type: "bar", type: "bar_thin" }, // measure 2 — now C
+    ])],
+  };
+  const chords = parseChordScheme(song);
+  assert.deepEqual(chords.map((m) => m.key.root), ["Bb", "C"]);
+});
+
+test("parseChordScheme propagates a line's key forward when a later line has none of its own", () => {
+  const song = {
+    lines: [
+      lineOf({ root: "Bb", acc: "", mode: "" }, [
+        { el_type: "note", chord: [{ name: "F" }] },
+        { el_type: "bar", type: "bar_thin" },
+      ]),
+      lineOf(null, [ // inherits Bb
+        { el_type: "note", chord: [{ name: "F" }] },
+        { el_type: "bar", type: "bar_thin" },
+      ]),
+    ],
+  };
+  const chords = parseChordScheme(song);
+  assert.deepEqual(chords.map((m) => m.key.root), ["Bb", "Bb"]);
+});
+
+test("parseChordScheme ignores a malformed keySignature element (no key payload) instead of blanking the current key", () => {
+  const song = {
+    lines: [lineOf({ root: "Bb", acc: "", mode: "" }, [
+      { el_type: "keySignature" }, // no .key payload — must be ignored
+      { el_type: "note", chord: [{ name: "F" }] },
+      { el_type: "bar", type: "bar_thin" },
+    ])],
+  };
+  const chords = parseChordScheme(song);
+  assert.equal(chords[0].key.root, "Bb");
+});
+
+test("parseChordScheme ignores a stray .key payload on a non-keySignature element", () => {
+  const song = {
+    lines: [lineOf({ root: "Bb", acc: "", mode: "" }, [
+      { el_type: "note", key: { root: "D", acc: "", mode: "" } }, // not a real key change
+      { el_type: "note", chord: [{ name: "F" }] },
+      { el_type: "bar", type: "bar_thin" },
+    ])],
+  };
+  const chords = parseChordScheme(song);
+  assert.equal(chords[0].key.root, "Bb");
+});
+
+test("parseChordScheme's stamped key survives a dropped alternate ending, staying aligned with the real (not raw bar-count) measures", () => {
+  // The regression this guards: a key change (Bugle Boy March's Part C,
+  // concert Bb) landing on the line right after a first/second-ending
+  // ("|1 ... :|2 ...") once had its measures mis-keyed, because a separate
+  // bar-counting pass (the old convertChordsToRoman) didn't agree with
+  // parseChordScheme on which raw "bar" elements become a real measure —
+  // the second ending's own bar (dropped by default) doesn't. Stamping the
+  // key at the exact moment a measure is actually pushed, in the same walk
+  // that decides whether to push it, makes that kind of drift impossible.
+  const song = voltaSong();
+  song.lines[0].staff[0].key = { root: "C", acc: "", mode: "" };
+  const voice = /** @type {any[]} */ (song.lines[0].staff[0].voices[0]);
+  voice.push(
+    { el_type: "keySignature", key: { root: "Bb", acc: "", mode: "" } },
+    { el_type: "note", chord: [{ name: "Bb" }] },
+    { el_type: "bar", type: "bar_thin" },
+  );
+  const chords = parseChordScheme(song); // default: drops the 2nd ending's own C2 measure
+  assert.deepEqual(chords.map((m) => [m.text, m.key.root]), [
+    [["C"], "C"],
+    [["F"], "C"],
+    [["G"], "C"],
+    [["Bb"], "Bb"],
+  ]);
+});

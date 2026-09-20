@@ -57,10 +57,18 @@ class ChordSchemeParser {
     this.didNotParseChordInThisMeasure = true;
     this.inAlternativeEnding = false;
     this.noteOrRestInMeasure = false;
+    // The key each pushed measure is stamped with (a march's trio section
+    // modulating to its own key, say) — set from each line's own key and
+    // any inline mid-line key change, same as abcjs reports them.
+    this.currentKey = null;
   }
 
   get skipEnding() {
     return this.inAlternativeEnding && !this.includeAlternateEndings;
+  }
+
+  setKey(key) {
+    if (key && key.root) this.currentKey = key;
   }
 
   applyBarShape(element) {
@@ -85,12 +93,22 @@ class ChordSchemeParser {
     }
   }
 
+  // Stamps the measure with whatever key is active right now — called only
+  // where a measure is actually about to be pushed, so it always lines up
+  // 1:1 with the real chords array a key change lands in, not with the raw
+  // count of "bar" elements abcjs emits (which includes ones, e.g. around a
+  // dropped alternate ending, that never become a measure of their own).
+  pushMeasure() {
+    this.currentMeasure.key = this.currentKey;
+    this.chords.push(this.currentMeasure);
+  }
+
   flushMeasure() {
     if (this.didNotParseChordInThisMeasure && this.parsedValidChord && this.noteOrRestInMeasure) {
       this.currentMeasure.text.push(" % ");
     }
     if (this.currentMeasure.text.length > 0) {
-      this.chords.push(this.currentMeasure);
+      this.pushMeasure();
       this.currentMeasure = { text: [] };
       this.noteOrRestInMeasure = false;
     }
@@ -142,6 +160,7 @@ class ChordSchemeParser {
 
   handleElement(element) {
     if (element.el_type === "note") this.noteOrRestInMeasure = true;
+    if (element.el_type === "keySignature") this.setKey(element.key);
     if (element.el_type === "part") this.handlePart(element);
     if (element.el_type === "bar") this.handleBar(element);
     this.handleChord(element);
@@ -153,7 +172,7 @@ class ChordSchemeParser {
     // in currentMeasure — flush them here or the chord table (and comping)
     // loses the last bar.
     if (!this.skipEnding && this.currentMeasure.text.length > 0) {
-      this.chords.push(this.currentMeasure);
+      this.pushMeasure();
     }
     // Prevent returning only % % % % % ....
     return this.parsedValidChord ? this.chords : [];
@@ -161,7 +180,12 @@ class ChordSchemeParser {
 }
 
 // Reads the chords from an abcjs tune (parsed intermediate format) into a
-// list of measures, each `{ text: [chordStrings...], leftRepeat?, ... }`.
+// list of measures, each `{ text: [chordStrings...], key, leftRepeat?, ... }`.
+// `key` (abcjs's own `{ root, acc, mode }`) is whatever key was active over
+// that measure — the tune's own K: for an ordinary single-key tune, or
+// whichever of its K: fields most recently applied for one like Bugle Boy
+// March that modulates key center partway through — read by
+// convertChordsToRoman for its per-measure Roman-numeral analysis.
 //
 // By default, measures inside a second-or-later ("[2", "[3", ...) repeat
 // ending are dropped: the chord table (and its repeat-boundary highlighting)
@@ -177,6 +201,7 @@ export function parseChordScheme(song, { includeAlternateEndings = false } = {})
   for (const line of song.lines) {
     // Subtitle is added to song.lines, don't break when line has no staff
     if (line.staff === undefined) continue;
+    parser.setKey(line.staff[0].key);
     for (const element of line.staff[0].voices[0]) {
       parser.handleElement(element);
     }
