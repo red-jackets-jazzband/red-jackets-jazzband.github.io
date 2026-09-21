@@ -35,6 +35,7 @@ import { createTourActions, isShown, waitUntil } from "./tour-actions.js";
 */
 
 const TOUR_BTN_ID = "tourBtn";
+const TOUR_LINK_ID = "tourStartLink";
 const SPOTLIGHT_PAD = 6;
 const TARGET_WAIT_MS = 1500;
 const SWALLOWED_KEYS = new Set([" ", "Spacebar", "/", "ArrowUp", "ArrowDown", "Enter"]);
@@ -454,6 +455,11 @@ export function createTour(ctx) {
       btn.addEventListener("click", () => start());
       labelHelpButton();
       btn.hidden = false;
+    }
+    const link = byId(TOUR_LINK_ID);
+    if (link) {
+      link.addEventListener("click", () => start());
+      link.hidden = false;
     }
   }
 

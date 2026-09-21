@@ -533,6 +533,102 @@ video.video {
   padding: 16px 24px 24px;
 }
 
+/*
+  Empty state: shown in the sheet until a song renders (sheet.js sets
+  body.rj-sheet-active on the first real render). Below 1024px the sheet is
+  a separate screen that only appears once a song is active, so this is
+  effectively desktop-only.
+*/
+.rj-sheet-empty {
+  position: relative;
+  padding: 72px 24px 80px;
+  text-align: center;
+  color: #444;
+  font-family: MuseJazzText, serif;
+  /* Faint five-line staff behind the text, like blank manuscript paper. */
+  background-image: repeating-linear-gradient(to bottom,
+    transparent 0 14px, rgba(0,0,0,.09) 14px 15px);
+  background-size: 100% 75px;
+  background-position: 0 30px;
+}
+body.rj-sheet-active .rj-sheet-empty {
+  display: none;
+}
+.rj-sheet-empty > p {
+  position: relative;
+}
+.rj-sheet-empty-title {
+  display: block;
+  width: fit-content;
+  margin: 0 auto;
+  padding: 0 14px;
+  background: #fff;
+  font-size: 46px;
+  line-height: 1.1;
+  color: #1b1b1b;
+  transform: rotate(-2deg);
+}
+.rj-sheet-empty-text {
+  display: block;
+  width: fit-content;
+  margin: 22px auto 0;
+  padding: 0 12px;
+  background: #fff;
+  font-size: 26px;
+  transform: rotate(1deg);
+}
+.rj-sheet-empty-sub {
+  display: block;
+  margin: 18px 0 0;
+  font-size: 22px;
+  color: #777;
+}
+.rj-sheet-empty-note {
+  position: absolute;
+  font-size: 44px;
+  line-height: 1;
+  color: var(--rj-gold);
+  opacity: .8;
+}
+.rj-sheet-empty-note--a { top: 40px; left: 12%; transform: rotate(-14deg); }
+.rj-sheet-empty-logo {
+  position: absolute;
+  right: 5%;
+  bottom: 24px;
+  width: 78px;
+  height: auto;
+  opacity: .55;
+  transform: rotate(9deg);
+}
+.rj-sheet-empty-note--c { bottom: 40px; left: 22%; font-size: 36px; transform: rotate(8deg); }
+.rj-sheet-empty-tour {
+  margin-top: 34px;
+  padding: 10px 20px;
+  background: var(--rj-gold);
+  border: 0;
+  border-radius: 999px;
+  color: #1b1b1b;
+  font: inherit;
+  font-size: 22px;
+  cursor: pointer;
+  transform: rotate(-1.5deg);
+  transition: transform 0.15s, background-color 0.15s;
+}
+.rj-sheet-empty-tour[hidden] {
+  display: none;
+}
+@media (hover: hover) {
+  .rj-sheet-empty-tour:hover {
+    background: #CA486d;
+    color: #fff;
+    transform: rotate(1deg) scale(1.04);
+  }
+}
+@media (max-width: 480px) {
+  .rj-sheet-empty-title { font-size: 34px; }
+  .rj-sheet-empty-text { font-size: 22px; }
+}
+
 .chordtable{
     font-family:'MuseJazzText', serif;
     line-height: 40px;
