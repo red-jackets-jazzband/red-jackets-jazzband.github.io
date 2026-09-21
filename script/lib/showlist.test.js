@@ -45,7 +45,8 @@ test("formatShowDateLong is 'd Mon yyyy', keeping the range suffix", () => {
 test("formatShowDateLong localises the month name", () => {
   assert.equal(formatShowDateLong(parseShowLine("2026/03/20,A,X"), "nl"), "20 mrt 2026");
   assert.equal(formatShowDateLong(parseShowLine("2026/03/20,A,X"), "de"), "20 März 2026");
-  assert.equal(formatShowDateLong(parseShowLine("2026/03/20,A,X"), "fr"), "20 Mar 2026");
+  assert.equal(formatShowDateLong(parseShowLine("2026/03/20,A,X"), "fr"), "20 mars 2026");
+  assert.equal(formatShowDateLong(parseShowLine("2026/03/20,A,X"), "es"), "20 Mar 2026");
 });
 
 test("splitShows partitions into upcoming and past, keeping source order", () => {

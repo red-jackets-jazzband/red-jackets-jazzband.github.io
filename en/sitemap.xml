@@ -22,6 +22,11 @@
                 hreflang="de"
                 href="https://www.redjackets.nl/de/band/"
                 />
+    <xhtml:link
+                rel="alternate"
+                hreflang="fr"
+                href="https://www.redjackets.nl/fr/band/"
+                />
   </url><url>
     <loc>https://www.redjackets.nl/in-action/</loc>
     <lastmod>2019-03-16T10:25:31+01:00</lastmod>
@@ -39,6 +44,11 @@
                 rel="alternate"
                 hreflang="de"
                 href="https://www.redjackets.nl/de/in-action/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="fr"
+                href="https://www.redjackets.nl/fr/in-action/"
                 />
   </url><url>
     <loc>https://www.redjackets.nl/</loc>
@@ -58,6 +68,11 @@
                 hreflang="de"
                 href="https://www.redjackets.nl/de/"
                 />
+    <xhtml:link
+                rel="alternate"
+                hreflang="fr"
+                href="https://www.redjackets.nl/fr/"
+                />
   </url><url>
     <loc>https://www.redjackets.nl/agenda/</loc>
     <lastmod>2019-03-16T08:20:22+01:00</lastmod>
@@ -75,6 +90,11 @@
                 rel="alternate"
                 hreflang="de"
                 href="https://www.redjackets.nl/de/agenda/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="fr"
+                href="https://www.redjackets.nl/fr/agenda/"
                 />
   </url>
 </urlset>

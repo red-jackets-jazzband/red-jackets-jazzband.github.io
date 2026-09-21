@@ -1,4 +1,4 @@
-// Entry point for /agenda/ (and /nl/agenda/, /de/agenda/): fills the upcoming
+// Entry point for /agenda/ (and /nl/agenda/, /de/agenda/, /fr/agenda/): fills the upcoming
 // and past show blocks from static/agenda/shows.txt. Upcoming shows are shown
 // loud; the archive is a quiet, year-grouped list under a tally line.
 import { byId } from "./lib/dom.js";
@@ -9,10 +9,10 @@ import {
 } from "./lib/showlist.js";
 
 // The Split theme always stamps <html lang="en-US">, so read the language off
-// the URL prefix instead (/nl/agenda/, /de/agenda/).
+// the URL prefix instead (/nl/agenda/, /de/agenda/, /fr/agenda/).
 function pageLang() {
   const first = window.location.pathname.split("/").filter(Boolean)[0];
-  return first === "nl" || first === "de" ? first : "en";
+  return first === "nl" || first === "de" || first === "fr" ? first : "en";
 }
 
 function showRow(show, variant, lang) {

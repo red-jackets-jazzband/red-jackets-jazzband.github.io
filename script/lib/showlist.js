@@ -33,11 +33,12 @@ const MONTHS = {
   en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
   nl: ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
   de: ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sep.", "Okt.", "Nov.", "Dez."],
+  fr: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."],
 };
 
 // "20 Jun 2026", or "6-7 May 2022" for a multi-day event. Used by the redesigned
 // agenda list, where the date sits in its own column rather than a slash string.
-// `lang` picks the month names ("en" | "nl" | "de"), defaulting to English.
+// `lang` picks the month names ("en" | "nl" | "de" | "fr"), defaulting to English.
 export function formatShowDateLong(show, lang = "en") {
   const d = show.date;
   const months = MONTHS[lang] || MONTHS.en;

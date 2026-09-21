@@ -160,8 +160,9 @@ test("flattenTourSteps tags each step with its chapter position", () => {
 test("resolveTourLang: saved choice beats URL prefix beats browser language beats English", () => {
   assert.equal(resolveTourLang("de", "/nl/songs/", ["nl-NL"]), "de");
   assert.equal(resolveTourLang(null, "/nl/songs/", ["de-DE"]), "nl");
-  assert.equal(resolveTourLang(null, "/songs/", ["fr-FR", "de-AT", "nl"]), "de");
-  assert.equal(resolveTourLang(null, "/songs/", ["fr-FR"]), "en");
+  assert.equal(resolveTourLang(null, "/songs/", ["es-ES", "de-AT", "nl"]), "de");
+  assert.equal(resolveTourLang(null, "/songs/", ["fr-FR"]), "fr");
+  assert.equal(resolveTourLang(null, "/songs/", ["es-ES"]), "en");
   assert.equal(resolveTourLang("xx", "/songs/", undefined), "en");
   assert.equal(resolveTourLang(null, undefined, ["NL-be"]), "nl");
 });

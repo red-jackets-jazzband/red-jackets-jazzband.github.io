@@ -1,4 +1,4 @@
-// Guided-tour copy: parsing of static/tour/tour.{en,nl,de}.md, the English-is-
+// Guided-tour copy: parsing of static/tour/tour.{en,nl,de,fr}.md, the English-is-
 // canonical merge for translations, and the display-language choice. Pure text
 // in, plain objects out — songs/tour.js owns fetching and all DOM work.
 //
@@ -31,7 +31,7 @@
  * @typedef {{ ui: Record<string, string>, chapters: TourChapter[] }} TourContent
  */
 
-export const TOUR_LANGS = ["en", "nl", "de"];
+export const TOUR_LANGS = ["en", "nl", "de", "fr"];
 
 const META_KEYS = new Set(["target", "setup", "interactive"]);
 const UI_SECTION = "ui";
@@ -51,7 +51,7 @@ export function isTourLang(value) {
 
 /*
   Which language the tour opens in: an explicit earlier choice, else the URL
-  prefix (/nl/…, /de/… — the site's own convention, since the theme always
+  prefix (/nl/…, /de/…, /fr/… — the site's own convention, since the theme always
   stamps <html lang="en-US">), else the first browser language we translate,
   else English.
 */
