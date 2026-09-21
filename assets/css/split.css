@@ -5235,3 +5235,26 @@ body.rj-sheet-fullscreen #sheetmenu {
     display: none !important;
   }
 }
+
+/* ------------------------------------------------------------------
+   Badge  (a pill-shaped call-to-action link, e.g. the "Kom jij ons
+   versterken?" recruitment link at the foot of /nl/band/)
+   ------------------------------------------------------------------ */
+.split-bio a.rj-badge {
+  display: inline-block;
+  margin: 10px 0 30px;
+  padding: 10px 22px;
+  border: 1px solid var(--rj-gold);
+  border-radius: 999px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rj-gold);
+}
+.split-bio a.rj-badge:hover {
+  border: 1px solid var(--rj-hover);
+  background: var(--rj-hover);
+  color: #fff;
+}
