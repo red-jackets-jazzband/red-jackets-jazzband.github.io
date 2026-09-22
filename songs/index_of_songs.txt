@@ -1,5 +1,6 @@
 Ain't my fault,aint_my_fault.abc
 Alcoholic Blues,alcoholic_blues.abc
+All by Myself,all_by_myself.abc
 All of me,all_of_me.abc
 All the girls go crazy,all_the_girls.abc
 Amazing Grace,amazing_grace.abc
