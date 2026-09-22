@@ -212,7 +212,7 @@ body.page-template-page-fullsingle-split p {
   line-height: 80px;
   letter-spacing: -2px;
 }
-.split-intro h1 {
+.split-intro .split-intro-nav {
   font-weight: 400;
   text-transform: uppercase;
   font-size: 16px;
@@ -363,7 +363,7 @@ body.page-template-page-fullsingle-split p {
     width: 90%;
   }
 }
-.split-lists .split-list h3 {
+.split-lists .split-list h2 {
   font-weight: 400;
   text-transform: uppercase;
   font-size: 11px;
