@@ -1,0 +1,15 @@
+# Red Jackets Jazzband
+
+> Street parade jazz band from Bergen op Zoom, the Netherlands, founded in 2009. The Red Jackets play traditional New Orleans jazz — from early-20th-century traditionals and the blues to newer Rebirth Brass Band-style classics — out on the street, between the people, at festivals, parades and squares.
+
+The band is a frequently booked act at (inter)national jazz festivals, built around an authentic street-parade rhythm section (washboard, banjo) and musicians spanning several generations. Contact: info@redjackets.nl.
+
+The site is also available in Dutch (`/nl/`), German (`/de/`) and French (`/fr/`); the pages below are the English versions.
+
+## Pages
+
+- [Home](https://www.redjackets.nl/): band overview and links to the rest of the site.
+- [Band](https://www.redjackets.nl/band/): biography and background on the Red Jackets Jazzband.
+- [Agenda](https://www.redjackets.nl/agenda/): upcoming shows, festivals and street parades, plus a list of past performances.
+- [In Action](https://www.redjackets.nl/in-action/): photos, videos and a SoundCloud playlist of the band performing live.
+- [Songs](https://www.redjackets.nl/songs/): 146+ traditional jazz lead sheets (chords, notation, audio playback, transposition) and setlists from the band's repertoire, shared for other musicians to learn and play.
