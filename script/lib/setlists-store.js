@@ -85,6 +85,16 @@ export function renamePersonalSetlist(storage, id, name) {
   writeStorage(storage, list);
 }
 
+// Blanks an entry's desc — used to drop a hidden marker (see the guided
+// tour's demo-setlist marker) once whatever set it no longer applies,
+// without touching anything a visitor can see or set themselves.
+export function clearPersonalSetlistMarker(storage, id) {
+  const list = readStorage(storage);
+  const entry = findEntry(list, id);
+  if (entry) entry.desc = "";
+  writeStorage(storage, list);
+}
+
 export function addSongToPersonalSetlist(storage, id, song) {
   const list = readStorage(storage);
   const entry = findEntry(list, id);
@@ -160,9 +170,23 @@ export function copyBandSetlistToPersonal(storage, bandSetlist) {
   });
 }
 
+// desc is free text a visitor can read on a printed booklet cover page — a
+// legitimate one never contains a control character, so one that does is an
+// app-internal flag (e.g. the guided tour's own demo-setlist marker) that
+// must never leak into a downloaded file, or survive back out of one:
+// discarded whole rather than stripped down to whatever readable text was
+// riding along with it. Applied at both ends of the .txt boundary — on
+// export so a marker never reaches the file in the first place, and on
+// import too, so a file downloaded before this existed can't carry one in.
+function sanitizeDesc(desc) {
+  const value = String(desc || "");
+  // eslint-disable-next-line no-control-regex -- detecting an internal marker is the point
+  return /[\u0000-\u001f]/.test(value) ? "" : value;
+}
+
 export function exportPersonalSetlistText(storage, id) {
   const entry = getPersonalSetlist(storage, id);
-  return entry ? serializeSetlistFile(entry) : null;
+  return entry ? serializeSetlistFile({ ...entry, desc: sanitizeDesc(entry.desc) }) : null;
 }
 
 // Imports a setlist .txt (this device's own export, or one carried over
@@ -172,7 +196,7 @@ export function importPersonalSetlistText(storage, text, fallbackName) {
   const parsed = parseSetlistFile(text);
   return createEntry(storage, {
     name: parsed.name || fallbackName,
-    desc: parsed.desc || "",
+    desc: sanitizeDesc(parsed.desc),
     songs: parsed.songs,
   });
 }

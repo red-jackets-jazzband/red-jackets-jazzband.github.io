@@ -15,6 +15,7 @@ import {
   nextStepIndex,
   placeTooltip,
   spotlightClipPath,
+  tightenBox,
 } from "../lib/tour-layout.js";
 import { createTourActions, isShown, waitUntil } from "./tour-actions.js";
 
@@ -47,6 +48,30 @@ const stepKey = (step) => `${step.chapterId}/${step.id}`;
 const toBox = (rect) => ({
   left: rect.left, top: rect.top, width: rect.width, height: rect.height,
 });
+
+// The box to spotlight for a non-interactive `target`: its own box, tightened
+// to its visible children's — a target that's a flex-stretched container
+// (e.g. the library list, `flex: 1` over whatever height the sidebar leaves,
+// even with only a couple of rows in it) spotlights just its content instead
+// of the empty space filling out the rest of its own height.
+function targetBox(target) {
+  const own = toBox(target.getBoundingClientRect());
+  const children = [...target.children]
+    .filter((child) => isShown(child))
+    .map((child) => toBox(child.getBoundingClientRect()));
+  return tightenBox(own, children);
+}
+
+// A "try it" step needs the whole real control reachable through the
+// shield's hole, not just the part `targetBox` currently sees — including
+// content that only exists once the visitor has interacted with it (search
+// results dropping in below the add-song field, a set-break's label input
+// appearing after the button is clicked). So an interactive step always
+// spotlights the target's own full bounding box; a step that's only
+// pointing something out keeps the tightened box.
+function boxForTarget(target, step) {
+  return step.interactive ? toBox(target.getBoundingClientRect()) : targetBox(target);
+}
 
 // Stops a key from reaching the page's own shortcuts.
 function swallow(event) {
@@ -146,6 +171,7 @@ export function createTour(ctx) {
   let returnFocus = null;
   let layoutPending = false;
   let refs = null;
+  let pageObserver = null; // watches the page for content changes under the current spotlight
 
   const ui = (key) => (content ? content.ui[key] || "" : "");
   const isAvailable = (step) => !skipped.has(stepKey(step));
@@ -270,7 +296,7 @@ export function createTour(ctx) {
 
   function layout(target) {
     const step = flat[index];
-    let box = target ? toBox(target.getBoundingClientRect()) : null;
+    let box = target ? boxForTarget(target, step) : null;
     // Measure the card in its neutral (undocked, unplaced) shape.
     delete refs.card.dataset.placement;
     refs.card.style.left = "";
@@ -282,7 +308,7 @@ export function createTour(ctx) {
       // Nudge the page so the spotlighted control clears the docked card.
       const dy = dockScrollDelta(spot.placement, box, cardRect.height, viewport.height);
       if (dy) window.scrollBy(0, dy);
-      box = toBox(target.getBoundingClientRect());
+      box = boxForTarget(target, step);
     }
     refs.veil.style.clipPath = spotlightClipPath(box, SPOTLIGHT_PAD);
     // A hole in the shield lets clicks through to the real control — only
@@ -306,6 +332,28 @@ export function createTour(ctx) {
       currentTarget = firstShown(flat[index].targets) || currentTarget;
       layout(currentTarget);
     });
+  }
+
+  // An interactive step's real target can change shape after the visitor
+  // touches it — search results dropping in below the add-song field, a
+  // set-break's label row appearing once the button is clicked — with
+  // nothing so much as a resize or scroll to tell the tour to re-measure.
+  // Watching the page for any content change and re-running the same
+  // re-find-and-place scheduleLayout does for resize/scroll covers all of
+  // that generically, current and future steps alike. Mutations inside the
+  // tour's own card (renderCard's own re-renders) are ignored — those are
+  // already followed by an explicit layout() call.
+  function onPageMutation(records) {
+    if (records.every((record) => refs.root.contains(record.target))) return;
+    scheduleLayout();
+  }
+
+  function watchPage(on) {
+    pageObserver?.disconnect();
+    pageObserver = null;
+    if (!on) return;
+    pageObserver = new window.MutationObserver(onPageMutation);
+    pageObserver.observe(document.body, { childList: true, subtree: true });
   }
 
   // ---- navigation ---------------------------------------------------
@@ -406,6 +454,7 @@ export function createTour(ctx) {
     document[method]("keydown", onKeydown, true);
     window[method]("resize", scheduleLayout);
     window[method]("scroll", scheduleLayout, true);
+    watchPage(on);
   }
 
   function finish() {

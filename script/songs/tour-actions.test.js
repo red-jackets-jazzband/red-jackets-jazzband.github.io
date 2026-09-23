@@ -1,15 +1,24 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountPage } from "../../../tests/helpers/dom.js";
-import { makeCtx } from "../../../tests/helpers/ctx.js";
+import { makeCtx, memoryStorage } from "../../../tests/helpers/ctx.js";
 import {
-  DEMO_SETLIST_FILE, DEMO_SONG_FILE, TOUR_ACTION_NAMES, createTourActions, isShown, waitUntil,
+  addSongToPersonalSetlist, createPersonalSetlist, exportPersonalSetlistText, getPersonalSetlist,
+  importPersonalSetlistText, renamePersonalSetlist,
+} from "../lib/setlists-store.js";
+import {
+  DEMO_SETLIST_FILE, DEMO_SETLIST_NAME, DEMO_SETLIST_SONG_1, DEMO_SETLIST_SONG_2, DEMO_SONG_FILE,
+  TOUR_ACTION_NAMES, createTourActions, isShown, waitUntil,
 } from "./tour-actions.js";
 
 const DRAWER_CLASS = "show-advanced";
+const CREATE_DEMO_SETLIST = "createDemoSetlist";
+const ADD_DEMO_SONG_1 = "addDemoSong1";
+const ADD_DEMO_SONG_2 = "addDemoSong2";
+const OWN_SONG_FILE = "all_of_me.abc";
 
 // A ctx whose collaborators just record what the actions asked of them.
-function setup({ state = {}, sheetLoadMs = 10 } = {}) {
+function setup({ state = {}, sheetLoadMs = 10, storage = memoryStorage() } = {}) {
   const page = mountPage();
   const calls = [];
   const panelOpen = { mixer: false, inspiration: false }; // panel visibility the stubs report back
@@ -31,7 +40,9 @@ function setup({ state = {}, sheetLoadMs = 10 } = {}) {
       ctx.state.currentSongFile = song.file;
       setTimeout(() => { ctx.state.currentSongText = `X:1 ${song.file}`; }, sheetLoadMs);
     },
+    storage: () => storage,
   });
+  ctx.setlistHome = { render: () => calls.push("setlistHome.render") };
   ctx.setlistView = {
     openBand: (file, name, done) => {
       calls.push(`setlist:${file}`);
@@ -46,6 +57,28 @@ function setup({ state = {}, sheetLoadMs = 10 } = {}) {
       ctx.state.currentSetlistSongIndex = idx;
       setTimeout(() => { ctx.state.currentSongText = `X:1 setlist ${idx}`; }, sheetLoadMs);
       return true;
+    },
+    openPersonal: (id, done) => {
+      calls.push(`personal:${id}`);
+      ctx.state.setlistsView = "open";
+      ctx.state.currentPersonalId = id;
+      ctx.state.currentSetlistId = id;
+      ctx.state.currentSongFile = null;
+      if (done) done();
+    },
+    // The real setlist-view.js falls back to the shelf once the entry it
+    // looks up is gone — mirrored here since end()'s cleanup relies on it.
+    refreshOpenPersonal: () => {
+      calls.push("refreshOpenPersonal");
+      if (!getPersonalSetlist(storage, ctx.state.currentPersonalId)) {
+        ctx.state.setlistsView = "home";
+        ctx.state.currentPersonalId = null;
+        ctx.setlistHome.render();
+      }
+    },
+    addSongByFile: (file) => {
+      calls.push(`addSong:${file}`);
+      addSongToPersonalSetlist(storage, ctx.state.currentPersonalId, { file, key: "" });
     },
   };
   // Mirrors app.js's openSetlistById: reopening a setlist by id, then `then`.
@@ -71,7 +104,9 @@ function setup({ state = {}, sheetLoadMs = 10 } = {}) {
     ctx.state.compingActive = select.value !== "off";
   });
   document.getElementById("compingSlot").append(select);
-  return { ctx, calls, select, sheetmenu, actions: createTourActions(ctx), cleanup: page.cleanup };
+  return {
+    ctx, calls, select, sheetmenu, storage, actions: createTourActions(ctx), cleanup: page.cleanup,
+  };
 }
 
 test("the exported action names are exactly the actions createTourActions provides", () => {
@@ -232,7 +267,7 @@ test("compingOn keeps a pattern the visitor picked themselves rather than swappi
 
 test("begin() silences playback; end() puts back the drawer, comping and the visitor's own song", async () => {
   const { actions, calls, ctx, select, sheetmenu, cleanup } = setup({
-    state: { currentSongFile: "all_of_me.abc", activeTab: "library" },
+    state: { currentSongFile: OWN_SONG_FILE, activeTab: "library" },
   });
   try {
     select.value = "off";
@@ -248,7 +283,7 @@ test("begin() silences playback; end() puts back the drawer, comping and the vis
     actions.end();
     assert.equal(select.value, "off");
     assert.equal(sheetmenu.classList.contains(DRAWER_CLASS), false);
-    assert.equal(ctx.state.currentSongFile, "all_of_me.abc");
+    assert.equal(ctx.state.currentSongFile, OWN_SONG_FILE);
     assert.ok(calls.includes("mixer:false") && calls.includes("inspiration:false"));
 
     calls.length = 0;
@@ -277,7 +312,7 @@ test("end() reopens the setlist, its song row, full screen, the mixer and Inspir
   const { actions, calls, ctx, cleanup } = setup({
     state: {
       activeTab: "setlists", setlistsView: "open", currentSetlistId: "my_gig",
-      currentSongFile: "all_of_me.abc", currentSetlistSongIndex: 3, currentSongText: "X:1 mine",
+      currentSongFile: OWN_SONG_FILE, currentSetlistSongIndex: 3, currentSongText: "X:1 mine",
     },
   });
   try {
@@ -322,5 +357,212 @@ test("end() with a setlist that has vanished settles on the Setlists home instea
     assert.equal(ctx.state.setlistsView, "home");
   } finally {
     cleanup();
+  }
+});
+
+test("createDemoSetlist makes one empty personal setlist and opens it, idempotently", async () => {
+  const { actions, calls, ctx, storage, cleanup } = setup();
+  try {
+    await actions.apply([CREATE_DEMO_SETLIST]);
+    const id = ctx.state.currentPersonalId;
+    const entry = getPersonalSetlist(storage, id);
+    assert.equal(entry.name, DEMO_SETLIST_NAME);
+    assert.deepEqual(entry.songs, []);
+    assert.equal(ctx.state.setlistsView, "open");
+    assert.deepEqual(calls.filter((c) => c.startsWith("tab:") || c.startsWith("personal:")), [
+      "tab:setlists", `personal:${id}`,
+    ]);
+
+    calls.length = 0;
+    await actions.apply([CREATE_DEMO_SETLIST]);
+    assert.equal(ctx.state.currentPersonalId, id, "the same setlist, not a second one");
+    assert.deepEqual(calls.filter((c) => c.startsWith("tab:") || c.startsWith("personal:")), [],
+      "already open — nothing left to do");
+  } finally {
+    cleanup();
+  }
+});
+
+test("addDemoSong1 and addDemoSong2 each add their song once, and never duplicate on a repeat visit", async () => {
+  const { actions, calls, ctx, storage, cleanup } = setup();
+  try {
+    await actions.apply([CREATE_DEMO_SETLIST, ADD_DEMO_SONG_1]);
+    let entry = getPersonalSetlist(storage, ctx.state.currentPersonalId);
+    assert.deepEqual(entry.songs.map((s) => s.file), [DEMO_SETLIST_SONG_1]);
+
+    await actions.apply([CREATE_DEMO_SETLIST, ADD_DEMO_SONG_1, ADD_DEMO_SONG_2]);
+    entry = getPersonalSetlist(storage, ctx.state.currentPersonalId);
+    assert.deepEqual(entry.songs.map((s) => s.file), [DEMO_SETLIST_SONG_1, DEMO_SETLIST_SONG_2]);
+
+    calls.length = 0;
+    await actions.apply([CREATE_DEMO_SETLIST, ADD_DEMO_SONG_1, ADD_DEMO_SONG_2]);
+    assert.equal(calls.some((c) => c.startsWith("addSong:")), false, "both songs already there");
+    entry = getPersonalSetlist(storage, ctx.state.currentPersonalId);
+    assert.equal(entry.songs.length, 2, "still just the two songs, not four");
+  } finally {
+    cleanup();
+  }
+});
+
+test("end() deletes the demo setlist, falling back to the shelf when it was the one on screen", async () => {
+  // The visitor started the tour already on the Setlists tab, so — unlike the
+  // common case below — restoreLocation's own switchTab never fires (same tab,
+  // same as the snapshot) and end() lands with the just-deleted demo still
+  // the current view; the cleanup itself has to steer back to the shelf.
+  const { actions, calls, ctx, storage, cleanup } = setup({ state: { activeTab: "setlists" } });
+  try {
+    actions.begin();
+    await actions.apply([CREATE_DEMO_SETLIST, ADD_DEMO_SONG_1]);
+    const id = ctx.state.currentPersonalId;
+    assert.equal(ctx.state.setlistsView, "open");
+
+    calls.length = 0;
+    await actions.end();
+    assert.equal(getPersonalSetlist(storage, id), null, "the demo setlist is gone");
+    assert.equal(ctx.state.setlistsView, "home", "nothing left pointing at the deleted entry");
+    assert.equal(ctx.state.currentPersonalId, null);
+    assert.ok(calls.includes("refreshOpenPersonal"));
+  } finally {
+    cleanup();
+  }
+});
+
+test("end() deletes the demo setlist quietly when the visitor had already moved on from it", async () => {
+  const { actions, calls, ctx, storage, cleanup } = setup({ state: { currentSongFile: OWN_SONG_FILE } });
+  try {
+    actions.begin();
+    await actions.apply([CREATE_DEMO_SETLIST, ADD_DEMO_SONG_1]);
+    const id = ctx.state.currentPersonalId;
+    // The last chapter's own setup (openDemoSong/showLibrary) already moved
+    // the tour off the setlist before end() ever runs, the common case.
+    await actions.apply(["openDemoSong"]);
+    calls.length = 0;
+
+    await actions.end();
+    assert.equal(getPersonalSetlist(storage, id), null);
+    assert.equal(ctx.state.currentSongFile, OWN_SONG_FILE, "the visitor's own song, untouched");
+    assert.equal(calls.some((c) => c === "refreshOpenPersonal" || c === "setlistHome.render"), false);
+  } finally {
+    cleanup();
+  }
+});
+
+test("end() keeps a demo setlist the visitor built on for real, instead of deleting it", async () => {
+  const { actions, ctx, storage, cleanup } = setup();
+  try {
+    actions.begin();
+    await actions.apply([CREATE_DEMO_SETLIST, ADD_DEMO_SONG_1]);
+    const id = ctx.state.currentPersonalId;
+    // The add-song step is interactive: true — a visitor can really search
+    // and add any song, not just the one the script itself added.
+    addSongToPersonalSetlist(storage, id, { file: OWN_SONG_FILE, key: "" });
+
+    await actions.end();
+    const entry = getPersonalSetlist(storage, id);
+    assert.ok(entry, "kept, not deleted");
+    assert.deepEqual(entry.songs.map((s) => s.file), [DEMO_SETLIST_SONG_1, OWN_SONG_FILE]);
+    assert.equal(entry.desc, "", "the marker is dropped so a later tour never sweeps it");
+  } finally {
+    cleanup();
+  }
+});
+
+test("end() still deletes an untouched demo setlist even after a reorder step visits it", async () => {
+  const { actions, ctx, storage, cleanup } = setup();
+  try {
+    actions.begin();
+    await actions.apply([CREATE_DEMO_SETLIST, ADD_DEMO_SONG_1, ADD_DEMO_SONG_2]);
+    const id = ctx.state.currentPersonalId;
+
+    await actions.end();
+    assert.equal(getPersonalSetlist(storage, id), null, "still just tour scaffolding — safe to delete");
+  } finally {
+    cleanup();
+  }
+});
+
+test("begin() sweeps a demo setlist abandoned by a tour that never finished, but leaves a same-named real one alone", async () => {
+  const storage = memoryStorage();
+  const real = createPersonalSetlist(storage, DEMO_SETLIST_NAME);
+
+  const abandoned = setup({ storage });
+  let leftoverId;
+  try {
+    abandoned.actions.begin();
+    await abandoned.actions.apply([CREATE_DEMO_SETLIST]);
+    leftoverId = abandoned.ctx.state.currentPersonalId;
+    assert.notEqual(leftoverId, real.id);
+    // No end() here — the tab "closes" mid-tour, the way a crash would.
+  } finally {
+    abandoned.cleanup();
+  }
+
+  const next = setup({ storage });
+  try {
+    next.actions.begin();
+    assert.equal(getPersonalSetlist(storage, leftoverId), null, "the abandoned demo is swept away");
+    assert.ok(getPersonalSetlist(storage, real.id), "a real setlist with the same name survives");
+  } finally {
+    next.cleanup();
+  }
+});
+
+test("begin() keeps a demo setlist a visitor customized before an interrupted tour ever reached end()", async () => {
+  const storage = memoryStorage();
+
+  const abandoned = setup({ storage });
+  let leftoverId;
+  try {
+    abandoned.actions.begin();
+    await abandoned.actions.apply([CREATE_DEMO_SETLIST, ADD_DEMO_SONG_1]);
+    leftoverId = abandoned.ctx.state.currentPersonalId;
+    // The visitor renamed their own copy — reachable for real from the
+    // "create" step — before the tab "closed" mid-tour.
+    renamePersonalSetlist(storage, leftoverId, "My real gig");
+  } finally {
+    abandoned.cleanup();
+  }
+
+  const next = setup({ storage });
+  try {
+    next.actions.begin();
+    const entry = getPersonalSetlist(storage, leftoverId);
+    assert.ok(entry, "kept, not swept away");
+    assert.equal(entry.name, "My real gig");
+    assert.equal(entry.desc, "", "the marker is dropped so it's never swept again");
+  } finally {
+    next.cleanup();
+  }
+});
+
+test("exporting and reimporting a demo setlist never carries the marker back in", async () => {
+  const storage = memoryStorage();
+
+  const first = setup({ storage });
+  let exportedText;
+  try {
+    first.actions.begin();
+    await first.actions.apply([CREATE_DEMO_SETLIST, ADD_DEMO_SONG_1]);
+    const id = first.ctx.state.currentPersonalId;
+    // The "exports" step is a real, ordinary download of the demo's own
+    // entry — same path a visitor's own setlist export takes.
+    exportedText = exportPersonalSetlistText(storage, id);
+    await first.actions.end(); // the untouched original demo is deleted here
+  } finally {
+    first.cleanup();
+  }
+
+  // Some time later, on this device or another, the visitor imports their
+  // own download back in as a setlist of their own — nothing to do with the
+  // tour any more.
+  const imported = importPersonalSetlistText(storage, exportedText, "My import");
+  assert.equal(imported.desc, "", "the marker never made it into the exported file");
+
+  const next = setup({ storage });
+  try {
+    next.actions.begin();
+    assert.ok(getPersonalSetlist(storage, imported.id), "a tour sweep never touches it");
+  } finally {
+    next.cleanup();
   }
 });

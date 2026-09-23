@@ -82,6 +82,24 @@ export function placeTooltip(target, card, viewport, gap = DEFAULT_GAP) {
 export const isDocked = (placement) => placement === "dock" || placement === "dock-top";
 
 /**
+ * `box`, tightened to the union of `childBoxes` when that's shorter — so a
+ * flex-stretched target (e.g. the library list, which fills whatever height
+ * the sidebar leaves even when it only holds a couple of rows) spotlights its
+ * actual content instead of the empty space padding out its own box. Left,
+ * top and width always stay the container's own; only the bottom can move
+ * up, never down — a scrolled container with more content than fits keeps
+ * its own (clipped) height rather than growing past it.
+ * @param {Box} box
+ * @param {Box[]} childBoxes
+ * @returns {Box}
+ */
+export function tightenBox(box, childBoxes) {
+  if (!childBoxes.length) return box;
+  const bottom = Math.max(...childBoxes.map((child) => child.top + child.height));
+  return { ...box, height: clamp(bottom - box.top, 0, box.height) };
+}
+
+/**
  * How far to scroll the page (positive = down) so a docked card of
  * `cardHeight` doesn't cover the spotlighted `box`. Zero when it already clears.
  * @param {Placement} placement  "dock" (card along the bottom) or "dock-top"

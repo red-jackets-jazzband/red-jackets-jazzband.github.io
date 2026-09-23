@@ -322,3 +322,54 @@ test("Tab stays inside the card while a non-interactive step is showing", async 
     cleanup();
   }
 });
+
+test("an interactive step's spotlight uses the target's full box, not tightened to its visible children", async () => {
+  const { cleanup } = await setup();
+  try {
+    const btn = byId("playPauseBtn");
+    // The button reports a real height of 60px, but its one visible child
+    // (the icon) is much shorter — targetBox's tightening (meant for a
+    // flex-stretched *container*, e.g. the library list) would shrink the
+    // spotlight down to that, cutting off part of a real, clickable control.
+    // An interactive ("try it") step must keep the control's own full box.
+    btn.getBoundingClientRect = () => ({ left: 10, top: 10, width: 100, height: 60 });
+    btn.firstElementChild.getBoundingClientRect = () => ({ left: 15, top: 15, width: 20, height: 15 });
+
+    byId("tourBtn").click();
+    await settle();
+    primaryBtn().click(); // -> "second" (target #playPauseBtn, interactive: true)
+    await settle();
+
+    const ring = rootEl().querySelector(".rj-tour-ring");
+    assert.equal(ring.style.height, "72px", "the button's own full height plus the spotlight pad");
+  } finally {
+    cleanup();
+  }
+});
+
+test("a DOM change under the spotlighted control re-measures it without a resize or scroll", async () => {
+  const { cleanup } = await setup();
+  try {
+    const btn = byId("playPauseBtn");
+    btn.getBoundingClientRect = () => ({ left: 10, top: 10, width: 100, height: 30 });
+
+    byId("tourBtn").click();
+    await settle();
+    primaryBtn().click(); // -> "second"
+    await settle();
+
+    const ring = rootEl().querySelector(".rj-tour-ring");
+    assert.equal(ring.style.height, "42px");
+
+    // The control grows after the visitor interacts with it (e.g. search
+    // results dropping in below an add-song field) — nothing resizes or
+    // scrolls the page to tell the tour to re-measure.
+    btn.getBoundingClientRect = () => ({ left: 10, top: 10, width: 100, height: 80 });
+    btn.append(document.createElement("span"));
+
+    await waitUntil(() => ring.style.height === "92px", { timeout: 2000, interval: 10 });
+    assert.equal(ring.style.height, "92px");
+  } finally {
+    cleanup();
+  }
+});

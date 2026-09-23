@@ -15,174 +15,221 @@ helpLabel: Take the tour
 ## welcome: Welcome to the songs page
 setup: showLibrary
 target: #libraryTabs
-This library holds the lead sheets of songs the band has played, currently plays, or may play in the future. This short tour walks through picking a song, playing and printing it, transposing, practising along with a recording, the mixer, setlists and comping.
+Every tune the Red Jackets have played, still play, or might play next lives here — search it, print it, transpose it, and make it yours. This quick tour walks through finding a song, playing and printing it, transposing it, practising along with a recording, mixing your own sound, and building setlists with comping.
 
-Use **Next** and **Back** or the **←** and **→** keys. **Esc** leaves the tour, and the **?** button brings it back any time.
+Use **Next** and **Back**, or the **←** and **→** keys. **Esc** gets you out any time, and the **?** button brings the tour back whenever you like.
 
 ## search: Find a song
 setup: showLibrary
 target: #songSearch
-Type part of a title to filter the list. Press **/** anywhere to jump to this box, then use **↑** **↓** and **Enter** to open a song. The **A–Z** strip beside the list jumps straight to a letter.
+interactive: true
+Type part of a title and the list narrows as you go. Press **/** anywhere to jump straight to this box, then **↑** **↓** and **Enter** to open a song. In a hurry? The **A–Z** strip beside the list jumps straight to a letter.
 
 ## open: Your lead sheet
 setup: openDemoSong
 target: .rj-sheet-paper
-Picking a song opens it here. We've opened *Bourbon Street Parade* for the tour. The chord table comes first, then the notation. On a phone the sheet takes over the whole screen and a **back** button returns you to the list.
+Pick a song and it opens right here — we've cued up *Bourbon Street Parade* for the tour. Chord table first, then the full notation below it. On a phone the sheet takes over the whole screen; a **back** button brings you home to the list.
 
-## instrument: Choose your instrument
+## instrument: Read your own part
 setup: openDemoSong
 target: #instrument
-Pick your instrument and the sheet is transposed to fit it: concert pitch, Concert + Roman (concert pitch with a Roman numeral analysis added to the chord table), alto sax, B♭ clarinet or trumpet, tenor sax, trombone (bass clef) or sousaphone (bass clef). The page remembers your choice for next time. Playback always sounds at concert pitch, whatever instrument's part is on screen.
+interactive: true
+No mental transposition required. Pick your instrument and watch the whole sheet transpose to fit: concert pitch, Concert + Roman (concert pitch with a Roman numeral analysis added to the chord table), alto sax, B♭ clarinet or trumpet, tenor sax, trombone (bass clef) or sousaphone (bass clef). The page remembers your choice for next time, and playback always sounds at concert pitch, whatever part is on screen.
 
-## play: Play it
+## play: Listen along
 setup: openDemoSong
-target: #playPauseBtn
-**Play** plays the tune, and the notes light up on the sheet as they sound. **Stop** ends playback. Press the **Spacebar** any time a sheet is open to play or pause.
+target: .sheet-transport
+interactive: true
+Hearing a tune before you pick up your horn always helps. Hit **Play** and the notes light up on the sheet as they sound; **Stop** ends it. Or just tap the **Spacebar** any time a sheet is open — play, pause, done.
 
-## print: Print or save as PDF
+## print: Take it to the gig
 setup: openDemoSong
 target: #printLink
-**Print** turns the chart into a clean page. To keep a digital copy, choose *Save as PDF* in the print dialog. Setlists have their own print buttons, which we'll get to later.
+interactive: true
+For a stand or a folder, get it on paper. **Print** turns the chart into a clean page — or choose *Save as PDF* in the dialog to keep a digital copy instead. Setlists get their own print buttons; more on that later.
 
-# adjust: Transpose and export
+# adjust: Play it your way
 setup: openDemoSong
 
-## key: Change the key
+## key: Find your key
 target: #keyStepper
 interactive: true
-Try it: the **−** and **+** buttons move the key by **semitones**. It transposes both the notation and the sound, so what you play and what you hear stay in step. In a personal setlist the new key is saved with that song.
+Not every tune sits right in the printed key. The **−** and **+** buttons nudge it by **semitones** — notation and sound move together, so what you play and what you hear always agree. Save it in a personal setlist and the new key travels with that song.
 
-## tempo: Change the tempo
+## tempo: Practise at your own pace
 target: #tempoStepper
 interactive: true
-The tempo is in real **beats per minute**, starting from the tune's own marking. Slow it down to learn a tricky passage, then bring it back up.
+The tempo's in real **beats per minute**, starting from the tune's own marking. Slow it right down to learn a tricky passage, then bring it back up to speed.
 
-## more: More controls
+## more: Loop a tricky passage
 setup: openDrawer
 target: #repeatStepper
-The small arrow at the bottom of the toolbar opens **More controls**. The **Repeat** stepper plays the tune up to 20 times in a row, for practising on a loop, and skips the lead-in bar after the first pass so the loop stays tidy. The comping picker lives here too.
+interactive: true
+Repeating a passage by hand breaks your flow. The small arrow at the bottom of the toolbar opens **More controls**, where the **Repeat** stepper plays the tune up to 20 times in a row — skipping the lead-in bar after the first pass, so the loop stays tidy. The comping picker lives here too.
 
-## irealpro: Open it in iReal Pro
+## irealpro: Bring a backing band
 target: #iRealPro
-For any tune with chords, this button hands the chart to the **iReal Pro** app on your phone, so you have a backing band in your pocket.
+For any tune with chords, this button hands the chart to the **iReal Pro** app on your phone, so you've got a backing band in your pocket.
 
-## mp3: Export an MP3
+## mp3: Make a practice recording
 target: #exportMp3Btn
-Renders what you are hearing right now into an **.mp3** file: your instrument, key, tempo, comping, mixer settings and repeat count all included. Handy for a practice track to take away.
+Renders exactly what you're hearing right now into an **.mp3** — instrument, key, tempo, comping, mixer settings and repeat count, all baked in. A practice track to take home with you.
 
-## fullscreen: Full screen
+## fullscreen: Read it up close
 target: #sheetFullscreenBtn
-Gives the whole screen to the sheet and, where your browser allows, keeps the screen awake while you read. On a phone you can still **pinch to zoom** on a dense chart.
+Gives the whole screen to the sheet, and — where your browser allows — keeps the screen awake while you read. Chart looking dense? **Pinch to zoom** still works on a phone.
 
 # inspiration: Listen and practise
 setup: openDemoSong
 
-## button: Inspiration
+## button: Hear other versions
 target: #inspirationLink
-When a song has reference recordings, an **Inspiration** button appears. It opens a floating player, so you can hear how other bands play the tune.
+interactive: true
+Want to hear how other bands played this tune? When a song has reference recordings, an **Inspiration** button shows up — open it for a floating player right alongside your sheet.
 
-## panel: The floating player
+## panel: Keep listening while you browse
 setup: openInspiration
 target: #inspirationPanel
-The player keeps going while you browse other songs. Drag its **header** to move it and its **left edge** to resize it, or use the resize button to jump between sizes. It closes only when you close it.
+interactive: true
+The player keeps going while you browse other songs — it only closes when you close it. Drag its **header** to move it around, its **left edge** to resize it, or use the resize button to jump between sizes.
 
-## tabs: YouTube, Spotify and more
+## tabs: Compare recordings
 setup: openInspiration
 target: #inspirationTabs
-This song has more than one recording, so the tabs switch between them. Only one plays at a time.
-
-## zoom: Zoom in on the timeline
-setup: openInspiration
-target: #inspirationLoopOverview
-The strip is the whole recording. Use the **+** and **−** buttons, or drag the highlighted window or its edges, to zoom the timeline below it, which makes it far easier to place markers precisely.
+interactive: true
+This song has more than one recording — switch between the tabs to compare them. Only one plays at a time.
 
 ## loop: Loop a phrase
 setup: openInspiration
-target: #inspirationLoopTrack, #inspirationLoopBar
-Play the video, press **A** where a phrase starts and **B** where it ends, and it repeats endlessly. You can also drag the **A** and **B** handles on the timeline, and **✕** clears them.
+target: #inspirationLoopBar
+interactive: true
+Get a tricky phrase to loop on its own, instead of scrubbing back by hand over and over. Play the video, press **A** where the phrase starts and **B** where it ends, and it repeats endlessly. Drag the **A** and **B** handles on the timeline to fine-tune, and **✕** clears them.
+
+## zoom: Place your loop precisely
+setup: openInspiration
+target: .inspiration-loop-overview-row
+interactive: true
+The strip above is the whole recording. Use the **+** and **−** buttons, or drag the highlighted window or its edges, to zoom the timeline below — makes placing your **A** and **B** markers far more precise.
 
 ## speed: Slow it down
 setup: openInspiration
 target: #inspirationLoopSpeed
-Step the **speed** down (or up) to learn a fast line at your own pace, then play along.
+interactive: true
+Step the **speed** down — or up — to learn a fast line at your own pace, then play along.
 
 ## share: Share your loop
 setup: openInspiration
 target: #inspirationShareBtn
-Copies a link to this song **and** your A–B loop. Whoever opens it lands on the same sheet with the video already set to your phrase.
+interactive: true
+Copies a link to this song **and** your A–B loop. Send it to a bandmate and they land on the same sheet, video already set to your phrase.
 
-# mixer: The mixer
+# mixer: Balance your sound
 setup: openDemoSong
 
-## open: Open the mixer
+## open: Shape your own mix
 setup: openMixer
 target: #mixerPanel
-The **Mixer** is the mixing desk for everything you hear. It opens as a small panel under its button, and on a phone as a sheet from the bottom of the screen.
+The **Mixer** is your mixing desk for everything you hear — a small panel under its button on desktop, a sheet sliding up from the bottom on a phone.
 
-## accompaniment: Bass and chords
+## accompaniment: Bring in bass and chords
 setup: openMixer
 target: #mixerSectionAccompaniment
-The **auto-accompaniment** plays a bass line and chords built from the chord symbols. They start **muted**, so nothing changes until you turn them on. Each has a **mute** button, a **volume** fader and a **voice** picker, and the pattern picker sets the style.
+interactive: true
+Give the tune a backing band of its own: the **auto-accompaniment** plays a bass line and chords straight off the chord symbols. Both start **muted**, so nothing changes until you switch them on — each gets a **mute** button, a **volume** fader and a **voice** picker, and the **accompaniment pattern** picker sets the style.
 
-## voices: Every voice of the tune
+## voices: Mix every part separately
 setup: openMixer
 target: #mixerVoicesSection
-Each melody line in the song gets its own mute, volume and instrument. A tune with a trumpet and a sousaphone shows both. Your choices carry over to every other song with a voice of the same name.
+interactive: true
+Each melody line in the song gets its own mute, volume and instrument — a tune with a trumpet and a sousaphone shows both, side by side. Set them once and your choices carry over to every other song with a voice of the same name.
 
-## extras: Swing, metronome and quality
+## extras: Dial in the feel
 setup: openMixer
 target: #mixerStripSwing
-The **swing** fader loosens straight eighth notes. The **drum** switches the metronome on, and the **wave** button enables higher-quality playback.
+interactive: true
+Loosen up straight eighth notes with the **swing** fader, switch on a click with the **drum** metronome, or bump up the sound quality with the **wave** button.
 
 # setlists: Setlists and printing
 
-## shelf: The setlist shelf
+## shelf: Browse setlists
 setup: showSetlists
 target: #songList
-The **Setlists** tab lists the band's own setlists, which are read-only, and **Yours** underneath. Yours are stored in this browser only.
+The **Setlists** tab lists the band's own setlists — read-only — and **Yours** underneath. Yours live in this browser only, ready whenever you need them.
 
 ## new: Make your own setlist
 setup: showSetlists
 target: .rj-library-new-setlist-btn
-**New setlist** starts from scratch, from a copy of any existing setlist (a **remix**), or from a **.txt** file you upload. Then you add songs by searching, drag them into order, add set breaks and set a different key for each song.
+**New setlist** starts from scratch, from a copy of any existing setlist (a **remix**), or from a **.txt** file you upload. Let's build one from scratch, step by step.
 
-## open: Open a setlist
+## create: Start from scratch
+setup: createDemoSetlist
+target: #setlistTitleRow
+interactive: true
+Starting from *Empty* opens a blank setlist right away, ready for songs — we've called this one *Tour setlist*. Double-click a name (or its pencil) any time to rename yours.
+
+## addsong: Add a song
+setup: createDemoSetlist
+target: .rj-library-add-song-field
+interactive: true
+Search a title in the box at the foot of the list, then press **Enter** — or click a match — to add it.
+
+## addsong2: Add another
+setup: createDemoSetlist, addDemoSong1
+target: .rj-library-add-song-field
+interactive: true
+Add a second song the same way. The list grows downward, one row per song, ready to put in order.
+
+## reorder: Set the running order
+setup: createDemoSetlist, addDemoSong1, addDemoSong2
+target: #songList
+interactive: true
+Drag a song's **⋮⋮** handle up or down to move it. With a row focused, **Alt** + **↑** **↓** nudges it one slot at a time from the keyboard instead.
+
+## break: Split into sets
+setup: createDemoSetlist, addDemoSong1, addDemoSong2
+target: .setlist-divider-input, .rj-library-add-break
+interactive: true
+**Add a set break** starts a new set — handy for splitting a gig into Set 1, Set 2 and so on. Type a label, or leave it blank for an automatic "Set 2".
+
+## open: Run through the set
 setup: openDemoSetlist
 target: #openSetlistTools
-Opening a setlist puts its songs in order in the sidebar, split into **sets**. Click one to see it in the same interactive sheet, or use **↑** **↓** (or swipe on a phone) to step through the list. **Listen** opens the setlist's songs on YouTube.
+Opening a setlist lines its songs up in the sidebar, split into **sets**. Click one to open it in the same interactive sheet, or use **↑** **↓** (or swipe on a phone) to step through the whole list. **Listen** opens the setlist's songs on YouTube.
 
-## print: Three ways to print
+## print: Print for the gig
 setup: openDemoSetlist
 target: .rj-library-print-group
+interactive: true
 - **Setlist**: a big numbered list of titles to put on stage.
 - **Chordbook**: every song's title and chord grid.
 - **Songbook**: every song with its chords and full notation.
 
-## exports: Every way to export
-setup: openDemoSong
-target: #sheetActions
-Beyond the three setlist prints, a single song can be **printed** or saved as a PDF, exported as an **MP3**, or sent to **iReal Pro**. A personal setlist can also be exported as a **.txt** file and imported again on another device.
+## exports: Take a setlist anywhere
+setup: createDemoSetlist, addDemoSong1, addDemoSong2
+target: #setlistExportBtn
+A personal setlist can also be exported as a **.txt** file and imported again on another device — the setlist equivalent of the Print, MP3 and iReal Pro exports you already know from a single song.
 
 # comping: Comping
 setup: openDemoSong
 
-## pick: Add a comping part
+## pick: Add your own accompaniment
 setup: openDrawer
 target: #compingSlot
 interactive: true
-Comping is a chord accompaniment written out as a second staff under the melody. Try picking a **pattern** from this list: Charleston, clave, walking steps and more.
+Comping is a chord accompaniment written right out as a second staff under the melody. Pick a **pattern** from the list — Charleston, clave, walking steps and more — and hear it come alive.
 
 ## notation: Read the colours
 setup: openDrawer, compingOn
 target: #notation
-Each hit is a three-note chord, and the colour tells you the role of each note: **black** is the root, **gold** the third and **magenta** the fifth. The three lines move smoothly from chord to chord, so they are easy to follow.
+Each hit is a three-note chord, and the colour tells you each note's role: **black** is the root, **gold** the third, **magenta** the fifth. The three lines move smoothly from chord to chord, so your eye never loses the thread.
 
-## mixer: Comping in the mixer
+## mixer: Blend comping into the mix
 setup: openDrawer, compingOn, openMixer
 target: #mixerVoicesSection
-With comping on, it joins the mixer as its own **Comping** voice, so you can mute it, turn it up or give it another instrument.
+interactive: true
+With comping on, it joins the mixer as its own **Comping** voice — mute it, turn it up, or hand it a different instrument.
 
 ## done: That's the tour
 setup: showLibrary
 target: #tourBtn
-That covers everything. Replay the tour any time with this **?** button, and pick another language in the tour's corner.
+That's the tour! Replay it any time with this **?** button, and pick another language from the tour's corner whenever you like.

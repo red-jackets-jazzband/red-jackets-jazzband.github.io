@@ -885,6 +885,6 @@ export function createSetlistView(ctx) {
 
   return {
     openBand, openPersonal, refreshOpenPersonal, renderOpen,
-    highlightCurrent, stepSong, openSongInOpenSetlist, openSongAtIndex, initControls,
+    highlightCurrent, stepSong, openSongInOpenSetlist, openSongAtIndex, addSongByFile, initControls,
   };
 }

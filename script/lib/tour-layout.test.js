@@ -8,6 +8,7 @@ import {
   nextStepIndex,
   placeTooltip,
   spotlightClipPath,
+  tightenBox,
 } from "./tour-layout.js";
 
 const VIEWPORT = { width: 1400, height: 900 };
@@ -84,6 +85,20 @@ test("spotlightClipPath cuts an evenodd hole padded around the target", () => {
     "polygon(evenodd, 0 0, 0 100%, 100% 100%, 100% 0, 0 0, 94px 44px, 306px 44px, 306px 96px, 94px 96px, 94px 44px, 0 0)",
   );
   assert.equal(spotlightClipPath(null), "none");
+});
+
+test("tightenBox shrinks a container down to its children, never past them", () => {
+  const container = box(100, 50, 300, 600); // a flex-stretched sidebar, mostly empty
+  const rows = [box(100, 50, 300, 20), box(100, 70, 300, 20)];
+  assert.deepEqual(tightenBox(container, rows), { ...container, height: 40 });
+});
+
+test("tightenBox leaves the box alone with no children, and never grows it", () => {
+  const container = box(100, 50, 300, 60);
+  assert.deepEqual(tightenBox(container, []), container);
+  // Scrolled content taller than the container itself: height is clipped, not grown.
+  const overflowing = [box(100, 50, 300, 20), box(100, 500, 300, 400)];
+  assert.deepEqual(tightenBox(container, overflowing), { ...container, height: 60 });
 });
 
 test("nextStepIndex walks either way and skips unavailable steps", () => {

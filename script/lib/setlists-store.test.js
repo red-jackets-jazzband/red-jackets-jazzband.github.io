@@ -169,6 +169,23 @@ test("importPersonalSetlistText falls back to a given name when the file has non
   assert.equal(imported.name, "my_upload");
 });
 
+test("exportPersonalSetlistText strips control characters out of desc, never writing them to the file", () => {
+  const storage = makeStorage();
+  // An app-internal marker (e.g. the guided tour's own demo-setlist tag)
+  // must never reach a file a visitor could reimport as a real setlist.
+  const entry = copyBandSetlistToPersonal(storage, { name: "Marked", desc: "\u0000rj-tour-demo", songs: [] });
+
+  const text = exportPersonalSetlistText(storage, entry.id);
+  assert.equal(text.includes("\u0000"), false);
+  assert.equal(text.includes("# desc,"), false, "an all-control desc leaves no desc line at all");
+});
+
+test("importPersonalSetlistText strips control characters out of a file's own desc line", () => {
+  const storage = makeStorage();
+  const imported = importPersonalSetlistText(storage, "# name,Old export\n# desc,\u0000rj-tour-demo\nbasin_street.abc,\n", "fallback");
+  assert.equal(imported.desc, "");
+});
+
 test("every function degrades to a no-op / empty result when storage is unavailable, never throws", () => {
   const brokenStorage = {
     getItem: function() {

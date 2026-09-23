@@ -1,4 +1,9 @@
 import { byId } from "../lib/dom.js";
+import { isSetlistDivider } from "../lib/setlist-format.js";
+import {
+  clearPersonalSetlistMarker, copyBandSetlistToPersonal, deletePersonalSetlist, getPersonalSetlist,
+  listPersonalSetlists,
+} from "../lib/setlists-store.js";
 
 /*
   The guided tour's hands: everything that moves the real page into the state a
@@ -16,6 +21,39 @@ export const DEMO_SETLIST_FILE = "setlist_2026.txt";
 // A plain, easy-to-read comping pattern (see COMPING_PATTERNS in lib/comping.js).
 export const COMPING_DEMO_PATTERN = "on_2_and_4";
 
+// The personal setlist the "build one from scratch" steps create and grow.
+// desc carries an invisible marker (never shown or settable through the UI)
+// instead of matching on the display name, so a visitor's own real setlist —
+// even one they happen to have named the same — is never swept up with it.
+export const DEMO_SETLIST_NAME = "Tour setlist";
+const DEMO_SETLIST_MARKER = "\u0000rj-tour-demo";
+export const DEMO_SETLIST_SONG_1 = "basin_street.abc";
+export const DEMO_SETLIST_SONG_2 = "bill_bailey.abc";
+const DEMO_SETLIST_FILES = [DEMO_SETLIST_SONG_1, DEMO_SETLIST_SONG_2];
+
+// Whether `song` is still exactly one of the demo's own two scripted songs —
+// never a divider, a transposed one, or one already counted.
+function isPlainDemoSong(song, filesSoFar) {
+  return !isSetlistDivider(song) && !song.key
+    && DEMO_SETLIST_FILES.includes(song.file) && !filesSoFar.includes(song.file);
+}
+
+// True while a demo setlist entry still holds nothing but what the tour's own
+// script put there — no rename, no extra or duplicated song, no set break, no
+// transpose. Every one of those is directly reachable while the tour is open
+// (the add-song, reorder and break steps are all `interactive: true`), so a
+// visitor can turn this into something real of their own; once they do, it
+// must never be swept away or deleted like ordinary tour scaffolding.
+function isUntouchedDemoSetlist(entry) {
+  if (!entry || entry.name !== DEMO_SETLIST_NAME) return false;
+  const filesSoFar = [];
+  for (const song of entry.songs) {
+    if (!isPlainDemoSong(song, filesSoFar)) return false;
+    filesSoFar.push(song.file);
+  }
+  return true;
+}
+
 // Every action name a tour file's `setup:` line may use — checked against the
 // real static/tour/tour.en.md by tests/tour-content.test.js.
 export const TOUR_ACTION_NAMES = [
@@ -27,6 +65,9 @@ export const TOUR_ACTION_NAMES = [
   "openMixer",
   "openInspiration",
   "compingOn",
+  "createDemoSetlist",
+  "addDemoSong1",
+  "addDemoSong2",
 ];
 
 const SHEET_ACTIVE_CLASS = "rj-sheet-active";
@@ -106,6 +147,7 @@ export function createTourActions(ctx) {
   let snapshot = null;
   let demoShown = false; // has the tour put the demo song on the sheet?
   let loopBarGaveUp = false; // YouTube's player never came up (blocked / offline)
+  let demoSetlistId = null; // the personal setlist createDemoSetlist made, deleted again in end()
 
   async function showLibrary() {
     leaveSheetIfStacked();
@@ -148,6 +190,63 @@ export function createTourActions(ctx) {
     );
   }
 
+  // Deletes any leftover demo setlist from a tour that never reached end()
+  // (a closed tab, a JS error). Matches on the marker in `desc`, not the
+  // display name, so a visitor's own real setlist is never at risk even if
+  // they happened to name it the same thing. One that no longer looks like
+  // the tour's own untouched scaffolding — a visitor built on it for real —
+  // is kept instead: the marker is dropped so it reads as an ordinary
+  // personal setlist and is never swept again.
+  function sweepStaleDemoSetlists() {
+    const storage = ctx.storage();
+    listPersonalSetlists(storage)
+      .filter((entry) => entry.desc === DEMO_SETLIST_MARKER)
+      .forEach((entry) => {
+        if (isUntouchedDemoSetlist(entry)) deletePersonalSetlist(storage, entry.id);
+        else clearPersonalSetlistMarker(storage, entry.id);
+      });
+  }
+
+  // The "build a setlist from scratch" steps skip the New-setlist modal (its
+  // z-index sits below the tour overlay's, so it would open invisibly behind
+  // the shield — see tour.en.md's "new" step) and create the same kind of
+  // personal, empty setlist the *Empty* choice in that modal would.
+  async function createDemoSetlist() {
+    const { state } = ctx;
+    const storage = ctx.storage();
+    if (!demoSetlistId || !getPersonalSetlist(storage, demoSetlistId)) {
+      demoSetlistId = copyBandSetlistToPersonal(storage, {
+        name: DEMO_SETLIST_NAME, desc: DEMO_SETLIST_MARKER, songs: [],
+      }).id;
+    }
+    if (state.activeTab !== "setlists") ctx.switchTab("setlists");
+    if (state.setlistsView === "open" && state.currentPersonalId === demoSetlistId) return;
+    await withTimeout(
+      new Promise((resolve) => { ctx.setlistView.openPersonal(demoSetlistId, resolve); }),
+      SETLIST_WAIT_MS,
+    );
+  }
+
+  // Adds `file` to the demo setlist through the exact function a real click on
+  // an add-song search result calls, so a visitor who tries the step
+  // themselves and one who skips it end up in the identical state. A no-op
+  // once the song is already there, so re-running it (Back, a chapter jump)
+  // never adds a second copy.
+  function addDemoSetlistSong(file) {
+    if (!demoSetlistId) return;
+    const entry = getPersonalSetlist(ctx.storage(), demoSetlistId);
+    if (!entry || entry.songs.some((song) => song.file === file)) return;
+    ctx.setlistView.addSongByFile(file);
+  }
+
+  async function addDemoSong1() {
+    addDemoSetlistSong(DEMO_SETLIST_SONG_1);
+  }
+
+  async function addDemoSong2() {
+    addDemoSetlistSong(DEMO_SETLIST_SONG_2);
+  }
+
   async function openMixer() {
     ctx.mixer.setOpen(true);
   }
@@ -175,7 +274,17 @@ export function createTourActions(ctx) {
   }
 
   const actions = {
-    showLibrary, showSetlists, openDemoSong, openDemoSetlist, openDrawer, openMixer, openInspiration, compingOn,
+    showLibrary,
+    showSetlists,
+    openDemoSong,
+    openDemoSetlist,
+    openDrawer,
+    openMixer,
+    openInspiration,
+    compingOn,
+    createDemoSetlist,
+    addDemoSong1,
+    addDemoSong2,
   };
 
   // Panels are only ever open because the current step asked for them, so the
@@ -215,6 +324,8 @@ export function createTourActions(ctx) {
     };
     demoShown = state.currentSongFile === DEMO_SONG_FILE;
     loopBarGaveUp = false;
+    demoSetlistId = null;
+    sweepStaleDemoSetlists();
     ctx.audio.stop();
     exitFullscreen();
   }
@@ -289,6 +400,33 @@ export function createTourActions(ctx) {
     if (snap.compingValue !== null) chooseComping(snap.compingValue);
     await restoreLocation(snap);
     restorePanels(snap);
+    if (demoSetlistId) {
+      const staleId = demoSetlistId;
+      // Escape/Skip can land end() before restoreLocation ever leaves the
+      // Setlists tab (e.g. snap.tab was already "setlists"), so the demo
+      // setlist can still be the one on screen — either open, or just
+      // listed on the shelf under "Yours" — when it's touched underneath it.
+      const viewingIt = ctx.state.activeTab === "setlists" && ctx.state.setlistsView === "open"
+        && ctx.state.currentPersonalId === staleId;
+      const onShelf = ctx.state.activeTab === "setlists" && ctx.state.setlistsView === "home";
+      const storage = ctx.storage();
+      // Interactive steps (add-song, reorder, break) let a visitor build for
+      // real on top of the demo — only an untouched entry is tour
+      // scaffolding safe to delete; anything else is their own work now, so
+      // it's kept and just quietly promoted to an ordinary personal setlist.
+      if (isUntouchedDemoSetlist(getPersonalSetlist(storage, staleId))) {
+        deletePersonalSetlist(storage, staleId);
+      } else {
+        clearPersonalSetlistMarker(storage, staleId);
+      }
+      demoSetlistId = null;
+      // refreshOpenPersonal already falls back to the shelf itself once the
+      // entry it looks up is gone — the same path a real "delete this
+      // setlist while it's open elsewhere" takes; it re-renders it in place
+      // just as normally when the entry is kept instead.
+      if (viewingIt) ctx.setlistView.refreshOpenPersonal();
+      else if (onShelf) ctx.setlistHome.render();
+    }
   }
 
   return { actions, apply, begin, end };
