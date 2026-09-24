@@ -1293,7 +1293,7 @@ export function createInspiration(ctx) {
   function updateSizeButtonIcon() {
     const icon = byId("inspirationSizeBtn")?.querySelector("span");
     if (!icon) return;
-    const atMax = panelWidth >= PANEL_WIDTHS[PANEL_WIDTHS.length - 1];
+    const atMax = panelWidth >= PANEL_WIDTHS.at(-1);
     icon.className = atMax
       ? "fa-solid fa-down-left-and-up-right-to-center"
       : "fa-solid fa-up-right-and-down-left-from-center";

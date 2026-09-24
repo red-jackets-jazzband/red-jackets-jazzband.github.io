@@ -1,34 +1,38 @@
-# name,Setlist 2026
-# break,Set 1
-bourbon_street_parade.abc,
-five_foot_two.abc,
-second_line.abc,
-gatemouth.abc,
-you_are_my_sunshine.abc,
-im_walking.abc,
-oh_when_the_saints.abc,
-walking_on_a_thin_line.abc,
-# break,Set 2
-lilly_of_the_valley.abc,
-just_a_little_while.abc,
-didnt_he_ramble.abc,
-bellamina.abc,
-when_youre_smiling.abc,
-whoopin_blues.abc,
-bill_bailey.abc,
-# break,Set 3
-see_see_rider.abc,
-happy_feet_blues.abc,
-go_down_to_new_orleans.abc,
-bei_mir_bist_du_schon.abc,
-closer_walk.abc,
-isle_of_capri.abc,
-dippermouth_blues.abc,
-milenburg_joys.abc,
-# break,Set 4
-lil_liza_jane.abc,
-honky_tonk_town.abc,
-gatemouth.abc,
-all_the_girls.abc,
-gloryland.abc,
-ice_cream.abc,
+# Setlist 2026
+
+## Set 1
+- [Bourbon Street Parade](/songs/bourbon_street_parade.abc)
+- [Five Foot Two](/songs/five_foot_two.abc)
+- [Second line (Joe Avery)](/songs/second_line.abc)
+- [Gate Mouth](/songs/gatemouth.abc)
+- [You are my Sunshine](/songs/you_are_my_sunshine.abc)
+- [I'm Walking](/songs/im_walking.abc)
+- [Oh when the Saints](/songs/oh_when_the_saints.abc)
+- [Walking on a Thin Line](/songs/walking_on_a_thin_line.abc)
+
+## Set 2
+- [Lilly of the Valley](/songs/lilly_of_the_valley.abc)
+- [Just a little while](/songs/just_a_little_while.abc)
+- [Oh Didn't He Ramble](/songs/didnt_he_ramble.abc)
+- [Bellamina](/songs/bellamina.abc)
+- [When you're Smiling](/songs/when_youre_smiling.abc)
+- [Whoopin' Blues](/songs/whoopin_blues.abc)
+- [Won't you come home Bill Bailey](/songs/bill_bailey.abc)
+
+## Set 3
+- [See See Rider](/songs/see_see_rider.abc)
+- [Oh on the 3rd day](/songs/happy_feet_blues.abc)
+- [Why don't you go down to New Orleans](/songs/go_down_to_new_orleans.abc)
+- [Bei mir bist du Schon](/songs/bei_mir_bist_du_schon.abc)
+- [Just a closer walk with thee](/songs/closer_walk.abc)
+- [Isle of Capri](/songs/isle_of_capri.abc)
+- [Sugarfoot stomp](/songs/dippermouth_blues.abc)
+- [Milenburg Joys](/songs/milenburg_joys.abc)
+
+## Set 4
+- [Li'l Liza Jane](/songs/lil_liza_jane.abc)
+- [Honky Tonk Town](/songs/honky_tonk_town.abc)
+- [Gate Mouth](/songs/gatemouth.abc)
+- [The way I ride](/songs/all_the_girls.abc)
+- [Over in the Gloryland](/songs/gloryland.abc)
+- [Ice Cream](/songs/ice_cream.abc)

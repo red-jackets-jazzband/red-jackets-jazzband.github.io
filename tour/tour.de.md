@@ -112,6 +112,9 @@ Ziehe den **⋮⋮**-Griff eines Songs nach oben oder unten, um ihn zu verschieb
 ## break: Teile in Sets auf
 **Add a set break** beginnt ein neues Set — praktisch, um einen Gig in Set 1, Set 2 und so weiter zu unterteilen. Tippe eine Bezeichnung ein oder lass sie leer für ein automatisches „Set 2“.
 
+## note: Etwas für die Band notieren
+Klicke auf **+ note** unter einem Song, um dir etwas für den Gig zu notieren — wer solo spielt, ein Tonartwechsel, eine Erinnerung. Es erscheint auf der gedruckten Setlist und der Bühnenliste, nie auf dem eigenen Blatt des Songs.
+
 ## open: Spiel das Set durch
 Öffnest du eine Setlist, stehen ihre Songs sofort der Reihe nach in der Seitenleiste, unterteilt in **Sets**. Klick auf einen Song, um ihn im selben interaktiven Leadsheet zu öffnen, oder blättere mit **↑** **↓** (auf dem Handy per Wischen) durch die ganze Liste. **Listen** öffnet die Songs der Setlist auf YouTube.
 

@@ -112,6 +112,9 @@ Faites glisser la poignée **⋮⋮** d'un morceau vers le haut ou le bas pour l
 ## break: Découpez en sets
 **Add a set break** démarre un nouveau set — pratique pour découper un concert en Set 1, Set 2, etc. Tapez un intitulé, ou laissez-le vide pour un « Set 2 » automatique.
 
+## note: Notez quelque chose pour le groupe
+Cliquez sur **+ note** sous un morceau pour noter quelque chose pour le concert — qui joue le solo, un changement de tonalité, un rappel. Cela apparaît sur la setlist imprimée et la liste de scène, jamais sur la partition du morceau lui-même.
+
 ## open: Parcourez le set
 Ouvrez une setlist, et ses morceaux s'affichent aussitôt dans l'ordre dans la barre latérale, répartis en **sets**. Cliquez sur un morceau pour l'ouvrir dans la même grille interactive, ou parcourez toute la liste avec **↑** **↓** (en balayant sur téléphone). **Listen** ouvre les morceaux de la setlist sur YouTube.
 

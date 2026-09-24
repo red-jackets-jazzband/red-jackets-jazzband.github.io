@@ -45,7 +45,9 @@ function fillSongMeta(n, meta) {
 function coverPage(name, desc) {
   return el("div", { class: "bookContent hideOnScreen setlist-cover" }, [
     el("h1", { text: name }),
-    el("p", { text: desc }),
+    // white-space: pre-line (split.css) renders the desc's own "\n"s as real
+    // line/paragraph breaks rather than collapsing them.
+    el("p", { class: "setlist-cover-desc", text: desc }),
     el("img", { src: "/images/songbook_qr.png", height: 100, width: 100 }),
   ]);
 }
@@ -122,6 +124,18 @@ export function createSetlistPrint(ctx) {
 
   // ---- "Print setlist": the numbered stage list ----------------------
 
+  // The song title cell, plus — when the setlist item carries one — a
+  // smaller line underneath for its per-song note (e.g. who solos). This is
+  // the one place a note is meant to show up in print: never on the
+  // song's own chart.
+  function songCell(entry) {
+    const parts = [ctx.songName(entry.item.file)];
+    if (entry.item.note) {
+      parts.push(el("div", { class: "setlist-stage-note", text: entry.item.note }));
+    }
+    return el("td", { class: "stage-c-song" }, parts);
+  }
+
   function stageTable(songs) {
     const showInstr = instrumentTransposes(instrument());
     const columns = ["num", "song", "concert", ...(showInstr ? ["instr"] : []), "tempo"];
@@ -150,7 +164,7 @@ export function createSetlistPrint(ctx) {
       }
       const cells = [
         el("td", { class: "stage-c-num", text: `${entry.displayNumber}.` }),
-        el("td", { class: "stage-c-song", text: ctx.songName(entry.item.file) }),
+        songCell(entry),
         el("td", {
           class: "stage-c-concert",
           id: `setlistStageConcert-${entry.songCount}`,

@@ -1,26 +1,28 @@
-# name,N.O.A.D.S. Songbook
-# desc,Eind 2009, aan een keukentafel ergens aan één van de Bergse Singels, herrees uit de as van de vroegere MLC Jazzband een nieuw straatorkest, de Red Jackets Jazzband. Dat is 10 jaar geleden en wie jarig is trakteert! Dit boek is gemaakt ter gelegenheid van het 10 jarig bestaan van de Red Jackets Jazzband en is een geschenk aan alle Bergse Straatorkesten. Daarnaast is dit boek bedoeld om andere muzikanten kennis te laten maken met New Orleans (aan de Schelde) Jazz. Bergen op Zoom en jazz horen van oudsher bij elkaar. De stad kent een unieke rijke traditie en een ongekende hoeveelheid aan straatorkesten. Bergen op Zoom wordt dan ook wel met recht 'New Orleans Aan de Schelde' genoemd. De straatorkesten zijn in de basis hetzelfde, maar elke band is op geheel eigen wijze uniek. Deze eigen(wijs)heid leidt tot een mooi pallet aan songs die we hebben gebundeld in dit N.O.A.D.S. Songbook. De songs in het N.O.A.D.S. Songbook behoren tot de favorieten van de huidige traditionele Bergse straatorkesten. Ze zijn voor het eerst gebundeld en het boek is daarmee een uniek document. Heb je vragen of opmerkingen, neem dan contact met ons op via www.redjackets.nl.
-big_chief.abc,
-bourbon_street_parade.abc,
-cest_magnifique.abc,
-corrine_corrina.abc,
-do_watcha_wanna.abc,
-honky_tonk_town.abc,
-feel_like_funkin_it_up.abc,
-go_to_the_mardi_gras.abc,
-i_got_that_feeling.abc,
-im_walking.abc,
-be_like_you.abc,
-ice_cream.abc,
-jambalaya.abc,
-second_line.abc,
-lord_lord_lord.abc,
-milenburg_joys.abc,
-oh_when_the_saints.abc,
-oye_como_va.abc,
-see_see_rider.abc,
-steamin_blues.abc,
-sweet_georgia_brown.abc,
-walking_on_a_thin_line.abc,
-we_shall_not_be_moved.abc,
-you_are_my_sunshine.abc,
+# N.O.A.D.S. Songbook
+
+Eind 2009, aan een keukentafel ergens aan één van de Bergse Singels, herrees uit de as van de vroegere MLC Jazzband een nieuw straatorkest, de Red Jackets Jazzband. Dat is 10 jaar geleden en wie jarig is trakteert! Dit boek is gemaakt ter gelegenheid van het 10 jarig bestaan van de Red Jackets Jazzband en is een geschenk aan alle Bergse Straatorkesten. Daarnaast is dit boek bedoeld om andere muzikanten kennis te laten maken met New Orleans (aan de Schelde) Jazz. Bergen op Zoom en jazz horen van oudsher bij elkaar. De stad kent een unieke rijke traditie en een ongekende hoeveelheid aan straatorkesten. Bergen op Zoom wordt dan ook wel met recht 'New Orleans Aan de Schelde' genoemd. De straatorkesten zijn in de basis hetzelfde, maar elke band is op geheel eigen wijze uniek. Deze eigen(wijs)heid leidt tot een mooi pallet aan songs die we hebben gebundeld in dit N.O.A.D.S. Songbook. De songs in het N.O.A.D.S. Songbook behoren tot de favorieten van de huidige traditionele Bergse straatorkesten. Ze zijn voor het eerst gebundeld en het boek is daarmee een uniek document. Heb je vragen of opmerkingen, neem dan contact met ons op via www.redjackets.nl.
+
+- [Big Chief](/songs/big_chief.abc)
+- [Bourbon Street Parade](/songs/bourbon_street_parade.abc)
+- [C'est Magnifique](/songs/cest_magnifique.abc)
+- [Corrine Corrina](/songs/corrine_corrina.abc)
+- [Do Watcha Wanna](/songs/do_watcha_wanna.abc)
+- [Honky Tonk Town](/songs/honky_tonk_town.abc)
+- [Feel like Funkin' it up](/songs/feel_like_funkin_it_up.abc)
+- [Mardi Gras in New Orleans](/songs/go_to_the_mardi_gras.abc)
+- [I Got That Feeling](/songs/i_got_that_feeling.abc)
+- [I'm Walking](/songs/im_walking.abc)
+- [I Wanna Be Like You](/songs/be_like_you.abc)
+- [Ice Cream](/songs/ice_cream.abc)
+- [Jambalaya](/songs/jambalaya.abc)
+- [Second line (Joe Avery)](/songs/second_line.abc)
+- [Lord Lord Lord](/songs/lord_lord_lord.abc)
+- [Milenburg Joys](/songs/milenburg_joys.abc)
+- [Oh when the Saints](/songs/oh_when_the_saints.abc)
+- [Oye Como Va](/songs/oye_como_va.abc)
+- [See See Rider](/songs/see_see_rider.abc)
+- [Steamin Blues](/songs/steamin_blues.abc)
+- [Sweet Georgia Brown](/songs/sweet_georgia_brown.abc)
+- [Walking on a Thin Line](/songs/walking_on_a_thin_line.abc)
+- [We shall not be moved](/songs/we_shall_not_be_moved.abc)
+- [You are my Sunshine](/songs/you_are_my_sunshine.abc)

@@ -13,6 +13,7 @@ import {
   addSongToPersonalSetlist,
   removeSongFromPersonalSetlist,
   updateSongKeyInPersonalSetlist,
+  updateSongNoteInPersonalSetlist,
   addDividerToPersonalSetlist,
   updateDividerLabelInPersonalSetlist,
   setPersonalSetlistOrder,
@@ -284,6 +285,80 @@ export function createSetlistView(ctx) {
     });
   }
 
+  // A song's per-setlist note (e.g. "Ben solos 2nd chorus") — shown only in
+  // the setlist itself (this list, and the printed stage list in
+  // setlist-print.js), never on the song's own interactive sheet. Read-only
+  // text for a band setlist (whatever its .txt file's own "> " lines set);
+  // click-to-edit for a personal one, same in-place-edit pattern as the
+  // setlist title (initRename below) and the divider label.
+  function noteBlock(song, index, personalEntry) {
+    const hasNote = Boolean(song.note);
+    if (!personalEntry) {
+      return hasNote
+        ? el("div", { class: "setlist-song-note-row" },
+          el("div", { class: "setlist-song-note-text", text: song.note }))
+        : null;
+    }
+
+    let cancelled = false;
+    const textEl = el("button", {
+      type: "button",
+      class: "setlist-song-note-text",
+      text: song.note || "",
+      hidden: !hasNote,
+    });
+    const addBtn = el("button", {
+      type: "button", class: "setlist-song-note-add", text: "+ note", hidden: hasNote,
+    });
+    const inputEl = el("textarea", {
+      class: "setlist-song-note-input",
+      placeholder: "Add a note (e.g. who solos)…",
+      value: song.note || "",
+      rows: 2,
+      hidden: true,
+    });
+
+    const enterEdit = () => {
+      cancelled = false;
+      textEl.hidden = true;
+      addBtn.hidden = true;
+      inputEl.hidden = false;
+      inputEl.focus();
+    };
+    const leaveEdit = () => {
+      inputEl.hidden = true;
+      textEl.hidden = !hasNote;
+      addBtn.hidden = hasNote;
+    };
+    const commit = () => {
+      if (cancelled) {
+        cancelled = false;
+        leaveEdit();
+        return;
+      }
+      const value = inputEl.value.trim();
+      if (value === (song.note || "")) {
+        leaveEdit();
+        return;
+      }
+      updateSongNoteInPersonalSetlist(ctx.storage(), personalEntry.id, index, value);
+      refreshOpenPersonal();
+    };
+
+    textEl.addEventListener("click", enterEdit);
+    addBtn.addEventListener("click", enterEdit);
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      cancelled = true;
+      inputEl.value = song.note || "";
+      inputEl.blur();
+    });
+    inputEl.addEventListener("blur", commit);
+
+    return el("div", { class: "setlist-song-note-row" }, [textEl, addBtn, inputEl]);
+  }
+
   function songRow(song, index, personalEntry, displayNumber) {
     const row = el("div", {
       class: "song-list-item setlist-song-row",
@@ -306,6 +381,10 @@ export function createSetlistView(ctx) {
       const badge = formatSetlistKeyLabel(song.key);
       if (badge) row.append(el("span", { class: "setlist-song-key-badge", text: badge }));
     }
+
+    const note = noteBlock(song, index, personalEntry);
+    if (note) row.append(note);
+
     return row;
   }
 
@@ -449,7 +528,7 @@ export function createSetlistView(ctx) {
         break;
       }
     }
-    const anchor = before || others[others.length - 1].nextSibling;
+    const anchor = before || others.at(-1).nextSibling;
     if (anchor !== dragged && dragged.nextSibling !== anchor) {
       dragged.parentNode.insertBefore(dragged, anchor);
       rowDrag.moved = true;
@@ -532,7 +611,7 @@ export function createSetlistView(ctx) {
     const pos = songIndexes.indexOf(ctx.state.currentSetlistSongIndex);
     let next;
     if (pos === -1) {
-      next = dir > 0 ? songIndexes[0] : songIndexes[songIndexes.length - 1];
+      next = dir > 0 ? songIndexes[0] : songIndexes.at(-1);
     } else {
       const np = pos + dir;
       if (np < 0 || np >= songIndexes.length) return false;
@@ -651,10 +730,8 @@ export function createSetlistView(ctx) {
         breakBtn.focus();
         return;
       }
-      const rows = byId("songList")
-        ? byId("songList").querySelectorAll(".setlist-song-title, .setlist-divider-input")
-        : [];
-      const last = rows[rows.length - 1];
+      const rows = qsa(".setlist-song-title, .setlist-divider-input", byId("songList"));
+      const last = rows.at(-1);
       if (last) last.focus();
     }
 
@@ -828,7 +905,7 @@ export function createSetlistView(ctx) {
     on("setlistExportBtn", "click", () => {
       if (!ctx.state.currentPersonalId) return;
       const entry = getPersonalSetlist(ctx.storage(), ctx.state.currentPersonalId);
-      const text = exportPersonalSetlistText(ctx.storage(), ctx.state.currentPersonalId);
+      const text = exportPersonalSetlistText(ctx.storage(), ctx.state.currentPersonalId, ctx.songName);
       if (!text) return;
       const filename = `${(entry.name || "setlist").toLowerCase().replace(/[^a-z0-9]+/g, "_")}.txt`;
       downloadText(filename, text);

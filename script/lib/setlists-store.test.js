@@ -8,6 +8,7 @@ import {
   addSongToPersonalSetlist,
   removeSongFromPersonalSetlist,
   updateSongKeyInPersonalSetlist,
+  updateSongNoteInPersonalSetlist,
   addDividerToPersonalSetlist,
   updateDividerLabelInPersonalSetlist,
   setPersonalSetlistOrder,
@@ -112,12 +113,46 @@ test("addDividerToPersonalSetlist / updateDividerLabelInPersonalSetlist manage s
   updateDividerLabelInPersonalSetlist(storage, entry.id, 0, "nope");
   assert.deepEqual(listPersonalSetlists(storage)[0].songs[0], { file: "a.abc", key: "" });
 
-  // A divider survives export/import as a "# break" line.
+  // A divider survives export/import as a "##" heading.
   const text = exportPersonalSetlistText(storage, entry.id);
-  assert.match(text, /# break,Second set/);
+  assert.match(text, /## Second set/);
   const deviceB = makeStorage();
   const imported = importPersonalSetlistText(deviceB, text, "fallback");
   assert.equal(imported.songs[1].divider, "Second set");
+});
+
+test("updateSongNoteInPersonalSetlist changes just that song's note", () => {
+  const storage = makeStorage();
+  const entry = createPersonalSetlist(storage, "My List");
+  addSongToPersonalSetlist(storage, entry.id, { file: BASIN_STREET, key: "" });
+  addSongToPersonalSetlist(storage, entry.id, { file: "tiger_rag.abc", key: "" });
+
+  updateSongNoteInPersonalSetlist(storage, entry.id, 0, "Ben solos 2nd chorus.");
+  assert.equal(listPersonalSetlists(storage)[0].songs[0].note, "Ben solos 2nd chorus.");
+  assert.equal(listPersonalSetlists(storage)[0].songs[1].note, undefined);
+});
+
+test("updateSongNoteInPersonalSetlist keeps a multi-line note and normalizes CRLF to plain newlines", () => {
+  const storage = makeStorage();
+  const entry = createPersonalSetlist(storage, "My List");
+  addSongToPersonalSetlist(storage, entry.id, { file: BASIN_STREET, key: "" });
+
+  updateSongNoteInPersonalSetlist(storage, entry.id, 0, "Line one.\r\nLine two.\r\n\r\nLine three.");
+  assert.equal(listPersonalSetlists(storage)[0].songs[0].note, "Line one.\nLine two.\n\nLine three.");
+});
+
+test("a multi-line note survives export/import across two devices", () => {
+  const deviceA = makeStorage();
+  const entry = createPersonalSetlist(deviceA, "My List");
+  addSongToPersonalSetlist(deviceA, entry.id, { file: BASIN_STREET, key: "" });
+  updateSongNoteInPersonalSetlist(deviceA, entry.id, 0, "Ben solos.\nWatch the turnaround.");
+
+  const text = exportPersonalSetlistText(deviceA, entry.id);
+  assert.match(text, /\n {2}> Ben solos\.\n {2}> Watch the turnaround\.\n/);
+
+  const deviceB = makeStorage();
+  const imported = importPersonalSetlistText(deviceB, text, "fallback");
+  assert.equal(imported.songs[0].note, "Ben solos.\nWatch the turnaround.");
 });
 
 test("renamePersonalSetlist updates the name", () => {
@@ -154,13 +189,22 @@ test("exportPersonalSetlistText / importPersonalSetlistText round-trip across tw
   addSongToPersonalSetlist(deviceA, entry.id, { file: BASIN_STREET, key: "Bb" });
 
   const text = exportPersonalSetlistText(deviceA, entry.id);
-  assert.match(text, /# name,Export Me/);
-  assert.match(text, /basin_street\.abc,Bb/);
+  assert.match(text, /^# Export Me/);
+  assert.match(text, /\/songs\/basin_street\.abc\?key=Bb/);
 
   const deviceB = makeStorage(); // a different browser/device
   const imported = importPersonalSetlistText(deviceB, text, "fallback");
   assert.equal(imported.name, "Export Me");
   assert.deepEqual(imported.songs, [{ file: BASIN_STREET, key: "Bb" }]);
+});
+
+test("exportPersonalSetlistText uses the given songName resolver for each link's text", () => {
+  const storage = makeStorage();
+  const entry = createPersonalSetlist(storage, "My List");
+  addSongToPersonalSetlist(storage, entry.id, { file: BASIN_STREET, key: "" });
+
+  const text = exportPersonalSetlistText(storage, entry.id, () => "Basin Street Blues");
+  assert.match(text, /- \[Basin Street Blues\]\(\/songs\/basin_street\.abc\)/);
 });
 
 test("importPersonalSetlistText falls back to a given name when the file has none", () => {

@@ -132,6 +132,16 @@ export function updateSongKeyInPersonalSetlist(storage, id, index, key) {
   writeStorage(storage, list);
 }
 
+// A per-song note — printed-setlist-only, e.g. who takes the solo. Sanitized
+// on the way in (see sanitizeNote below), the one place this ever gets set
+// from the UI, so every read of it is already clean.
+export function updateSongNoteInPersonalSetlist(storage, id, index, note) {
+  const list = readStorage(storage);
+  const song = findEntry(list, id)?.songs[index];
+  if (song) song.note = sanitizeNote(note);
+  writeStorage(storage, list);
+}
+
 /*
    Reorders the whole `songs` array (items and dividers alike) to match
    `order`, a permutation of its indices — `order[k]` is the current index
@@ -171,22 +181,49 @@ export function copyBandSetlistToPersonal(storage, bandSetlist) {
 }
 
 // desc is free text a visitor can read on a printed booklet cover page — a
-// legitimate one never contains a control character, so one that does is an
-// app-internal flag (e.g. the guided tour's own demo-setlist marker) that
-// must never leak into a downloaded file, or survive back out of one:
-// discarded whole rather than stripped down to whatever readable text was
-// riding along with it. Applied at both ends of the .txt boundary — on
-// export so a marker never reaches the file in the first place, and on
-// import too, so a file downloaded before this existed can't carry one in.
+// legitimate one is real multi-line prose (so "\n" is fine) but never
+// contains any other control character, so one that does is an app-internal
+// flag (e.g. the guided tour's own demo-setlist marker) that must never leak
+// into a downloaded file, or survive back out of one: discarded whole rather
+// than stripped down to whatever readable text was riding along with it.
+// Applied at both ends of the .txt boundary — on export so a marker never
+// reaches the file in the first place, and on import too, so a file
+// downloaded before this existed can't carry one in.
 function sanitizeDesc(desc) {
-  const value = String(desc || "");
+  const value = String(desc || "").replace(/\r\n?/g, "\n");
   // eslint-disable-next-line no-control-regex -- detecting an internal marker is the point
-  return /[\u0000-\u001f]/.test(value) ? "" : value;
+  return /[\u0000-\u0009\u000b-\u001f]/.test(value) ? "" : value;
 }
 
-export function exportPersonalSetlistText(storage, id) {
+// A per-song note has no internal-marker convention to guard (unlike desc
+// above) — it's just stray-byte hygiene, so offending characters are
+// stripped rather than nuking the whole note. "\r\n"/"\r" (a note typed or
+// pasted on Windows) is normalized to a plain "\n" rather than stripped, so
+// line breaks survive.
+function sanitizeNote(note) {
+  const value = String(note || "").replace(/\r\n?/g, "\n");
+  // eslint-disable-next-line no-control-regex -- stripping stray control bytes, not detecting a marker
+  return value.replace(/[\u0000-\u0009\u000b-\u001f]/g, "");
+}
+
+function sanitizeSongs(songs) {
+  return (songs || []).map((item) => {
+    if (isSetlistDivider(item) || !item.note) return item;
+    return { ...item, note: sanitizeNote(item.note) };
+  });
+}
+
+// `songName(file)`, when given, resolves each song's real current title for
+// the exported file's link text (see serializeSetlistFile) — the caller's
+// own live song index, not something this storage module has access to.
+export function exportPersonalSetlistText(storage, id, songName) {
   const entry = getPersonalSetlist(storage, id);
-  return entry ? serializeSetlistFile({ ...entry, desc: sanitizeDesc(entry.desc) }) : null;
+  return entry
+    ? serializeSetlistFile(
+      { ...entry, desc: sanitizeDesc(entry.desc), songs: sanitizeSongs(entry.songs) },
+      { songName },
+    )
+    : null;
 }
 
 // Imports a setlist .txt (this device's own export, or one carried over
@@ -197,6 +234,6 @@ export function importPersonalSetlistText(storage, text, fallbackName) {
   return createEntry(storage, {
     name: parsed.name || fallbackName,
     desc: sanitizeDesc(parsed.desc),
-    songs: parsed.songs,
+    songs: sanitizeSongs(parsed.songs),
   });
 }

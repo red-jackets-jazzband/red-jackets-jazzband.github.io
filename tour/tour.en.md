@@ -191,6 +191,12 @@ target: .setlist-divider-input, .rj-library-add-break
 interactive: true
 **Add a set break** starts a new set — handy for splitting a gig into Set 1, Set 2 and so on. Type a label, or leave it blank for an automatic "Set 2".
 
+## note: Note something for the band
+setup: createDemoSetlist, addDemoSong1, addDemoSong2
+target: .setlist-song-note-add
+interactive: true
+Click **+ note** under any song to jot something down for the gig — who takes the solo, a key change, a reminder. It shows on the printed setlist and stage list, never on the song's own sheet.
+
 ## open: Run through the set
 setup: openDemoSetlist
 target: #openSetlistTools

@@ -248,6 +248,35 @@ test("a personal-setlist desc adds a cover page", async () => {
   }
 });
 
+test("a multi-line desc is preserved as-is (CSS renders its own '\\n's as line breaks)", async () => {
+  const { print, settle, cleanup } = setup();
+  try {
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, "Line one.\n\nLine two."));
+    await settle();
+    const cover = document.querySelector("#setlistPrintBooklet .setlist-cover-desc");
+    assert.equal(cover.textContent, "Line one.\n\nLine two.");
+  } finally {
+    cleanup();
+  }
+});
+
+test("the stage list shows a song's per-setlist note under its title, only when it has one", async () => {
+  const { print, settle, cleanup } = setup();
+  try {
+    const songsWithNote = [
+      { file: "a.abc", key: "", note: "Ben solos 2nd chorus." },
+      { file: "b.abc", key: "" },
+    ];
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", songsWithNote, ""));
+    await settle();
+    const notes = [...document.querySelectorAll(".setlist-stage-note")];
+    assert.equal(notes.length, 1);
+    assert.equal(notes[0].textContent, "Ben solos 2nd chorus.");
+  } finally {
+    cleanup();
+  }
+});
+
 test("buildBooklet collects each song's YouTube F: link into a deduped watch_videos playlist URL", async () => {
   const { print, settle, cleanup } = setup();
   try {

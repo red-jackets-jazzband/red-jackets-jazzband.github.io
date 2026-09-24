@@ -112,6 +112,9 @@ Sleep het **⋮⋮**-handvat van een nummer omhoog of omlaag om het te verplaats
 ## break: Splits op in sets
 **Add a set break** begint een nieuwe set — handig om een optreden op te delen in Set 1, Set 2, enzovoort. Typ een label, of laat het leeg voor een automatisch “Set 2”.
 
+## note: Noteer iets voor de band
+Klik op **+ note** onder een nummer om iets te noteren voor het optreden — wie er solo speelt, een toonsoortwissel, een geheugensteuntje. Het verschijnt op de geprinte setlist en stage list, nooit op het eigen blad van het nummer.
+
 ## open: Doorloop de set
 Open je een setlist, dan staan de nummers meteen op volgorde in de zijbalk, verdeeld in **sets**. Klik op een nummer om het in hetzelfde interactieve leadsheet te openen, of gebruik **↑** **↓** (of veeg op een telefoon) om door de hele lijst te stappen. **Listen** opent de nummers van de setlist op YouTube.
 
