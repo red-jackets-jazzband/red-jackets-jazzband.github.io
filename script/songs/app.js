@@ -287,14 +287,30 @@ function createApp() {
     ctx.switchTab((layout && layout.dataset.defaultTab) || "library");
   }
 
+  // Each phase is independent enough to survive the others failing: a thrown
+  // error in, say, initSheet() (an unsupported API on a given browser, a
+  // malformed song) used to abort every later phase silently, including
+  // ctx.tour.init() — so the "?" tour button would simply never appear, with
+  // nothing in the UI to explain why. Isolating each phase means a failure
+  // stays local to whatever broke, and lands in the console instead of
+  // vanishing.
   return {
     start() {
       const params = parseSongsParams(window.location.hash);
-      initSheet();
-      initSidebar();
-      bootstrap(params);
-      // Last, so the tour sees the page as bootstrap left it.
-      ctx.tour.init();
+      const phases = [
+        () => initSheet(),
+        () => initSidebar(),
+        () => bootstrap(params),
+        // Last, so the tour sees the page as bootstrap left it.
+        () => ctx.tour.init(),
+      ];
+      for (const phase of phases) {
+        try {
+          phase();
+        } catch (error) {
+          console.error(error);
+        }
+      }
     },
   };
 }
