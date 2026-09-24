@@ -28,7 +28,7 @@ async function exportMp3(ctx, btn) {
     const synth = new ABCJS.synth.CreateSynth();
     await synth.init(built);
     await synth.prime();
-    const buffer = synth.audioBuffers?.[0];
+    const buffer = synth.audioBuffers && synth.audioBuffers[0];
     if (!buffer) throw new Error("No audio rendered for this tune");
     const mp3 = encodeMp3(buffer, { repeatCount: built.repeatCount, restartFraction: built.restartFraction });
     downloadBlob(mp3Filename(song), new Blob([mp3], { type: "audio/mpeg" }));

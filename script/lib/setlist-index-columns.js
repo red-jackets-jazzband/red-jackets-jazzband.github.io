@@ -91,7 +91,7 @@ function packByWeight(chunks, columnCount) {
 // back into a single group per column so they print as one continuous <ol>.
 function mergeHeadinglessRuns(column) {
   return column.reduce((groups, chunk) => {
-    const prev = groups.at(-1);
+    const prev = groups[groups.length - 1];
     if (prev && prev.heading == null && chunk.heading == null) {
       prev.entries.push(...chunk.entries);
     } else {

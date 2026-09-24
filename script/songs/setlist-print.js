@@ -156,10 +156,10 @@ export function createSetlistPrint(ctx) {
 
     walkSetlist(songs).entries.forEach((entry) => {
       if (entry.kind === "set-heading") {
-        if (tbodies.at(-1).childElementCount > 0) {
+        if (tbodies[tbodies.length - 1].childElementCount > 0) {
           tbodies.push(el("tbody", { class: "setlist-stage-set-body" }));
         }
-        tbodies.at(-1).append(setRow(entry.label));
+        tbodies[tbodies.length - 1].append(setRow(entry.label));
         return;
       }
       const cells = [
@@ -175,7 +175,7 @@ export function createSetlistPrint(ctx) {
         cells.push(el("td", { class: "stage-c-instr", id: `setlistStageInstr-${entry.songCount}` }));
       }
       cells.push(el("td", { class: "stage-c-tempo", id: `setlistStageTempo-${entry.songCount}` }));
-      tbodies.at(-1).append(el("tr", {}, cells));
+      tbodies[tbodies.length - 1].append(el("tr", {}, cells));
     });
 
     return el("table", { class: "setlist-stage-table" }, [

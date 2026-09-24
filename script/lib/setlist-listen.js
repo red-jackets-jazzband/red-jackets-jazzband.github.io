@@ -4,6 +4,7 @@
 // playlist for the whole setlist.
 import { parseInspirationLinks, firstYoutubeUrl } from "./inspiration-links.js";
 import { extractYouTubeId } from "./youtube.js";
+import { execAll } from "./regex-exec-all.js";
 
 const F_FIELD = /^F:(.*)$/gm;
 
@@ -15,7 +16,7 @@ const F_FIELD = /^F:(.*)$/gm;
 // none.
 export function firstYoutubeIdFromAbc(abcText) {
   if (typeof abcText !== "string") return null;
-  const lines = Array.from(abcText.matchAll(F_FIELD), (m) => m[1].trim());
+  const lines = execAll(F_FIELD, abcText).map((m) => m[1].trim());
   const url = firstYoutubeUrl(parseInspirationLinks(lines.join("\n")));
   return url ? extractYouTubeId(url) : null;
 }

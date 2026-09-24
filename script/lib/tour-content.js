@@ -68,7 +68,7 @@ export function resolveTourLang(saved, pathname, navigatorLanguages) {
 
 // `{n}`-style placeholders in a UI string ("Step {n} of {total}").
 export function formatTourString(template, values = {}) {
-  let out = String(template ?? "");
+  let out = template === null || template === undefined ? "" : String(template);
   for (const [key, value] of Object.entries(values)) {
     out = out.split(`{${key}}`).join(String(value));
   }
@@ -221,7 +221,7 @@ function startChapterHeading(state, headingText) {
 // A line under a chapter heading but before its first step: only `setup:` means anything.
 function addChapterMeta(chapter, line) {
   const meta = parseMeta(line);
-  if (meta?.name === "setup") chapter.setup = splitList(meta.value);
+  if (meta && meta.name === "setup") chapter.setup = splitList(meta.value);
 }
 
 function consumeLine(state, line) {
@@ -245,7 +245,8 @@ function consumeLine(state, line) {
  */
 export function parseTourMarkdown(text) {
   const state = { ui: {}, rawChapters: [], inUi: false, chapter: null, step: null };
-  for (const line of String(text ?? "").split(/\r?\n/)) consumeLine(state, line);
+  const safeText = text === null || text === undefined ? "" : String(text);
+  for (const line of safeText.split(/\r?\n/)) consumeLine(state, line);
   return {
     ui: state.ui,
     chapters: state.rawChapters.map((raw) => ({
@@ -276,19 +277,22 @@ export function mergeTourLang(base, overlay) {
   }
   return {
     ui: { ...base.ui, ...overlay.ui },
-    chapters: base.chapters.map((chapter) => ({
-      ...chapter,
-      title: translatedChapters.get(chapter.id)?.title || chapter.title,
-      steps: chapter.steps.map((step) => {
-        const translated = translatedSteps.get(`${chapter.id}/${step.id}`);
-        if (!translated) return step;
-        return {
-          ...step,
-          title: translated.title || step.title,
-          body: translated.body.length ? translated.body : step.body,
-        };
-      }),
-    })),
+    chapters: base.chapters.map((chapter) => {
+      const translatedChapter = translatedChapters.get(chapter.id);
+      return {
+        ...chapter,
+        title: (translatedChapter && translatedChapter.title) || chapter.title,
+        steps: chapter.steps.map((step) => {
+          const translated = translatedSteps.get(`${chapter.id}/${step.id}`);
+          if (!translated) return step;
+          return {
+            ...step,
+            title: translated.title || step.title,
+            body: translated.body.length ? translated.body : step.body,
+          };
+        }),
+      };
+    }),
   };
 }
 

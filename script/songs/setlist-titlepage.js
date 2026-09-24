@@ -44,7 +44,7 @@ export function fitTextWidth(textEl, targetWidth, maxFont) {
   } catch {
     return;
   }
-  if (!bbox?.width) return;
+  if (!bbox || !bbox.width) return;
   const current = Number.parseFloat(textEl.getAttribute("font-size"));
   const fitted = (targetWidth / bbox.width) * current;
   textEl.setAttribute("font-size", String(Math.min(fitted, maxFont)));
@@ -84,7 +84,7 @@ export function fitTitlePage(page) {
     fitTextWidth(name, NAME_TARGET_WIDTH_MM, NAME_MAX_FONT_MM);
   };
   refit();
-  if (document.fonts?.load) {
+  if (document.fonts && document.fonts.load) {
     return Promise.all([
       document.fonts.load("16px Saniretro"),
       document.fonts.load("16px AkuraPopo"),

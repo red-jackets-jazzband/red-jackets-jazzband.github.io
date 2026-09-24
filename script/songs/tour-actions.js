@@ -80,7 +80,7 @@ const POLL_MS = 50;
 // Not hidden by `hidden`, `display:none` (including a closed <dialog>) or a
 // display:none ancestor — what a user would call "on screen", minus layout.
 export function isShown(node) {
-  for (let current = node; current?.nodeType === 1; current = current.parentElement) {
+  for (let current = node; current && current.nodeType === 1; current = current.parentElement) {
     if (current.hidden) return false;
     if (window.getComputedStyle(current).display === "none") return false;
   }
@@ -110,7 +110,10 @@ function withTimeout(promise, ms) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
-const isDrawerOpen = () => Boolean(byId("sheetmenu")?.classList.contains("show-advanced"));
+const isDrawerOpen = () => {
+  const sheetmenu = byId("sheetmenu");
+  return Boolean(sheetmenu && sheetmenu.classList.contains("show-advanced"));
+};
 
 function setDrawer(open) {
   const btn = byId("advancedToggleBtn");
@@ -140,7 +143,8 @@ async function openDrawer() {
 }
 
 function exitFullscreen() {
-  if (document.body.classList.contains(FULLSCREEN_CLASS)) byId("sheetFullscreenBtn")?.click();
+  const btn = byId("sheetFullscreenBtn");
+  if (document.body.classList.contains(FULLSCREEN_CLASS) && btn) btn.click();
 }
 
 export function createTourActions(ctx) {
@@ -268,7 +272,7 @@ export function createTourActions(ctx) {
   // that uses this must also `setup: openDrawer`.)
   async function compingOn() {
     const select = byId("comping");
-    if (select?.value === "off" && chooseComping(COMPING_DEMO_PATTERN)) {
+    if (select && select.value === "off" && chooseComping(COMPING_DEMO_PATTERN)) {
       await waitUntil(() => ctx.state.compingActive, { timeout: 2000 });
     }
   }
@@ -319,8 +323,8 @@ export function createTourActions(ctx) {
       drawerOpen: isDrawerOpen(),
       compingValue: select ? select.value : null,
       fullscreen: document.body.classList.contains(FULLSCREEN_CLASS),
-      mixerOpen: Boolean(ctx.mixer.isOpen?.()),
-      inspirationOpen: Boolean(ctx.inspiration.isOpen?.()),
+      mixerOpen: Boolean(ctx.mixer.isOpen()),
+      inspirationOpen: Boolean(ctx.inspiration.isOpen()),
     };
     demoShown = state.currentSongFile === DEMO_SONG_FILE;
     loopBarGaveUp = false;
@@ -384,7 +388,8 @@ export function createTourActions(ctx) {
   // button are both built per rendered song).
   function restorePanels(snap) {
     if (snap.fullscreen && !document.body.classList.contains(FULLSCREEN_CLASS)) {
-      byId("sheetFullscreenBtn")?.click();
+      const btn = byId("sheetFullscreenBtn");
+      if (btn) btn.click();
     }
     if (snap.mixerOpen) ctx.mixer.setOpen(true);
     if (snap.inspirationOpen) ctx.inspiration.setOpen(true);

@@ -242,7 +242,7 @@ export function createSheet(ctx) {
   // known active and syncInstrumentVoices has run, so
   // ctx.state.instrumentVoices reflects this same render.
   function compingVoiceIndex() {
-    return ctx.state.instrumentVoices.at(-1).index;
+    return ctx.state.instrumentVoices[ctx.state.instrumentVoices.length - 1].index;
   }
 
   // Live sheet only: stamp the mixer's Bass/Chords levels and every

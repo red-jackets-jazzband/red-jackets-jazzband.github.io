@@ -16,7 +16,7 @@ const STROKE_WIDTH = 1;
 // the viewBox instead of letting it float off the crop.
 function clampTopToViewBox(txt, y) {
   const svg = txt.ownerSVGElement;
-  if (!svg?.hasAttribute("viewBox")) return y;
+  if (!svg || !svg.hasAttribute("viewBox")) return y;
   const viewBox = svg.viewBox.baseVal;
   if (!viewBox) return y;
   const minY = viewBox.y + STROKE_WIDTH / 2;

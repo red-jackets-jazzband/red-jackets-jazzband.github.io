@@ -528,7 +528,7 @@ export function createSetlistView(ctx) {
         break;
       }
     }
-    const anchor = before || others.at(-1).nextSibling;
+    const anchor = before || others[others.length - 1].nextSibling;
     if (anchor !== dragged && dragged.nextSibling !== anchor) {
       dragged.parentNode.insertBefore(dragged, anchor);
       rowDrag.moved = true;
@@ -574,11 +574,12 @@ export function createSetlistView(ctx) {
   // Open the song at `idx` of the open setlist (its position, so a song listed
   // twice comes back on the right row). False for a divider / out-of-range.
   function openSongAtIndex(idx) {
-    const song = ctx.state.currentOpenSongs?.[idx];
+    const song = ctx.state.currentOpenSongs && ctx.state.currentOpenSongs[idx];
     if (!song || isSetlistDivider(song)) return false;
     openSetlistSong(song, idx);
-    byId("songList")?.querySelector(`.setlist-song-row[data-setlist-index="${idx}"]`)
-      ?.scrollIntoView({ block: "nearest" });
+    const listEl = byId("songList");
+    const row = listEl && listEl.querySelector(`.setlist-song-row[data-setlist-index="${idx}"]`);
+    if (row) row.scrollIntoView({ block: "nearest" });
     return true;
   }
 
@@ -601,7 +602,7 @@ export function createSetlistView(ctx) {
   // (initArrowNav) can tell a clamped edge apart from a real step.
   function stepSong(dir) {
     const songs = ctx.state.currentOpenSongs;
-    if (ctx.state.setlistsView !== "open" || !songs?.length) return false;
+    if (ctx.state.setlistsView !== "open" || !songs || !songs.length) return false;
     const songIndexes = [];
     songs.forEach((item, i) => {
       if (!isSetlistDivider(item)) songIndexes.push(i);
@@ -611,7 +612,7 @@ export function createSetlistView(ctx) {
     const pos = songIndexes.indexOf(ctx.state.currentSetlistSongIndex);
     let next;
     if (pos === -1) {
-      next = dir > 0 ? songIndexes[0] : songIndexes.at(-1);
+      next = dir > 0 ? songIndexes[0] : songIndexes[songIndexes.length - 1];
     } else {
       const np = pos + dir;
       if (np < 0 || np >= songIndexes.length) return false;
@@ -626,7 +627,7 @@ export function createSetlistView(ctx) {
     // some browsers fall back to scrolling the document itself to (0,0),
     // i.e. the whole page jumps to the top. offsetParent is null exactly
     // when the row has no layout box, so skip the scroll in that case.
-    if (row?.offsetParent) row.scrollIntoView({ block: "nearest" });
+    if (row && row.offsetParent) row.scrollIntoView({ block: "nearest" });
     return true;
   }
 
@@ -731,7 +732,7 @@ export function createSetlistView(ctx) {
         return;
       }
       const rows = qsa(".setlist-song-title, .setlist-divider-input", byId("songList"));
-      const last = rows.at(-1);
+      const last = rows[rows.length - 1];
       if (last) last.focus();
     }
 
@@ -856,7 +857,8 @@ export function createSetlistView(ctx) {
   // through to song navigation.
   function moveFocusedRowOnAltArrow(e) {
     if (ctx.state.setlistsView !== "open" || !ctx.state.currentPersonalId) return false;
-    const row = e.target.closest?.(".setlist-song-row, .setlist-divider-row");
+    const target = e.target;
+    const row = target && target.closest && target.closest(".setlist-song-row, .setlist-divider-row");
     if (!row) return false;
     e.preventDefault();
     moveRowByKeyboard(row, ctx.state.currentPersonalId, e.key === "ArrowDown" ? 1 : -1);
@@ -872,7 +874,8 @@ export function createSetlistView(ctx) {
     // Stepped past the last song: hand off to the "Add to setlist" tray
     // (personal setlists only — a band setlist has no such tray) instead
     // of just clamping in place.
-    if (down) byId("setlistAddSongSearch")?.focus();
+    const addSearch = byId("setlistAddSongSearch");
+    if (down && addSearch) addSearch.focus();
   }
 
   function initArrowNav() {

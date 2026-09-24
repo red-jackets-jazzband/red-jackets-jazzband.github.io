@@ -611,8 +611,8 @@ export function createMixer(ctx) {
     if (!open) return;
     const panel = byId("mixerPanel");
     const btn = byId("mixerBtn");
-    if (panel?.contains(e.target)) return;
-    if (btn?.contains(e.target)) return;
+    if (panel && panel.contains(e.target)) return;
+    if (btn && btn.contains(e.target)) return;
     setOpen(false);
   }
 

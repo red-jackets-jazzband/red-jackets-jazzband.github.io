@@ -57,11 +57,15 @@ function tagElements(groups, milliseconds, measureIdx) {
 }
 
 // abcjs's own tune-object shape for the M: field — see lib/irealpro.js for
-// the same access pattern. Optional-chained here (unlike irealpro.js) since
-// this feeds a background timer (songs/metronome.js's scheduler): a missing
-// staff/meter should fall back quietly, not throw out of a setInterval tick.
+// the same access pattern. Guarded step by step here (unlike irealpro.js)
+// since this feeds a background timer (songs/metronome.js's scheduler): a
+// missing staff/meter should fall back quietly, not throw out of a
+// setInterval tick.
 function meterValueOf(visualObj) {
-  return visualObj?.lines?.[0]?.staff?.[0]?.meter?.value;
+  const line = visualObj && visualObj.lines && visualObj.lines[0];
+  const staff = line && line.staff && line.staff[0];
+  const meter = staff && staff.meter;
+  return meter && meter.value;
 }
 
 // A pickup/anacrusis's length, in beats — both abcjs methods return a

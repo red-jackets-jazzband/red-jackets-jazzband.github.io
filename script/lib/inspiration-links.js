@@ -64,15 +64,18 @@ export function parseInspirationLinks(metaTextUrl) {
 // Undefined (not null) so all three drop straight into updateLink's own
 // "no sources -> remove the button" contract.
 export function firstYoutubeUrl(links) {
-  return links.find((link) => link.type === "youtube")?.url;
+  const link = links.find((l) => l.type === "youtube");
+  return link && link.url;
 }
 
 export function firstSpotifyUrl(links) {
-  return links.find((link) => link.type === "spotify")?.url;
+  const link = links.find((l) => l.type === "spotify");
+  return link && link.url;
 }
 
 export function firstSoundcloudUrl(links) {
-  return links.find((link) => link.type === "soundcloud")?.url;
+  const link = links.find((l) => l.type === "soundcloud");
+  return link && link.url;
 }
 
 // The first link of each type, in F: field order — one button per source

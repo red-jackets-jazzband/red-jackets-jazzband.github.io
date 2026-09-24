@@ -510,9 +510,10 @@ export function createInspiration(ctx) {
   }
 
   function updateLink(sources, title) {
-    const youtubeUrl = sources?.youtube;
-    const spotifyUrl = sources?.spotify;
-    const soundcloudUrl = sources?.soundcloud;
+    const safeSources = sources || {};
+    const youtubeUrl = safeSources.youtube;
+    const spotifyUrl = safeSources.spotify;
+    const soundcloudUrl = safeSources.soundcloud;
     if (!youtubeUrl && !spotifyUrl && !soundcloudUrl) {
       const btn = byId("inspirationLink");
       if (btn) btn.remove();
@@ -856,7 +857,7 @@ export function createInspiration(ctx) {
     const zoomOut = byId("inspirationZoomOut");
     const zoomIn = byId("inspirationZoomIn");
     if (zoomOut) zoomOut.disabled = !hasVideo || zoomLevel === ZOOM_LEVELS[0];
-    if (zoomIn) zoomIn.disabled = !hasVideo || zoomLevel === ZOOM_LEVELS.at(-1);
+    if (zoomIn) zoomIn.disabled = !hasVideo || zoomLevel === ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
   }
 
   /*
@@ -1026,7 +1027,7 @@ export function createInspiration(ctx) {
   // pauseYoutube() above works around) — getPlayerState() asks the player
   // directly instead of waiting for that event.
   function currentlyPlaying() {
-    if (player?.getPlayerState && window.YT?.PlayerState) {
+    if (player && player.getPlayerState && window.YT && window.YT.PlayerState) {
       return player.getPlayerState() === window.YT.PlayerState.PLAYING;
     }
     return isPlaying;
@@ -1252,7 +1253,7 @@ export function createInspiration(ctx) {
     overview.addEventListener("pointerdown", (e) => {
       const dur = playerDuration();
       if (dur <= 0) return;
-      const handle = e.target.closest?.(".inspiration-loop-overview-handle");
+      const handle = e.target.closest && e.target.closest(".inspiration-loop-overview-handle");
       if (handle) {
         overviewDragging = handle.id === "inspirationOverviewHandleEnd" ? "end" : "start";
         overview.setPointerCapture(e.pointerId);
@@ -1291,9 +1292,10 @@ export function createInspiration(ctx) {
   // ---- panel size ------------------------------------------------
 
   function updateSizeButtonIcon() {
-    const icon = byId("inspirationSizeBtn")?.querySelector("span");
+    const sizeBtn = byId("inspirationSizeBtn");
+    const icon = sizeBtn && sizeBtn.querySelector("span");
     if (!icon) return;
-    const atMax = panelWidth >= PANEL_WIDTHS.at(-1);
+    const atMax = panelWidth >= PANEL_WIDTHS[PANEL_WIDTHS.length - 1];
     icon.className = atMax
       ? "fa-solid fa-down-left-and-up-right-to-center"
       : "fa-solid fa-up-right-and-down-left-from-center";
@@ -1318,7 +1320,8 @@ export function createInspiration(ctx) {
   // The size button jumps to the next preset wider than the current width
   // (which may be an in-between value left by an edge drag), wrapping round.
   function cyclePanelSize(panel) {
-    const next = PANEL_WIDTHS.find((w) => w > panelWidth + 1) ?? PANEL_WIDTHS[0];
+    const wider = PANEL_WIDTHS.find((w) => w > panelWidth + 1);
+    const next = wider === undefined ? PANEL_WIDTHS[0] : wider;
     setPanelWidth(panel, next, true);
   }
 

@@ -1,4 +1,5 @@
 import { nextVoiceId } from "./voice-id.js";
+import { execAll } from "./regex-exec-all.js";
 
 // Pure helpers for the sheet's Mixer panel (songs/mixer.js).
 //
@@ -263,7 +264,7 @@ export function parseVoiceList(abcText) {
       useName(header[1], line);
       return;
     }
-    for (const inline of line.matchAll(INLINE_VOICE_MARKER)) {
+    for (const inline of execAll(INLINE_VOICE_MARKER, line)) {
       ensure(inline[1]);
     }
   });
@@ -398,7 +399,7 @@ function injectPerVoiceLines(text, linesById) {
       consider(header[1], isBody ? "bodyDecl" : "header", { lineIndex });
       return;
     }
-    for (const inline of line.matchAll(INLINE_VOICE_MARKER)) {
+    for (const inline of execAll(INLINE_VOICE_MARKER, line)) {
       consider(inline[1], "inline", { lineIndex, col: inline.index });
     }
   });
@@ -414,7 +415,8 @@ function injectPerVoiceLines(text, linesById) {
     const directiveLines = linesById.get(id);
     if (directiveLines === undefined) return;
     if (kind === "inline") {
-      const list = inlineByLine.get(location.lineIndex) ?? [];
+      const existing = inlineByLine.get(location.lineIndex);
+      const list = existing === undefined ? [] : existing;
       list.push({ id, col: location.col, directiveLines });
       inlineByLine.set(location.lineIndex, list);
     } else {
@@ -496,7 +498,8 @@ export function injectMixerAudio(abcText, {
 
   const linesById = new Map();
   voicePrograms.forEach((program, id) => {
-    const volumePercent = voiceVolumes.get(id) ?? 100;
+    const storedVolumePercent = voiceVolumes.get(id);
+    const volumePercent = storedVolumePercent === undefined ? 100 : storedVolumePercent;
     linesById.set(id, [`%%MIDI program ${program}`, beatStressLine(volumePercent)]);
   });
 

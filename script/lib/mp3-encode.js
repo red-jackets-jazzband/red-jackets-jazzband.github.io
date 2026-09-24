@@ -40,8 +40,10 @@ function resample(channelData, fromRate) {
     const srcPos = i * ratio;
     const index = Math.floor(srcPos);
     const frac = srcPos - index;
-    const a = channelData[index] ?? 0;
-    const b = channelData[index + 1] ?? a;
+    const rawA = channelData[index];
+    const a = rawA === undefined ? 0 : rawA;
+    const rawB = channelData[index + 1];
+    const b = rawB === undefined ? a : rawB;
     result[i] = a + (b - a) * frac;
   }
   return result;

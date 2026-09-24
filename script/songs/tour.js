@@ -83,7 +83,9 @@ function swallow(event) {
 // "press the button" behaviour, so those are the one case not preventDefault-ed.
 function activatesCardButton(event, card) {
   if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
-    return card.contains(event.target?.closest?.(BUTTON));
+    const target = event.target;
+    const closestButton = target && target.closest && target.closest(BUTTON);
+    return card.contains(closestButton);
   }
   return false;
 }
@@ -141,7 +143,7 @@ function trapTab(event, card) {
   const focusable = qsa("button:not([disabled])", card);
   if (!focusable.length) return;
   const first = focusable[0];
-  const last = focusable.at(-1);
+  const last = focusable[focusable.length - 1];
   const current = document.activeElement;
   let to = null;
   if (!card.contains(current) || (!event.shiftKey && current === last)) to = first;
@@ -349,7 +351,7 @@ export function createTour(ctx) {
   }
 
   function watchPage(on) {
-    pageObserver?.disconnect();
+    if (pageObserver) pageObserver.disconnect();
     pageObserver = null;
     if (!on) return;
     pageObserver = new window.MutationObserver(onPageMutation);
@@ -466,7 +468,7 @@ export function createTour(ctx) {
     refs.root.classList.remove("is-busy");
     currentTarget = null;
     actions.end();
-    if (returnFocus?.focus) returnFocus.focus({ preventScroll: true });
+    if (returnFocus && returnFocus.focus) returnFocus.focus({ preventScroll: true });
   }
 
   function start() {

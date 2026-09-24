@@ -79,8 +79,8 @@ async function setup({ files = FILES, storage = {} } = {}) {
       if (path in files) onLoad(files[path]);
       else onError(404);
     },
-    mixer: { setOpen: (open) => calls.push(`mixer:${open}`) },
-    inspiration: { setOpen: (open) => calls.push(`inspiration:${open}`) },
+    mixer: { setOpen: (open) => calls.push(`mixer:${open}`), isOpen: () => false },
+    inspiration: { setOpen: (open) => calls.push(`inspiration:${open}`), isOpen: () => false },
     audio: { stop: () => calls.push("audio.stop") },
   });
   const tour = createTour(ctx);

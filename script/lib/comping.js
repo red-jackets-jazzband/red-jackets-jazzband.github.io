@@ -1,5 +1,6 @@
 import { computeChordOffset, BREAK_CHORD } from "./chords.js";
 import { nextVoiceId } from "./voice-id.js";
+import { execAll } from "./regex-exec-all.js";
 
 /*
    Chord-tone comping generator.
@@ -293,7 +294,8 @@ function stripInlineFields(str) {
   let result = "";
   let i = 0;
   while (i < str.length) {
-    const isField = str[i] === "[" && /[A-Za-z]/.test(str[i + 1] ?? "") && str[i + 2] === ":";
+    const nextChar = str[i + 1] === undefined ? "" : str[i + 1];
+    const isField = str[i] === "[" && /[A-Za-z]/.test(nextChar) && str[i + 2] === ":";
     if (!isField) {
       result += str[i];
       i += 1;
@@ -559,15 +561,16 @@ function normAccidental(a) {
 
 export function respellBar(fragment, keySig) {
   const barAcc = new Map();
-  return String(fragment).replaceAll(/\[[_^=A-Ga-g,']+\]/g, (chord) => {
+  return String(fragment).replace(/\[[_^=A-Ga-g,']+\]/g, (chord) => {
     const rebuilt = [];
-    for (const [, acc, letterRaw, oct] of chord
-      .slice(1, -1)
-      .matchAll(/([_^=]{0,2})([A-Ga-g])([,']{0,4})/g)) {
+    for (const [, acc, letterRaw, oct] of execAll(
+      /([_^=]{0,2})([A-Ga-g])([,']{0,4})/g,
+      chord.slice(1, -1),
+    )) {
       const letterOct = letterRaw + oct;
       const letter = letterRaw.toUpperCase();
       // Tonal never writes `=`; a bare note means natural.
-      const want = acc.replaceAll("=", "");
+      const want = acc.replace(/=/g, "");
       const current = barAcc.has(letterOct)
         ? barAcc.get(letterOct)
         : keySig[letter] || "";
@@ -907,7 +910,7 @@ function keySignature(keyScale) {
   const sig = {};
   for (const pc of keyScale) {
     const m = /^([A-G])([#b]*)$/.exec(String(pc));
-    if (m) sig[m[1]] = m[2].replaceAll("#", "^").replaceAll("b", "_");
+    if (m) sig[m[1]] = m[2].replace(/#/g, "^").replace(/b/g, "_");
   }
   return sig;
 }
@@ -1197,7 +1200,7 @@ function voiceLead(bars) {
       }
       // Nudge back by an octave if the stack has drifted off the staff.
       const lo = best.placed[0].midi;
-      const hi = best.placed.at(-1).midi;
+      const hi = best.placed[best.placed.length - 1].midi;
       const staffCenter = (lo + hi) / 2;
       let shift = 0;
       if (staffCenter < 55) shift = 12;
