@@ -12,8 +12,14 @@ export const qsa = (selector, root = document) =>
   (root ? Array.from(root.querySelectorAll(selector)) : []);
 
 // Empty a node; returns it for chaining. No-op on null.
+//
+// Not node.replaceChildren() — Safari 16.4+ only (see CLAUDE.md's Browser
+// support section); this codebase's floor is Safari 12, where it doesn't
+// exist and throws the instant anything tries to clear a list.
 export function clear(node) {
-  if (node) node.replaceChildren();
+  if (node) {
+    while (node.firstChild) node.removeChild(node.firstChild);
+  }
   return node;
 }
 

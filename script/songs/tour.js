@@ -1,4 +1,6 @@
-import { byId, el, qsa } from "../lib/dom.js";
+import {
+  byId, clear, el, qsa,
+} from "../lib/dom.js";
 import { PREF_KEYS, readPref, writePref } from "../lib/preferences.js";
 import {
   TOUR_LANGS,
@@ -248,7 +250,8 @@ export function createTour(ctx) {
   }
 
   function renderDots(step) {
-    refs.dots.replaceChildren(...content.chapters.map((chapter, i) => el(BUTTON, {
+    clear(refs.dots);
+    refs.dots.append(...content.chapters.map((chapter, i) => el(BUTTON, {
       type: BUTTON,
       class: i === step.chapterIndex ? "rj-tour-dot is-active" : "rj-tour-dot",
       attrs: {
@@ -270,7 +273,8 @@ export function createTour(ctx) {
       chapter: step.chapterTitle, n: shown.indexOf(step) + 1, total: shown.length,
     });
     refs.title.textContent = step.title;
-    refs.body.replaceChildren(...renderBlocks(step.body));
+    clear(refs.body);
+    refs.body.append(...renderBlocks(step.body));
     refs.langs.setAttribute("aria-label", ui("language"));
     for (const btn of qsa(".rj-tour-lang-btn", refs.langs)) {
       btn.setAttribute("aria-pressed", String(btn.dataset.lang === lang));

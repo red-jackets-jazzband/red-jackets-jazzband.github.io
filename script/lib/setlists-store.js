@@ -36,8 +36,15 @@ function writeStorage(storage, list) {
 }
 
 function generateId() {
-  // crypto.randomUUID: available in every supported browser and in Node 22 (CI).
-  return Date.now().toString(36) + crypto.randomUUID().slice(0, 8);
+  // Not crypto.randomUUID() — Safari 15.4+ only (see CLAUDE.md's Browser
+  // support section), and this codebase's floor is Safari 12. Nothing here
+  // needs cryptographic randomness, just a locally-unique id for a personal
+  // setlist stored in this one browser's localStorage — timestamp plus a
+  // random suffix is plenty.
+  // Not a security context — sonarjs flags Math.random() as a
+  // pseudo-random-number hotspot regardless of use.
+  // eslint-disable-next-line sonarjs/pseudo-random
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 }
 
 function findEntry(list, id) {
