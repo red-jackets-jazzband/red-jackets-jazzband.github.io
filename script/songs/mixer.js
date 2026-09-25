@@ -588,10 +588,21 @@ export function createMixer(ctx) {
     const panel = byId("mixerPanel");
     const backdrop = byId("mixerBackdrop");
     const btn = byId("mixerBtn");
-    // #mixerPanel is a native <dialog>: its `open` attribute is what the
-    // browser's own dialog:not([open]) { display: none } rule keys off, so
-    // this toggles that directly rather than the generic `hidden` attribute.
-    if (panel) panel.open = open;
+    // #mixerPanel is a <dialog>, but <dialog> itself is Safari 15.4+ — on
+    // Safari 12 it's an unrecognised element with no HTMLDialogElement
+    // interface at all, so `panel.open = open` would just set a plain JS
+    // expando property with no effect on the real `open` attribute, and
+    // there'd be no UA-stylesheet dialog:not([open]) rule to hide it either
+    // — the panel would sit permanently visible in the page from load, with
+    // this button's clicks changing nothing on screen (the exact "Mixer
+    // stays, button has no effect" symptom this replaced). Setting the
+    // content attribute directly works on every browser regardless of
+    // <dialog> support, and split.css's own .mixer-panel:not([open]) rule
+    // (rather than the native UA default) is what actually hides it.
+    if (panel) {
+      if (open) panel.setAttribute("open", "");
+      else panel.removeAttribute("open");
+    }
     if (backdrop) backdrop.hidden = !open;
     if (btn) {
       btn.classList.toggle("active", open);
