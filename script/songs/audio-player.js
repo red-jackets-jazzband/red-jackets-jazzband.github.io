@@ -21,8 +21,11 @@ const REPEAT_COUNT_DEFAULT = 1;
 // Banjo voice) but roughly 5x bigger per instrument fetched, which matters
 // more on mobile at a rehearsal than on a desktop — hence a toggle rather
 // than just switching the default outright.
-const STANDARD_SOUNDFONT_URL = "https://gleitz.github.io/midi-js-soundfonts/FatBoy/";
-const HIGH_QUALITY_SOUNDFONT_URL = "https://gleitz.github.io/midi-js-soundfonts/MusyngKite/";
+// Exported for songs/offline.js's "Download for offline" warm-up, which
+// needs to point ABCJS.synth.CreateSynth at the same soundfont set live
+// playback is currently using.
+export const STANDARD_SOUNDFONT_URL = "https://gleitz.github.io/midi-js-soundfonts/FatBoy/";
+export const HIGH_QUALITY_SOUNDFONT_URL = "https://gleitz.github.io/midi-js-soundfonts/MusyngKite/";
 
 const SYNTH_PARAMS = {
   program: 56, // Trumpet (GM)

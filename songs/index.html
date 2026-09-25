@@ -41,11 +41,22 @@
 
 
 
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="apple-touch-icon" href="/images/icons/apple-touch-icon.png" />
+<meta name="theme-color" content="#1b1b1b" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="RJ Songs" />
+
+
+
+
 
 
 
   
-  <link rel="stylesheet" href="/css/split.min.d5fe8a9c6d10424edead7b86ca2e7a817d38bf83ef8cc1ada2fc84ee62f3da26.css" type="text/css" media="screen,print" integrity="sha256-1f6KnG0QQk7erXuGyi56gX04v4PvjMGtovyE7mLz2iY=" />
+  <link rel="stylesheet" href="/css/split.min.dc4114a54e5d6adab36d701710025e127e04901a3bf3368ce659265600c0fee3.css" type="text/css" media="screen,print" integrity="sha256-3EEUpU5datqzbXAXEAJeEn4EkBo78zaM5lkmVgDA/uM=" />
 
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
@@ -100,7 +111,9 @@
     <button type="button" class="rj-library-tab" data-tab="library">Songs</button>
     <button type="button" class="rj-library-tab" data-tab="setlists">Setlists</button>
     <button type="button" id="tourBtn" class="rj-library-help-btn" hidden><span class="fa-solid fa-circle-question" aria-hidden="true"></span></button>
+    <button type="button" id="offlineBtn" class="rj-library-help-btn" title="Download for offline"><span class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></span></button>
   </div>
+  <div id="offlineStatus" class="rj-offline-status" role="status" aria-live="polite" hidden></div>
   <div class="rj-library-search" id="librarySearchRow">
     <input type="search" id="songSearch" placeholder="Search lead sheets" autocomplete="off" aria-label="Search lead sheets" />
     <kbd class="rj-search-hint" aria-hidden="true">/</kbd>
