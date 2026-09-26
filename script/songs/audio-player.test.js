@@ -610,6 +610,66 @@ test("a torn-down controller's belated callback doesn't move the cursor once a n
   }
 });
 
+// The overlapping-audio bug this guards: ABCjs's own play() resumes/pauses a
+// controller through a promise (go()-then-_play() when it's still priming),
+// and that promise keeps running even once initForTune() has paused and
+// discarded the controller for a song swap — so it can call the real
+// SynthController.play() (audible sound) well after the app has moved on to
+// a different tune. silenceIfStale() is what's supposed to catch that once
+// playPause()'s own promise resolves and notices the controller it started
+// is no longer current.
+test("a play() that resolves after a song swap gets silenced instead of left running", async () => {
+  const { audio, cleanup } = setup();
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+    const oldSc = abcjs.calls.synthControllers.at(-1);
+
+    // Press Play, then swap songs before that play() promise settles — the
+    // stub resolves via a real microtask, same as ABCjs, so the swap has to
+    // land before the awaited flush() below for the race to matter.
+    withAbcjs(abcjs, () => audio.playPause());
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    assert.equal(oldSc.pauseCalls, 1, "initForTune's own immediate pause() on the outgoing controller");
+
+    await flush();
+    assert.equal(
+      oldSc.pauseCalls,
+      2,
+      "playPause()'s own resolution must pause the stale controller again once it notices it's no longer current",
+    );
+  } finally {
+    cleanup();
+  }
+});
+
+// Same race, through the other path that can ever ask ABCjs to (re)start
+// audio: a Tempo nudge's setWarp(), whose own "wasPlaying" branch restarts
+// playback internally once it's done re-priming at the new tempo.
+test("a setWarp() that resolves after a song swap gets silenced instead of left running", async () => {
+  const { audio, cleanup } = setup();
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    await flush();
+    const oldSc = abcjs.calls.synthControllers.at(-1);
+
+    withAbcjs(abcjs, () => audio.stepTempo(5));
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    assert.equal(oldSc.pauseCalls, 1, "initForTune's own immediate pause() on the outgoing controller");
+
+    await flush();
+    assert.equal(
+      oldSc.pauseCalls,
+      2,
+      "applyTempo()'s own resolution must pause the stale controller again once it notices it's no longer current",
+    );
+  } finally {
+    cleanup();
+  }
+});
+
 test("loadRepeatCountState defaults to 1, reflects a persisted value, and rejects out-of-range/corrupt values", () => {
   const page = mountPage();
   try {
@@ -684,6 +744,43 @@ test("onFinished recovers when the repeat restart's sc.play() throws synchronous
     assert.deepEqual(abcjs.calls.seek, [0]);
     assert.equal(audio.isPlaying, false);
     assert.equal(document.getElementById("repeatCountLabel").textContent, "repeats");
+  } finally {
+    cleanup();
+  }
+});
+
+// A third instance of the race silenceIfStale() guards against (see its own
+// doc comment) — this time reached through the automatic repeat-loop
+// restart rather than a manual Play/Tempo press: tryRepeat()'s own sc.play()
+// is async (a real resume() under ABCjs), and a song swap can land while
+// that promise is still pending, after the identity/stopToken checks above
+// it have already passed.
+test("a repeat restart's sc.play() that resolves after a song swap gets silenced instead of left running", async () => {
+  const {
+    audio, abcjs, cleanup, play,
+  } = await setupPlayingTune({ repeatCount: 3 });
+  try {
+    const sc = await play();
+    let resolvePlay;
+    sc.play = () => new Promise((resolve) => {
+      resolvePlay = resolve;
+      sc.isStarted = true;
+    });
+
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished()); // schedules the deferred restart
+    await flush(); // the setTimeout(0) fires and calls sc.play(), which is still pending
+
+    // Swap songs while that restart's sc.play() is still in flight.
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+    assert.equal(sc.pauseCalls, 1, "initForTune's own immediate pause() on the outgoing controller");
+
+    resolvePlay();
+    await flush();
+    assert.equal(
+      sc.pauseCalls,
+      2,
+      "the repeat restart's own resolution must pause the stale controller again once it notices it's no longer current",
+    );
   } finally {
     cleanup();
   }
