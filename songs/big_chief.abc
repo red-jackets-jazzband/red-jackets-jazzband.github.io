@@ -10,11 +10,11 @@ F:https://secondhandsongs.com/work/139624
 K:Bbmaj
 V:1 clef=treble transpose=0 name="Trumpet" " 
 V:2 clef=bass transpose=-24 name="Sousaphone" middle=d " 
-[V:1] z cd f/2ff/2 fdc|| "F" F z3 z4 | z cd f/2ff/2 fdc| F z3 z4 | z cdf/2f f/2fgz |
+[V:1] z cd f/2f/2- f/2f/2 fdc|| "F" F z3 z4 | z cd f/2f/2- f/2f/2 fdc| F z3 z4 | z cd f/2f/2- f/2 f/2fg z |
 [V:2] z8 || f z2 e zc ze | f z3 z4 | f z2 e z c z e | f z3 z4 |
 w:
-[V:1] "Bb" fdA z z4 | z cdf/2f f/2fdc | "F" F z7 | 
+[V:1] "Bb" fdA z z4 | z cd f/2f/2- f/2 f/2fdc | "F" F z7 | 
 [V:2] B z2 G z F z G | B2 z2 z4 | f z2 e zc ze |
 w:
-[V:1] z4 f/2ffAc/2- |"C" cz/2d2z/2 z4 | z cdfdcAA | "F" F z3 z4 | z8 |
+[V:1] z4 f/2 ffAc/2- |"C" cz/2d2z/2 z4 | z cdf dcAA | "F" F z3 z4 | z8 |
 [V:2] f z3 z4 |cz2B zA zB | c2 z2 z4 | f z2 e zc zA | F z3 z4|
