@@ -20,6 +20,7 @@ Bogalusa Strut,bogalusa_strut.abc
 Bourbon Street Parade,bourbon_street_parade.abc
 Bucket's gotta hole,buckets_got_a_hole.abc
 Bugle Boy March,bugle_boy_march.abc
+Buona Sera,buona_sera.abc
 By and By,by_and_by.abc
 Canal Street Blues,canal_street_blues.abc
 Caravan,caravan.abc
