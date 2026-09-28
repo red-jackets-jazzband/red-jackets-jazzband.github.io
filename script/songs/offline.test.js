@@ -6,7 +6,12 @@ import { createAbcjsStub } from "../../../tests/helpers/stubs.js";
 import { GM_VOICES } from "../lib/gm-voices.js";
 import { createOffline, WIDE_RANGE_ABC } from "./offline.js";
 
-const SONG_INDEX = "Bourbon Street Parade,bourbon_street_parade.abc\nFive Foot Two,five_foot_two.abc\n";
+const SONG_INDEX = "Bourbon Street Parade,bourbon_street_parade.abc\nFive Foot Two,five_foot_two.abc\n"
+  // A file listed twice under different alias names, the same shape
+  // index_of_songs.txt itself uses (e.g. "Ain't my fault" / "It ain't my
+  // fault" both pointing at aint_my_fault.abc) — must be fetched once, not
+  // once per alias.
+  + "St Louis Blues,st_louis_blues.abc\nSaint Louis Blues,st_louis_blues.abc\n";
 const SETLIST_INDEX = "Setlist 2026,setlist_2026.txt\n";
 const TOUR_MD = "# ui\n";
 
@@ -81,6 +86,22 @@ async function runWithAbcjs(stub, fn) {
   }
 }
 
+// A fake BeforeInstallPromptEvent — neither jsdom nor Node has a real one,
+// and the only parts offline.js touches are preventDefault() (inherited
+// from Event, works as-is on a real dispatched event) plus the two
+// install-specific members, so a plain cancelable Event with those two
+// stubbed on is a faithful enough double.
+function makeInstallPromptEvent({ outcome = "accepted" } = {}) {
+  const event = new window.Event("beforeinstallprompt", { cancelable: true });
+  event.calls = { prompted: 0 };
+  event.prompt = () => {
+    event.calls.prompted += 1;
+    return Promise.resolve();
+  };
+  event.userChoice = Promise.resolve({ outcome });
+  return event;
+}
+
 test("init() hides the button and never registers when serviceWorker isn't supported", () => {
   const {
     offline, registerCalls, cleanup,
@@ -107,6 +128,84 @@ test("init() registers the service worker at /songs/ scope and wires the button"
   }
 });
 
+test("beforeinstallprompt is captured and suppressed, and offers install on the button", () => {
+  const { offline, cleanup } = setup();
+  try {
+    offline.init();
+    const btn = document.getElementById("offlineBtn");
+    assert.equal(btn.title, "Download for offline");
+
+    const event = makeInstallPromptEvent();
+    window.dispatchEvent(event);
+
+    assert.equal(event.defaultPrevented, true, "the browser's own install affordance should be suppressed");
+    assert.equal(btn.title, "Install app & download for offline");
+    assert.equal(btn.getAttribute("aria-label"), "Install app & download for offline");
+  } finally {
+    cleanup();
+  }
+});
+
+test("downloadForOffline shows the captured install prompt first, then proceeds with the normal download", async () => {
+  const { offline, cleanup } = setup();
+  const fetchCalls = [];
+  globalThis.fetch = fakeFetch(fetchCalls);
+  try {
+    offline.init();
+    const event = makeInstallPromptEvent();
+    window.dispatchEvent(event);
+
+    await runWithAbcjs(createAbcjsStub(), () => offline.downloadForOffline());
+
+    assert.equal(event.calls.prompted, 1);
+    assert.ok(fetchCalls.includes("/songs/index_of_songs.txt"));
+    assert.equal(document.getElementById("offlineStatus").textContent, "Available offline.");
+    // The captured event is spent after one use — the button drops back to
+    // a plain download affordance rather than offering an install that
+    // would just throw if tried again.
+    assert.equal(document.getElementById("offlineBtn").title, "Download for offline");
+  } finally {
+    delete globalThis.fetch;
+    cleanup();
+  }
+});
+
+test("a captured install prompt is used at most once; a later download doesn't try to reuse it", async () => {
+  const { offline, cleanup } = setup();
+  globalThis.fetch = fakeFetch([]);
+  try {
+    offline.init();
+    const event = makeInstallPromptEvent();
+    window.dispatchEvent(event);
+
+    await runWithAbcjs(createAbcjsStub(), () => offline.downloadForOffline());
+    // The first run already consumed the captured prompt; a second,
+    // separate download shouldn't try to call .prompt() on it again.
+    await runWithAbcjs(createAbcjsStub(), () => offline.downloadForOffline());
+
+    assert.equal(event.calls.prompted, 1);
+  } finally {
+    delete globalThis.fetch;
+    cleanup();
+  }
+});
+
+test("appinstalled clears the captured prompt and reverts the button to a plain download affordance", () => {
+  const { offline, cleanup } = setup();
+  try {
+    offline.init();
+    window.dispatchEvent(makeInstallPromptEvent());
+    const btn = document.getElementById("offlineBtn");
+    assert.equal(btn.title, "Install app & download for offline");
+
+    window.dispatchEvent(new window.Event("appinstalled"));
+    assert.equal(btn.title, "Download for offline");
+    assert.equal(btn.getAttribute("aria-label"), "Download for offline");
+  } finally {
+    cleanup();
+  }
+});
+
 test("downloadForOffline fetches the indexes, every song/setlist/tour file, warms every curated voice, and reports status", async () => {
   const { offline, cleanup } = setup();
   const fetchCalls = [];
@@ -125,6 +224,21 @@ test("downloadForOffline fetches the indexes, every song/setlist/tour file, warm
 
     assert.equal(document.getElementById("offlineStatus").textContent, "Available offline.");
     assert.equal(document.getElementById("offlineStatus").hidden, false);
+  } finally {
+    delete globalThis.fetch;
+    cleanup();
+  }
+});
+
+test("downloadForOffline fetches a file listed under multiple aliases only once", async () => {
+  const { offline, cleanup } = setup();
+  const fetchCalls = [];
+  globalThis.fetch = fakeFetch(fetchCalls);
+  try {
+    await runWithAbcjs(createAbcjsStub(), () => offline.downloadForOffline());
+
+    const stLouisFetches = fetchCalls.filter((path) => path === "/songs/st_louis_blues.abc");
+    assert.equal(stLouisFetches.length, 1);
   } finally {
     delete globalThis.fetch;
     cleanup();

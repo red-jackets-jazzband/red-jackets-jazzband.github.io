@@ -48,6 +48,9 @@ function setStatus(text) {
   node.hidden = !text;
 }
 
+const DOWNLOAD_LABEL = "Download for offline";
+const INSTALL_LABEL = "Install app & download for offline";
+
 function serviceWorkerSupported() {
   return "serviceWorker" in navigator;
 }
@@ -156,6 +159,18 @@ async function fetchIndex(path) {
   return parseSongIndex(await response.text());
 }
 
+// The song/setlist index formats allow the same file to appear on more than
+// one line (index_of_songs.txt lists several alias names — "Ain't my
+// fault" / "It ain't my fault" / "No it ain't my fault" — against the one
+// aint_my_fault.abc), which is by design for the library's own search. But
+// that means naively mapping every entry straight to a fetch path would
+// download (and re-download, since the service worker's cacheFirstRevalidate
+// strategy refetches in the background even on a cache hit) the same file
+// once per alias. De-duping by file first keeps each one to a single fetch.
+function uniqueFiles(entries) {
+  return Array.from(new Set(entries.map((entry) => entry.file)));
+}
+
 async function runDownload(ctx) {
   setStatus("Getting ready…");
   const registered = await registerServiceWorker();
@@ -183,11 +198,11 @@ async function runDownload(ctx) {
 
   let failures = 0;
   failures += await fetchAll(
-    songs.map((s) => `/songs/${s.file}`),
+    uniqueFiles(songs).map((file) => `/songs/${file}`),
     (done, total) => setStatus(`Songs: ${done} of ${total}`),
   );
   failures += await fetchAll(
-    setlists.map((s) => `/setlists/${s.file}`),
+    uniqueFiles(setlists).map((file) => `/setlists/${file}`),
     (done, total) => setStatus(`Setlists: ${done} of ${total}`),
   );
   await fetchAll(TOUR_LANGS.map((lang) => `/tour/tour.${lang}.md`), () => {});
@@ -225,14 +240,59 @@ function downloadStatus(failures) {
   as a last resort: an uncaught rejection reaching this click handler would
   otherwise leave "Getting ready…" stuck on screen with no way to tell
   what happened, on top of the unhandled-rejection console noise.
+
+  The button is also the page's one PWA install affordance. A browser that
+  judges this page installable (served over HTTPS, a valid manifest with
+  icons and `display: standalone`, a registered service worker — every one
+  of which this page already satisfies) signals that by firing
+  `beforeinstallprompt` on `window`, once, at a moment of its own choosing —
+  normally to show its own small "install"/"add to home screen" affordance
+  (an address-bar icon, a mini-infobar) with no explanation of what it's
+  for. `event.preventDefault()` suppresses that and stashes the event
+  instead, so the same click that starts a download can also raise the
+  browser's real, native install dialog — one control, one explanation
+  ("Install app & download for offline"), rather than a second icon most
+  visitors would never notice or understand. The captured event can only
+  ever be prompted once (a second `.prompt()` call throws), so it's cleared
+  immediately before calling it — a second click right after the visitor
+  dismisses the native dialog falls straight through to a plain download
+  instead of erroring on a spent event. Downloading proceeds either way
+  (installed or not: accepting, dismissing and "not installable here" all
+  look the same from here on) — the library is worth having offline whether
+  or not the visitor chose to install. Not every browser ever fires this
+  event at all (Firefox desktop doesn't implement it; iOS/iPadOS Safari has
+  no programmatic install prompt — installing there is a manual "Add to
+  Home Screen" from the share sheet) — on those the button quietly stays a
+  plain download action, since there's nothing here to offer beyond what's
+  already true.
 */
 export function createOffline(ctx) {
   let downloading = false;
+  let deferredInstallPrompt = null;
+  let installBtn = null;
+
+  function updateInstallAffordance() {
+    if (!installBtn) return;
+    const label = deferredInstallPrompt ? INSTALL_LABEL : DOWNLOAD_LABEL;
+    installBtn.title = label;
+    installBtn.setAttribute("aria-label", label);
+  }
+
+  function promptInstall() {
+    if (!deferredInstallPrompt) return Promise.resolve(null);
+    const promptEvent = deferredInstallPrompt;
+    deferredInstallPrompt = null;
+    updateInstallAffordance();
+    return promptEvent.prompt()
+      .then(() => promptEvent.userChoice)
+      .catch(() => null); // a prompt failure shouldn't block the download that follows
+  }
 
   function downloadForOffline() {
     if (downloading) return Promise.resolve();
     downloading = true;
-    return runDownload(ctx)
+    return promptInstall()
+      .then(() => runDownload(ctx))
       .catch(() => setStatus("Couldn't finish downloading — try again when you're back online."))
       .finally(() => { downloading = false; });
   }
@@ -244,8 +304,23 @@ export function createOffline(ctx) {
       btn.hidden = true;
       return;
     }
+    installBtn = btn;
     on("offlineBtn", "click", downloadForOffline);
     registerServiceWorker();
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      updateInstallAffordance();
+    });
+    // Fires once the visitor actually installs, whether that went through
+    // this button's own prompt or the browser's separate install affordance
+    // (its address-bar icon, say) — either way the captured event is now
+    // stale, so drop it and the button reverts to a plain download action.
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      updateInstallAffordance();
+    });
   }
 
   return { init, downloadForOffline };
