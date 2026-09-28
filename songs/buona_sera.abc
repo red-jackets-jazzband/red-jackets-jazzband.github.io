@@ -5,16 +5,16 @@ F:https://secondhandsongs.com/work/21989
 M:4/4
 L:1/8
 Q:1/4=120
-K:Ebmaj
-z4 z G2 A |: "F"B2 B2 B B2 c- | c c3 c2 c2 | c3 B- B4- |
-B2 z2 G2 A2 | B2 B2 B2 B e- | "C7"e3 e d B2 A- | A8 |
-z4 z F2 G | A2 A2 A2 A A- | A f3 e2 c2 | e3 d- d4 |
-z f3 e2 c2 | e d2 d d3 c | (3c2B2B2 B2 A2 | "F"G8 |
-"F"z4 z G2 A | B2 B2 B B2 c- | c c3 c2 c2 | c3 B- B4- |
-B2 z2 G2 A2 | B2 B2 B2 B g- | g3 g f e2 c- | "Bb"c8 |
-z4 c2 d2 | "Bbm"e2 e2 e2 e2 | e2 e2 _d2 _c2 | "F"_c3 B- B4- |
-B4 c2 B2 | "C7"B2 A2 A G2 A- | A4 d2 B2 | "F"c3 B- B4- |
-B2 z2 e2 f2 | "F7"g2 g2 g2 g g- | g g3 f2 e2 | "Bb"f3 c- c4- |
-c2 z2 g2 e2 | "F"g2 e2 z g2 e | "C7"g2 d2 (3g2g2g2 |1"F"e8- | e2 z2 z G2 A :|2"F"e8- |
-e2 z2 z G2 G | "Gm7"F2 G2 A2 B2 | "C7"c2 c2 (3g2g2g2 |
-"F"e8- | "Bb"e8- | "F"e8- | e6 z2 |]
+K:Fmaj
+z4 z A2 B |: "F"c2 c2 c c2 d- | d d3 d2 d2 | d3 c- c4- |
+c2 z2 A2 B2 | c2 c2 c2 c f- | "C7"f3 f e c2 B- | B8 |
+z4 z G2 A | B2 B2 B2 B B- | B g3 f2 d2 | f3 e- e4 |
+z g3 f2 d2 | f e2 e e3 d | (3d2c2c2 c2 B2 | "F"A8 |
+"F"z4 z A2 B | c2 c2 c c2 d- | d d3 d2 d2 | d3 c- c4- |
+c2 z2 A2 B2 | c2 c2 c2 c a- | a3 a g f2 d- | "Bb"d8 |
+z4 d2 e2 | "Bbm"f2 f2 f2 f2 | f2 f2 _e2 _d2 | "F"_d3 c- c4- |
+c4 d2 c2 | "C7"c2 B2 B A2 B- | B4 e2 c2 | "F"d3 c- c4- |
+c2 z2 f2 g2 | "F7"a2 a2 a2 a a- | a a3 g2 f2 | "Bb"g3 d- d4- |
+d2 z2 a2 f2 | "F"a2 f2 z a2 f | "C7"a2 e2 (3a2a2a2 |1"F"f8- | f2 z2 z A2 B :|2"F"f8- |
+f2 z2 z A2 A | "Gm7"G2 A2 B2 c2 | "C7"d2 d2 (3a2a2a2 |
+"F"f8- | "Bb"f8- | "F"f8- | f6 z2 |]
