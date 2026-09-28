@@ -1,5 +1,6 @@
 Ain't my fault,aint_my_fault.abc
 Alcoholic Blues,alcoholic_blues.abc
+Algiers Strut,algiers_strut.abc
 All by Myself,all_by_myself.abc
 All of me,all_of_me.abc
 All the girls go crazy,all_the_girls.abc
@@ -164,3 +165,4 @@ Willie the Weeper,willie_the_weeper.abc
 Won't you come home Bill Bailey,bill_bailey.abc
 You are my Sunshine,you_are_my_sunshine.abc
 You Rascal You,you_rascal_you.abc
+You're All I Want for Christmas,algiers_strut.abc
