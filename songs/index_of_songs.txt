@@ -123,6 +123,7 @@ Paper Moon,paper_moon.abc
 Paul Barbarins Second Line,paul_barbarins_second_line.abc
 Petit Fleur,petit_fleur.abc
 Precious Lord Take My Hand,take_my_hand.abc
+Royal Garden Blues,royal_garden_blues.abc
 Saint James Infirmary,st_james_infirmary.abc
 Saint Louis Blues,st_louis_blues.abc
 Second line (Joe Avery),second_line.abc
@@ -137,6 +138,7 @@ Shine,shine.abc
 Shine on me,shine_on_me.abc
 Sing On,sing_on.abc
 Sister Kate,sister_kate.abc
+Skokiaan,skokiaan.abc
 Some of these Days,some_of_these_days.abc
 South,south.abc
 Sugarfoot stomp,dippermouth_blues.abc
