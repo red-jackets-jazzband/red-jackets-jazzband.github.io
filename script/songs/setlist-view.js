@@ -6,6 +6,7 @@ import { walkSetlist } from "../lib/setlist-walk.js";
 import { filterSongsByQuery } from "../lib/song-index.js";
 import {
   extractKeyFromAbc, setlistTransposeSteps, formatSetlistKeyLabel,
+  resolvedSetlistKeyName, noteChroma, KEY_NAME_BY_CHROMA,
 } from "../lib/music-theory.js";
 import {
   getPersonalSetlist,
@@ -22,27 +23,6 @@ import {
 
 const emptyRow = (text) => el("div", { class: "song-list-empty", text });
 const setHeaderRow = (text) => el("div", { class: "song-list-letter setlist-set-heading", text });
-
-// Semitone-override value (what personal setlists store) -> the digits shown in
-// the stepper: blank for none, and blank for a legacy key-name override the
-// number field can't represent (the stored value is left intact until a number
-// is set).
-function semitoneFieldValue(raw) {
-  const trimmed = String(raw == null ? "" : raw).trim();
-  return /^[+-]?\d+$/.test(trimmed) && Number.parseInt(trimmed, 10) !== 0
-    ? String(Number.parseInt(trimmed, 10))
-    : "";
-}
-
-// What a semitone <input> should persist as its override: "" unless the user
-// typed a whole number in the field's -12..12 range (HTML min/max/step don't
-// gate a change handler, so "1.5" or "40" reach us verbatim).
-function semitoneOverride(rawValue) {
-  const trimmed = String(rawValue == null ? "" : rawValue).trim();
-  if (!/^[+-]?\d+$/.test(trimmed)) return "";
-  const n = Number(trimmed);
-  return Number.isInteger(n) && n !== 0 && n >= -12 && n <= 12 ? String(n) : "";
-}
 
 function downloadText(filename, text) {
   downloadBlob(filename, new Blob([text], { type: "text/plain" }));
@@ -72,6 +52,10 @@ function applyOpenChrome(name, isPersonal) {
   show("setlistNameInput", true);
   show("setlistRenameBtn", !isPersonal);
   show("setlistExportBtn", !isPersonal);
+}
+
+function setRowDragTranslate(row, y) {
+  row.style.transform = y === 0 ? "" : `translateY(${y}px)`;
 }
 
 function draggableRows() {
@@ -152,6 +136,114 @@ export function createSetlistView(ctx) {
   let rowDrag = null;
   let songLoadSeq = 0; // bumped per song open; a stale XHR callback checks it before rendering
 
+  // ---- per-song key resolution -----------------------------------
+
+  // A song's own written key (its K: field), fetched once per file and kept
+  // for the life of this view — every open setlist's key display (band badge
+  // or personal key picker) reads off this rather than the raw override, so
+  // "F, +2" shows as the real resulting key ("G") instead of a semitone
+  // count. undefined = not yet requested, null = fetched but no K: found.
+  const nativeKeyCache = {};
+  const pendingKeyFetches = new Set();
+
+  function resolveNativeKey(file) {
+    if (Object.prototype.hasOwnProperty.call(nativeKeyCache, file) || pendingKeyFetches.has(file)) return;
+    pendingKeyFetches.add(file);
+    const settle = (key) => {
+      nativeKeyCache[file] = key;
+      pendingKeyFetches.delete(file);
+      updateKeyDisplays();
+    };
+    ctx.readFile(`/songs/${file}`, (text) => settle(extractKeyFromAbc(text)), () => settle(null));
+  }
+
+  // What a row's key control should currently show, given what's known about
+  // the song's own key so far. `disabled` covers both "still loading" and
+  // "the tune's key couldn't be read at all" — a personal setlist's picker
+  // can't offer a meaningful palette without a native key to diff against.
+  function keyDisplayInfo(song) {
+    const known = Object.prototype.hasOwnProperty.call(nativeKeyCache, song.file);
+    const nativeKey = known ? nativeKeyCache[song.file] : undefined;
+    if (!known) return { disabled: true, text: "", isTransposed: false };
+    if (!nativeKey) {
+      const fallback = formatSetlistKeyLabel(song.key);
+      return { disabled: true, text: fallback, isTransposed: Boolean(fallback) };
+    }
+    return {
+      disabled: false,
+      text: resolvedSetlistKeyName(song.key, nativeKey),
+      isTransposed: setlistTransposeSteps(song.key, nativeKey) !== 0,
+    };
+  }
+
+  // Refresh every currently-rendered row's key control from the cache/song
+  // data, without a full re-render — called once a fetch settles, and safe to
+  // call any other time too (e.g. nothing to do if nothing's changed).
+  function updateKeyDisplays() {
+    const listEl = byId("songList");
+    if (!listEl) return;
+    qsa(".setlist-song-row", listEl).forEach((row) => {
+      const song = ctx.state.currentOpenSongs
+        && ctx.state.currentOpenSongs[Number(row.dataset.setlistIndex)];
+      if (song) applyKeyDisplay(row, song);
+    });
+  }
+
+  function applySelectDisplay(select, song) {
+    const info = keyDisplayInfo(song);
+    select.disabled = info.disabled;
+    if (info.text) select.value = info.text;
+    select.classList.toggle("is-transposed", info.isTransposed);
+  }
+
+  function applyBadgeDisplay(badge, song) {
+    const info = keyDisplayInfo(song);
+    badge.textContent = info.text;
+    badge.classList.toggle("is-transposed", info.isTransposed);
+  }
+
+  function applyKeyDisplay(row, song) {
+    const select = row.querySelector(".setlist-song-key-select");
+    if (select) {
+      applySelectDisplay(select, song);
+      return;
+    }
+    const badge = row.querySelector(".setlist-song-key-badge");
+    if (badge) applyBadgeDisplay(badge, song);
+  }
+
+  // The personal-setlist key picker: a fixed 12-key palette (same spelling as
+  // every other resolved-key display) rather than a semitone stepper — pick
+  // "B♭" instead of doing the semitone maths yourself. Selecting the song's
+  // own native key clears the override (back to "standard"); anything else is
+  // stored as a target-key override, the same format band setlists' `?key=`
+  // links already use.
+  function keySelect(song, index, personalEntry) {
+    const select = el("select", {
+      class: "setlist-song-key-select",
+      title: "Key for this setlist",
+      disabled: true,
+      attrs: { "aria-label": `Key of ${ctx.songName(song.file)} in this setlist` },
+    }, KEY_NAME_BY_CHROMA.map((name) => el("option", { value: name, text: name })));
+    select.addEventListener("change", () => {
+      const nativeKey = nativeKeyCache[song.file];
+      if (!nativeKey) return;
+      const stored = noteChroma(select.value) === noteChroma(nativeKey) ? "" : select.value;
+      updateSongKeyInPersonalSetlist(ctx.storage(), personalEntry.id, index, stored);
+      refreshOpenPersonal();
+    });
+    resolveNativeKey(song.file);
+    applySelectDisplay(select, song);
+    return select;
+  }
+
+  function keyBadge(song) {
+    const badge = el("span", { class: "setlist-song-key-badge" });
+    resolveNativeKey(song.file);
+    applyBadgeDisplay(badge, song);
+    return badge;
+  }
+
   // ---- opening -----------------------------------------------------
 
   // Opening a *different* setlist drops the pointer to whatever song was last
@@ -228,8 +320,8 @@ export function createSetlistView(ctx) {
     row.append(el("button", {
       type: "button",
       class: "setlist-song-btn setlist-song-remove",
-      text: "×",
       title: "Remove",
+      html: '<span class="fa-solid fa-trash-can" aria-hidden="true"></span>',
       attrs: { "aria-label": "Remove" },
       on: {
         click: () => removeRow(row, personalEntry.id),
@@ -264,27 +356,6 @@ export function createSetlistView(ctx) {
     return row;
   }
 
-  function semitoneField(song, index, personalEntry) {
-    return el("input", {
-      type: "number",
-      class: "setlist-song-semitones",
-      min: "-12",
-      max: "12",
-      step: "1",
-      placeholder: "0",
-      title: "Transpose, in semitones",
-      value: semitoneFieldValue(song.key),
-      attrs: { "aria-label": `Transpose ${ctx.songName(song.file)}, in semitones` },
-      on: {
-        change: (e) => {
-          const stored = semitoneOverride(e.target.value);
-          updateSongKeyInPersonalSetlist(ctx.storage(), personalEntry.id, index, stored);
-          refreshOpenPersonal();
-        },
-      },
-    });
-  }
-
   // A song's per-setlist note (e.g. "Ben solos 2nd chorus") — shown only in
   // the setlist itself (this list, and the printed stage list in
   // setlist-print.js), never on the song's own interactive sheet. Read-only
@@ -313,6 +384,7 @@ export function createSetlistView(ctx) {
     const inputEl = el("textarea", {
       class: "setlist-song-note-input",
       placeholder: "Add a note (e.g. who solos)…",
+      title: "Ctrl+Enter to finish, Esc to cancel",
       value: song.note || "",
       rows: 2,
       hidden: true,
@@ -348,6 +420,11 @@ export function createSetlistView(ctx) {
     textEl.addEventListener("click", enterEdit);
     addBtn.addEventListener("click", enterEdit);
     inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && e.ctrlKey) {
+        e.preventDefault();
+        inputEl.blur();
+        return;
+      }
       if (e.key !== "Escape") return;
       e.preventDefault();
       cancelled = true;
@@ -375,11 +452,10 @@ export function createSetlistView(ctx) {
     ]);
 
     if (personalEntry) {
-      row.append(semitoneField(song, index, personalEntry));
+      row.append(keySelect(song, index, personalEntry));
       appendRowControls(row, personalEntry);
     } else {
-      const badge = formatSetlistKeyLabel(song.key);
-      if (badge) row.append(el("span", { class: "setlist-song-key-badge", text: badge }));
+      row.append(keyBadge(song));
     }
 
     const note = noteBlock(song, index, personalEntry);
@@ -501,9 +577,10 @@ export function createSetlistView(ctx) {
   function beginRowDrag(e, handle, row, personalId) {
     if (e.button != null && e.button !== 0) return;
     e.preventDefault();
-    rowDrag = { personalId, row, moved: false };
+    rowDrag = { personalId, row, moved: false, pointerStartY: e.clientY, translateY: 0 };
     row.classList.add("setlist-row-dragging");
     document.body.classList.add("setlist-dragging");
+    setRowDragTranslate(row, 0);
     try {
       handle.setPointerCapture(e.pointerId);
     } catch {
@@ -517,6 +594,9 @@ export function createSetlistView(ctx) {
   function onRowDragMove(e) {
     if (!rowDrag) return;
     const dragged = rowDrag.row;
+    rowDrag.translateY = e.clientY - rowDrag.pointerStartY;
+    setRowDragTranslate(dragged, rowDrag.translateY);
+
     const others = draggableRows().filter((r) => r !== dragged);
     if (others.length === 0) return;
 
@@ -530,7 +610,18 @@ export function createSetlistView(ctx) {
     }
     const anchor = before || others[others.length - 1].nextSibling;
     if (anchor !== dragged && dragged.nextSibling !== anchor) {
+      // Reordering relocates the row within its parent, which would otherwise
+      // make it jump by a row's height (its untransformed layout position
+      // moves, but the pointer-following translateY doesn't know that yet).
+      // Re-anchor the translate to the row's new resting spot so it keeps
+      // reading as "still under the pointer" instead of snapping.
+      const visualTop = dragged.getBoundingClientRect().top;
+      setRowDragTranslate(dragged, 0);
       dragged.parentNode.insertBefore(dragged, anchor);
+      const restingTop = dragged.getBoundingClientRect().top;
+      rowDrag.translateY = visualTop - restingTop;
+      rowDrag.pointerStartY = e.clientY;
+      setRowDragTranslate(dragged, rowDrag.translateY);
       rowDrag.moved = true;
       renumberOpen();
     }
@@ -543,6 +634,7 @@ export function createSetlistView(ctx) {
     rowDrag = null;
     drag.row.classList.remove("setlist-row-dragging");
     document.body.classList.remove("setlist-dragging");
+    setRowDragTranslate(drag.row, 0);
     if (!drag.moved) return;
     persistOrder(
       drag.personalId,

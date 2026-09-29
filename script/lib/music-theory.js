@@ -169,8 +169,9 @@ export function setlistTransposeSteps(rawOverride, nativeKey) {
 
 // Names each pitch class the way a jazz chart tends to spell a key — flats
 // for the black notes (D♭, E♭, G♭, A♭, B♭). Good enough for a setlist key
-// badge you call on stage; not a full key-signature speller.
-const KEY_NAME_BY_CHROMA = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
+// badge you call on stage; not a full key-signature speller. Exported as the
+// fixed 12-key palette a setlist row's own key picker offers.
+export const KEY_NAME_BY_CHROMA = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
 
 /*
    Transpose a key name (letter + optional accidental; any trailing mode word
@@ -198,4 +199,20 @@ export function formatSetlistKeyLabel(rawOverride) {
     return (n > 0 ? "+" : "−") + Math.abs(n);
   }
   return trimmed;
+}
+
+/*
+   The key a setlist row actually shows on screen: the tune's own key with
+   that row's override (semitone offset or target key name, either form
+   setlistTransposeSteps already understands) applied, spelled the same way
+   transposeKeyName spells any resolved key — flats for the black notes, and
+   run through the same call even at zero offset (matching
+   resolvedExportSongMeta's existing "Concert" column) so an unmodified song
+   still reads as a real key name, not a blank. Returns null when the tune's
+   own key isn't known yet (nativeKey not loaded, or its K: field couldn't be
+   read) — the caller falls back to the raw override badge in that case.
+*/
+export function resolvedSetlistKeyName(rawOverride, nativeKey) {
+  if (!nativeKey) return null;
+  return transposeKeyName(nativeKey, setlistTransposeSteps(rawOverride, nativeKey));
 }

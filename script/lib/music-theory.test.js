@@ -9,6 +9,7 @@ import {
   setlistTransposeSteps,
   formatSetlistKeyLabel,
   transposeKeyName,
+  resolvedSetlistKeyName,
   tempoBpmFromAbc,
 } from "./music-theory.js";
 import { BREAK_CHORD } from "./chords.js";
@@ -362,4 +363,15 @@ test("transposeKeyName falls back to no transposition for a non-finite semitone 
   assert.equal(transposeKeyName("C", Infinity), "C");
   assert.equal(transposeKeyName("C", -Infinity), "C");
   assert.equal(transposeKeyName("C", NaN), "C");
+});
+
+test("resolvedSetlistKeyName resolves both override forms to the same spelled key", () => {
+  assert.equal(resolvedSetlistKeyName("2", "F"), "G"); // semitone offset
+  assert.equal(resolvedSetlistKeyName("Bb", "C"), "B♭"); // target key name, spelled canonically
+  assert.equal(resolvedSetlistKeyName("", "F"), "F"); // no override — the tune's own key
+});
+
+test("resolvedSetlistKeyName is null when the tune's own key isn't known", () => {
+  assert.equal(resolvedSetlistKeyName("2", null), null);
+  assert.equal(resolvedSetlistKeyName("2", ""), null);
 });
