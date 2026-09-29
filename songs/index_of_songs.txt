@@ -20,6 +20,7 @@ Blue and Lonesome,im_blue_and_lonesome.abc
 Bogalusa Strut,bogalusa_strut.abc
 Bourbon Street Parade,bourbon_street_parade.abc
 Bucket's gotta hole,buckets_got_a_hole.abc
+Buddy Bolden's Blues,buddy_boldens_blues.abc
 Bugle Boy March,bugle_boy_march.abc
 Buona Sera,buona_sera.abc
 By and By,by_and_by.abc
