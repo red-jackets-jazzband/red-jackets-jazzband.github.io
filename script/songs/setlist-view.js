@@ -6,7 +6,7 @@ import { walkSetlist } from "../lib/setlist-walk.js";
 import { filterSongsByQuery } from "../lib/song-index.js";
 import {
   extractKeyFromAbc, setlistTransposeSteps, formatSetlistKeyLabel,
-  resolvedSetlistKeyName, noteChroma, KEY_NAME_BY_CHROMA,
+  resolvedSetlistKeyName, tempoBpmFromAbc,
 } from "../lib/music-theory.js";
 import {
   getPersonalSetlist,
@@ -63,6 +63,57 @@ function draggableRows() {
   return listEl
     ? Array.from(listEl.querySelectorAll(".setlist-song-row, .setlist-divider-row"))
     : [];
+}
+
+// A row control that can plausibly be a note field's blur destination (the
+// user clicking straight from an open note onto something else in the
+// list) — used by describeFocusTarget/restoreDescribedFocus below to carry
+// focus across a refreshOpenPersonal() rebuild, which wipes and rebuilds
+// every one of these from scratch.
+const ROW_FOCUS_SELECTORS = [
+  ".setlist-drag-handle",
+  ".setlist-song-remove",
+  ".setlist-song-title",
+  ".setlist-song-note-add",
+  ".setlist-song-note-text",
+  ".setlist-divider-input",
+];
+
+// Describe `target` (a note field's blur `relatedTarget`) in a way that
+// survives refreshOpenPersonal() wiping and rebuilding #songList: a row
+// index + the control's own role, or one of the two fixed controls in the
+// "Add to setlist" tray at the list's foot. Returns null for anything else
+// — outside #songList entirely (refreshOpenPersonal never touches it, so
+// it's still correctly focused once the render settles) or a control this
+// list doesn't know how to relocate.
+function describeFocusTarget(listEl, target) {
+  if (!listEl || !listEl.contains(target)) return null;
+  if (target.id === "setlistAddSongSearch") return { addSearch: true };
+  if (target.closest(".rj-library-add-break")) return { addBreak: true };
+  const row = target.closest(".setlist-song-row, .setlist-divider-row");
+  if (!row) return null;
+  const selector = ROW_FOCUS_SELECTORS.find((s) => target.closest(s));
+  return selector ? { index: row.dataset.setlistIndex, selector } : null;
+}
+
+// The other half of describeFocusTarget: relocate and focus the equivalent
+// control after a rebuild. Returns whether it found one.
+function restoreDescribedFocus(listEl, described) {
+  if (!listEl || !described) return false;
+  if (described.addSearch) {
+    const target = byId("setlistAddSongSearch");
+    if (target) target.focus();
+    return Boolean(target);
+  }
+  if (described.addBreak) {
+    const target = listEl.querySelector(".rj-library-add-break");
+    if (target) target.focus();
+    return Boolean(target);
+  }
+  const row = listEl.querySelector(`[data-setlist-index="${described.index}"]`);
+  const target = row && row.querySelector(described.selector);
+  if (target) target.focus();
+  return Boolean(target);
 }
 
 // Rewrite the number badges / "Set N" placeholders straight from current DOM
@@ -133,28 +184,36 @@ export function createSetlistView(ctx) {
   let addSongActiveIndex = -1; // keyboard-highlighted add-song result, -1 = none
   let focusAddSongAfterRender = false;
   let focusHandleAfterRender = null; // draggable-row index to re-focus after a keyboard nudge
+  let noteFocusAfterRender = null; // describeFocusTarget() result to re-focus after a note commit
   let rowDrag = null;
   let songLoadSeq = 0; // bumped per song open; a stale XHR callback checks it before rendering
 
   // ---- per-song key resolution -----------------------------------
 
-  // A song's own written key (its K: field), fetched once per file and kept
-  // for the life of this view — every open setlist's key display (band badge
-  // or personal key picker) reads off this rather than the raw override, so
+  // A song's own written key (its K: field) and native tempo (its Q: field),
+  // fetched once per file (one XHR covers both) and kept for the life of
+  // this view — every open setlist's key display (band badge or personal key
+  // picker) reads off the cached key rather than the raw override, so
   // "F, +2" shows as the real resulting key ("G") instead of a semitone
-  // count. undefined = not yet requested, null = fetched but no K: found.
+  // count. undefined = not yet requested, null = fetched but no K:/Q: found.
   const nativeKeyCache = {};
+  const nativeBpmCache = {};
   const pendingKeyFetches = new Set();
 
   function resolveNativeKey(file) {
     if (Object.prototype.hasOwnProperty.call(nativeKeyCache, file) || pendingKeyFetches.has(file)) return;
     pendingKeyFetches.add(file);
-    const settle = (key) => {
+    const settle = (key, bpm) => {
       nativeKeyCache[file] = key;
+      nativeBpmCache[file] = bpm;
       pendingKeyFetches.delete(file);
       updateKeyDisplays();
     };
-    ctx.readFile(`/songs/${file}`, (text) => settle(extractKeyFromAbc(text)), () => settle(null));
+    ctx.readFile(
+      `/songs/${file}`,
+      (text) => settle(extractKeyFromAbc(text), tempoBpmFromAbc(text)),
+      () => settle(null, null),
+    );
   }
 
   // What a row's key control should currently show, given what's known about
@@ -189,56 +248,39 @@ export function createSetlistView(ctx) {
     });
   }
 
-  function applySelectDisplay(select, song) {
-    const info = keyDisplayInfo(song);
-    select.disabled = info.disabled;
-    if (info.text) select.value = info.text;
-    select.classList.toggle("is-transposed", info.isTransposed);
-  }
-
   function applyBadgeDisplay(badge, song) {
     const info = keyDisplayInfo(song);
-    badge.textContent = info.text;
+    const keyEl = badge.querySelector(".setlist-song-key-badge-key");
+    keyEl.textContent = info.text;
     badge.classList.toggle("is-transposed", info.isTransposed);
+
+    // The tune's own native bpm (Q: field) — read-only everywhere, same as
+    // the key, since a setlist has no per-song tempo override to resolve.
+    const bpmEl = badge.querySelector(".setlist-song-key-badge-bpm");
+    const bpm = Object.prototype.hasOwnProperty.call(nativeBpmCache, song.file)
+      ? nativeBpmCache[song.file]
+      : null;
+    bpmEl.textContent = bpm ? String(bpm) : "";
+    bpmEl.hidden = !bpm;
   }
 
   function applyKeyDisplay(row, song) {
-    const select = row.querySelector(".setlist-song-key-select");
-    if (select) {
-      applySelectDisplay(select, song);
-      return;
-    }
     const badge = row.querySelector(".setlist-song-key-badge");
     if (badge) applyBadgeDisplay(badge, song);
   }
 
-  // The personal-setlist key picker: a fixed 12-key palette (same spelling as
-  // every other resolved-key display) rather than a semitone stepper — pick
-  // "B♭" instead of doing the semitone maths yourself. Selecting the song's
-  // own native key clears the override (back to "standard"); anything else is
-  // stored as a target-key override, the same format band setlists' `?key=`
-  // links already use.
-  function keySelect(song, index, personalEntry) {
-    const select = el("select", {
-      class: "setlist-song-key-select",
-      title: "Key for this setlist",
-      disabled: true,
-      attrs: { "aria-label": `Key of ${ctx.songName(song.file)} in this setlist` },
-    }, KEY_NAME_BY_CHROMA.map((name) => el("option", { value: name, text: name })));
-    select.addEventListener("change", () => {
-      const nativeKey = nativeKeyCache[song.file];
-      if (!nativeKey) return;
-      const stored = noteChroma(select.value) === noteChroma(nativeKey) ? "" : select.value;
-      updateSongKeyInPersonalSetlist(ctx.storage(), personalEntry.id, index, stored);
-      refreshOpenPersonal();
-    });
-    resolveNativeKey(song.file);
-    applySelectDisplay(select, song);
-    return select;
-  }
-
+  // Every row's key is read-only here, band setlist or personal — the same
+  // badge either way, so a personal setlist's list looks and reads like a
+  // band one. A personal setlist's per-song override is still editable, but
+  // only via the Key stepper above the sheet while that song is open
+  // (initTransposeWriteBack below), not from the list itself. The tune's
+  // native bpm sits just underneath, small, the same caption treatment the
+  // Inspiration panel's A/B loop-marker buttons use for their own timestamp.
   function keyBadge(song) {
-    const badge = el("span", { class: "setlist-song-key-badge" });
+    const badge = el("span", { class: "setlist-song-key-badge" }, [
+      el("span", { class: "setlist-song-key-badge-key" }),
+      el("span", { class: "setlist-song-key-badge-bpm", hidden: true }),
+    ]);
     resolveNativeKey(song.file);
     applyBadgeDisplay(badge, song);
     return badge;
@@ -397,23 +439,44 @@ export function createSetlistView(ctx) {
       inputEl.hidden = false;
       inputEl.focus();
     };
-    const leaveEdit = () => {
+    // `relatedTarget` is the blur's real destination, if any: null for a
+    // programmatic blur() with nowhere else to go (Ctrl+Enter, Escape), set
+    // when the user instead clicked straight onto another focusable control
+    // (a different row, the add-song tray). Only the null case should pull
+    // focus back onto this row — otherwise we'd be fighting the browser's
+    // own pending focus change to wherever the user actually clicked.
+    const leaveEdit = (relatedTarget) => {
       inputEl.hidden = true;
       textEl.hidden = !hasNote;
       addBtn.hidden = hasNote;
+      // Blur already moved focus to <body> by the time this runs — without
+      // reclaiming it here, Alt+Up/Down's row lookup (e.target.closest(...))
+      // finds nothing and keyboard reorder silently stops working until the
+      // row is clicked again.
+      if (!relatedTarget) (hasNote ? textEl : addBtn).focus();
     };
-    const commit = () => {
+    const commit = (relatedTarget) => {
       if (cancelled) {
         cancelled = false;
-        leaveEdit();
+        leaveEdit(relatedTarget);
         return;
       }
       const value = inputEl.value.trim();
       if (value === (song.note || "")) {
-        leaveEdit();
+        leaveEdit(relatedTarget);
         return;
       }
       updateSongNoteInPersonalSetlist(ctx.storage(), personalEntry.id, index, value);
+      // The row gets fully rebuilt by this re-render, so the local textEl
+      // above won't exist afterward. A keyboard commit / nowhere-else blur
+      // hands off to the same post-render refocus mechanism removeRow/
+      // moveRowByKeyboard use (this row's drag handle); a real click
+      // destination gets relocated to its own rebuilt equivalent instead.
+      if (relatedTarget) {
+        noteFocusAfterRender = describeFocusTarget(byId("songList"), relatedTarget);
+      } else {
+        focusHandleAfterRender = index;
+      }
       refreshOpenPersonal();
     };
 
@@ -431,7 +494,7 @@ export function createSetlistView(ctx) {
       inputEl.value = song.note || "";
       inputEl.blur();
     });
-    inputEl.addEventListener("blur", commit);
+    inputEl.addEventListener("blur", (e) => commit(e.relatedTarget));
 
     return el("div", { class: "setlist-song-note-row" }, [textEl, addBtn, inputEl]);
   }
@@ -451,12 +514,8 @@ export function createSetlistView(ctx) {
       }),
     ]);
 
-    if (personalEntry) {
-      row.append(keySelect(song, index, personalEntry));
-      appendRowControls(row, personalEntry);
-    } else {
-      row.append(keyBadge(song));
-    }
+    row.append(keyBadge(song));
+    if (personalEntry) appendRowControls(row, personalEntry);
 
     const note = noteBlock(song, index, personalEntry);
     if (note) row.append(note);
@@ -524,6 +583,11 @@ export function createSetlistView(ctx) {
       const handles = listEl.querySelectorAll(".setlist-drag-handle");
       if (handles[focusHandleAfterRender]) handles[focusHandleAfterRender].focus();
       focusHandleAfterRender = null;
+    }
+    if (noteFocusAfterRender) {
+      const described = noteFocusAfterRender;
+      noteFocusAfterRender = null;
+      restoreDescribedFocus(listEl, described);
     }
   }
 

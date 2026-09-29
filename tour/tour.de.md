@@ -21,7 +21,7 @@ Nutze **Weiter** und **Zurück** oder die Tasten **←** und **→**. Mit **Esc*
 Tippe einen Teil des Titels ein, und die Liste wird von selbst kürzer. Drücke überall **/**, um sofort in dieses Feld zu springen, und öffne dann mit **↑** **↓** und **Enter** einen Song. Es eilt? Die **A–Z**-Leiste neben der Liste springt direkt zu einem Buchstaben.
 
 ## open: Dein Leadsheet
-Wähl einen Song, und er öffnet sich direkt hier — für die Tour haben wir schon mal *Bourbon Street Parade* aufgeschlagen. Zuerst die Akkordtabelle, danach die vollständige Notation. Auf einem Handy füllt das Leadsheet den ganzen Bildschirm; ein **Zurück**-Knopf bringt dich wieder zur Liste.
+Wähl einen Song, und er öffnet sich direkt hier — für die Tour haben wir schon mal *Bourbon Street Parade* aufgeschlagen. Zuerst die Akkordtabelle, danach die vollständige Notation. Auf einem Handy füllt das Leadsheet den ganzen Bildschirm; ein **‹ Songs**-Knopf bringt dich wieder zur Liste.
 
 ## instrument: Lies deine eigene Stimme
 Transponieren im Kopf brauchst du nicht mehr. Wähl dein Instrument, und sieh zu, wie sich das ganze Leadsheet darauf einstellt: Konzerttonhöhe, Concert + Roman (Konzerttonhöhe mit einer Analyse in römischen Ziffern in der Akkordtabelle), Altsaxofon, B-Klarinette oder -Trompete, Tenorsaxofon, Posaune (Bassschlüssel) oder Sousaphon (Bassschlüssel). Die Seite merkt sich deine Wahl für das nächste Mal, und die Wiedergabe klingt immer in Konzerttonhöhe, egal welche Stimme gerade angezeigt wird.

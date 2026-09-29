@@ -4,7 +4,7 @@ import { mountPage } from "../../../tests/helpers/dom.js";
 import { makeCtx, memoryStorage } from "../../../tests/helpers/ctx.js";
 import {
   addSongToPersonalSetlist, createPersonalSetlist, exportPersonalSetlistText, getPersonalSetlist,
-  importPersonalSetlistText, renamePersonalSetlist,
+  importPersonalSetlistText, renamePersonalSetlist, updateSongNoteInPersonalSetlist,
 } from "../lib/setlists-store.js";
 import {
   DEMO_SETLIST_FILE, DEMO_SETLIST_NAME, DEMO_SETLIST_SONG_1, DEMO_SETLIST_SONG_2, DEMO_SONG_FILE,
@@ -462,6 +462,26 @@ test("end() keeps a demo setlist the visitor built on for real, instead of delet
     assert.ok(entry, "kept, not deleted");
     assert.deepEqual(entry.songs.map((s) => s.file), [DEMO_SETLIST_SONG_1, OWN_SONG_FILE]);
     assert.equal(entry.desc, "", "the marker is dropped so a later tour never sweeps it");
+  } finally {
+    cleanup();
+  }
+});
+
+test("end() keeps a demo setlist the visitor added a note to, instead of deleting it and the note", async () => {
+  const { actions, ctx, storage, cleanup } = setup();
+  try {
+    actions.begin();
+    await actions.apply([CREATE_DEMO_SETLIST, ADD_DEMO_SONG_1]);
+    const id = ctx.state.currentPersonalId;
+    // The note step is interactive: true — a visitor can really jot
+    // something down on the demo's own first song, same as the add-song
+    // step above can really add a song of their own.
+    updateSongNoteInPersonalSetlist(storage, id, 0, "Ben solos 2nd chorus.");
+
+    await actions.end();
+    const entry = getPersonalSetlist(storage, id);
+    assert.ok(entry, "kept, not deleted");
+    assert.equal(entry.songs[0].note, "Ben solos 2nd chorus.");
   } finally {
     cleanup();
   }

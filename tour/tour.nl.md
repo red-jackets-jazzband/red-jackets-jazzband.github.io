@@ -21,7 +21,7 @@ Gebruik **Volgende** en **Terug**, of de toetsen **←** en **→**. Met **Esc**
 Typ een deel van een titel en de lijst wordt vanzelf korter. Druk overal op **/** om meteen naar dit vak te springen, en gebruik dan **↑** **↓** en **Enter** om een nummer te openen. Haast? De **A–Z**-balk naast de lijst springt direct naar een letter.
 
 ## open: Je leadsheet
-Kies een nummer en het opent meteen hier — voor de rondleiding hebben we *Bourbon Street Parade* alvast klaargezet. Eerst de akkoordentabel, dan de volledige notatie eronder. Op een telefoon vult het leadsheet het hele scherm; een **terug**-knop brengt je weer bij de lijst.
+Kies een nummer en het opent meteen hier — voor de rondleiding hebben we *Bourbon Street Parade* alvast klaargezet. Eerst de akkoordentabel, dan de volledige notatie eronder. Op een telefoon vult het leadsheet het hele scherm; een **‹ Songs**-knop brengt je weer bij de lijst.
 
 ## instrument: Lees je eigen partij
 Transponeren in je hoofd hoeft niet meer. Kies je instrument en zie het hele leadsheet meeveranderen: concert (C), Concert + Roman (concertstemming met een analyse in Romeinse cijfers in de akkoordentabel), altsax, Bb-klarinet of -trompet, tenorsax, trombone (bassleutel) of sousafoon (bassleutel). De pagina onthoudt je keuze voor de volgende keer, en het geluid klinkt altijd in concertstemming, welk instrument er ook op het scherm staat.

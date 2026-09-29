@@ -21,7 +21,7 @@ Utilisez **Suivant** et **Retour**, ou les touches **←** et **→**. **Échap*
 Tapez une partie du titre, et la liste se resserre au fil de la frappe. Appuyez sur **/** n'importe où pour sauter directement dans ce champ, puis **↑** **↓** et **Entrée** pour ouvrir un morceau. Pressé ? La barre **A–Z** à côté de la liste saute directement à une lettre.
 
 ## open: Votre grille
-Choisissez un morceau, il s'ouvre juste ici — pour la visite, nous avons déjà sorti *Bourbon Street Parade*. D'abord le tableau d'accords, puis la partition complète en dessous. Sur téléphone, la grille occupe tout l'écran ; un bouton **Retour** vous ramène à la liste.
+Choisissez un morceau, il s'ouvre juste ici — pour la visite, nous avons déjà sorti *Bourbon Street Parade*. D'abord le tableau d'accords, puis la partition complète en dessous. Sur téléphone, la grille occupe tout l'écran ; un bouton **‹ Songs** vous ramène à la liste.
 
 ## instrument: Lisez votre propre partie
 Plus besoin de transposer de tête. Choisissez votre instrument, et regardez toute la grille se transposer pour lui : hauteur réelle, Concert + Roman (hauteur réelle avec une analyse en chiffres romains dans le tableau d'accords), saxophone alto, clarinette ou trompette en si bémol, saxophone ténor, trombone (clé de fa) ou soubassophone (clé de fa). La page retient votre choix pour la prochaine fois, et la lecture sonne toujours à la hauteur réelle, quelle que soit la partie affichée.

@@ -11,12 +11,17 @@ import { createSetlistView } from "./setlist-view.js";
 
 const DRAG_HANDLE_SELECTOR = ".setlist-song-row .setlist-drag-handle";
 const NOTE_INPUT_SELECTOR = ".setlist-song-note-input";
+const NOTE_ADD_SELECTOR = ".setlist-song-note-add";
 const SONG_TITLE_SELECTOR = ".setlist-song-title";
+const KEY_SELECT_SELECTOR = ".setlist-song-key-select";
+const KEY_BADGE_SELECTOR = ".setlist-song-key-badge";
+const IS_TRANSPOSED_CLASS = "is-transposed";
 const BASIN_STREET_FILE = "basin_street.abc";
 const BASIN_STREET_NAME = "Basin Street Blues";
 const ADD_SONG_SEARCH_ID = "setlistAddSongSearch";
 const addSongSearch = () => document.getElementById(ADD_SONG_SEARCH_ID);
 const MINIMAL_ABC = "X:1\nK:C\nC2|";
+const NOTE_TEXT = "Ben solos.";
 
 function setup({ songs = [], personal = true } = {}) {
   const page = mountPage();
@@ -265,56 +270,84 @@ test("a band setlist renders read-only rows with key badges, no controls", () =>
     view.renderOpen("Band Night", songs, null, "");
     assert.equal(document.querySelectorAll(".setlist-drag-handle").length, 0);
 
-    const [badgeA, badgeB] = document.querySelectorAll(".setlist-song-key-badge");
+    const [badgeA, badgeB] = document.querySelectorAll(KEY_BADGE_SELECTOR);
     assert.equal(badgeA.textContent, "G", "F transposed +2 resolves to the real key, not \"+2\"");
-    assert.equal(badgeA.classList.contains("is-transposed"), true);
+    assert.equal(badgeA.classList.contains(IS_TRANSPOSED_CLASS), true);
     assert.equal(badgeB.textContent, "F", "no override — shows the tune's own key");
-    assert.equal(badgeB.classList.contains("is-transposed"), false);
+    assert.equal(badgeB.classList.contains(IS_TRANSPOSED_CLASS), false);
   } finally {
     cleanup();
   }
 });
 
-test("the per-song key picker writes a target-key override back to storage", () => {
+test("a key badge shows the tune's own bpm underneath, and hides it when the tune has none", () => {
+  const { view, ctx, cleanup } = setup({ personal: false });
+  try {
+    stubAbc(ctx, { "a.abc": "X:1\nK:F\nQ:1/4=132\nF2|", "b.abc": MINIMAL_ABC });
+    const songs = [{ file: "a.abc", key: "" }, { file: "b.abc", key: "" }];
+    view.renderOpen("Tempo Test Night", songs, null, "");
+
+    const [badgeA, badgeB] = document.querySelectorAll(KEY_BADGE_SELECTOR);
+    const bpmA = badgeA.querySelector(".setlist-song-key-badge-bpm");
+    const bpmB = badgeB.querySelector(".setlist-song-key-badge-bpm");
+    assert.equal(bpmA.textContent, "132");
+    assert.equal(bpmA.hidden, false);
+    assert.equal(bpmB.textContent, "", "no Q: field — nothing to show");
+    assert.equal(bpmB.hidden, true);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a personal setlist also shows a read-only key badge, not a picker", () => {
+  const { view, ctx, entry, cleanup } = setup({ songs: [{ file: "a.abc", key: "2" }] });
+  try {
+    stubAbc(ctx, { "a.abc": "X:1\nK:C\nC2|" });
+    view.renderOpen(entry.name, entry.songs, entry, "");
+    assert.equal(document.querySelector(KEY_SELECT_SELECTOR), null, "no editable picker");
+    const badge = document.querySelector(KEY_BADGE_SELECTOR);
+    assert.equal(badge.textContent, "D", "C + 2 semitones resolves to D");
+    assert.equal(badge.classList.contains(IS_TRANSPOSED_CLASS), true);
+    // The row still has its drag handle / remove button — only the key
+    // control itself dropped its editing affordance.
+    assert.equal(document.querySelectorAll(".setlist-drag-handle").length, 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a personal setlist's key badge falls back to a semitone label when the tune's key can't be read", () => {
+  const { view, ctx, entry, cleanup } = setup({ songs: [{ file: "a.abc", key: "2" }] });
+  try {
+    // 404: the tune's own key never resolves, so the badge falls back to
+    // formatSetlistKeyLabel's raw offset text instead of a resolved key name.
+    stubAbc(ctx, {});
+    view.renderOpen(entry.name, entry.songs, entry, "");
+    const badge = document.querySelector(KEY_BADGE_SELECTOR);
+    assert.equal(badge.textContent, "+2");
+    assert.equal(badge.classList.contains(IS_TRANSPOSED_CLASS), true);
+  } finally {
+    cleanup();
+  }
+});
+
+test("the Key stepper writes a per-song key override back to the open personal setlist", () => {
   const { view, ctx, entry, storage, cleanup } = setup({ songs: [{ file: "a.abc" }] });
   try {
     stubAbc(ctx, { "a.abc": "X:1\nK:C\nC2|" });
+    view.initControls();
     view.renderOpen(entry.name, entry.songs, entry, "");
-    const select = document.querySelector(".setlist-song-key-select");
-    assert.equal(select.disabled, false, "enabled once the tune's own key has loaded");
-    assert.equal(select.value, "C", "shows the tune's own key with no override yet");
+    ctx.state.currentSongFile = "a.abc";
+    ctx.state.currentSetlistSongIndex = 0;
 
-    select.value = "B♭";
-    select.dispatchEvent(new window.Event("change"));
-    assert.equal(getPersonalSetlist(storage, entry.id).songs[0].key, "B♭");
-  } finally {
-    cleanup();
-  }
-});
+    const transpose = document.getElementById("transpose");
+    transpose.value = "2";
+    transpose.dispatchEvent(new window.Event("input"));
 
-test("picking the song's own native key in the picker clears the override", () => {
-  const { view, ctx, entry, storage, cleanup } = setup({ songs: [{ file: "a.abc", key: "2" }] });
-  try {
-    stubAbc(ctx, { "a.abc": "X:1\nK:C\nC2|" });
-    view.renderOpen(entry.name, entry.songs, entry, "");
-    const select = document.querySelector(".setlist-song-key-select");
-    assert.equal(select.value, "D", "C + 2 semitones resolves to D");
-    assert.equal(select.classList.contains("is-transposed"), true);
-
-    select.value = "C";
-    select.dispatchEvent(new window.Event("change"));
-    assert.equal(getPersonalSetlist(storage, entry.id).songs[0].key, "", "back to the tune's own key");
-  } finally {
-    cleanup();
-  }
-});
-
-test("the key picker stays disabled until the song's own key has loaded", () => {
-  const { view, entry, cleanup } = setup({ songs: [{ file: "a.abc" }] });
-  try {
-    // Default ctx.readFile never calls back, so the native key never resolves.
-    view.renderOpen(entry.name, entry.songs, entry, "");
-    assert.equal(document.querySelector(".setlist-song-key-select").disabled, true);
+    assert.equal(getPersonalSetlist(storage, entry.id).songs[0].key, "2");
+    const badge = document.querySelector(KEY_BADGE_SELECTOR);
+    assert.equal(badge.textContent, "D", "the badge reflects the stepper's new override");
+    assert.equal(badge.classList.contains(IS_TRANSPOSED_CLASS), true);
   } finally {
     cleanup();
   }
@@ -324,7 +357,7 @@ test("clicking the '+ note' button reveals an editable field; blur saves the tri
   const { view, entry, storage, cleanup } = setup({ songs: [{ file: "a.abc" }] });
   try {
     view.renderOpen(entry.name, entry.songs, entry, "");
-    document.querySelector(".setlist-song-note-add").dispatchEvent(new window.Event("click"));
+    document.querySelector(NOTE_ADD_SELECTOR).dispatchEvent(new window.Event("click"));
     const input = document.querySelector(NOTE_INPUT_SELECTOR);
     assert.equal(input.hidden, false);
     input.value = "  Ben solos 2nd chorus.  ";
@@ -355,6 +388,8 @@ test("clicking an existing note reveals it prefilled, and Escape cancels without
     input.dispatchEvent(new window.Event("blur"));
 
     assert.equal(getPersonalSetlist(storage, entry.id).songs[0].note, "Original note.");
+    assert.equal(document.activeElement, document.querySelector(".setlist-song-note-text"),
+      "Escape hands focus back to the note text, not <body>");
   } finally {
     cleanup();
   }
@@ -364,7 +399,7 @@ test("Ctrl+Enter in the note field commits and blurs it, same as a plain blur", 
   const { view, entry, storage, cleanup } = setup({ songs: [{ file: "a.abc" }] });
   try {
     view.renderOpen(entry.name, entry.songs, entry, "");
-    document.querySelector(".setlist-song-note-add").dispatchEvent(new window.Event("click"));
+    document.querySelector(NOTE_ADD_SELECTOR).dispatchEvent(new window.Event("click"));
     const input = document.querySelector(NOTE_INPUT_SELECTOR);
     input.value = "Ben solos 2nd chorus.";
     input.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", ctrlKey: true, bubbles: true }));
@@ -381,7 +416,7 @@ test("blurring a note field with an unchanged value doesn't write back or lose t
   const { view, entry, storage, cleanup } = setup({ songs: [{ file: "a.abc" }] });
   try {
     view.renderOpen(entry.name, entry.songs, entry, "");
-    document.querySelector(".setlist-song-note-add").dispatchEvent(new window.Event("click"));
+    document.querySelector(NOTE_ADD_SELECTOR).dispatchEvent(new window.Event("click"));
     document.querySelector(NOTE_INPUT_SELECTOR).dispatchEvent(new window.Event("blur"));
     assert.equal(getPersonalSetlist(storage, entry.id).songs[0].note, undefined);
   } finally {
@@ -392,11 +427,11 @@ test("blurring a note field with an unchanged value doesn't write back or lose t
 test("a band setlist shows a read-only note with no edit controls", () => {
   const { view, cleanup } = setup({ personal: false });
   try {
-    view.renderOpen("Band Night", [{ file: "a.abc", key: "", note: "Ben solos." }], null, "");
+    view.renderOpen("Band Night", [{ file: "a.abc", key: "", note: NOTE_TEXT }], null, "");
     const textEl = document.querySelector(".setlist-song-note-text");
-    assert.equal(textEl.textContent, "Ben solos.");
+    assert.equal(textEl.textContent, NOTE_TEXT);
     assert.equal(document.querySelector(NOTE_INPUT_SELECTOR), null);
-    assert.equal(document.querySelector(".setlist-song-note-add"), null);
+    assert.equal(document.querySelector(NOTE_ADD_SELECTOR), null);
   } finally {
     cleanup();
   }
@@ -447,6 +482,61 @@ function openThreeSongSetlist() {
   view.renderOpen(entry.name, entry.songs, entry, "");
   return result;
 }
+
+// Open a three-song personal setlist and start editing its first song's
+// note, with NOTE_TEXT typed in but not yet committed (blur is left to the
+// caller, since that's the part the two note-commit-focus tests differ on).
+function openNoteEditorWithChange() {
+  const result = openThreeSongSetlist();
+  document.querySelectorAll(NOTE_ADD_SELECTOR)[0].dispatchEvent(new window.Event("click"));
+  const input = document.querySelectorAll(NOTE_INPUT_SELECTOR)[0];
+  input.value = NOTE_TEXT;
+  return { ...result, input };
+}
+
+test("committing a note (Ctrl+Enter) refocuses the row so Alt+Up/Down reorder still works", () => {
+  const { entry, storage, input, cleanup } = openNoteEditorWithChange();
+  try {
+    input.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", ctrlKey: true, bubbles: true }));
+    input.dispatchEvent(new window.Event("blur"));
+
+    // Committing re-renders the row from scratch; without an explicit
+    // refocus, focus falls through to <body> and the very next Alt+Down
+    // silently does nothing, since moveRowByKeyboard's row lookup
+    // (e.target.closest(".setlist-song-row")) finds nothing to act on.
+    assert.ok(document.activeElement.closest(".setlist-song-row"), "focus stayed inside a row after commit");
+
+    document.activeElement.dispatchEvent(
+      new window.KeyboardEvent("keydown", { key: "ArrowDown", altKey: true, bubbles: true }),
+    );
+    assert.deepEqual(
+      getPersonalSetlist(storage, entry.id).songs.map((s) => s.file),
+      ["b.abc", "a.abc", "c.abc"],
+    );
+  } finally {
+    cleanup();
+  }
+});
+
+test("committing a note by clicking another row's drag handle relocates focus there, not back to the edited row", () => {
+  const { entry, storage, input, cleanup } = openNoteEditorWithChange();
+  try {
+    const destination = document.querySelectorAll(DRAG_HANDLE_SELECTOR)[2];
+    input.dispatchEvent(new window.FocusEvent("blur", { relatedTarget: destination, bubbles: true }));
+
+    assert.equal(getPersonalSetlist(storage, entry.id).songs[0].note, NOTE_TEXT);
+    // The row list is fully rebuilt by the commit, so the original
+    // `destination` node is gone — focus should land on ITS rebuilt
+    // equivalent (song c's drag handle), not get pulled back onto row 0
+    // just because that's the row whose note was being edited.
+    assert.equal(
+      document.activeElement.closest(".setlist-song-row").dataset.songFile,
+      "c.abc",
+    );
+  } finally {
+    cleanup();
+  }
+});
 
 // Open a three-song personal setlist, run `trigger` against it, and assert
 // the surviving song files. Shared by the remove-row tests below.

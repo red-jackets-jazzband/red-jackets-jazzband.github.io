@@ -28,7 +28,7 @@ Type part of a title and the list narrows as you go. Press **/** anywhere to jum
 ## open: Your lead sheet
 setup: openDemoSong
 target: .rj-sheet-paper
-Pick a song and it opens right here — we've cued up *Bourbon Street Parade* for the tour. Chord table first, then the full notation below it. On a phone the sheet takes over the whole screen; a **back** button brings you home to the list.
+Pick a song and it opens right here — we've cued up *Bourbon Street Parade* for the tour. Chord table first, then the full notation below it. On a phone the sheet takes over the whole screen; a **‹ Songs** button up top brings you home to the list.
 
 ## instrument: Read your own part
 setup: openDemoSong
@@ -192,7 +192,7 @@ interactive: true
 **Add a set break** starts a new set — handy for splitting a gig into Set 1, Set 2 and so on. Type a label, or leave it blank for an automatic "Set 2".
 
 ## note: Note something for the band
-setup: createDemoSetlist, addDemoSong1, addDemoSong2
+setup: createDemoSetlist, addDemoSong1, addDemoSong2, revealDemoNote
 target: .setlist-song-note-add
 interactive: true
 Click **+ note** under any song to jot something down for the gig — who takes the solo, a key change, a reminder. It shows on the printed setlist and stage list, never on the song's own sheet.
