@@ -1,6 +1,7 @@
-import { byId, downloadBlob } from "../lib/dom.js";
+import { byId, downloadBlob, loadScriptOnce } from "../lib/dom.js";
 import { encodeMp3 } from "../lib/mp3-encode.js";
 
+const LAMEJS_SRC = "/script/lamejs-1.2.1-min.js";
 const IDLE_ICON = '<span class="fa-solid fa-file-audio" aria-hidden="true"></span>';
 const BUSY_ICON = '<span class="fa-solid fa-spinner fa-spin" aria-hidden="true"></span>';
 
@@ -8,6 +9,12 @@ const BUSY_ICON = '<span class="fa-solid fa-spinner fa-spin" aria-hidden="true">
 // in step with the source ABC rather than re-deriving one from the title.
 function mp3Filename(songFile) {
   return `${String(songFile || "song").replace(/\.abc$/i, "")}.mp3`;
+}
+
+// The encoder is ~150KB and only this button needs it, so it loads on first
+// use rather than with the page (sw.js precaches it for offline use).
+function ensureLamejs() {
+  return typeof lamejs === "undefined" ? loadScriptOnce(LAMEJS_SRC) : Promise.resolve();
 }
 
 async function exportMp3(ctx, btn) {
@@ -30,6 +37,7 @@ async function exportMp3(ctx, btn) {
     await synth.prime();
     const buffer = synth.audioBuffers && synth.audioBuffers[0];
     if (!buffer) throw new Error("No audio rendered for this tune");
+    await ensureLamejs();
     const mp3 = encodeMp3(buffer, { repeatCount: built.repeatCount, restartFraction: built.restartFraction });
     downloadBlob(mp3Filename(song), new Blob([mp3], { type: "audio/mpeg" }));
   } catch (err) {

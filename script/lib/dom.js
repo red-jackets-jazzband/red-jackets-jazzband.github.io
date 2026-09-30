@@ -120,3 +120,23 @@ export function downloadBlob(filename, blob) {
   link.remove();
   URL.revokeObjectURL(url);
 }
+
+const pendingScripts = new Map();
+
+// Inject a classic <script src> once and resolve when it has executed. A repeat
+// call for the same src shares the first call's promise; a failed load is
+// forgotten so the next call can retry. Used for bundles only one button needs
+// (lamejs), so they don't cost every page load.
+export function loadScriptOnce(src) {
+  const known = pendingScripts.get(src);
+  if (known) return known;
+  const promise = new Promise((resolve, reject) => {
+    const script = el("script", { src });
+    script.addEventListener("load", () => resolve());
+    script.addEventListener("error", () => reject(new Error(`Could not load ${src}`)));
+    document.head.append(script);
+  });
+  pendingScripts.set(src, promise);
+  promise.catch(() => pendingScripts.delete(src));
+  return promise;
+}

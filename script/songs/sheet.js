@@ -343,7 +343,7 @@ export function createSheet(ctx) {
       ctx.mixer.refresh();
     }
 
-    byId(titleId).innerHTML = titlePrefix + song.metaText.title;
+    byId(titleId).textContent = titlePrefix + song.metaText.title;
 
     if (!isBooklet && visualObjs && visualObjs.length > 0) {
       ctx.audio.initForTune(visualObjs[0]);

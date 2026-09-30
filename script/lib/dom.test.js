@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountPage } from "../../../tests/helpers/dom.js";
 import {
-  byId, qs, qsa, clear, setHidden, on, el, mount, downloadBlob,
+  byId, qs, qsa, clear, setHidden, on, el, mount, downloadBlob, loadScriptOnce,
 } from "./dom.js";
 
 function inDom(fn) {
@@ -124,4 +124,25 @@ test("downloadBlob clicks a throwaway object-URL anchor, then cleans it up", () 
       HTMLAnchorElement.prototype.click = originalClick;
     }
   });
+});
+
+test("loadScriptOnce injects one script per src, resolves on load and rejects (then allows a retry) on error", async () => {
+  const page = mountPage({ html: "<div id='root'></div>" });
+  try {
+    const scriptsFor = (src) => [...document.head.querySelectorAll("script")].filter((s) => s.getAttribute("src") === src);
+
+    const first = loadScriptOnce("/a.js");
+    assert.equal(loadScriptOnce("/a.js"), first);
+    assert.equal(scriptsFor("/a.js").length, 1);
+    scriptsFor("/a.js")[0].dispatchEvent(new window.Event("load"));
+    await first;
+
+    const failing = loadScriptOnce("/b.js");
+    scriptsFor("/b.js")[0].dispatchEvent(new window.Event("error"));
+    await assert.rejects(failing, /Could not load \/b\.js/);
+    loadScriptOnce("/b.js");
+    assert.equal(scriptsFor("/b.js").length, 2);
+  } finally {
+    page.cleanup();
+  }
 });

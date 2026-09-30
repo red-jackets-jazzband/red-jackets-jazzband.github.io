@@ -360,7 +360,7 @@ const CHORDS = [
 
 test("buildCompingTune adds a bracketed one-voice block-chord comping staff", () => {
   const out = withTonal(() => buildCompingTune(TUNE, CHORDS, fakeSong(), "whole_note"));
-  assert.ok(out && out.abc, PRODUCED_A_TUNE);
+  assert.ok(out?.abc, PRODUCED_A_TUNE);
   const abc = out.abc;
   assert.match(abc, /^%%staves \[1 2\]/m);
   assert.match(abc, /^V:2 name="5\\n3\\nR"$/m);
@@ -481,7 +481,7 @@ test("buildCompingTune returns null when it cannot apply", () => {
 test("buildCompingTune adds N+1 (V:2) to a tune whose one voice is declared before K:", () => {
   const singleVoiced = TUNE.replace("K:C", "V:1\nK:C");
   const out = withTonal(() => buildCompingTune(singleVoiced, CHORDS, fakeSong(), "whole_note"));
-  assert.ok(out && out.abc, PRODUCED_A_TUNE);
+  assert.ok(out?.abc, PRODUCED_A_TUNE);
   // the tune's own V:1 declaration survives untouched, no synthesized V:1/V:2 pair
   assert.equal((out.abc.match(/^V:1$/gm) || []).length, 1);
   assert.match(out.abc, /\nV:2 name="5\\n3\\nR"\n/);
@@ -510,7 +510,7 @@ const HONKY_STYLE_TUNE = [
 
 test("buildCompingTune appends comping as V:4 on a honky_tonk_town_riffs.abc-shaped tune", () => {
   const out = withTonal(() => buildCompingTune(HONKY_STYLE_TUNE, CHORDS, fakeSong(), "whole_note"));
-  assert.ok(out && out.abc, PRODUCED_A_TUNE);
+  assert.ok(out?.abc, PRODUCED_A_TUNE);
   const abc = out.abc;
   // all three original voice declarations and bodies survive untouched
   assert.match(abc, /V:1 name="Root"\nV:2 name="Third"\nV:3 name="Fifth"\n/);
@@ -544,7 +544,7 @@ const INLINE_VOICE_TUNE = [
 
 test("buildCompingTune appends comping as V:3 on a big_chief.abc-shaped tune with inline [V:n] switches", () => {
   const out = withTonal(() => buildCompingTune(INLINE_VOICE_TUNE, CHORDS, fakeSong(), "whole_note"));
-  assert.ok(out && out.abc, PRODUCED_A_TUNE);
+  assert.ok(out?.abc, PRODUCED_A_TUNE);
   const abc = out.abc;
   // both original voice declarations and every inline-switched body line survive untouched
   assert.match(abc, /V:1 clef=treble name="Trumpet"\nV:2 clef=bass name="Sousaphone"\n/);
@@ -576,7 +576,7 @@ const INLINE_ONLY_VOICE_TUNE = [
 
 test("buildCompingTune appends comping as V:3 on a tune whose voices are only ever named inline, never declared on their own V: line", () => {
   const out = withTonal(() => buildCompingTune(INLINE_ONLY_VOICE_TUNE, CHORDS, fakeSong(), "whole_note"));
-  assert.ok(out && out.abc, PRODUCED_A_TUNE);
+  assert.ok(out?.abc, PRODUCED_A_TUNE);
   const abc = out.abc;
   // every inline-switched body line survives untouched
   assert.match(abc, /\[V:1\] "C" c4\| "F" f4\|\n\[V:2\] e4\| a4\|\n\[V:1\] "G7" g4\| "C" c4\|\n\[V:2\] b4\| e4\|/);
@@ -591,7 +591,7 @@ test("buildCompingTune appends comping as V:3 on a tune whose voices are only ev
 test("buildCompingTune preserves an explicit-voice chart's own %%score/%%staves layout, appending the new voice rather than dropping it", () => {
   const stagedTune = HONKY_STYLE_TUNE.replace("K:C", "%%staves {1 2} 3\nK:C");
   const out = withTonal(() => buildCompingTune(stagedTune, CHORDS, fakeSong(), "whole_note"));
-  assert.ok(out && out.abc, PRODUCED_A_TUNE);
+  assert.ok(out?.abc, PRODUCED_A_TUNE);
   // the original grouping/braces survive, with the new comping voice (V:4)
   // tacked on the end as its own ungrouped staff
   assert.equal((out.abc.match(/^%%staves\b.*$/gm) || []).length, 1);
@@ -617,7 +617,7 @@ test("buildCompingTune's new voice id fills a gap in a sparse voice list", () =>
     "e4| a4| b4| e4|",
   ].join("\n");
   const out = withTonal(() => buildCompingTune(sparseTune, CHORDS, fakeSong(), "whole_note"));
-  assert.ok(out && out.abc, PRODUCED_A_TUNE);
+  assert.ok(out?.abc, PRODUCED_A_TUNE);
   assert.doesNotMatch(out.abc, /^V:3 name="5\\n3\\nR"$/m);
   assert.match(out.abc, /^V:2 name="5\\n3\\nR"$/m);
 });
@@ -625,14 +625,14 @@ test("buildCompingTune's new voice id fills a gap in a sparse voice list", () =>
 test("buildCompingTune defaults to 4/4 when the tune has no M: field at all", () => {
   const noMeter = TUNE.split("\n").filter((l) => !l.startsWith("M:")).join("\n");
   const out = withTonal(() => buildCompingTune(noMeter, CHORDS, fakeSong(), "whole_note"));
-  assert.ok(out && out.abc, PRODUCED_A_TUNE);
+  assert.ok(out?.abc, PRODUCED_A_TUNE);
 });
 
 test("buildCompingTune accepts every supported meter (M:C, M:C|, M:2/2), not only 4/4", () => {
   withTonal(() => {
     for (const meter of ["C", "C|", "2/2"]) {
       const out = buildCompingTune(TUNE.replace("M:4/4", `M:${meter}`), CHORDS, fakeSong(), "whole_note");
-      assert.ok(out && out.abc, `M:${meter} should be supported`);
+      assert.ok(out?.abc, `M:${meter} should be supported`);
     }
   });
 });

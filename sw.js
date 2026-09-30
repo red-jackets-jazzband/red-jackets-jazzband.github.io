@@ -40,7 +40,9 @@ const CURRENT_CACHES = new Set([SHELL_CACHE, SOUNDFONT_CACHE, FONT_AWESOME_CACHE
 // covers the rest (the whole song/setlist list, warmed proactively) and the
 // soundfont samples (which nothing short of actually rendering audio can
 // discover the URLs for — see that file's own doc comment).
-const PRECACHE_URLS = ["/songs/", "/manifest.webmanifest"];
+// lamejs is loaded on demand by the Export MP3 button, so it has no <script>
+// tag for the scan below to find — list it here to have it offline.
+const PRECACHE_URLS = ["/songs/", "/manifest.webmanifest", "/script/lamejs-1.2.1-min.js"];
 
 // A page's own <head>/<body> — its stylesheet(s), the webfonts they declare
 // via @font-face, and its own <script> tags (including, for the type="module"
