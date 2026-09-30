@@ -1,2 +1,3 @@
 N.O.A.D.S. Songbook,noads_songbook.txt
 Setlist 2026,setlist_2026.txt
+Volgende Repetitie,repetitie.txt

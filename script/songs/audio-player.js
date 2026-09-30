@@ -28,7 +28,7 @@ export const STANDARD_SOUNDFONT_URL = "https://gleitz.github.io/midi-js-soundfon
 export const HIGH_QUALITY_SOUNDFONT_URL = "https://gleitz.github.io/midi-js-soundfonts/MusyngKite/";
 
 const SYNTH_PARAMS = {
-  program: 56, // Trumpet (GM)
+  program: 66, // Tenor Sax (GM)
 };
 
 const PLAY_ICON = '<span class="fa-solid fa-play" aria-hidden="true"></span>';

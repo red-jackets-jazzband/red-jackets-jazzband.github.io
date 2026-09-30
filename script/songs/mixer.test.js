@@ -402,8 +402,8 @@ test("loadMixerState defaults Bass/Chords to full volume, muted, every Voice on 
   const page = mountPage();
   try {
     assert.deepEqual(loadMixerState(), {
-      bassVolume: 100, chordsVolume: 100,
-      bassMuted: true, chordsMuted: true,
+      bassVolume: 100, chordsVolume: 88,
+      bassMuted: false, chordsMuted: false,
       bassProgram: null, chordsProgram: null,
     });
   } finally {
@@ -420,7 +420,7 @@ test("loadMixerState reads back persisted, clamped values and a chosen program",
     window.localStorage.setItem("rj.mixerChordsProgram", "0"); // GM 0 is falsy — must not read back as null
     assert.deepEqual(loadMixerState(), {
       bassVolume: 100, chordsVolume: 20,
-      bassMuted: false, chordsMuted: true,
+      bassMuted: false, chordsMuted: false,
       bassProgram: null, chordsProgram: 0,
     });
   } finally {
@@ -568,10 +568,10 @@ test("releasing the Swing fader (change) applies immediately without waiting for
   releaseFaderAppliesImmediately({ rangeId: "mixerSwingRange", storageKey: "rj.mixerSwing", value: 60 });
 });
 
-test("loadSwingState defaults to 40, reads back a persisted, clamped value", () => {
+test("loadSwingState defaults to 52, reads back a persisted, clamped value", () => {
   const page = mountPage();
   try {
-    assert.equal(loadSwingState(), 40);
+    assert.equal(loadSwingState(), 52);
     window.localStorage.setItem("rj.mixerSwing", "150"); // clamped
     assert.equal(loadSwingState(), 100);
   } finally {
@@ -584,7 +584,7 @@ test("loadSwingState falls back to the default on a corrupted (non-numeric) stor
   const page = mountPage();
   try {
     window.localStorage.setItem("rj.mixerSwing", "invalid");
-    assert.equal(loadSwingState(), 40);
+    assert.equal(loadSwingState(), 52);
   } finally {
     window.localStorage.clear();
     page.cleanup();
@@ -620,28 +620,28 @@ test("clicking the Quality toggle flips ctx.state.highQualityAudio, persists it,
   }
 });
 
-test("loadHighQualityAudioState defaults to off, and reflects a persisted '1'", () => {
+test("loadHighQualityAudioState defaults to on, and reflects a persisted 0", () => {
   const page = mountPage();
   try {
-    assert.equal(loadHighQualityAudioState(), false);
-    window.localStorage.setItem("rj.highQualityAudio", "1");
     assert.equal(loadHighQualityAudioState(), true);
+    window.localStorage.setItem("rj.highQualityAudio", "0");
+    assert.equal(loadHighQualityAudioState(), false);
   } finally {
     window.localStorage.clear();
     page.cleanup();
   }
 });
 
-test("loadGchordPatternState defaults to 'jazz', reads back a persisted choice, and falls back on a stale one", () => {
+test("loadGchordPatternState defaults to two-beat, reads back a persisted choice, and falls back on a stale one", () => {
   const page = mountPage();
   try {
-    assert.equal(loadGchordPatternState(), "jazz");
+    assert.equal(loadGchordPatternState(), "two-beat");
 
     window.localStorage.setItem("rj.mixerGchordPattern", "waltz");
     assert.equal(loadGchordPatternState(), "waltz");
 
     window.localStorage.setItem("rj.mixerGchordPattern", "not-a-real-pattern");
-    assert.equal(loadGchordPatternState(), "jazz");
+    assert.equal(loadGchordPatternState(), "two-beat");
   } finally {
     window.localStorage.clear();
     page.cleanup();

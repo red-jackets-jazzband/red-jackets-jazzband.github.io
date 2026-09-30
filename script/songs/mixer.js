@@ -17,7 +17,8 @@ const REPOSITION_MARGIN = 8;
 // they're different from every other voice below). Muted by default so no
 // song suddenly grows a new backing band the first time this ships.
 const CHANNELS = ["bass", "chords"];
-const DEFAULT_MUTED = { bass: true, chords: true };
+const DEFAULT_MUTED = { bass: false, chords: false };
+const DEFAULT_VOLUME = { bass: 100, chords: 88 };
 
 // Both remaining fixed channels need the tune to have chord symbols at all
 // to do anything — read from ctx.state, kept in sync by sheet.js on every
@@ -30,7 +31,7 @@ const GATE_STATE_KEY = { bass: "hasChords", chords: "hasChords" };
 // anything baked into the ABC text. No gate: it's audible on any tune with
 // eighth notes, chords or not. Defaults on (a moderate 40%, not full) rather
 // than off, since most of this band's repertoire is swung, not straight.
-const SWING_DEFAULT_PERCENT = 40;
+const SWING_DEFAULT_PERCENT = 52;
 
 function clampPercent(value) {
   const n = Number(value);
@@ -710,7 +711,7 @@ export function loadMixerState() {
   const state = {};
   CHANNELS.forEach((channel) => {
     const storedVolume = readPref(volumeKey(channel));
-    state[`${channel}Volume`] = storedVolume === null ? 100 : clampPercent(storedVolume);
+    state[`${channel}Volume`] = storedVolume === null ? DEFAULT_VOLUME[channel] : clampPercent(storedVolume);
     const storedMuted = readPref(mutedKey(channel));
     state[`${channel}Muted`] = storedMuted === null ? DEFAULT_MUTED[channel] : storedMuted === "1";
     const storedProgram = readPref(programKey(channel));
@@ -734,7 +735,8 @@ export function loadGchordPatternState() {
 // nothing should suddenly start fetching ~5x-bigger soundfont files the
 // first time this ships.
 export function loadHighQualityAudioState() {
-  return readPref(PREF_KEYS.highQualityAudio) === "1";
+  const stored = readPref(PREF_KEYS.highQualityAudio);
+  return stored === null ? true : stored === "1";
 }
 
 // ctx.state.swing's initial value, seeded from the persisted pref — defaults

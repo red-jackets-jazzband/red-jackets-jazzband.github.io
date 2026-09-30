@@ -56,7 +56,7 @@ const VOICE_NAME_PROGRAM_HINTS = [
   { test: /vibraphone|vibes/i, value: 11 },
 ];
 
-export function guessGmProgram(label, fallback = 56) {
+export function guessGmProgram(label, fallback = 66) {
   if (!label) return fallback;
   const hit = VOICE_NAME_PROGRAM_HINTS.find((hint) => hint.test.test(label));
   return hit ? hit.value : fallback;

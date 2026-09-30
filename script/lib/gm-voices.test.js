@@ -17,16 +17,16 @@ test("every GM_VOICES entry is a valid, unique 0-indexed GM program number", () 
 test("guessGmProgram maps a tune's own voice name to a sensible GM program", () => {
   assert.equal(guessGmProgram("Trumpet"), 56);
   assert.equal(guessGmProgram("Sousaphone"), 58);
-  assert.equal(guessGmProgram("Root"), 56); // no hint matches "Root" — falls back to Trumpet
+  assert.equal(guessGmProgram("Root"), 66); // no hint matches "Root" — falls back to Tenor Sax
   assert.equal(guessGmProgram("Baritone Sax"), 67);
   assert.equal(guessGmProgram("Tenor Sax"), 66);
   assert.equal(guessGmProgram("Alto Sax"), 65);
   assert.equal(guessGmProgram("Electric Bass"), 32);
 });
 
-test("guessGmProgram falls back to Trumpet (or a given fallback) for an unrecognised/missing name", () => {
-  assert.equal(guessGmProgram(""), 56);
-  assert.equal(guessGmProgram(undefined), 56);
-  assert.equal(guessGmProgram("Kazoo"), 56);
+test("guessGmProgram falls back to Tenor Sax (or a given fallback) for an unrecognised/missing name", () => {
+  assert.equal(guessGmProgram(""), 66);
+  assert.equal(guessGmProgram(undefined), 66);
+  assert.equal(guessGmProgram("Kazoo"), 66);
   assert.equal(guessGmProgram("Kazoo", 0), 0);
 });

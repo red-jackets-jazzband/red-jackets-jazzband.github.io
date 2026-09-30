@@ -46,7 +46,7 @@ test("beatStressLine formats percentToBeatStress's triple as a ready-to-splice %
 });
 
 test("DEFAULT_PROGRAM carries the expected hardcoded GM program for Bass/Chords only", () => {
-  assert.deepEqual(DEFAULT_PROGRAM, { bass: 32, chords: 26 });
+  assert.deepEqual(DEFAULT_PROGRAM, { bass: 33, chords: 105 });
 });
 
 const NO_COMPING_TUNE = ["X:1", "T:Test", "M:4/4", "L:1/8", "K:C", '"C" C8 |'].join("\n");
@@ -72,7 +72,7 @@ test("injectMixerAudio stamps Bass/Chords accompaniment directives (default prog
     hasChords: true, bassPercent: 70, chordsPercent: 20, voicePrograms: onlyMelody(56),
   });
   const before = out.slice(0, out.indexOf("K:C"));
-  assert.match(before, /%%MIDI gchord bzczbzcz/);
+  assert.match(before, /%%MIDI gchord fzczfzcz/);
   assert.match(before, new RegExp(`%%MIDI bassprog ${DEFAULT_PROGRAM.bass}`));
   assert.match(before, new RegExp(`%%MIDI chordprog ${DEFAULT_PROGRAM.chords}`));
   assert.match(before, new RegExp(`%%MIDI bassvol ${percentToMidiVolume(70)}`));

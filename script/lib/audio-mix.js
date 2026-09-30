@@ -70,7 +70,7 @@ export const MIDI_VOLUME_MAX = 127;
 // "Default" program is resolved per-voice instead, from its own name — see
 // lib/gm-voices.js's guessGmProgram.
 export const DEFAULT_PROGRAM = {
-  bass: 32, chords: 26,
+  bass: 33, chords: 105,
 };
 
 /*
@@ -121,7 +121,7 @@ export const GCHORD_PATTERNS = [
   { value: "arpeggio", label: "Banjo Roll (trad jazz, rolled chord)", pattern: "gzhzizjz" },
 ];
 
-export const DEFAULT_GCHORD_PATTERN_VALUE = "jazz";
+export const DEFAULT_GCHORD_PATTERN_VALUE = "two-beat";
 
 // The gchord pattern string for a Pattern-picker `value` (falling back to
 // the default entry for anything unrecognised — a stale/corrupted
