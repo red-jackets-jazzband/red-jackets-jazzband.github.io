@@ -122,6 +122,7 @@ Oh when the Saints,oh_when_the_saints.abc
 Old Kentucky Home,my_old_kentucky_home.abc
 Original Dixieland One-Step,original_dixieland_one_step.abc
 Over in the Gloryland,gloryland.abc
+Panama,panama.abc
 Paper Moon,paper_moon.abc
 Paul Barbarins Second Line,paul_barbarins_second_line.abc
 Petit Fleur,petit_fleur.abc
