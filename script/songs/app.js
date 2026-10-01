@@ -15,7 +15,7 @@ import { createInspiration } from "./inspiration.js";
 import { initSheetControls } from "./sheet-controls.js";
 import { initMp3Export } from "./mp3-export.js";
 import { createFullscreen } from "./fullscreen.js";
-import { createInstrumentDropdown, createCompingDropdown } from "./selects.js";
+import { createInstrumentDropdown, createCompingDropdown, createSoloDropdown } from "./selects.js";
 import { createLibraryTab } from "./library-tab.js";
 import { createSetlistData } from "./setlist-data.js";
 import { createSetlistHome } from "./setlist-home.js";
@@ -56,6 +56,7 @@ function createApp() {
       currentLibrarySongName: undefined, // name of the row currentLibraryIndex was set from, to tell apart duplicate aliases sharing a file
       currentSongText: undefined, // clef-adjusted ABC currently on the sheet
       compingActive: false,
+      soloActive: false,
       instrumentVoices: [], // this tune's fully resolved Mixer voice list — see lib/audio-mix.js's resolveMixerVoices
       mixerVoices: [], // per-voice Mixer channel state, materialised from instrumentVoices — see mixer.js's syncVoices
       tempoOverrideBpm: null,
@@ -191,6 +192,7 @@ function createApp() {
   function initSheet() {
     createInstrumentDropdown(ctx);
     createCompingDropdown(ctx);
+    createSoloDropdown(ctx);
     initSheetControls(ctx);
     initMp3Export(ctx);
     ctx.mixer.init();

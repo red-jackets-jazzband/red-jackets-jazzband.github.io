@@ -986,3 +986,63 @@ test("refresh() also redraws voice rows from current state (not just Bass/Chords
     cleanup();
   }
 });
+
+const MELODY_AND_SOLO = [
+  { id: "1", index: 0, label: "Melody" },
+  { id: "2", index: 1, label: "Solo", fallbackProgram: 71 },
+];
+
+test("while Solo is on the first voice is silenced without touching its saved mute, and Solo shows its style's instrument", () => {
+  const { ctx, mixer, cleanup } = setup();
+  try {
+    mixer.syncVoices(MELODY_AND_SOLO);
+    const [lead, solo] = ctx.state.mixerVoices;
+    assert.equal(lead.autoMuted, true);
+    assert.equal(lead.muted, false);
+    assert.equal(solo.autoMuted, false);
+    assert.equal(document.querySelector("#mixerVoiceStrip-melody").classList.contains("is-muted"), true);
+    assert.equal(document.querySelector("#mixerVoiceStrip-solo .mixer-voice-select").value, "71");
+    assert.equal(document.querySelector("#mixerVoiceStrip-solo .mixer-strip-sublabel").textContent, "improvised");
+    assert.equal(window.localStorage.getItem("rj.mixerVoice.melody.muted"), null);
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
+test("clicking the lead's mute while Solo silenced it brings it back for this take only", () => {
+  const { ctx, mixer, cleanup } = setup();
+  try {
+    mixer.syncVoices(MELODY_AND_SOLO);
+    document.querySelector("#mixerVoiceStrip-melody .mixer-mute-btn").click();
+    const lead = ctx.state.mixerVoices[0];
+    assert.equal(lead.autoMuted, false);
+    assert.equal(lead.muted, false);
+    assert.equal(window.localStorage.getItem("rj.mixerVoice.melody.muted"), "0");
+    mixer.syncVoices([{ id: "1", index: 0, label: "Melody" }]);
+    assert.equal(ctx.state.mixerVoices[0].autoMuted, false);
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
+test("an un-muted lead stays un-muted when Comping is toggled while Solo plays, and re-mutes once Solo goes off and on", () => {
+  const { ctx, mixer, cleanup } = setup();
+  try {
+    mixer.syncVoices(MELODY_AND_SOLO);
+    document.querySelector("#mixerVoiceStrip-melody .mixer-mute-btn").click();
+    mixer.syncVoices([
+      { id: "1", index: 0, label: "Melody" },
+      { id: "2", index: 1, label: "Comping" },
+      { id: "3", index: 2, label: "Solo", fallbackProgram: 71 },
+    ]);
+    assert.equal(ctx.state.mixerVoices[0].autoMuted, false);
+    mixer.syncVoices([{ id: "1", index: 0, label: "Melody" }]);
+    mixer.syncVoices(MELODY_AND_SOLO);
+    assert.equal(ctx.state.mixerVoices[0].autoMuted, true);
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});

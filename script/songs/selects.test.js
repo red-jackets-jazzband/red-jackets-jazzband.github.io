@@ -4,7 +4,8 @@ import { mountPage } from "../../../tests/helpers/dom.js";
 import { makeCtx } from "../../../tests/helpers/ctx.js";
 import { INSTRUMENTS } from "../lib/instruments.js";
 import { COMPING_PATTERNS } from "../lib/comping.js";
-import { createInstrumentDropdown, createCompingDropdown } from "./selects.js";
+import { SOLO_STYLES } from "../lib/solo.js";
+import { createInstrumentDropdown, createCompingDropdown, createSoloDropdown } from "./selects.js";
 
 test("createInstrumentDropdown builds every instrument option into #sheetStatus", () => {
   const page = mountPage();
@@ -60,6 +61,26 @@ test("createCompingDropdown builds an OFF entry plus grouped patterns", () => {
     select.dispatchEvent(new window.Event("change"));
     assert.equal(rerenders.length, 1);
     assert.equal(window.localStorage.getItem("rj.comping"), COMPING_PATTERNS[0].value);
+  } finally {
+    page.cleanup();
+  }
+});
+
+test("createSoloDropdown builds an OFF entry plus one per style and re-renders on change", () => {
+  const page = mountPage();
+  try {
+    const rerenders = [];
+    createSoloDropdown(makeCtx({ sheet: { rerender: () => rerenders.push(1) } }));
+    const select = document.getElementById("solo");
+    assert.ok(document.getElementById("soloSlot").contains(select));
+    assert.deepEqual(
+      [...select.options].map((o) => o.value),
+      ["off", ...SOLO_STYLES.map((s) => s.value)],
+    );
+    select.value = "armstrong";
+    select.dispatchEvent(new window.Event("change"));
+    assert.equal(rerenders.length, 1);
+    assert.equal(window.localStorage.getItem("rj.solo"), "armstrong");
   } finally {
     page.cleanup();
   }

@@ -2,6 +2,7 @@ import { byId, el } from "../lib/dom.js";
 import { readPref, writePref, PREF_KEYS } from "../lib/preferences.js";
 import { INSTRUMENTS } from "../lib/instruments.js";
 import { COMPING_PATTERNS } from "../lib/comping.js";
+import { SOLO_STYLES } from "../lib/solo.js";
 
 function dropdown(select) {
   return el("div", { class: "dropdown" }, select);
@@ -70,6 +71,35 @@ export function createCompingDropdown(ctx) {
 
   select.addEventListener("change", () => {
     writePref(PREF_KEYS.comping, select.value);
+    ctx.sheet.rerender();
+  });
+
+  slot.append(dropdown(select));
+}
+
+/*
+  The solo <select> (#solo), built the same way as the comping one: an "OFF"
+  entry plus one entry per solo style from lib/solo.js. Changing it re-renders
+  the current song, where sheet.js evolves the line and adds it as another
+  staff (and the Mixer mutes the lead while it plays). Sticky across songs.
+*/
+export function createSoloDropdown(ctx) {
+  const slot = byId("soloSlot");
+  if (!slot) return;
+
+  const select = el("select", { class: "dropbtn", id: "solo" },
+    el("option", { value: "off", text: "SOLO: OFF" }));
+  for (const style of SOLO_STYLES) {
+    select.append(el("option", { value: style.value, text: style.label.toUpperCase() }));
+  }
+
+  const stored = readPref(PREF_KEYS.solo);
+  if (stored && (stored === "off" || SOLO_STYLES.some((s) => s.value === stored))) {
+    select.value = stored;
+  }
+
+  select.addEventListener("change", () => {
+    writePref(PREF_KEYS.solo, select.value);
     ctx.sheet.rerender();
   });
 

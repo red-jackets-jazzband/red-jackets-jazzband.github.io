@@ -404,3 +404,24 @@ test("injectMixerAudio keeps notes ahead of a chosen inline marker on their own 
   assert.match(out, new RegExp(`\\nV:1\\n%%MIDI program 71\\n${DEFAULT_BEAT_LINE}\\n"C" C4 \\n`));
   assert.match(out, new RegExp(`\\nV:2\\n%%MIDI program 56\\n${DEFAULT_BEAT_LINE}\\n\\[V:2\\] E4 \\[V:1\\] C4 \\|$`));
 });
+
+test("resolveMixerVoices appends Solo after Comping, with the style's instrument as its default", () => {
+  assert.deepEqual(resolveMixerVoices([], true, 71), [
+    { id: "1", index: 0, label: "Melody" },
+    { id: "2", index: 1, label: "Comping" },
+    { id: "3", index: 2, label: "Solo", fallbackProgram: 71 },
+  ]);
+  assert.deepEqual(resolveMixerVoices([], false, 56), [
+    { id: "1", index: 0, label: "Melody" },
+    { id: "2", index: 1, label: "Solo", fallbackProgram: 56 },
+  ]);
+});
+
+test("computeVoicesOff silences a voice that Solo auto-muted as well as one the listener muted", () => {
+  const voices = [
+    { index: 0, muted: false, autoMuted: true },
+    { index: 1, muted: true, autoMuted: false },
+    { index: 2, muted: false, autoMuted: false },
+  ];
+  assert.deepEqual(computeVoicesOff(voices).voicesOff, [0, 1]);
+});

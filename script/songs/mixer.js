@@ -2,7 +2,7 @@ import {
   byId, el, on, clear,
 } from "../lib/dom.js";
 import { readPref, writePref, PREF_KEYS } from "../lib/preferences.js";
-import { GM_VOICES, guessGmProgram } from "../lib/gm-voices.js";
+import { GM_VOICES, defaultVoiceProgram } from "../lib/gm-voices.js";
 import { GCHORD_PATTERNS, DEFAULT_GCHORD_PATTERN_VALUE, DEFAULT_PROGRAM } from "../lib/audio-mix.js";
 
 // Full re-engrave (the only way to change what plays — see sheet.js /
@@ -204,7 +204,7 @@ function voiceVolumeKey(slug) {
 // the set of voices actually changed (a different song opened, or Comping
 // toggled on/off — resolveMixerVoices appends/drops the extra entry).
 function voiceListSignature(voices) {
-  return voices.map((v) => `${v.id}|${v.label}`).join("|");
+  return voices.map((v) => `${v.id}|${v.label}|${v.fallbackProgram}`).join("|");
 }
 
 // Comping is always literally "Comping" (see resolveMixerVoices' own doc
@@ -212,12 +212,15 @@ function voiceListSignature(voices) {
 // match is enough to give it its "fills" subtitle and the extra breathing
 // room that sets it apart from the tune's own voices above it (split.css's
 // .mixer-strip--comping).
+const GENERATED_VOICE_SUBLABEL = { Comping: "fills", Solo: "improvised" };
+
 function buildVoiceLabel(voice) {
   const nameSpan = el("span", { class: "mixer-strip-label", text: voice.label, attrs: { title: voice.label } });
-  if (voice.label !== "Comping") return nameSpan;
+  const sublabel = GENERATED_VOICE_SUBLABEL[voice.label];
+  if (sublabel === undefined) return nameSpan;
   return el("div", { class: "mixer-strip-label-wrap" }, [
     nameSpan,
-    el("span", { class: "mixer-strip-sublabel", text: "fills" }),
+    el("span", { class: "mixer-strip-sublabel", text: sublabel }),
   ]);
 }
 
@@ -287,14 +290,17 @@ function updateVoiceRowVisual({
   // .is-muted on the whole strip, not just the mute button — see
   // updateStripVisual's own comment (same reasoning, split.css greys the
   // fader for either kind of row the same way).
-  strip.classList.toggle("is-muted", v.muted);
+  // A voice silenced only because Solo took over (autoMuted) looks and acts
+  // muted too, but isn't the listener's own persisted mute choice.
+  const silent = v.muted || v.autoMuted;
+  strip.classList.toggle("is-muted", silent);
   fill.style.width = `${v.volume}%`;
   readout.textContent = `${v.volume}%`;
-  muteBtn.classList.toggle("is-muted", v.muted);
-  muteBtn.setAttribute("aria-pressed", v.muted ? "true" : "false");
-  muteIcon.classList.toggle("fa-volume-xmark", v.muted);
-  muteIcon.classList.toggle("fa-volume-high", !v.muted);
-  const label = `${v.muted ? "Unmute" : "Mute"} ${v.label}`;
+  muteBtn.classList.toggle("is-muted", silent);
+  muteBtn.setAttribute("aria-pressed", silent ? "true" : "false");
+  muteIcon.classList.toggle("fa-volume-xmark", silent);
+  muteIcon.classList.toggle("fa-volume-high", !silent);
+  const label = `${silent ? "Unmute" : "Mute"} ${v.label}`;
   muteBtn.title = label;
   muteBtn.setAttribute("aria-label", label);
 }
@@ -365,6 +371,11 @@ export function createMixer(ctx) {
   // below mutates the exact object sheet.js reads back out of ctx.state).
   let voiceRows = [];
   let voiceListSig = "";
+  // The listener brought the lead back while Solo plays. Kept here (not on the
+  // voice object) so it survives voice-list changes such as toggling Comping;
+  // cleared when Solo turns off or the tune's own voices change.
+  let leadUnmuted = false;
+  let ownVoicesSig = "";
 
   function rebuildVoiceStrips() {
     const container = byId("mixerVoicesList");
@@ -373,7 +384,7 @@ export function createMixer(ctx) {
     voiceRows = ctx.state.mixerVoices.map((v) => {
       const row = buildVoiceStrip(v);
       container.append(row.strip);
-      row.select.value = String(resolveEffectiveProgram(v.program, guessGmProgram(v.label)));
+      row.select.value = String(resolveEffectiveProgram(v.program, defaultVoiceProgram(v)));
       row.select.addEventListener("change", () => {
         v.program = Number(row.select.value);
         persistVoiceState(v);
@@ -386,7 +397,14 @@ export function createMixer(ctx) {
       });
       row.range.addEventListener("change", applyNow);
       on(row.muteBtn, "click", () => {
-        v.muted = !v.muted;
+        // Un-muting a lead that Solo silenced is a one-off override (this
+        // song, until Solo changes); the persisted mute choice stays as it was.
+        if (v.autoMuted) {
+          v.autoMuted = false;
+          leadUnmuted = true;
+        } else {
+          v.muted = !v.muted;
+        }
         updateVoiceRowVisual({ v, ...row });
         persistVoiceState(v);
         ctx.sheet.rerender();
@@ -430,6 +448,11 @@ export function createMixer(ctx) {
       persist();
     }
     const withSlugs = dedupeVoiceSlugs(voices);
+    // While Solo plays, the first voice (typically the lead) steps aside.
+    const soloOn = voices.some((v) => v.label === "Solo");
+    const ownSig = voiceListSignature(voices.filter((v) => v.label !== "Solo" && v.label !== "Comping"));
+    if (!soloOn || ownSig !== ownVoicesSig) leadUnmuted = false;
+    ownVoicesSig = ownSig;
     ctx.state.mixerVoices = withSlugs.map((v) => {
       const muted = readPref(voiceMutedKey(v.slug)) === "1";
       const storedProgram = readPref(voiceProgramKey(v.slug));
@@ -437,7 +460,7 @@ export function createMixer(ctx) {
       const storedVolume = readPref(voiceVolumeKey(v.slug));
       const volume = storedVolume === null ? 100 : clampPercent(storedVolume);
       return {
-        ...v, muted, program, volume,
+        ...v, muted, program, volume, autoMuted: soloOn && v.index === 0 && !leadUnmuted,
       };
     });
     rebuildVoiceStrips();

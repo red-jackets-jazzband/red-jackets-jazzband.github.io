@@ -26,6 +26,7 @@ test("PREF_KEYS pins the persisted key names", () => {
   assert.deepEqual(PREF_KEYS, {
     instrument: "rj.instrument",
     comping: "rj.comping",
+    solo: "rj.solo",
     sheetAdvanced: "rj.sheetAdvanced",
     inspirationWidth: "rj.inspirationWidth",
     mixerBassVolume: "rj.mixerBassVolume",

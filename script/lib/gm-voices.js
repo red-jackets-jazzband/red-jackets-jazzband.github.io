@@ -56,6 +56,13 @@ const VOICE_NAME_PROGRAM_HINTS = [
   { test: /vibraphone|vibes/i, value: 11 },
 ];
 
+// A resolved Mixer voice's un-overridden program: its own `fallbackProgram`
+// when the voice came with one (the generated Solo, whose instrument follows
+// its style), else a guess from its name.
+export function defaultVoiceProgram(voice) {
+  return voice.fallbackProgram === undefined ? guessGmProgram(voice.label) : voice.fallbackProgram;
+}
+
 export function guessGmProgram(label, fallback = 66) {
   if (!label) return fallback;
   const hit = VOICE_NAME_PROGRAM_HINTS.find((hint) => hint.test.test(label));

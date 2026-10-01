@@ -301,7 +301,7 @@ export function parseVoiceList(abcText) {
   non-numeric voice ids, where a plain length-based guess could collide with
   an id the chart already uses.
 */
-export function resolveMixerVoices(rawVoices, compingActive) {
+export function resolveMixerVoices(rawVoices, compingActive, soloProgram = null) {
   const base = rawVoices.length > 0 ? rawVoices : [{ id: "1", index: 0, name: null }];
   const unnamedTotal = base.filter((v) => !v.name).length;
   let unnamedSeen = 0;
@@ -310,9 +310,18 @@ export function resolveMixerVoices(rawVoices, compingActive) {
     unnamedSeen += 1;
     return { id: v.id, index: v.index, label: unnamedTotal > 1 ? `Melody ${unnamedSeen}` : "Melody" };
   });
-  if (!compingActive) return labeled;
-  const id = nextVoiceId(labeled.map((v) => v.id));
-  return [...labeled, { id, index: labeled.length, label: "Comping" }];
+  const voices = [...labeled];
+  if (compingActive) {
+    voices.push({ id: nextVoiceId(voices.map((v) => v.id)), index: voices.length, label: "Comping" });
+  }
+  if (soloProgram !== null) {
+    // Solo goes after Comping, matching the order sheet.js appends the two
+    // generated staves in; `fallbackProgram` is the style's own instrument.
+    voices.push({
+      id: nextVoiceId(voices.map((v) => v.id)), index: voices.length, label: "Solo", fallbackProgram: soloProgram,
+    });
+  }
+  return voices;
 }
 
 /*
@@ -551,6 +560,6 @@ export function computeVoicesOff(voices) {
   if (voices.length === 1) {
     return { voicesOff: voices[0].muted ? true : undefined };
   }
-  const off = voices.filter((v) => v.muted).map((v) => v.index);
+  const off = voices.filter((v) => v.muted || v.autoMuted).map((v) => v.index);
   return { voicesOff: off.length ? off : undefined };
 }

@@ -3,10 +3,11 @@ import { offsetForInstrument, changeClefForInstrument } from "../lib/instruments
 import { parseChordScheme, computeChordOffset } from "../lib/chords.js";
 import { convertChordsToRoman } from "../lib/music-theory.js";
 import { buildCompingTune } from "../lib/comping.js";
+import { buildSoloTune, SOLO_PROGRAMS } from "../lib/solo.js";
 import {
   injectMixerAudio, resolveGchordPattern, parseVoiceList, resolveMixerVoices,
 } from "../lib/audio-mix.js";
-import { guessGmProgram } from "../lib/gm-voices.js";
+import { defaultVoiceProgram } from "../lib/gm-voices.js";
 import { renderChordTable, scanRepeatBoundaries, fitChordTable } from "./chord-table.js";
 import { stylePartMarkers, applyCompingColors } from "./sheet-decorations.js";
 import { updateIrealProLink } from "./irealpro-link.js";
@@ -101,11 +102,13 @@ function buildComping(abcText, compingValue) {
   return buildCompingTune(abcText, concertChords, concertSong, compingValue);
 }
 
-function compingRequest(isBooklet, chords) {
+// The advanced drawer's pick in `selectId` ("comping" / "solo"), or "off" for a
+// booklet, a chordless tune or a closed drawer.
+function advancedRequest(selectId, isBooklet, chords) {
   if (isBooklet || chords.length === 0) return "off";
   const menu = byId("sheetmenu");
   if (!menu || !menu.classList.contains("show-advanced")) return "off";
-  const select = byId("comping");
+  const select = byId(selectId);
   return select ? select.value : "off";
 }
 
@@ -136,12 +139,30 @@ function resolveTranspose(text, instrumentValue, extraTransposeSteps, isBooklet)
   augmented) ABC, the notehead colour palette and whether it took.
 */
 function applyComping(abcText, chords, isBooklet) {
-  const compingValue = compingRequest(isBooklet, chords);
+  const compingValue = advancedRequest("comping", isBooklet, chords);
   if (compingValue !== "off") {
     const comping = buildComping(abcText, compingValue);
     if (comping) return { renderText: comping.abc, palette: comping.palette, active: true };
   }
   return { renderText: abcText, palette: null, active: false };
+}
+
+/*
+  Live sheet only: when a solo style is picked, evolve a line over the same
+  concert-pitch chords and append it as one more staff after Comping (when
+  that is on), so the one visualTranspose still moves everything together.
+  Returns the render text, and `program` (the style's General MIDI
+  instrument) when it took, null otherwise.
+*/
+function applySolo(renderText, abcText, chords, isBooklet) {
+  const style = advancedRequest("solo", isBooklet, chords);
+  if (style !== "off") {
+    const concertSong = parseTune(abcText, 0);
+    const concertChords = parseChordScheme(concertSong, { includeAlternateEndings: true });
+    const solo = buildSoloTune(renderText, concertChords, concertSong, style);
+    if (solo) return { renderText: solo.abc, program: SOLO_PROGRAMS[style] };
+  }
+  return { renderText, program: null };
 }
 
 // Move W: lyric SVGs out of the notation container so the printer can
@@ -202,7 +223,7 @@ export function createSheet(ctx) {
   function voiceProgramMap() {
     const map = new Map();
     ctx.state.mixerVoices.forEach((v) => {
-      map.set(v.id, v.program === null ? guessGmProgram(v.label) : v.program);
+      map.set(v.id, v.program === null ? defaultVoiceProgram(v) : v.program);
     });
     return map;
   }
@@ -229,20 +250,20 @@ export function createSheet(ctx) {
   // (resolveMixerVoices) and hand it to the Mixer. Reads the raw `text`
   // param, never the transpose-adjusted `abcText`, so a prior comping/
   // instrument pass can't be mistaken for a second declaration of a voice.
-  function syncInstrumentVoices(text, compingActive, isBooklet) {
+  function syncInstrumentVoices(text, comping, soloProgram, isBooklet) {
     if (isBooklet) return;
-    ctx.state.instrumentVoices = resolveMixerVoices(parseVoiceList(text), compingActive);
+    ctx.state.instrumentVoices = resolveMixerVoices(parseVoiceList(text), comping.active, soloProgram);
     ctx.mixer.syncVoices(ctx.state.instrumentVoices);
   }
 
-  // The comping voice is always the last entry resolveMixerVoices resolved
-  // to -- its own `index` is that voice's 0-indexed ABCjs voice number
+  // The comping voice is the "Comping" entry resolveMixerVoices resolved
+  // (Solo, when on, comes after it) -- its own `index` is that voice's 0-indexed ABCjs voice number
   // (V:2 for an ordinary tune, or one past however many voices a chart like
   // honky_tonk_town_riffs.abc already declares). Only called once comping is
   // known active and syncInstrumentVoices has run, so
   // ctx.state.instrumentVoices reflects this same render.
   function compingVoiceIndex() {
-    return ctx.state.instrumentVoices[ctx.state.instrumentVoices.length - 1].index;
+    return ctx.state.instrumentVoices.find((v) => v.label === "Comping").index;
   }
 
   // Live sheet only: stamp the mixer's Bass/Chords levels and every
@@ -275,10 +296,11 @@ export function createSheet(ctx) {
     ctx.state.currentSongText = abcText;
   }
 
-  function recordLiveTune(isBooklet, song, comping) {
+  function recordLiveTune(isBooklet, song, comping, solo) {
     if (isBooklet) return;
     ctx.audio.chordOffset = computeChordOffset(song);
     ctx.state.compingActive = comping.active;
+    ctx.state.soloActive = solo.program !== null;
   }
 
   function engrave(text, opts) {
@@ -301,10 +323,11 @@ export function createSheet(ctx) {
       ? convertChordsToRoman(chords)
       : chords;
     const comping = applyComping(abcText, chords, isBooklet);
-    recordLiveTune(isBooklet, song, comping);
-    syncInstrumentVoices(text, comping.active, isBooklet);
+    const solo = applySolo(comping.renderText, abcText, chords, isBooklet);
+    recordLiveTune(isBooklet, song, comping, solo);
+    syncInstrumentVoices(text, comping, solo.program, isBooklet);
 
-    const renderText = resolveRenderText(comping, chords.length > 0, isBooklet);
+    const renderText = resolveRenderText({ ...comping, renderText: solo.renderText }, chords.length > 0, isBooklet);
 
     if (addLink) {
       const inspirationLinks = parseInspirationLinks(song.metaText.url);

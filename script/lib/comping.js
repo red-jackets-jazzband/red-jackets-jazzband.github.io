@@ -474,6 +474,7 @@ function pushNoteToken(tokens, t) {
 // worst case that kind of pattern can hit when scanned across a long
 // non-matching run.
 export function tokenizeBar(str) {
+  /** @type {Array<{ annotation?: string, pitch?: string, dur?: number, tie?: boolean, rest?: boolean }>} */
   const tokens = [];
   let i = 0;
   while (i < str.length) {
@@ -559,34 +560,43 @@ function normAccidental(a) {
   return a === "" ? "nat" : a;
 }
 
+// Rebuild one run of notes ("CEG" inside a chord, or a lone "_B,") with the
+// fewest accidentals, tracking what's already been set this bar in `barAcc`.
+function respellNotes(run, keySig, barAcc) {
+  const rebuilt = [];
+  for (const [, acc, letterRaw, oct] of execAll(
+    /([_^=]{0,2})([A-Ga-g])([,']{0,4})/g,
+    run,
+  )) {
+    const letterOct = letterRaw + oct;
+    const letter = letterRaw.toUpperCase();
+    // Tonal never writes `=`; a bare note means natural.
+    const want = acc.replace(/=/g, "");
+    const current = barAcc.has(letterOct)
+      ? barAcc.get(letterOct)
+      : keySig[letter] || "";
+    if (normAccidental(want) === normAccidental(current)) {
+      rebuilt.push(letterOct);
+      continue;
+    }
+    barAcc.set(letterOct, want);
+    rebuilt.push((want || "=") + letterOct);
+  }
+  return rebuilt.join("");
+}
+
+// Handles chord tokens "[CEG]" and, for the solo voice, single notes.
 export function respellBar(fragment, keySig) {
   const barAcc = new Map();
-  return String(fragment).replace(/\[[_^=A-Ga-g,']+\]/g, (chord) => {
-    const rebuilt = [];
-    for (const [, acc, letterRaw, oct] of execAll(
-      /([_^=]{0,2})([A-Ga-g])([,']{0,4})/g,
-      chord.slice(1, -1),
-    )) {
-      const letterOct = letterRaw + oct;
-      const letter = letterRaw.toUpperCase();
-      // Tonal never writes `=`; a bare note means natural.
-      const want = acc.replace(/=/g, "");
-      const current = barAcc.has(letterOct)
-        ? barAcc.get(letterOct)
-        : keySig[letter] || "";
-      if (normAccidental(want) === normAccidental(current)) {
-        rebuilt.push(letterOct);
-        continue;
-      }
-      barAcc.set(letterOct, want);
-      rebuilt.push((want || "=") + letterOct);
-    }
-    return "[" + rebuilt.join("") + "]";
-  });
+  return String(fragment).replace(/\[[_^=A-Ga-g,']+\]|[_^=]{0,2}[A-Ga-g][,']{0,4}/g, (token) => (
+    token.startsWith("[")
+      ? "[" + respellNotes(token.slice(1, -1), keySig, barAcc) + "]"
+      : respellNotes(token, keySig, barAcc)
+  ));
 }
 
 // Spread `total` eighth slots across `parts` notes as evenly as possible.
-function distribute(total, parts) {
+export function distribute(total, parts) {
   const base = Math.floor(total / parts);
   let remainder = total - base * parts;
   const out = [];
@@ -878,7 +888,7 @@ export function buildVoiceBody(rawBody, barStrings, leadingRestBars, restToken, 
 // ---------------------------------------------------------------------------
 
 // Undo parseChordScheme's cosmetic unicode so Tonal can read the chord.
-function plainChordName(name) {
+export function plainChordName(name) {
   return String(name)
     .replace(/♭/g, "b")
     .replace(/♯/g, "#")
@@ -892,7 +902,7 @@ const MODE_ALIASES = {
   mix: "mixolydian", aeo: "aeolian", loc: "locrian",
 };
 
-function keyScaleNotes(key) {
+export function keyScaleNotes(key) {
   const tonic = (key.root || "C") + (key.acc || "");
   const mode = MODE_ALIASES[String(key.mode || "").toLowerCase()] || "major";
   let notes = Tonal.Scale.get(tonic + " " + mode).notes;
@@ -906,7 +916,7 @@ function keyScaleNotes(key) {
    … }. Feeds respellBar so the comping only prints accidentals the key doesn't
    already imply.
 */
-function keySignature(keyScale) {
+export function keySignature(keyScale) {
   const sig = {};
   for (const pc of keyScale) {
     const m = /^([A-G])([#b]*)$/.exec(String(pc));
@@ -916,7 +926,7 @@ function keySignature(keyScale) {
 }
 
 // Pitch class -> chroma 0..11 (Tonal.Note.chroma isn't in the test stub).
-function pcChromaVal(pc) {
+export function pcChromaVal(pc) {
   const mid = Tonal.Note.midi(pc + "4");
   return mid == null ? 0 : ((mid % 12) + 12) % 12;
 }
@@ -1059,33 +1069,36 @@ function chordArgs(voices, keyScale) {
 // on: after voice-leading the black voice may well be sitting on a fifth.
 const VOICE_KEYS = ["R", "3", "5"];
 
+/*
+   Chord scheme -> per-bar arrays of plain chord names Tonal can read, or
+   `null` for a break ("N.C.") slot. "%" / empty holds the previous chord, and
+   a slash chord keeps only its upper part. `last` (the "%"-hold memory) is
+   left untouched by a break, so a hold *after* one still continues whatever
+   chord preceded the break, not "N.C." itself. Shared by the comping voice and
+   the solo generator (lib/solo.js).
+*/
+export function resolveChordNames(chords) {
+  let last = "C";
+  return chords.map((measure) => measure.text.map((raw) => {
+    if (raw === BREAK_CHORD) return null;
+    let name = plainChordName(raw);
+    if (name === "%" || name === "") name = last;
+    name = name.split("/")[0];
+    last = name;
+    return name;
+  }));
+}
+
 // Chord scheme -> per-bar arrays of triads, each triad [{pc}] root/3rd/5th
 // first, or `null` for a break ("N.C.") slot — a deliberate silence the
-// comping voice should rest through rather than hold the previous chord
-// over. `last` (the "%"-hold memory) is left untouched by a break, so a
-// hold *after* one still continues whatever chord preceded the break, not
-// "N.C." itself.
+// comping voice should rest through rather than hold the previous chord over.
 function extractChordNotes(chords) {
-  const result = [];
-  let last = "C";
-  for (const measure of chords) {
-    const row = [];
-    for (const raw of measure.text) {
-      if (raw === BREAK_CHORD) {
-        row.push(null);
-        continue;
-      }
-      let name = plainChordName(raw);
-      if (name === "%" || name === "") name = last;
-      name = name.split("/")[0];
-      last = name;
-      const notes = Tonal.Chord.get(name).notes.slice(0, 3);
-      while (notes.length < 3) notes.push(notes[0] || "C");
-      row.push(notes.map((pc) => ({ pc })));
-    }
-    result.push(row);
-  }
-  return result;
+  return resolveChordNames(chords).map((row) => row.map((name) => {
+    if (name === null) return null;
+    const notes = Tonal.Chord.get(name).notes.slice(0, 3);
+    while (notes.length < 3) notes.push(notes[0] || "C");
+    return notes.map((pc) => ({ pc }));
+  }));
 }
 
 // The six ways to stack a triad's three tones: root position and its rotations.
@@ -1237,92 +1250,9 @@ function chordKey(triple) {
 // Entry point
 // ---------------------------------------------------------------------------
 
-/*
-   Build the comping tune.
-
-   Parameters:
-     text   - the ABC string about to be rendered (already clef-adjusted for
-              the instrument), parsed by the caller at visualTranspose 0 so
-              the chords/key below are in concert pitch. The single
-              visualTranspose the caller passes to ABCjs.renderAbc then
-              transposes melody and comping together.
-     chords - parseChordScheme(song) output (concert pitch).
-     song   - the ABCjs parseOnly tune (concert pitch).
-     pattern- a COMPING_PATTERNS value.
-
-   `chords`/`song` are always read from the tune's first voice (parseChordScheme
-   and the key lookup below both key off `staff[0]`), so the generated pattern
-   always tracks whatever V:1 is doing — the tune's only melody line for an
-   ordinary tune, or the first declared voice of a multi-voice chart, whether
-   its voices are woven line-by-line via repeated whole-line "V: 1" / "V: 2"
-   switches (honky_tonk_town_riffs.abc's Root line) or inline "[V:1] ... |
-   [V:2] ... |" markers (big_chief.abc's Trumpet line) — see extractVoiceBody.
-   The comping voice is appended as voice N+1, one past however many voices
-   (N) the tune already declares (N=1, with no "V:" of its own, for an
-   ordinary tune) — never a hardcoded V:2 — so lib/audio-mix.js's
-   resolveMixerVoices (which already models this general N+1 shape) and this
-   generator now agree. Its own doc comment covers the two different ways the
-   Mixer panel depends on that: computeVoicesOff mutes by ABCjs voice index,
-   and injectMixerAudio scopes each voice's %%MIDI program (Voice picker) to
-   right after that voice's own first declaration line.
-
-   Returns { abc, palette }, or null when comping can't apply (no chords, an
-   unsupported meter, no K: line):
-     abc     - the augmented ABC (all the tune's own voices untouched, plus one
-               new block-chord comping voice appended as N+1)
-     palette - one entry per chord onset ABCjs will draw in the comping voice,
-               in reading order: the voice key (black / gold / red) of each
-               notehead bottom-to-top. The voices never cross so every entry is
-               ["R","3","5"] as it stands, but it's kept per-onset rather than
-               assumed so sheet-decorations.js — which zips it against the
-               rendered noteheads and tie arcs — stays correct regardless.
-*/
-export function buildCompingTune(text, chords, song, pattern) {
-  const pat = PATTERNS[pattern];
-  if (!pat) return null;
-  if (!chords || !chords.length) return null;
-  if (!song || !song.lines || !song.lines[0] || !song.lines[0].staff) return null;
-
-  const meter = readMeter(text);
-  if (!meter) return null;
-
-  const split = splitHeaderBody(text);
-  if (!split) return null;
-
-  const [lnum, lden] = readUnit(text);
-  const key = song.lines[0].staff[0].key || { root: "C", acc: "", mode: "" };
-  const keyScale = keyScaleNotes(key);
-  const keySig = keySignature(keyScale);
-  const bassClef = /clef\s*=\s*bass/.test(split.kLine);
-
-  // findVoiceIds alone only sees a whole-line "V:" declaration -- a voice
-  // that's only ever switched into inline (findInlineVoiceIds) is just as
-  // real and just as much a collision risk for the id nextVoiceId is about
-  // to hand the generated Comping voice, so both are merged before that
-  // allocation runs. Declared ids come first so voiceIds[0] below still
-  // means "the tune's own first/melody voice" even when it's undeclared and
-  // only ever named inline (a tune with no "V:" line at all, interleaving
-  // "[V:1] ... [V:2] ..." from its very first body line).
-  const declaredVoiceIds = findVoiceIds(text);
-  const inlineVoiceIds = findInlineVoiceIds(text).filter((id) => !declaredVoiceIds.includes(id));
-  const voiceIds = [...declaredVoiceIds, ...inlineVoiceIds];
-  const explicitVoices = voiceIds.length > 0;
-  // An ordinary tune has no "V:" of its own, but always ends up as V:1 below
-  // (the synthesized "%%staves [1 2]\nV:1\n..." block), so that's the id to
-  // avoid colliding with here even though voiceIds found nothing.
-  const newVoiceId = nextVoiceId(explicitVoices ? voiceIds : ["1"]);
-  // The body a tune with its own voices interleaves per system -- repeated
-  // whole-line "V: 1" / "V: 2" / "V: 3" switches (honky_tonk_town_riffs.abc)
-  // or inline "[V:1] ... [V:2] ..." markers (big_chief.abc) -- must be
-  // narrowed to just V:1's own bars before it can serve as buildVoiceBody's
-  // bar-for-bar template below; a tune that only ever declared its one voice
-  // once (in the header, before K:) already has a body that's entirely that
-  // voice's.
-  const bodyHasVoiceSwitches = /^V:\s*\S+/m.test(split.body) || /\[V:/.test(split.body);
-  const patternSourceBody = explicitVoices && bodyHasVoiceSwitches
-    ? extractVoiceBody(text, voiceIds[0])
-    : split.body;
-
+// One comping bar fragment per chord-scheme bar, plus the colour order of each
+// chord onset in it (see buildCompingTune's `palette`).
+function compingBars(chords, pat, { keyScale, keySig, lnum, lden }) {
   const voiced = voiceLead(extractChordNotes(chords));
 
   // One comping voice: each pattern slot is a block chord "[low mid high]".
@@ -1377,6 +1307,90 @@ export function buildCompingTune(text, chords, song, pattern) {
     compBars.push(rebeamBar(respellBar(fragment, keySig), lnum, lden));
     compPalettes.push(barPalette);
   }
+  return { compBars, compPalettes };
+}
+
+/*
+   Append one generated voice to a tune, bar for bar with its melody.
+
+   Parameters:
+     text     - the ABC string about to be rendered (already clef-adjusted for
+                the instrument), parsed by the caller at visualTranspose 0 so
+                the chords/key below are in concert pitch. The single
+                visualTranspose the caller passes to ABCjs.renderAbc then
+                transposes melody and appended voices together. It may already
+                carry an appended voice (Comping, then Solo on top of it).
+     song     - the ABCjs parseOnly tune (concert pitch).
+     makeBars - ({ keyScale, keySig, lnum, lden }) => string[] | null: one ABC
+                fragment per chord-scheme bar (8 eighth slots each), or null
+                when the voice can't be built.
+     voice    - { name, titleSuffix }: the V: name="..." text as written in
+                ABC, and what to append to the T: line ("" for nothing).
+
+   `song` is always read from the tune's first voice (parseChordScheme and the
+   key lookup below both key off `staff[0]`), so the generated voice always
+   tracks whatever V:1 is doing — the tune's only melody line for an ordinary
+   tune, or the first declared voice of a multi-voice chart, whether its
+   voices are woven line-by-line via repeated whole-line "V: 1" / "V: 2"
+   switches (honky_tonk_town_riffs.abc's Root line) or inline "[V:1] ... |
+   [V:2] ... |" markers (big_chief.abc's Trumpet line) — see extractVoiceBody.
+   The voice is appended as voice N+1, one past however many voices (N) the
+   tune already declares (N=1, with no "V:" of its own, for an ordinary tune)
+   — never a hardcoded V:2 — so lib/audio-mix.js's resolveMixerVoices (which
+   already models this general N+1 shape) and this generator agree. Its own
+   doc comment covers the two different ways the Mixer panel depends on that:
+   computeVoicesOff mutes by ABCjs voice index, and injectMixerAudio scopes
+   each voice's %%MIDI program (Voice picker) to right after that voice's own
+   first declaration line.
+
+   Returns the augmented ABC, or null when the voice can't apply (an
+   unsupported meter, no K: line, no bars).
+*/
+export function appendBarVoice(text, song, makeBars, voice) {
+  if (!song || !song.lines || !song.lines[0] || !song.lines[0].staff) return null;
+
+  const meter = readMeter(text);
+  if (!meter) return null;
+
+  const split = splitHeaderBody(text);
+  if (!split) return null;
+
+  const [lnum, lden] = readUnit(text);
+  const key = song.lines[0].staff[0].key || { root: "C", acc: "", mode: "" };
+  const keyScale = keyScaleNotes(key);
+  const keySig = keySignature(keyScale);
+  const bassClef = /clef\s*=\s*bass/.test(split.kLine);
+
+  // findVoiceIds alone only sees a whole-line "V:" declaration -- a voice
+  // that's only ever switched into inline (findInlineVoiceIds) is just as
+  // real and just as much a collision risk for the id nextVoiceId is about
+  // to hand the generated Comping voice, so both are merged before that
+  // allocation runs. Declared ids come first so voiceIds[0] below still
+  // means "the tune's own first/melody voice" even when it's undeclared and
+  // only ever named inline (a tune with no "V:" line at all, interleaving
+  // "[V:1] ... [V:2] ..." from its very first body line).
+  const declaredVoiceIds = findVoiceIds(text);
+  const inlineVoiceIds = findInlineVoiceIds(text).filter((id) => !declaredVoiceIds.includes(id));
+  const voiceIds = [...declaredVoiceIds, ...inlineVoiceIds];
+  const explicitVoices = voiceIds.length > 0;
+  // An ordinary tune has no "V:" of its own, but always ends up as V:1 below
+  // (the synthesized "%%staves [1 2]\nV:1\n..." block), so that's the id to
+  // avoid colliding with here even though voiceIds found nothing.
+  const newVoiceId = nextVoiceId(explicitVoices ? voiceIds : ["1"]);
+  // The body a tune with its own voices interleaves per system -- repeated
+  // whole-line "V: 1" / "V: 2" / "V: 3" switches (honky_tonk_town_riffs.abc)
+  // or inline "[V:1] ... [V:2] ..." markers (big_chief.abc) -- must be
+  // narrowed to just V:1's own bars before it can serve as buildVoiceBody's
+  // bar-for-bar template below; a tune that only ever declared its one voice
+  // once (in the header, before K:) already has a body that's entirely that
+  // voice's.
+  const bodyHasVoiceSwitches = /^V:\s*\S+/m.test(split.body) || /\[V:/.test(split.body);
+  const patternSourceBody = explicitVoices && bodyHasVoiceSwitches
+    ? extractVoiceBody(text, voiceIds[0])
+    : split.body;
+
+  const compBars = makeBars({ keyScale, keySig, lnum, lden });
+  if (!compBars) return null;
 
   const leadingRestBars = computeChordOffset(song) || 0;
   // Invisible rest: keeps the comping voice bar-aligned with the melody
@@ -1385,13 +1399,7 @@ export function buildCompingTune(text, chords, song, pattern) {
   const compBody = buildVoiceBody(
     patternSourceBody, compBars, leadingRestBars, restToken, lnum, lden,
   ).trim();
-  // buildVoiceBody consumes compBars in order (leading/tail bars use the plain
-  // rest), so the drawn chord onsets are compPalettes flattened in bar order.
-  const palette = compPalettes.flat();
-
   const clefSuffix = bassClef ? " clef=bass middle=D" : "";
-  const label = PATTERN_LABEL[pattern] || pattern;
-
   const headerOut = [];
   let layoutLine = null;
   for (const line of split.header) {
@@ -1401,7 +1409,7 @@ export function buildCompingTune(text, chords, song, pattern) {
       continue;
     }
     if (/^T:/.test(line)) {
-      headerOut.push(line + "  (comping \u2013 " + label + ")");
+      headerOut.push(line + voice.titleSuffix);
       continue;
     }
     headerOut.push(line);
@@ -1412,7 +1420,7 @@ export function buildCompingTune(text, chords, song, pattern) {
   // the label's own stacking order mirrors the notes' vertical stacking in
   // the chord, root at the bottom).
   const compingVoiceLine =
-    "V:" + newVoiceId + String.raw` name="5\n3\nR"` + clefSuffix;
+    "V:" + newVoiceId + " name=\"" + voice.name + "\"" + clefSuffix;
   const existingBody = split.body.trimEnd();
   let abc;
   if (explicitVoices) {
@@ -1442,5 +1450,42 @@ export function buildCompingTune(text, chords, song, pattern) {
       "\nV:1\n" + existingBody +
       "\nV:2\n" + compBody + "\n";
   }
-  return { abc, palette };
+  return abc;
+}
+
+/*
+   Build the comping tune.
+
+   `chords` is parseChordScheme(song) output (concert pitch); `pattern` a
+   COMPING_PATTERNS value. See appendBarVoice for `text` and `song`.
+
+   Returns { abc, palette }, or null when comping can't apply (no chords, an
+   unsupported meter, no K: line):
+     abc     - the augmented ABC (all the tune's own voices untouched, plus one
+               new block-chord comping voice appended as N+1)
+     palette - one entry per chord onset ABCjs will draw in the comping voice,
+               in reading order: the voice key (black / gold / red) of each
+               notehead bottom-to-top. The voices never cross so every entry is
+               ["R","3","5"] as it stands, but it's kept per-onset rather than
+               assumed so sheet-decorations.js — which zips it against the
+               rendered noteheads and tie arcs — stays correct regardless.
+*/
+export function buildCompingTune(text, chords, song, pattern) {
+  const pat = PATTERNS[pattern];
+  if (!pat || !chords || !chords.length) return null;
+  let palettes = [];
+  const abc = appendBarVoice(text, song, (layout) => {
+    const { compBars, compPalettes } = compingBars(chords, pat, layout);
+    // appendBarVoice consumes compBars in order (leading/tail bars use the
+    // plain rest), so the drawn chord onsets are compPalettes flattened in
+    // bar order.
+    palettes = compPalettes.flat();
+    return compBars;
+  }, {
+    // Stacked 5 / 3 / R label at the staff's left, naming the chord tones the
+    // three notehead colours pick out (fifth / third / root, top to bottom).
+    name: String.raw`5\n3\nR`,
+    titleSuffix: "  (comping \u2013 " + (PATTERN_LABEL[pattern] || pattern) + ")",
+  });
+  return abc === null ? null : { abc, palette: palettes };
 }
