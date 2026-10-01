@@ -140,3 +140,20 @@ test("asking for another take cancels the one running", async () => {
   cancelSolo();
   assert.equal(doneFirst, false);
 });
+
+test("a solo never repeats the same bar rhythm four times running, and syncopates", () => {
+  const bars = ["Cm7", "Cm7", "Fm7", "Fm7", "Bb7", "Bb7", "Ebmaj7", "Ebmaj7", "Ab7", "Ab7", "Dbmaj7", "Dbmaj7", "G7", "G7", "Cm7", "Cm7"];
+  const prog = bars.map((chord) => ({ chord, beats: 4 }));
+  for (const seed of [1, 2, 3]) {
+    const { notes } = generateSolo(prog, { style: "solo", seed, popSize: 60, generations: 200 });
+    const rhythms = [];
+    for (const n of notes) {
+      const bar = Math.floor(n.start / 4);
+      rhythms[bar] = (rhythms[bar] || "") + `${n.start % 4}:${n.duration},`;
+    }
+    for (let i = 3; i < rhythms.length; i++) {
+      assert.ok(!(rhythms[i] === rhythms[i - 1] && rhythms[i] === rhythms[i - 2] && rhythms[i] === rhythms[i - 3]), `seed ${seed}, bar ${i}`);
+    }
+    assert.ok(notes.some((n) => n.start % 1 !== 0 && n.duration >= 1), `seed ${seed} has an anticipation`);
+  }
+});

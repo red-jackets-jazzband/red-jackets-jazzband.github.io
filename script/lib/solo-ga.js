@@ -60,7 +60,8 @@ const MAJOR_WITH_SEVENTH = [0, 2, 3, 4, 5, 7, 9, 11];
   degree 0 (a multiple of 12); density = target onsets per bar; phraseWeight
   scales the phrase rules; falls/rips = chance of tagging that articulation;
   approach = weight for chromatic approach notes and enclosures; crossRhythm =
-  weight for dotted-quarter (3-against-4) groupings; figures = Armstrong's
+  weight for dotted-quarter (3-against-4) groupings; syncopation = weight for
+  anticipations (an offbeat note tied over the next beat, a rest on the beat); figures = Armstrong's
   trademark repeated-note figure and "triple call" [S]; arpeggios = descending
   chord-tone arpeggios, ideally landing on the seventh [S]; arc = build the solo to a
   late climax [H]; extensions = upper structures and maj7 [H]; climb =
@@ -70,16 +71,16 @@ const MAJOR_WITH_SEVENTH = [0, 2, 3, 4, 5, 7, 9, 11];
 */
 export const STYLES = {
   trumpet: {
-    low: 58, high: 82, base: 60, density: 4, phraseWeight: 1, falls: 0.35, rips: 0.4, approach: 0.5, crossRhythm: 0.8, arpeggios: true,
+    low: 58, high: 82, base: 60, density: 4, phraseWeight: 1, falls: 0.35, rips: 0.4, approach: 0.5, crossRhythm: 0.8, syncopation: 1, arpeggios: true,
   },
   armstrong: {
     low: 58, high: 86, base: 60, density: 5, phraseWeight: 1, falls: 0.3, rips: 0.7,
-    approach: 1.5, approachMax: 0.15, crossRhythm: 1.5, arc: true, extensions: true, figures: true, arpeggios: true,
+    approach: 1.5, approachMax: 0.15, crossRhythm: 1.5, syncopation: 1.5, arc: true, extensions: true, figures: true, arpeggios: true,
   },
-  clarinet: { low: 62, high: 89, base: 72, density: 7, phraseWeight: 0.8, falls: 0, rips: 0, approach: 0.8, crossRhythm: 1, climb: true },
+  clarinet: { low: 62, high: 89, base: 72, density: 7, phraseWeight: 0.8, falls: 0, rips: 0, approach: 0.8, crossRhythm: 1, syncopation: 1, climb: true },
   trombone: { low: 40, high: 67, base: 48, density: 3, phraseWeight: 0.3, falls: 0.3, rips: 0, approach: 0, crossRhythm: 0, tailgate: true },
-  tromboneFree: { low: 40, high: 69, base: 48, density: 4, phraseWeight: 1, falls: 0.3, rips: 0, approach: 0.5, crossRhythm: 0.8, below: true },
-  solo: { low: 58, high: 84, base: 60, density: 5, phraseWeight: 1, falls: 0.3, rips: 0.3, approach: 0.8, crossRhythm: 1, arc: true },
+  tromboneFree: { low: 40, high: 69, base: 48, density: 4, phraseWeight: 1, falls: 0.3, rips: 0, approach: 0.5, crossRhythm: 0.8, syncopation: 0.6, below: true },
+  solo: { low: 58, high: 84, base: 60, density: 5, phraseWeight: 1, falls: 0.3, rips: 0.3, approach: 0.8, crossRhythm: 1, syncopation: 1.2, arc: true },
 };
 
 const DEFAULTS = {
@@ -588,6 +589,9 @@ function repetitionScore(history, bar, stats, contour) {
       }
     }
   }
+  if (history.loopCheck && bar >= 2 && stats.mask === history.masks[bar - 1] && stats.mask === history.masks[bar - 2]) {
+    f -= 4; // the same rhythm three bars running sounds mechanical
+  }
   return f;
 }
 
@@ -630,28 +634,46 @@ function sameIdea(ctx, g, a, b) {
 // up or down), not a new thought every bar: reward an idea returning one, two
 // or four bars later (the phrase length), and penalise too many distinct ones.
 const IDEA_LAGS = [[1, 0.8], [2, 1.2], [4, 1.5]];
+const IDEA_SHARE = 0.35; // at most about a third of the bars may repeat an earlier one
+
+// Reward for the idea in `bar` coming back at the nearest lag, with the
+// triple call [S] rewarded and a fourth identical bar punished: three is a
+// call, four is a loop.
+function ideaBarScore(ctx, g, bar) {
+  let f = 0;
+  for (const [lag, reward] of IDEA_LAGS) {
+    if (bar >= lag && sameIdea(ctx, g, bar - lag, bar)) {
+      f += reward;
+      break;
+    }
+  }
+  let run = 0;
+  while (run < 3 && bar - run >= 1 && sameIdea(ctx, g, bar - run - 1, bar - run)) {
+    run++;
+  }
+  if (run === 2) {
+    f += 0.6;
+  }
+  return run === 3 ? f - 6 : f;
+}
 
 function ideaScore(ctx, g) {
   if (ctx.o.tailgate || ctx.ag) {
     return 0; // a part that follows the lead and the changes repeats nothing of its own
   }
   let f = 0;
+  let returns = 0;
   for (let bar = 1; bar < ctx.bars; bar++) {
-    for (const [lag, reward] of IDEA_LAGS) {
-      if (bar >= lag && sameIdea(ctx, g, bar - lag, bar)) {
-        f += reward;
-        break;
-      }
-    }
-    if (bar >= 2 && sameIdea(ctx, g, bar - 1, bar) && sameIdea(ctx, g, bar - 2, bar - 1)) {
-      f += 0.6; // the triple call [S]
+    f += ideaBarScore(ctx, g, bar);
+    if (sameIdea(ctx, g, bar - 1, bar) || (bar >= 2 && sameIdea(ctx, g, bar - 2, bar))) {
+      returns++;
     }
   }
-  return f;
+  return f - 2 * Math.max(0, returns - Math.ceil(ctx.bars * IDEA_SHARE));
 }
 
 function barsScore(ctx, g, ev, covered) {
-  const history = { masks: [], contours: [] };
+  const history = { masks: [], contours: [], loopCheck: Boolean(ctx.o.syncopation) };
   let f = 0;
   for (let bar = 0; bar < ctx.bars; bar++) {
     const stats = barStats(ctx, g, bar);
@@ -664,7 +686,33 @@ function barsScore(ctx, g, ev, covered) {
   }
   // Ideas return, but the rhythm still has to move: a handful of distinct bars at least.
   const distinct = new Set(history.masks).size;
-  return f - 2 * Math.max(0, Math.floor(ctx.bars / 4) + 1 - distinct);
+  return f - 2 * Math.max(0, Math.floor(ctx.bars / (ctx.o.syncopation ? 3 : 4)) + 1 - distinct);
+}
+
+// Syncopation: an offbeat note held across the next beat (an anticipation),
+// or a beat left empty with the line entering on the "and" after it. Swing
+// phrasing lives on these, a line that only ever plays on the beat sounds square.
+function anticipates(g, e) {
+  const held = e.slot % SUB === SUB - 1 && e.len >= SUB;
+  const afterRest = e.slot % SUB === SUB - 1 && g[e.slot - 1] === REST;
+  return held || afterRest;
+}
+
+function syncopationScore(ctx, g, ev) {
+  if (!ctx.o.syncopation) {
+    return 0;
+  }
+  const perBar = new Array(ctx.bars).fill(0);
+  for (const e of ev) {
+    if (!e.app && anticipates(g, e)) {
+      perBar[barOf(ctx, e.slot)]++;
+    }
+  }
+  let f = 0;
+  for (const n of perBar) {
+    f += n === 0 ? -0.8 : Math.min(n, 2) * 0.7 - Math.max(0, n - 3) * 0.7;
+  }
+  return ctx.o.syncopation * f / 2;
 }
 
 // A break lands on the downbeat after it.
@@ -1013,7 +1061,7 @@ function fitness(ctx, g) {
   }
   const covered = coverage(ctx, ev);
   return notesScore(ctx, ev) + barsScore(ctx, g, ev, covered) + breakLandingScore(ctx, g)
-    + ornamentCapScore(ctx, ev) + blueCapScore(ctx, ev) + ideaScore(ctx, g) + repeatedNoteScore(ctx, ev) + arpeggioScore(ctx, ev) + phraseRecallScore(ctx, ev) + finaleScore(ctx, ev) + bridgeScore(ctx, ev) + crossRhythmScore(ctx, ev) + phrasesScore(ctx, ev)
+    + ornamentCapScore(ctx, ev) + blueCapScore(ctx, ev) + ideaScore(ctx, g) + repeatedNoteScore(ctx, ev) + arpeggioScore(ctx, ev) + phraseRecallScore(ctx, ev) + finaleScore(ctx, ev) + bridgeScore(ctx, ev) + crossRhythmScore(ctx, ev) + syncopationScore(ctx, g, ev) + phrasesScore(ctx, ev)
     + breathsScore(ctx, covered) + arcScore(ctx, ev) + melodyScore(ctx, g)
     + registerScore(ctx, ev) + endingScore(ctx, ev);
 }
@@ -1266,10 +1314,25 @@ function tripleCallOp(ctx, g) {
   }
 }
 
+// Push a note on the beat back onto the "and" before it, tied over the beat.
+function anticipateOp(ctx, g) {
+  const beats = [];
+  for (let s = ctx.sub; s < ctx.total; s += ctx.sub) {
+    if (isDegree(g[s]) && g[s - 1] !== HOLD && !isDegree(g[s - 1])) {
+      beats.push(s);
+    }
+  }
+  if (beats.length) {
+    const s = beats[randInt(ctx, 0, beats.length - 1)];
+    g[s - 1] = g[s];
+    g[s] = HOLD;
+  }
+}
+
 function operatorsFor(ctx) {
   const ops = [perturbOp, splitMergeOp, transposeOp, invertOp, retrogradeOp, sortOp, repeatLickOp, breathOp, approachOp];
-  if (!ctx.o.tailgate && !ctx.ag) {
-    ops.push(repeatLickOp); // ideas that come back: twice the weight for a lead
+  if (ctx.o.syncopation) {
+    ops.push(anticipateOp, anticipateOp);
   }
   if (ctx.o.figures) {
     ops.push(repeatNoteOp, tripleCallOp, recallOp, heldHighOp);
