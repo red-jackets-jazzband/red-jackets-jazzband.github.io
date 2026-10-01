@@ -3,7 +3,9 @@ import { offsetForInstrument, changeClefForInstrument } from "../lib/instruments
 import { parseChordScheme, computeChordOffset } from "../lib/chords.js";
 import { convertChordsToRoman } from "../lib/music-theory.js";
 import { buildCompingTune } from "../lib/comping.js";
-import { buildSoloTune, SOLO_PROGRAMS } from "../lib/solo.js";
+import {
+  buildSoloTune, cancelSolo, composeSolo, hasSoloTake, SOLO_PROGRAMS,
+} from "../lib/solo.js";
 import {
   injectMixerAudio, resolveGchordPattern, parseVoiceList, resolveMixerVoices,
 } from "../lib/audio-mix.js";
@@ -152,17 +154,35 @@ function applyComping(abcText, chords, isBooklet) {
   concert-pitch chords and append it as one more staff after Comping (when
   that is on), so the one visualTranspose still moves everything together.
   Returns the render text, and `program` (the style's General MIDI
-  instrument) when it took, null otherwise.
+  instrument) when it took, null otherwise. A take that hasn't been evolved yet
+  isn't waited for: `compose` starts it in the background and the sheet shows
+  without the solo until it's ready (then re-renders).
 */
-function applySolo(renderText, abcText, chords, isBooklet) {
+function applySolo(renderText, abcText, chords, isBooklet, compose) {
+  if (isBooklet) return { renderText, program: null }; // never touches the live job
   const style = advancedRequest("solo", isBooklet, chords);
-  if (style !== "off") {
-    const concertSong = parseTune(abcText, 0);
-    const concertChords = parseChordScheme(concertSong, { includeAlternateEndings: true });
-    const solo = buildSoloTune(renderText, concertChords, concertSong, style);
-    if (solo) return { renderText: solo.abc, program: SOLO_PROGRAMS[style] };
+  if (style === "off") {
+    cancelSolo();
+    compose(null);
+    return { renderText, program: null };
   }
-  return { renderText, program: null };
+  const concertSong = parseTune(abcText, 0);
+  const concertChords = parseChordScheme(concertSong, { includeAlternateEndings: true });
+  if (!hasSoloTake(concertChords, concertSong, style)) {
+    compose({ chords: concertChords, song: concertSong, style });
+    return { renderText, program: null };
+  }
+  cancelSolo(); // a job for the previous song must not re-render over this one
+  compose(null);
+  const solo = buildSoloTune(renderText, concertChords, concertSong, style);
+  return solo ? { renderText: solo.abc, program: SOLO_PROGRAMS[style] } : { renderText, program: null };
+}
+
+// The "Composing solo… 42%" readout next to the Solo dropdown (#soloStatus).
+function showSoloStatus(fraction) {
+  const status = byId("soloStatus");
+  if (!status) return;
+  status.textContent = fraction === null ? "" : `Composing solo… ${Math.round(fraction * 100)}%`;
 }
 
 // Move W: lyric SVGs out of the notation container so the printer can
@@ -303,6 +323,23 @@ export function createSheet(ctx) {
     ctx.state.soloActive = solo.program !== null;
   }
 
+  // Start (or keep running) the background evolution of the solo take the
+  // render just asked for; null clears the readout. When it's done the sheet
+  // re-renders and the take is picked up from the cache.
+  function composeSoloTake(request) {
+    if (request === null) {
+      showSoloStatus(null);
+      return;
+    }
+    composeSolo(request.chords, request.song, request.style, {
+      onProgress: showSoloStatus,
+      onDone: () => {
+        showSoloStatus(null);
+        ctx.sheet.rerender();
+      },
+    });
+  }
+
   function engrave(text, opts) {
     const {
       notationId, chordId, titleId,
@@ -323,7 +360,7 @@ export function createSheet(ctx) {
       ? convertChordsToRoman(chords)
       : chords;
     const comping = applyComping(abcText, chords, isBooklet);
-    const solo = applySolo(comping.renderText, abcText, chords, isBooklet);
+    const solo = applySolo(comping.renderText, abcText, chords, isBooklet, composeSoloTake);
     recordLiveTune(isBooklet, song, comping, solo);
     syncInstrumentVoices(text, comping, solo.program, isBooklet);
 

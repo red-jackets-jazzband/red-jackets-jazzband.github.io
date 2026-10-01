@@ -1,6 +1,9 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { buildSoloTune, melodyNotes, SOLO_PROGRAMS, SOLO_STYLES } from "./solo.js";
+import {
+  buildSoloTune, cancelSolo, composeSolo, hasSoloTake, melodyNotes, SOLO_PROGRAMS, SOLO_STYLES,
+} from "./solo.js";
+import { generateSolo, startSolo } from "./solo-ga.js";
 import { buildCompingTune, COMPING_PATTERNS } from "./comping.js";
 import { BREAK_CHORD } from "./chords.js";
 import { tonalStub } from "../../../tests/helpers/stubs.js";
@@ -103,4 +106,37 @@ test("the lead shapes the take: a trumpet solo differs from one without a tune",
   const withLead = buildSoloTune(ABC, CHORDS, SONG, "trumpet", FAST).abc;
   const noLead = buildSoloTune(ABC, CHORDS, { lines: [{ staff: [{ key: { root: "F", acc: "", mode: "" }, voices: [[]] }] }] }, "trumpet", FAST).abc;
   assert.notEqual(withLead, noLead);
+});
+
+test("a take evolved in slices equals the one evolved in a single go", () => {
+  const progression = ["F", "C7", "F", "F"];
+  const job = startSolo(progression, { ...FAST, style: "armstrong", seed: 4 });
+  let slices = 0;
+  while (!job.step(1)) slices++;
+  assert.ok(slices > 1, "it should have taken several slices");
+  assert.equal(job.progress, 1);
+  assert.deepEqual(job.result().notes, generateSolo(progression, { ...FAST, style: "armstrong", seed: 4 }).notes);
+});
+
+test("composeSolo evolves in the background, reports progress and leaves the take ready", async () => {
+  const gaOptions = { popSize: 30, generations: 60 };
+  assert.equal(hasSoloTake(CHORDS, SONG, "clarinet", gaOptions), false);
+  const progress = [];
+  await new Promise((resolve) => {
+    composeSolo(CHORDS, SONG, "clarinet", { gaOptions, onProgress: (f) => progress.push(f), onDone: resolve });
+  });
+  assert.equal(progress[0], 0);
+  assert.ok(progress.every((f, i) => i === 0 || f >= progress[i - 1]));
+  assert.equal(hasSoloTake(CHORDS, SONG, "clarinet", gaOptions), true);
+  assert.equal(composeSolo(CHORDS, SONG, "clarinet", { gaOptions, onProgress: () => {}, onDone: () => {} }), false);
+});
+
+test("asking for another take cancels the one running", async () => {
+  const gaOptions = { popSize: 30, generations: 400 };
+  let doneFirst = false;
+  composeSolo(CHORDS, SONG, "trombone", { gaOptions, onProgress: () => {}, onDone: () => { doneFirst = true; } });
+  composeSolo(CHORDS, SONG, "solo", { gaOptions: { popSize: 20, generations: 20 }, onProgress: () => {}, onDone: () => {} });
+  await new Promise((resolve) => { setTimeout(resolve, 150); });
+  cancelSolo();
+  assert.equal(doneFirst, false);
 });

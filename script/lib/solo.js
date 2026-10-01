@@ -2,7 +2,7 @@ import {
   appendBarVoice, distribute, pcChromaVal, rebeamBar, resolveChordNames, respellBar,
 } from "./comping.js";
 import { computeChordOffset } from "./chords.js";
-import { generateSolo } from "./solo-ga.js";
+import { generateSolo, startSolo } from "./solo-ga.js";
 
 /*
   Solo voice for the sheet: the same shape as lib/comping.js's Comping voice
@@ -195,40 +195,100 @@ function barFragments(notes, bars, spell) {
 const TAKE_CACHE_SIZE = 8;
 const takes = new Map();
 
-// Lighter than the GA's own defaults: it runs on the main thread inside
-// engrave(), and the rules converge well before the full 60 x 160.
-const LIVE_GA = { popSize: 40, generations: 100 };
+// More than the GA's own defaults (60 x 160): the fitness keeps climbing well
+// past that, and the page evolves the take in the background with a progress
+// readout (composeSolo), so a longer wait buys a noticeably better solo.
+const LIVE_GA = { popSize: 100, generations: 500 };
+// Each background slice; the UI gets a turn between slices.
+const SLICE_MS = 25;
 
 function leadOptions(style, lead) {
   if (MELODY_STYLES.has(style)) return { melody: lead };
   return AGAINST_STYLES.has(style) ? { against: lead } : {};
 }
 
-function solveSolo(names, style, lead, gaOptions) {
+// What it takes to evolve (and to recognise) the take for this chart + style +
+// lead, or null when there is nothing to solo over.
+function takeRequest(chords, song, style, gaOptions) {
+  if (!chords || chords.length === 0 || !SOLO_STYLES.some((s) => s.value === style)) return null;
+  const names = resolveChordNames(chords);
+  const lead = melodyNotes(song, computeChordOffset(song) || 0);
   const leadKey = lead.map((n) => `${n.start}:${n.midi}`).join(",");
-  const key = `${style}|${names.map((row) => row.join(",")).join(";")}|${leadKey}`;
-  if (takes.has(key)) return takes.get(key);
+  const key = `${style}|${names.map((row) => row.join(",")).join(";")}|${leadKey}|${JSON.stringify(gaOptions)}`;
   const { progression, breaks } = toProgression(names);
-  const { notes } = generateSolo(progression, {
-    style, breaks, seed: seedOf(key, style), ...LIVE_GA, ...leadOptions(style, lead), ...gaOptions,
-  });
+  return {
+    key,
+    progression,
+    options: {
+      style, breaks, seed: seedOf(key, style), ...LIVE_GA, ...leadOptions(style, lead), ...gaOptions,
+    },
+  };
+}
+
+function remember(key, notes) {
   takes.set(key, notes);
   if (takes.size > TAKE_CACHE_SIZE) takes.delete(takes.keys().next().value);
-  return notes;
+}
+
+/** Whether this chart + style already has its take, so a render can use it now. */
+export function hasSoloTake(chords, song, style, gaOptions = {}) {
+  const request = takeRequest(chords, song, style, gaOptions);
+  return request !== null && takes.has(request.key);
+}
+
+// The background job in flight, if any: { key, timer }.
+let running = null;
+
+/** Stop the background evolution, if one is running. */
+export function cancelSolo() {
+  if (running !== null) clearTimeout(running.timer);
+  running = null;
+}
+
+/*
+  Evolve the take for this chart + style in the background, in short slices so
+  the page stays responsive. onProgress(0..1) is called as it goes, onDone()
+  once the take is ready (then buildSoloTune uses it instantly). Asking for the
+  take that is already running changes nothing; asking for another one drops
+  the old job. Returns false when there is nothing to do (no such style / no
+  chords, or the take already exists).
+*/
+export function composeSolo(chords, song, style, { onProgress, onDone, gaOptions = {} }) {
+  const request = takeRequest(chords, song, style, gaOptions);
+  if (request === null || takes.has(request.key)) return false;
+  if (running !== null && running.key === request.key) return true;
+  cancelSolo();
+  const job = startSolo(request.progression, request.options);
+  const state = { key: request.key, timer: null };
+  running = state;
+  const tick = () => {
+    if (job.step(SLICE_MS)) {
+      remember(request.key, job.result().notes);
+      running = null;
+      onDone();
+      return;
+    }
+    onProgress(job.progress);
+    state.timer = setTimeout(tick, 0);
+  };
+  onProgress(0);
+  state.timer = setTimeout(tick, 0);
+  return true;
 }
 
 /*
   Add a Solo staff for `style` (a SOLO_STYLES value) to the tune. `text`, `chords`
   and `song` are as for buildCompingTune; `text` may already carry the Comping
   voice. Returns { abc, notes } or null when a solo can't apply (no chords, no
-  such style, an unsupported meter, no K: line). `gaOptions` overrides the GA's
-  own options (the tests use a small population).
+  such style, an unsupported meter, no K: line). A take that isn't ready yet is
+  evolved on the spot (the page calls composeSolo first, so it always is);
+  `gaOptions` overrides the GA's own options (the tests use a small population).
 */
 export function buildSoloTune(text, chords, song, style, gaOptions = {}) {
-  if (!chords || chords.length === 0 || !SOLO_STYLES.some((s) => s.value === style)) return null;
-  const names = resolveChordNames(chords);
-  const lead = melodyNotes(song, computeChordOffset(song) || 0);
-  const notes = solveSolo(names, style, lead, gaOptions);
+  const request = takeRequest(chords, song, style, gaOptions);
+  if (request === null) return null;
+  if (!takes.has(request.key)) remember(request.key, generateSolo(request.progression, request.options).notes);
+  const notes = takes.get(request.key);
   const abc = appendBarVoice(text, song, ({ keyScale, keySig, lnum, lden }) => (
     barFragments(notes, chords.length, createSpeller(keyScale))
       .map((fragment) => rebeamBar(respellBar(fragment, keySig), lnum, lden))

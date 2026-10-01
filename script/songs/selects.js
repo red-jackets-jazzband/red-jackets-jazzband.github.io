@@ -103,5 +103,9 @@ export function createSoloDropdown(ctx) {
     ctx.sheet.rerender();
   });
 
-  slot.append(dropdown(select));
+  // Progress of the background composing (written by sheet.js).
+  const status = el("span", {
+    class: "sheet-solo-status", id: "soloStatus", attrs: { role: "status", "aria-live": "polite" },
+  });
+  slot.append(dropdown(select), status);
 }
