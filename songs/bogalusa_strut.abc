@@ -2,13 +2,15 @@ X:1
 T:Bogalusa Strut
 C:Sam Morgan (1927)
 R:Stomp
+F:https://secondhandsongs.com/performance/1165988
 M:4/4
 L:1/8
-K:Bbmaj
+K:Cmaj
 P:Intro
-"Eb"B4 "Gdim"G4|"Bb"F4 "G7"D4|"C7"DCDF- "F7"FD C2|"Bb"B,6 "Bb7"B2|
+"F"c4 "Adim"A4|"C"G4 "A7"E4|"D7"EDEG- "G7"GE D2|"C"C6 "C7"c2|
 P:A
-"Eb"G^F G2 B4|z BAB cB G2|"Bb"D^CDF-F4|z F=EF GF D2|"F7"DCDC C4|GFGF- F^F G2|"Bb"D8-|D2 B2 A2 "Bb7"_A2|
-"Eb"G^F G2 B4|z BAB cB G2|"Bb"D^CDF-F4|z F=EF GF D2|"F7"DCDC C4|GFGF- FF G2|"Bb"B8-|B4 z4|
-"F7"z2 G2 GF3|GFG F4 z|"Bb"z2 G2 GF3|GFG F4 z|"F7"z2 G2 GF3|GFG F4 z|"Bb"B8-|"Bb7"B4 z4|
-"F7"z2 G2 GF3|GFG F4 z|"Bb"z2 G2 GF3|"Bb7"GFG F4 z|"Eb"G^FGB- "Gdim"BA G2|"Bb"F=EFG- "G7"GF D2|"C7"DCDF- "F7"FD C2|"Bb"B,6 z2|]
+"F"A^G A2 c4|z cBc dc A2|"C"E^DEG-G4|z G^FG AG E2|"G7"EDED D4|AGAG- G^G A2|"C"E8-|E2 c2 B2 "C7"_B2|
+"F"A^G A2 c4|z cBc dc A2|"C"E^DEG-G4|z G^FG AG E2|"G7"EDED D4|AGAG- GG A2|"C"c8-|c4 z4|
+P:B
+"G7"z2 A2 AG3|AGA G4 z|"C"z2 A2 AG3|AGA G4 z|"G7"z2 A2 AG3|AGA G4 z|"C"c8-|"C7"c4 z4|
+"G7"z2 A2 AG3|AGA G4 z|"C"z2 A2 AG3|"C7"AGA G4 z|"F"A^GAc- "Adim"cB A2|"C"G^FGA- "A7"AG E2|"D7"EDEG- "G7"GE D2|"C"C6 z2|]
