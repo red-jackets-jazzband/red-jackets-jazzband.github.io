@@ -478,6 +478,24 @@ test("clicking a note while paused seeks there and resumes playback", async () =
   }
 });
 
+test("clicking a note while playing seeks without toggling playback off", async () => {
+  const {
+    audio, abcjs, cleanup, click,
+  } = await setupClickableNote();
+  try {
+    audio.playPause();
+    await flush();
+    assert.equal(audio.isPlaying, true);
+    const sc = abcjs.calls.synthControllers.at(-1);
+    await click();
+    assert.deepEqual(abcjs.calls.seek, [500 / 1500]);
+    assert.equal(sc.isStarted, true);
+    assert.equal(audio.isPlaying, true);
+  } finally {
+    cleanup();
+  }
+});
+
 test("clicking a note while Play is disabled neither seeks nor flags the tune as mid-way", async () => {
   const {
     audio, abcjs, cleanup, click,

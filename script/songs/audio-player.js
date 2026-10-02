@@ -136,6 +136,7 @@ export function createAudioPlayer(ctx) {
     // Set by buildTimingMap — see its own doc comment. undefined for a tune
     // with no pickup (or before any tune has loaded).
     firstBarMs: undefined,
+    measureStartMs: [],
     currentVisualObj: null,
     nativeQpm: null,
     transposeSemitones: 0,
@@ -490,6 +491,10 @@ export function createAudioPlayer(ctx) {
     offset instead of 0 for a tune with a pickup, so the loop doesn't replay
     the lead-in note(s) every time round.
   */
+  function recordMeasureStart(list, idx, ms) {
+    if (list[idx] === undefined) list[idx] = ms;
+  }
+
   function buildTimingMap(visualObj) {
     if (typeof ABCJS.TimingCallbacks !== "function") return;
     try {
@@ -502,6 +507,7 @@ export function createAudioPlayer(ctx) {
       let measureIdx = 0;
       let seenFirstEvent = false;
       let firstBarMs;
+      const measureStartMs = [];
       for (const t of timings) {
         if (t.type !== "event" || !t.elements || t.milliseconds === undefined) continue;
         if (t.measureStart && seenFirstEvent) measureIdx += 1;
@@ -513,10 +519,12 @@ export function createAudioPlayer(ctx) {
           measureIdx = taggedIdx;
           continue;
         }
+        recordMeasureStart(measureStartMs, measureIdx, t.milliseconds);
         tagElements(t.elements, t.milliseconds, measureIdx);
       }
       state.totalMs = maxMs + 500; // a little slack so the last note isn't at fraction 1
       state.firstBarMs = firstBarMs;
+      state.measureStartMs = measureStartMs;
     } catch (err) {
       console.warn("buildTimingMap error:", err);
     }
@@ -542,17 +550,32 @@ export function createAudioPlayer(ctx) {
       const btn = byId("playPauseBtn");
       if ((btn && btn.disabled) || state.isLoadingPlayback) return;
     }
-    sc.seek(Math.max(0, Math.min(1, ms / state.totalMs)));
+    const fraction = Math.max(0, Math.min(1, ms / state.totalMs));
+    sc.seek(fraction);
+    // seek() alone doesn't update the controller's own resume position, which
+    // the next play() restarts its timer from — keep it in step.
+    if (typeof sc.setProgress === "function") sc.setProgress(fraction, state.totalMs);
     if (typeof sc.play !== "function") return;
-    // Already playing: seek() pauses the synth, so resume it from the new spot.
-    // Stopped/paused: a click on a note starts playback from there.
-    if (state.isPlaying) {
-      sc.play();
-    } else {
+    // Already playing: the synth's seek() keeps running from the new spot, and
+    // play() here would toggle it to paused — so leave it alone.
+    // Stopped/paused: a click starts playback from there.
+    if (!state.isPlaying) {
       // The seek makes this a "resume from here", not a fresh start from 0.
       state.pausedMidway = true;
       playPause();
     }
+  }
+
+  // Chord-table click: start from the first note of the bar the cell shows.
+  function handleChordClick(e) {
+    const target = e.target;
+    const cell = target && target.closest ? target.closest(".chordCell") : null;
+    if (!cell) return;
+    const cells = Array.from(document.querySelectorAll("#chordtable .chordCell"));
+    const idx = cells.indexOf(cell);
+    if (idx < 0) return;
+    const ms = state.measureStartMs[idx + (state.chordOffset || 0)];
+    if (ms !== undefined) seekToMs(ms);
   }
 
   function handleNotationClick(e) {
@@ -724,6 +747,7 @@ export function createAudioPlayer(ctx) {
     state.repeatsPlayed = 0;
     state.totalMs = 0;
     state.firstBarMs = undefined;
+    state.measureStartMs = [];
     state.currentVisualObj = visualObj;
     // ABCjs's own getBpm(), not a raw read of metaText.tempo.bpm: a tune with
     // no Q: field at all has metaText.tempo undefined, but ABCjs's synth
@@ -791,6 +815,11 @@ export function createAudioPlayer(ctx) {
     if (!notation || notation._abcClickHandlerSet) return;
     notation._abcClickHandlerSet = true;
     notation.addEventListener("click", handleNotationClick);
+    const chords = byId("chordtable");
+    if (chords && !chords._abcClickHandlerSet) {
+      chords._abcClickHandlerSet = true;
+      chords.addEventListener("click", handleChordClick);
+    }
   }
 
   // Called from the Repeat stepper (sheet-controls.js): clamps and persists
