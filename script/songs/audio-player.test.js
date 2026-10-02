@@ -425,6 +425,9 @@ test("playPause recovers when sc.play() throws synchronously, and a retry works"
 
 // A real DOM note inside #notation, tagged by buildTimingMap with its _abcSeekMs
 // (500ms of a 1000ms+500ms-slack = 1500ms tune → fraction 1/3).
+// Seeks land half a millisecond early so ABCjs doesn't skip the clicked event.
+const CLICK_FRACTION = (500 - 0.5) / 1800; // of the end timing, not last note + 500
+
 async function setupClickableNote() {
   const { audio, cleanup } = setup();
   const abcjs = createAbcjsStub({ audioSupported: true });
@@ -434,6 +437,7 @@ async function setupClickableNote() {
     { type: "event", elements: [[{}]], milliseconds: 0 },
     { type: "event", elements: [[note]], milliseconds: 500 },
     { type: "event", elements: [[{}]], milliseconds: 1000 },
+    { type: "end", milliseconds: 1800 }, // ABCjs's lastMoment: the last note plus its duration
   ];
   withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
   audio.setupNotationClickHandler(); // sheet.js does this after every render
@@ -453,7 +457,7 @@ test("clicking a note while stopped seeks there and starts playback", async () =
   } = await setupClickableNote();
   try {
     await click();
-    assert.deepEqual(abcjs.calls.seek, [500 / 1500]);
+    assert.deepEqual(abcjs.calls.seek, [CLICK_FRACTION]);
     assert.equal(audio.isPlaying, true);
   } finally {
     cleanup();
@@ -471,7 +475,7 @@ test("clicking a note while paused seeks there and resumes playback", async () =
     await flush();
     assert.equal(audio.isPlaying, false);
     await click();
-    assert.deepEqual(abcjs.calls.seek, [500 / 1500]);
+    assert.deepEqual(abcjs.calls.seek, [CLICK_FRACTION]);
     assert.equal(audio.isPlaying, true);
   } finally {
     cleanup();
@@ -488,9 +492,48 @@ test("clicking a note while playing seeks without toggling playback off", async 
     assert.equal(audio.isPlaying, true);
     const sc = abcjs.calls.synthControllers.at(-1);
     await click();
-    assert.deepEqual(abcjs.calls.seek, [500 / 1500]);
+    assert.deepEqual(abcjs.calls.seek, [CLICK_FRACTION]);
     assert.equal(sc.isStarted, true);
     assert.equal(audio.isPlaying, true);
+  } finally {
+    cleanup();
+  }
+});
+
+test("clicking a note on a never-played tune primes it, then seeks and plays from there", async () => {
+  const {
+    audio, abcjs, cleanup, click,
+  } = await setupClickableNote();
+  try {
+    const sc = abcjs.calls.synthControllers.at(-1);
+    assert.equal(sc.isLoaded, false);
+    await click();
+    assert.equal(abcjs.calls.go.length, 1);
+    assert.deepEqual(abcjs.calls.seek, [CLICK_FRACTION]); // recorded only once loaded
+    assert.equal(audio.isPlaying, true);
+  } finally {
+    cleanup();
+  }
+});
+
+test("clicking a chord cell seeks to its offset measure", async () => {
+  const { audio, abcjs, cleanup } = await setupPlayingTune({}, {
+    noteTimings: [
+      { type: "event", elements: [[{}]], milliseconds: 0 },
+      { type: "event", elements: [[{}]], milliseconds: 500, measureStart: true },
+      { type: "event", elements: [[{}]], milliseconds: 1000, measureStart: true },
+      { type: "end", milliseconds: 1800 },
+    ],
+  });
+  try {
+    audio.chordOffset = 1;
+    const cell = document.createElement("div");
+    cell.className = "chordCell";
+    document.getElementById("chordtable").append(cell);
+    audio.setupNotationClickHandler();
+    cell.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    await flush();
+    assert.deepEqual(abcjs.calls.seek, [CLICK_FRACTION]);
   } finally {
     cleanup();
   }

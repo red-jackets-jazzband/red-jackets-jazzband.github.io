@@ -117,6 +117,19 @@ function tryCall(fn) {
   via lib/audio-mix.js's percentToAbcjsSwing into ABCjs's own `swing` synth
   init option, since it's neither a per-voice mute nor a %%MIDI text directive.
 */
+/*
+  The timer's own lastMoment — ABCjs's "end" entry, after the last note's full
+  duration. seekToMs() turns a ms offset into a fraction of this, so it has to
+  be the exact denominator the timer multiplies back by; maxMs + 500 only
+  approximated it, which made every seek land slightly late and, since ABCjs
+  skips events *before* the seek time, skip the very note that was clicked.
+  (Falls back to that approximation for a timing list with no "end".)
+*/
+function timelineEndMs(timings, maxMs) {
+  const last = timings[timings.length - 1];
+  return last && last.milliseconds > maxMs ? last.milliseconds : maxMs + 500;
+}
+
 export function createAudioPlayer(ctx) {
   const state = {
     synthController: null,
@@ -522,7 +535,7 @@ export function createAudioPlayer(ctx) {
         recordMeasureStart(measureStartMs, measureIdx, t.milliseconds);
         tagElements(t.elements, t.milliseconds, measureIdx);
       }
-      state.totalMs = maxMs + 500; // a little slack so the last note isn't at fraction 1
+      state.totalMs = timelineEndMs(timings, maxMs);
       state.firstBarMs = firstBarMs;
       state.measureStartMs = measureStartMs;
     } catch (err) {
@@ -550,7 +563,18 @@ export function createAudioPlayer(ctx) {
       const btn = byId("playPauseBtn");
       if ((btn && btn.disabled) || state.isLoadingPlayback) return;
     }
-    const fraction = Math.max(0, Math.min(1, ms / state.totalMs));
+    // Never been played: ABCjs has no timer or MIDI buffer until its first
+    // play() runs go(), so seek() would silently do nothing — and that go() also
+    // resets the position to 0. Prime it ourselves, then seek once it's ready.
+    if (sc.isLoaded === false && typeof sc.go === "function") {
+      primeThenSeek(sc, ms);
+      return;
+    }
+    // Half a millisecond early: ABCjs's seek keeps events strictly after the
+    // seek time, so landing a float-rounding hair past `ms` would skip the
+    // clicked note itself and highlight the next one (the next bar, for a tied
+    // note at the end of one).
+    const fraction = Math.max(0, Math.min(1, (ms - 0.5) / state.totalMs));
     sc.seek(fraction);
     // seek() alone doesn't update the controller's own resume position, which
     // the next play() restarts its timer from — keep it in step.
@@ -564,6 +588,34 @@ export function createAudioPlayer(ctx) {
       state.pausedMidway = true;
       playPause();
     }
+  }
+
+  function primeThenSeek(sc, ms) {
+    if (sc.isLoading) return;
+    state.isLoadingPlayback = true;
+    updatePlayButton();
+    const settle = () => {
+      if (sc !== state.synthController) return false;
+      state.isLoadingPlayback = false;
+      updatePlayButton();
+      return true;
+    };
+    let primed;
+    try {
+      primed = sc.go();
+    } catch (err) {
+      console.warn("Priming for click-to-seek failed:", err);
+      settle();
+      return;
+    }
+    Promise.resolve(primed)
+      .then(() => {
+        if (settle()) seekToMs(ms);
+      })
+      .catch((err) => {
+        console.warn("Priming for click-to-seek failed:", err);
+        settle();
+      });
   }
 
   // Chord-table click: start from the first note of the bar the cell shows.
