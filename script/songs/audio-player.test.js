@@ -423,6 +423,75 @@ test("playPause recovers when sc.play() throws synchronously, and a retry works"
   }
 });
 
+// A real DOM note inside #notation, tagged by buildTimingMap with its _abcSeekMs
+// (500ms of a 1000ms+500ms-slack = 1500ms tune → fraction 1/3).
+async function setupClickableNote() {
+  const { audio, cleanup } = setup();
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  const note = document.createElement("span");
+  document.getElementById("notation").append(note);
+  abcjs._noteTimings = [
+    { type: "event", elements: [[{}]], milliseconds: 0 },
+    { type: "event", elements: [[note]], milliseconds: 500 },
+    { type: "event", elements: [[{}]], milliseconds: 1000 },
+  ];
+  withAbcjs(abcjs, () => audio.initForTune({ metaText: {} }));
+  audio.setupNotationClickHandler(); // sheet.js does this after every render
+  await flush();
+  const click = async () => {
+    note.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    await flush();
+  };
+  return {
+    audio, abcjs, cleanup, click,
+  };
+}
+
+test("clicking a note while stopped seeks there and starts playback", async () => {
+  const {
+    audio, abcjs, cleanup, click,
+  } = await setupClickableNote();
+  try {
+    await click();
+    assert.deepEqual(abcjs.calls.seek, [500 / 1500]);
+    assert.equal(audio.isPlaying, true);
+  } finally {
+    cleanup();
+  }
+});
+
+test("clicking a note while paused seeks there and resumes playback", async () => {
+  const {
+    audio, abcjs, cleanup, click,
+  } = await setupClickableNote();
+  try {
+    audio.playPause();
+    await flush();
+    audio.playPause(); // pause
+    await flush();
+    assert.equal(audio.isPlaying, false);
+    await click();
+    assert.deepEqual(abcjs.calls.seek, [500 / 1500]);
+    assert.equal(audio.isPlaying, true);
+  } finally {
+    cleanup();
+  }
+});
+
+test("clicking a note while Play is disabled neither seeks nor flags the tune as mid-way", async () => {
+  const {
+    audio, abcjs, cleanup, click,
+  } = await setupClickableNote();
+  try {
+    document.getElementById("playPauseBtn").disabled = true;
+    await click();
+    assert.deepEqual(abcjs.calls.seek, []);
+    assert.equal(audio.isPlaying, false);
+  } finally {
+    cleanup();
+  }
+});
+
 test("playPause is a no-op while the transport buttons are disabled", async () => {
   const { audio, cleanup } = setup();
   const abcjs = createAbcjsStub({ audioSupported: true });
