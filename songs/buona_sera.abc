@@ -6,15 +6,15 @@ M:4/4
 L:1/8
 Q:1/4=188
 K:Fmaj
-z4 z A2 B |: "F"c2 c2 c c2 d- | d d3 d2 d2 | d3 c- c4- |
-c2 z2 A2 B2 | c2 c2 c2 c f- | "C7"f3 f e c2 B- | B8 |
-z4 z G2 A | B2 B2 B2 B B- | B g3 f2 d2 | f3 e- e4 |
-z g3 f2 d2 | f e2 e e3 d | (3d2c2c2 c2 B2 | "F"A8 |
+A2 B |: "F"c2 c2 c c2 d- | d d3 d2 d2 | d3 c- c4- |
+"F"c2 z2 A2 B2 | c2 c2 c2 c f- | "C7"f3 f e c2 B- | B8 |
+"C7"z4 z G2 A | B2 B2 B2 B B- | B g3 f2 d2 | f3 e- e4 |
+"C7"z g3 f2 d2 | f e2 e e3 d | (3d2c2c2 c2 B2 | "F"A8 |
 "F"z4 z A2 B | c2 c2 c c2 d- | d d3 d2 d2 | d3 c- c4- |
-c2 z2 A2 B2 | c2 c2 c2 c a- | a3 a g f2 d- | "Bb"d8 |
-z4 d2 e2 | "Bbm"f2 f2 f2 f2 | f2 f2 _e2 _d2 | "F"_d3 c- c4- |
-c4 d2 c2 | "C7"c2 B2 B A2 B- | B4 e2 c2 | "F"d3 c- c4- |
-c2 z2 f2 g2 | "F7"a2 a2 a2 a a- | a a3 g2 f2 | "Bb"g3 d- d4- |
-d2 z2 a2 f2 | "F"a2 f2 z a2 f | "C7"a2 e2 (3a2a2a2 |1"F"f8- | f2 z2 z A2 B :|2"F"f8- |
-f2 z2 z A2 A | "Gm7"G2 A2 B2 c2 | "C7"d2 d2 (3a2a2a2 |
+"F"c2 z2 A2 B2 | c2 c2 c2 c a- | a3 a g f2 d- | "Bb"d8 |
+"Bb"z4 d2 e2 | "Bbm"f2 f2 f2 f2 | f2 f2 _e2 _d2 | "F"_d3 c- c4- |
+"F"c4 d2 c2 | "C7"c2 B2 B A2 B- | B4 e2 c2 | "F"d3 c- c4- |
+"F"c2 z2 f2 g2 | "F7"a2 a2 a2 a a- | a a3 g2 f2 | "Bb"g3 d- d4- |
+"Bb"d2 z2 a2 f2 | "F"a2 f2 z a2 f | "C7"a2 e2 (3a2a2a2 |1"F"f8- | f2 z2 z A2 B :|2"F"f8- |
+"F"f2 z2 z A2 A | "Gm7"G2 A2 B2 c2 | "C7"d2 d2 (3a2a2a2 |
 "F"f8- | "Bb"f8- | "F"f8- | f6 z2 |]

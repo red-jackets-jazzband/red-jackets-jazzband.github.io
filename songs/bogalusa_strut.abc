@@ -7,10 +7,10 @@ M:4/4
 L:1/8
 K:Cmaj
 P:Intro
-"F"c4 "Adim"A4|"C"G4 "A7"E4|"D7"EDEG- "G7"GE D2|"C"C6 "C7"c2|
+"F"c4 "Adim"A4|"C"G4 "A7"E4|"D7"EDEG- "G7"GE D2|"C"C6 "C7"c2||
 P:A
 "F"A^G A2 c4|z cBc dc A2|"C"E^DEG-G4|z G^FG AG E2|"G7"EDED D4|AGAG- G^G A2|"C"E8-|E2 c2 B2 "C7"_B2|
-"F"A^G A2 c4|z cBc dc A2|"C"E^DEG-G4|z G^FG AG E2|"G7"EDED D4|AGAG- GG A2|"C"c8-|c4 z4|
+"F"A^G A2 c4|z cBc dc A2|"C"E^DEG-G4|z G^FG AG E2|"G7"EDED D4|AGAG- GG A2|"C"c8-|c4 z4||
 P:B
 "G7"z2 A2 AG3|AGA G4 z|"C"z2 A2 AG3|AGA G4 z|"G7"z2 A2 AG3|AGA G4 z|"C"c8-|"C7"c4 z4|
 "G7"z2 A2 AG3|AGA G4 z|"C"z2 A2 AG3|"C7"AGA G4 z|"F"A^GAc- "Adim"cB A2|"C"G^FGA- "A7"AG E2|"D7"EDEG- "G7"GE D2|"C"C6 z2|]

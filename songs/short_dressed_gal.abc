@@ -13,9 +13,9 @@ K: Bb
 P:A
 [V:1] |: "Bb" f d2 f2 z z2 | f d2 f2 z z2 | f2 f2 fg f2 | fd2 f2 z z2 | bf2 b2 z z2 |
 [V:2] |:     d B2 d2 z z2 | d B2 d2 z z2 | d2 d2 de d2 | dB2 d2 z z2 | dB2 d2 z z2 |
-[V:1] "Bb" b f2 b2 z z2 | z2 b2 b2 b2  | "Bb" b f2 b- "F"b z z2 | "Bb" b f2 b2 z z2 | b f2 b2 z z2 | b2b2 bc' b2 |
+[V:1] "Bb" b f2 b2 z z2 | z2 b2 b2 b2  | b f2 b- "F"b z z2 | "Bb" b f2 b2 z z2 | b f2 b2 z z2 | b2b2 bc' b2 |
 [V:2]      d B2 d2 z z2 | z2 f6        | fgf_d cB G2           |      d B2 d2 z z2 | d B2 d2 z z2 | d2 d2 de d2 |
-[V:1] "C7" b b2 a- "F7"a z z2 | "Bb" b f2 b2 z z2 | "Bb"b f2 b2 z z2 | "C7" z2 f2 "F7" z2 z  d-|[1"Bb"d2 z2 "F" z4 :|[2 "Bb" z2 B2 c2 d2 ||
+[V:1] "C7" b b2 a- "F7"a z z2 | "Bb" b f2 b2 z z2 | b f2 b2 z z2 | "C7" z2 f2 "F7" z2 z  d-|[1"Bb"d2 z2 "F" z4 :|[2 "Bb" z2 B2 c2 d2 ||
 [V:2]      d_d2 c- c     z z2 |      d B2 d2 z z2 |     d B2 d2 z Bc |     _dd c2      B2 GB-|       B2 z2     z4 :|        z2 B2 c2 d2 ||
 P:B
 [V:1] |: "Eb" e8 | z2 B2 c2 _d2 | "D7" d8 | z2 d2 d2 _d2 | "Cm" c8 | z4 c4 | "Eb" e4 z4 |[1 z2 B2 c2 d2 :|[2 "Cm" z2 g2- "F7" g4 |]
