@@ -8,8 +8,10 @@ import {
   rebeamBar,
   respellBar,
   buildVoiceBody,
+  explicitBar,
   buildCompingTune,
   measureBarSlots,
+  plainChordName,
 } from "./comping.js";
 import { BREAK_CHORD } from "./chords.js";
 import { tonalStub as TonalStub, withTonal, nameToMidi } from "../../../tests/helpers/stubs.js";
@@ -179,7 +181,7 @@ test("buildVoiceBody ignores a stray F: link line above the first bar", () => {
 
 test("buildVoiceBody ignores a stray L: field left above the pickup", () => {
   // Isle of Capri / All of Me / Jada order their header K: before L:, so
-  // splitHeaderBody (which cuts on the last K:) drops the L: field into the
+  // splitHeaderBody (which cuts on the first K:) drops the L: field into the
   // body, right above the pickup. Its newline must not read as a mid-measure
   // line break — that wrapped the comping's first bar onto the melody's second
   // system instead of sitting under the first full bar of line 1.
@@ -196,6 +198,28 @@ test("buildVoiceBody keeps a genuine mid-tune M: field, not just header leakage"
   const melody = '"C" c8 |\nM:3/4\n| "C" c4 c4 c4 |';
   const out = buildVoiceBody(melody, ["B1", "B2"], 0, "x8");
   assert.equal(out.trim(), "B1 |\nM:3/4\n| B2 |");
+});
+
+test("buildVoiceBody carries a whole-line K: change as an inline field, not a bar", () => {
+  // do_you_know_what_it_means.abc modulates mid-tune with whole-line K: fields.
+  const melody = '"C" c8 |\nK:Ebmaj\n"Eb" e8 |';
+  const out = buildVoiceBody(melody, ["B1", "B2"], 0, "x8");
+  assert.equal(out.trim(), "B1 |\n[K:Ebmaj] B2 |");
+});
+
+test("buildVoiceBody respells bars after a K: change for the new key", () => {
+  const melody = '"C" c8 |\nK:Ebmaj\n"Eb" e8 |';
+  const out = buildVoiceBody(melody, ["B1", "B2"], 0, "x8", undefined, undefined, (bar, key) => bar + "@" + key);
+  assert.equal(out.trim(), "B1 |\n[K:Ebmaj] B2@Ebmaj |");
+});
+
+test("explicitBar then respellBar moves a bar between key signatures", () => {
+  const cMaj = {};
+  const ebMaj = { B: "_", E: "_", A: "_" };
+  const explicit = explicitBar("[EGB]", cMaj);
+  assert.equal(explicit, "[EGB]");
+  assert.equal(respellBar(explicit, ebMaj), "[=EG=B]");
+  assert.equal(respellBar(explicitBar("[_E_B]", cMaj), ebMaj), "[EB]");
 });
 
 test("measureBarSlots sums a bar segment in eighth slots", () => {
@@ -270,6 +294,19 @@ test("buildVoiceBody rests a mid-tune anacrusis and skips its phantom pattern", 
 
 const callPatternBuilder = (fn) => fn("N", "ND", "NU", "NU2");
 
+// One char per eighth-note slot (ties ignored), so "z2" and "z z" compare equal.
+const expandSlots = (str) =>
+  str
+    .replace(/-/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((t) => {
+      const m = /^(\D+?)(\d*)$/.exec(t);
+      const len = m[2] === "" ? 1 : Number(m[2]);
+      return m[1] === "z" ? "z".repeat(len) : m[1] + "_".repeat(len - 1);
+    })
+    .join("");
+
 // Every pattern's exact twobar1/twobar2/half rhythm template, called with
 // plain placeholder tokens ("N"/"ND"/"NU"/"NU2" for the chord/down-step/
 // up-step/up-2-step tokens) so each pattern is pinned precisely without
@@ -280,7 +317,7 @@ test("every COMPING_PATTERNS entry's rhythm templates match exactly", () => {
     hold_over: { twobar1: "N8-", twobar2: "N6 z2", half: "N4" },
     hit_and_hold: { twobar1: "N z z N-N4", twobar2: "N z z N-N4", half: "N z z N" },
     double_hit: { twobar1: "N N z2 z4", twobar2: "N N z N z N3", half: "N N z2" },
-    whole_note: { twobar1: "N8-", twobar2: "N8", half: "N4" },
+    whole_note: { twobar1: "N8", twobar2: "N8", half: "N4" },
     walk_down_a: { twobar1: "N z z N-N2 z2", twobar2: "N N ND N z4", half: "N z z N" },
     walk_down_b: { twobar1: "z2 N z ND N2 ND", twobar2: "N N ND N z4", half: "z2 N z" },
     whole_then_step: { twobar1: "N8", twobar2: "ND z z ND z4", half: "N4" },
@@ -291,12 +328,12 @@ test("every COMPING_PATTERNS entry's rhythm templates match exactly", () => {
     full_walk: { twobar1: "N N ND N NU N ND N", twobar2: "ND z z N-N4", half: "N N ND N" },
     third_approach: { twobar1: "N ND z ND-N4", twobar2: "NU2 ND z ND-N4", half: "N ND z ND" },
     step_neighbor: { twobar1: "N ND z NU-N4", twobar2: "N ND z NU z N3", half: "N ND z NU" },
-    charleston: { twobar1: "N3 N z4", twobar2: "N3 N z4", half: "N2 N z" },
-    reverse_charleston: { twobar1: "z4 N3 N", twobar2: "z4 N3 N", half: "z N2 N" },
-    clave_3_2: { twobar1: "N3 N3 N2", twobar2: "z2 N3 N3", half: "N3 N" },
-    clave_2_3: { twobar1: "z2 N3 N3", twobar2: "N3 N3 N2", half: "z2 N2" },
-    three_hit: { twobar1: "N N N z z4", twobar2: "N N N z z4", half: "N N z2" },
-    i_got_a_woman: { twobar1: "z2 N2 z N2 z", twobar2: "N2 z6", half: "z N2 z" },
+    charleston: { twobar1: "N3 N z4", twobar2: "N3 N z4", half: "N3 N" },
+    reverse_charleston: { twobar1: "z4 N3 N", twobar2: "z4 N3 N", half: "z4" },
+    clave_3_2: { twobar1: "N z2 N z2 N z", twobar2: "z2 N z2 N z2", half: "N z2 N" },
+    clave_2_3: { twobar1: "z2 N z2 N z2", twobar2: "N z2 N z2 N z", half: "z2 N z" },
+    three_hit: { twobar1: "N N N z z4", twobar2: "N N N z z4", half: "N N N z" },
+    i_got_a_woman: { twobar1: "z2 N2 z N2 z", twobar2: "N2 z6", half: "z2 N2" },
     honky_tonk_riff: { twobar1: "N z N z N z N z", twobar2: "z N ND N z N z N", half: "N z N z" },
   };
   assert.deepEqual(Object.keys(PATTERNS).sort(), Object.keys(expected).sort());
@@ -304,6 +341,17 @@ test("every COMPING_PATTERNS entry's rhythm templates match exactly", () => {
     assert.equal(callPatternBuilder(pat.twobar1), expected[name].twobar1, `${name}.twobar1`);
     assert.equal(callPatternBuilder(pat.twobar2), expected[name].twobar2, `${name}.twobar2`);
     assert.equal(callPatternBuilder(pat.half), expected[name].half, `${name}.half`);
+    // a two-chord bar's two halves stitch back into the full bar's rhythm
+    const halves = [
+      [pat.half, pat.half2 || pat.half, pat.twobar1, "even"],
+      [pat.halfOdd || pat.half, pat.half2Odd || pat.half2 || pat.half, pat.twobar2, "odd"],
+    ];
+    for (const [a, b, full, bar] of halves) {
+      const stitched = `${callPatternBuilder(a)} ${callPatternBuilder(b)}`;
+      // a whole-bar hold is re-struck at the midpoint when the chord changes there
+      const restruck = expandSlots(stitched).replace("N___N", "N____");
+      assert.equal(restruck, expandSlots(callPatternBuilder(full)), `${name} ${bar} halves`);
+    }
   }
 });
 
@@ -374,6 +422,48 @@ test("buildCompingTune adds a bracketed one-voice block-chord comping staff", ()
   assert.match(v2, /^\|:/);
   assert.match(v2, /:\|$/);
   assert.match(v2, /\[[A-Ga-g][A-Ga-g][A-Ga-g]\]/);
+});
+
+test("buildCompingTune with parts splits comping into one single-note staff per chord tone", () => {
+  const out = withTonal(() => buildCompingTune(TUNE, CHORDS, fakeSong(), "whole_note", [1, 2]));
+  assert.ok(out?.abc, PRODUCED_A_TUNE);
+  assert.deepEqual(out.parts, ["3", "5"]);
+  const abc = out.abc;
+  assert.match(abc, /^V:2 name="3"$/m);
+  assert.match(abc, /^V:3 name="5"$/m);
+  assert.doesNotMatch(abc, /^V:4/m);
+  assert.match(abc, /T:Test Tune {2}\(comping – Whole note: 3 \+ 5\)/);
+  const v2 = abc.split("\nV:2\n").pop().split("\nV:3 name")[0];
+  const v3 = abc.split("\nV:3 name=\"5\"\n").pop();
+  assert.doesNotMatch(v2, /\[/);
+  assert.doesNotMatch(v3, /\[/);
+  assert.notEqual(v2.trim(), v3.trim());
+});
+
+test("buildCompingTune split only ties a voice into a note of the same pitch", () => {
+  const out = withTonal(() => buildCompingTune(TUNE, CHORDS, fakeSong(), "whole_note", [1]));
+  const notes = out.abc.split("\nV:2\n").pop().match(/[A-Ga-g][,']*\d*-?/g);
+  notes.forEach((n, i) => {
+    if (n.endsWith("-")) assert.equal(notes[i + 1].replace("-", ""), n.slice(0, -1), n);
+  });
+});
+
+test("buildCompingTune split brackets every staff, with the layout line ahead of the V: lines", () => {
+  const out = withTonal(() => buildCompingTune(TUNE, CHORDS, fakeSong(), "whole_note", [0, 1, 2]));
+  const lines = out.abc.split("\n");
+  const layout = lines.findIndex((l) => l.startsWith("%%staves"));
+  assert.equal(lines[layout], "%%staves [1 2 3 4]");
+  assert.ok(layout < lines.findIndex((l) => l.startsWith("V:")));
+});
+
+test("buildCompingTune split keeps the repeat structure and bar count of the block voice", () => {
+  const block = withTonal(() => buildCompingTune(TUNE, CHORDS, fakeSong(), "on_2_and_4"));
+  const split = withTonal(() => buildCompingTune(TUNE, CHORDS, fakeSong(), "on_2_and_4", [0]));
+  const blockBody = block.abc.split("\nV:2\n").pop().trim();
+  const splitBody = split.abc.split("\nV:2\n").pop().trim();
+  assert.equal(splitBody.split("|").length, blockBody.split("|").length);
+  assert.match(splitBody, /^\|:/);
+  assert.match(splitBody, /:\|$/);
 });
 
 // Mixer integration check: lib/audio-mix.js's injectMixerAudio depends on
@@ -970,9 +1060,10 @@ test("buildCompingTune scales pattern durations to a L:1/4 tune", () => {
     buildCompingTune(quarterTune, heldChords, fakeSong(), "whole_note"),
   );
   assert.match(out.abc, /^L:1\/4$/m);
-  // whole_note bar 1 is "n8-" in eighths -> "n4-" at L:1/4
+  // whole_note bar 1 is "n8" in eighths -> "n4" at L:1/4, untied
   const v2 = out.abc.split("\nV:2\n").pop();
-  assert.match(v2, /4-/);
+  assert.match(v2, /\]4 /);
+  assert.doesNotMatch(v2, /-/);
 });
 
 // ---------------------------------------------------------------------------
@@ -1035,4 +1126,11 @@ test("buildCompingTune voice-leads the chord after a break from the chord before
   const withBreakMidis = compingChordMidis(withBreak.abc);
   const noBreakMidis = compingChordMidis(noBreak.abc);
   assert.deepEqual(withBreakMidis[1], noBreakMidis[1]);
+});
+
+test("plainChordName spells half-diminished as m7b5, keeping dim7", () => {
+  assert.equal(plainChordName("AmØ"), "Am7b5");
+  assert.equal(plainChordName("BØ"), "Bm7b5");
+  assert.equal(plainChordName("AØ7"), "Adim7");
+  assert.equal(plainChordName("C♯m"), "C#m");
 });

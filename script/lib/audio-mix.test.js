@@ -425,3 +425,10 @@ test("computeVoicesOff silences a voice that Solo auto-muted as well as one the 
   ];
   assert.deepEqual(computeVoicesOff(voices).voicesOff, [0, 1]);
 });
+
+test("resolveMixerVoices splits Comping into one voice per chord tone", () => {
+  const voices = resolveMixerVoices([], true, null, ["3", "5"]);
+  assert.deepEqual(voices.map((v) => [v.id, v.index, v.label]), [
+    ["1", 0, "Melody"], ["2", 1, "Comping 3"], ["3", 2, "Comping 5"],
+  ]);
+});

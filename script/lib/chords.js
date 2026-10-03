@@ -16,6 +16,16 @@ function isValidChordName(name) {
 // prefix ("^N.C.") so abcjs doesn't parse it as a literal (and unparseable)
 // chord name. Matched here the same way, case-insensitively, so the chord
 // table and comping generator agree with abcjs on what counts as a break.
+// abcjs lists every quoted string on a note in `chord`, annotations like
+// "_In swing" included, in source order. The chord symbol isn't necessarily
+// first, so take the first entry that reads as a chord (or a "break").
+function pickChordName(entries) {
+  for (const entry of entries) {
+    if (isValidChordName(entry.name) || isBreakChordName(entry.name)) return entry.name;
+  }
+  return entries[0].name;
+}
+
 const BREAK_CHORD_NAMES = new Set(["break", "(break)", "no chord", "n.c.", "tacet"]);
 
 // The single display form every break synonym above normalizes to.
@@ -123,7 +133,7 @@ class ChordSchemeParser {
 
   handleChord(element) {
     if (this.skipEnding || element.chord === undefined) return;
-    const rawName = element.chord[0].name;
+    const rawName = pickChordName(element.chord);
     if (isValidChordName(rawName)) {
       this.currentMeasure.text.push(replaceAccidentalWithUtf8Char(rawName));
       this.didNotParseChordInThisMeasure = false;
@@ -295,7 +305,8 @@ export function computeChordOffset(song) {
     const voice = line.staff[0].voices[0] || [];
     for (let j = 0; j < voice.length; j++) {
       const el = voice[j];
-      if (el.chord && el.chord.length > 0 && isValidChordName(el.chord[0].name)) {
+      const chordName = el.chord && el.chord.length > 0 ? pickChordName(el.chord) : null;
+      if (chordName !== null && (isValidChordName(chordName) || isBreakChordName(chordName))) {
         return measureCount;
       }
       if (el.el_type === "note") hasNotesInMeasure = true;

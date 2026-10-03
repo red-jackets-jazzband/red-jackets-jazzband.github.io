@@ -7,11 +7,11 @@ import {
   buildSoloTune, cancelSolo, composeSolo, hasSoloTake, SOLO_PROGRAMS,
 } from "../lib/solo.js";
 import {
-  injectMixerAudio, resolveGchordPattern, parseVoiceList, resolveMixerVoices,
+  injectMixerAudio, resolveGchordPattern, parseVoiceList, resolveMixerVoices, isCompingLabel,
 } from "../lib/audio-mix.js";
 import { defaultVoiceProgram } from "../lib/gm-voices.js";
 import { renderChordTable, scanRepeatBoundaries, fitChordTable } from "./chord-table.js";
-import { stylePartMarkers, applyCompingColors } from "./sheet-decorations.js";
+import { stylePartMarkers, applyCompingColors, applySplitCompingColors } from "./sheet-decorations.js";
 import { updateIrealProLink } from "./irealpro-link.js";
 import { updateInspirationExtLinks } from "./inspiration-links.js";
 import { parseInspirationLinks, firstYoutubeUrl, firstSpotifyUrl, firstSoundcloudUrl } from "../lib/inspiration-links.js";
@@ -94,14 +94,14 @@ function hasInstrumentVoices(text) {
   });
 }
 
-function buildComping(abcText, compingValue) {
+function buildComping(abcText, compingValue, parts) {
   const concertSong = parseTune(abcText, 0);
   // Unlike the chord table's scheme, this must have one entry per physical
   // bar exactly as printed — including a second-ending's own bars — or the
   // comping voice runs out of bars (and falls silent) the moment the melody
   // reaches such an ending. See parseChordScheme's doc comment.
   const concertChords = parseChordScheme(concertSong, { includeAlternateEndings: true });
-  return buildCompingTune(abcText, concertChords, concertSong, compingValue);
+  return buildCompingTune(abcText, concertChords, concertSong, compingValue, parts);
 }
 
 // The advanced drawer's pick in `selectId` ("comping" / "solo"), or "off" for a
@@ -143,10 +143,25 @@ function resolveTranspose(text, instrumentValue, extraTransposeSteps, isBooklet)
 function applyComping(abcText, chords, isBooklet) {
   const compingValue = advancedRequest("comping", isBooklet, chords);
   if (compingValue !== "off") {
-    const comping = buildComping(abcText, compingValue);
-    if (comping) return { renderText: comping.abc, palette: comping.palette, active: true };
+    const comping = buildComping(abcText, compingValue, splitCompingParts());
+    if (comping) {
+      return { renderText: comping.abc, palette: comping.palette, parts: comping.parts || null, active: true };
+    }
   }
-  return { renderText: abcText, palette: null, active: false };
+  return { renderText: abcText, palette: null, parts: null, active: false };
+}
+
+// The chord tones (indices into R / 3 / 5) the Split button left selected, or
+// null while Comping is one block-chord staff. The state lives on the
+// buttons next to the Comping dropdown (songs/selects.js).
+function splitCompingParts() {
+  const split = byId("compingSplitBtn");
+  if (!split || split.getAttribute("aria-pressed") !== "true") return null;
+  const parts = [];
+  document.querySelectorAll(".comping-part-btn").forEach((btn) => {
+    if (btn.getAttribute("aria-pressed") === "true") parts.push(Number(btn.dataset.part));
+  });
+  return parts.length ? parts : null;
 }
 
 /*
@@ -272,7 +287,7 @@ export function createSheet(ctx) {
   // instrument pass can't be mistaken for a second declaration of a voice.
   function syncInstrumentVoices(text, comping, soloProgram, isBooklet) {
     if (isBooklet) return;
-    ctx.state.instrumentVoices = resolveMixerVoices(parseVoiceList(text), comping.active, soloProgram);
+    ctx.state.instrumentVoices = resolveMixerVoices(parseVoiceList(text), comping.active, soloProgram, comping.parts);
     ctx.mixer.syncVoices(ctx.state.instrumentVoices);
   }
 
@@ -283,7 +298,13 @@ export function createSheet(ctx) {
   // known active and syncInstrumentVoices has run, so
   // ctx.state.instrumentVoices reflects this same render.
   function compingVoiceIndex() {
-    return ctx.state.instrumentVoices.find((v) => v.label === "Comping").index;
+    return ctx.state.instrumentVoices.find((v) => isCompingLabel(v.label)).index;
+  }
+
+  function colorComping(notationEl, comping) {
+    if (!comping.active) return;
+    if (comping.parts) applySplitCompingColors(notationEl, comping.parts, compingVoiceIndex());
+    else applyCompingColors(notationEl, comping.palette, compingVoiceIndex());
   }
 
   // Live sheet only: stamp the mixer's Bass/Chords levels and every
@@ -387,7 +408,7 @@ export function createSheet(ctx) {
 
     const visualObjs = ABCJS.renderAbc(notationId, renderText, abcParams(visual));
 
-    if (comping.active) applyCompingColors(notationEl, comping.palette, compingVoiceIndex());
+    colorComping(notationEl, comping);
 
     notationEl.querySelectorAll(".abcjs-title").forEach((node) => {
       node.setAttribute("display", "none");

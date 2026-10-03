@@ -301,7 +301,18 @@ export function parseVoiceList(abcText) {
   non-numeric voice ids, where a plain length-based guess could collide with
   an id the chart already uses.
 */
-export function resolveMixerVoices(rawVoices, compingActive, soloProgram = null) {
+// True for the generated Comping voice(s): the single "Comping" voice, or
+// one of the split "Comping R" / "Comping 3" / "Comping 5" voices.
+export function isCompingLabel(label) {
+  return label === "Comping" || label.startsWith("Comping ");
+}
+
+/*
+  `compingParts` (null when Comping is one block-chord staff) lists the chord
+  tones — "R", "3", "5" — that Comping is split into: each becomes its own
+  "Comping <tone>" voice, in that order, instead of the single "Comping" one.
+*/
+export function resolveMixerVoices(rawVoices, compingActive, soloProgram = null, compingParts = null) {
   const base = rawVoices.length > 0 ? rawVoices : [{ id: "1", index: 0, name: null }];
   const unnamedTotal = base.filter((v) => !v.name).length;
   let unnamedSeen = 0;
@@ -312,7 +323,10 @@ export function resolveMixerVoices(rawVoices, compingActive, soloProgram = null)
   });
   const voices = [...labeled];
   if (compingActive) {
-    voices.push({ id: nextVoiceId(voices.map((v) => v.id)), index: voices.length, label: "Comping" });
+    const labels = compingParts && compingParts.length ? compingParts.map((p) => `Comping ${p}`) : ["Comping"];
+    labels.forEach((label) => {
+      voices.push({ id: nextVoiceId(voices.map((v) => v.id)), index: voices.length, label });
+    });
   }
   if (soloProgram !== null) {
     // Solo goes after Comping, matching the order sheet.js appends the two

@@ -15,6 +15,7 @@ const DRAWER_CLASS = "show-advanced";
 const CREATE_DEMO_SETLIST = "createDemoSetlist";
 const ADD_DEMO_SONG_1 = "addDemoSong1";
 const ADD_DEMO_SONG_2 = "addDemoSong2";
+const ARIA_PRESSED = "aria-pressed";
 const OWN_SONG_FILE = "all_of_me.abc";
 
 // A ctx whose collaborators just record what the actions asked of them.
@@ -260,6 +261,28 @@ test("compingOn keeps a pattern the visitor picked themselves rather than swappi
     await actions.apply(["compingOn"]);
     assert.equal(select.value, "charleston");
     assert.deepEqual(calls.filter((c) => c.startsWith("comping:")), []);
+  } finally {
+    cleanup();
+  }
+});
+
+test("compingSplit presses the Split button once, and end() puts it back", async () => {
+  const { actions, cleanup } = setup();
+  try {
+    const btn = document.createElement("button");
+    btn.id = "compingSplitBtn";
+    btn.setAttribute(ARIA_PRESSED, "false");
+    btn.addEventListener("click", () => btn.setAttribute(ARIA_PRESSED, String(btn.getAttribute(ARIA_PRESSED) !== "true")));
+    document.body.append(btn);
+
+    actions.begin();
+    await actions.apply(["compingSplit"]);
+    assert.equal(btn.getAttribute(ARIA_PRESSED), "true");
+    await actions.apply(["compingSplit"]);
+    assert.equal(btn.getAttribute(ARIA_PRESSED), "true");
+
+    actions.end();
+    assert.equal(btn.getAttribute(ARIA_PRESSED), "false");
   } finally {
     cleanup();
   }

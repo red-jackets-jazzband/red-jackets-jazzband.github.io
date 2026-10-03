@@ -16,6 +16,8 @@ chapters: Chapters
 language: Language
 close: Close the tour
 helpLabel: Take the tour
+chapterDone: {chapter} done
+chapterNext: Next: **{next}**
 `;
 
 // Four steps: search -> play (interactive) | ghost (target doesn't exist) -> print.
@@ -117,10 +119,48 @@ test("the browser language picks NL, and a missing NL step falls back to English
     byId("tourBtn").click();
     await settle();
     assert.equal(title(), "Eerste stap");
-    assert.equal(byId("rjTourBody").textContent, "Tekst met vet.");
+    assert.equal(byId("rjTourBody").querySelector("p").textContent, "Tekst met vet.");
     primaryBtn().click();
     await settle();
     assert.equal(title(), SECOND_STEP);
+  } finally {
+    cleanup();
+  }
+});
+
+test("the first card lays the chapters out as a numbered list that jumps to a chapter", async () => {
+  const { cleanup } = await setup();
+  try {
+    byId("tourBtn").click();
+    await settle();
+    const rows = [...byId("rjTourBody").querySelectorAll(".rj-tour-topic")];
+    assert.equal(rows.length, 2);
+    assert.equal(rows[0].querySelector(".rj-tour-topic-num").textContent, "1");
+    assert.equal(rows[1].querySelector("strong").textContent, "Chapter two");
+    rows[1].click();
+    await settle();
+    assert.equal(title(), "Last step");
+    assert.equal(byId("rjTourBody").querySelector(".rj-tour-topic"), null);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a chapter-done card repeats the list with finished chapters checked and the next one marked", async () => {
+  const { cleanup } = await setup();
+  try {
+    byId("tourBtn").click();
+    await settle();
+    for (let i = 0; i < 2; i += 1) {
+      primaryBtn().click();
+      await settle();
+    }
+    assert.equal(title(), "Chapter one done");
+    const rows = [...byId("rjTourBody").querySelectorAll(".rj-tour-topic")];
+    assert.equal(rows.length, 2);
+    assert.equal(rows[0].classList.contains("is-done"), true);
+    assert.equal(rows[0].querySelector(".rj-tour-topic-num").textContent, "✓");
+    assert.equal(rows[1].classList.contains("is-next"), true);
   } finally {
     cleanup();
   }
@@ -152,6 +192,11 @@ test("Next / Back and the arrow keys walk the steps; a step with no target is sk
     await settle();
     assert.equal(title(), SECOND_STEP);
 
+    primaryBtn().click(); // the "chapter done" card between the two chapters
+    await settle();
+    assert.equal(title(), "Chapter one done");
+    assert.equal(progress(), "Chapter one");
+
     primaryBtn().click(); // Ghost step has no target: skipped, lands on "Last step"
     await settle();
     assert.equal(title(), "Last step");
@@ -161,12 +206,17 @@ test("Next / Back and the arrow keys walk the steps; a step with no target is sk
 
     keydown("ArrowLeft");
     await settle();
-    assert.equal(title(), SECOND_STEP, "Back doesn't land on the skipped step");
+    assert.equal(title(), "Chapter one done", "Back doesn't land on the skipped step");
+    keydown("ArrowLeft");
+    await settle();
+    assert.equal(title(), SECOND_STEP);
     // SECOND_STEP is a try-it step, so the arrows only count from the card itself.
     keydown("ArrowRight");
     await settle();
     assert.equal(title(), SECOND_STEP);
     keydown("ArrowRight", primaryBtn());
+    await settle();
+    keydown("ArrowRight");
     await settle();
     assert.equal(title(), "Last step");
   } finally {
@@ -179,7 +229,7 @@ test("Done on the last step closes the tour", async () => {
   try {
     byId("tourBtn").click();
     await settle();
-    for (let i = 0; i < 2; i += 1) {
+    for (let i = 0; i < 3; i += 1) {
       primaryBtn().click();
       await settle();
     }

@@ -91,35 +91,36 @@ function initPrintLink() {
   });
 }
 
-// True when Space should be left to the browser's own key handling instead of
-// toggling play/pause: a text field, a contentEditable, or a button/link
-// (so Space still activates the focused control instead of double-toggling).
-// A focused song-list row (library-tab.js's <a class="song-list-item">) is
-// exempted from the button/link skip: anchors don't natively respond to Space
-// anyway, so without this a highlighted row just ate the keypress silently
-// instead of starting playback.
+// True when Space belongs to the focused element rather than play/pause: a
+// text field, a <select> (Space opens it) or a contentEditable. Buttons and
+// links deliberately do NOT own it, so Space plays/pauses even while e.g. the
+// Mixer or Full screen button has focus instead of toggling that button.
 function ownsSpacebar(t) {
   if (!t) return false;
-  if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT"
-    || t.isContentEditable) {
-    return true;
-  }
-  const activator = t.closest && t.closest("button, a, [role=button]");
-  return Boolean(activator) && !activator.classList.contains("song-list-item");
+  return t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT"
+    || t.isContentEditable;
+}
+
+function isPlainSpace(e) {
+  if (e.key !== " " && e.key !== "Spacebar") return false;
+  if (e.ctrlKey || e.metaKey || e.altKey) return false;
+  return document.body.classList.contains("rj-sheet-active") && !ownsSpacebar(e.target);
 }
 
 /*
   Spacebar toggles play/pause while a sheet is open, matching every audio
-  player's convention. preventDefault stops the page from scrolling.
+  player's convention. preventDefault stops the page from scrolling; the keyup
+  is cancelled too because a focused button fires its click on Space keyup
+  (and Firefox ignores a cancelled keydown for that).
 */
 function initSpacebarPlayPause(ctx) {
   document.addEventListener("keydown", (e) => {
-    if (e.key !== " " && e.key !== "Spacebar") return;
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    if (!document.body.classList.contains("rj-sheet-active")) return;
-    if (ownsSpacebar(e.target)) return;
+    if (!isPlainSpace(e)) return;
     e.preventDefault();
-    ctx.audio.playPause();
+    if (!e.repeat) ctx.audio.playPause();
+  });
+  document.addEventListener("keyup", (e) => {
+    if (isPlainSpace(e)) e.preventDefault();
   });
 }
 

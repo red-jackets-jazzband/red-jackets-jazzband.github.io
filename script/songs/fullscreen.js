@@ -61,6 +61,11 @@ export function createFullscreen() {
     }
     if (active) requestWakeLock();
     else releaseWakeLock();
+    // The class flip changes the sheet's available width without the window
+    // itself resizing, so nothing would re-fit the chord table (sheet.js
+    // listens for "resize") and it would keep its old, narrow zoom. Fire one
+    // once the new layout has been applied.
+    requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
   }
 
   function toggle() {

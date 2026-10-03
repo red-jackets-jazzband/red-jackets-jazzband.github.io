@@ -15,7 +15,7 @@ import { createInspiration } from "./inspiration.js";
 import { initSheetControls } from "./sheet-controls.js";
 import { initMp3Export } from "./mp3-export.js";
 import { createFullscreen } from "./fullscreen.js";
-import { createInstrumentDropdown, createCompingDropdown, createSoloDropdown } from "./selects.js";
+import { createInstrumentDropdown, createCompingDropdown } from "./selects.js";
 import { createLibraryTab } from "./library-tab.js";
 import { createSetlistData } from "./setlist-data.js";
 import { createSetlistHome } from "./setlist-home.js";
@@ -192,7 +192,8 @@ function createApp() {
   function initSheet() {
     createInstrumentDropdown(ctx);
     createCompingDropdown(ctx);
-    createSoloDropdown(ctx);
+    // Solo is hidden for now (results not good enough yet); re-enable by calling
+    // createSoloDropdown(ctx) here. With no #solo select, sheet.js treats it as off.
     initSheetControls(ctx);
     initMp3Export(ctx);
     ctx.mixer.init();

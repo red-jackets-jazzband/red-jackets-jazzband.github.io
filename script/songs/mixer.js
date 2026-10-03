@@ -3,7 +3,7 @@ import {
 } from "../lib/dom.js";
 import { readPref, writePref, PREF_KEYS } from "../lib/preferences.js";
 import { GM_VOICES, defaultVoiceProgram } from "../lib/gm-voices.js";
-import { GCHORD_PATTERNS, DEFAULT_GCHORD_PATTERN_VALUE, DEFAULT_PROGRAM } from "../lib/audio-mix.js";
+import { GCHORD_PATTERNS, DEFAULT_GCHORD_PATTERN_VALUE, DEFAULT_PROGRAM, isCompingLabel } from "../lib/audio-mix.js";
 
 // Full re-engrave (the only way to change what plays — see sheet.js /
 // lib/audio-mix.js) is too heavy to run on every "input" tick of a dragged
@@ -216,7 +216,7 @@ const GENERATED_VOICE_SUBLABEL = { Comping: "fills", Solo: "improvised" };
 
 function buildVoiceLabel(voice) {
   const nameSpan = el("span", { class: "mixer-strip-label", text: voice.label, attrs: { title: voice.label } });
-  const sublabel = GENERATED_VOICE_SUBLABEL[voice.label];
+  const sublabel = GENERATED_VOICE_SUBLABEL[isCompingLabel(voice.label) ? "Comping" : voice.label];
   if (sublabel === undefined) return nameSpan;
   return el("div", { class: "mixer-strip-label-wrap" }, [
     nameSpan,
@@ -256,7 +256,7 @@ function buildVoiceStrip(voice) {
   });
   buildVoiceOptions(select);
 
-  const stripClass = voice.label === "Comping" ? "mixer-strip mixer-strip--voice mixer-strip--comping" : "mixer-strip mixer-strip--voice";
+  const stripClass = isCompingLabel(voice.label) ? "mixer-strip mixer-strip--voice mixer-strip--comping" : "mixer-strip mixer-strip--voice";
   const strip = el("div", {
     id: `mixerVoiceStrip-${voice.slug}`,
     class: stripClass,
@@ -450,7 +450,7 @@ export function createMixer(ctx) {
     const withSlugs = dedupeVoiceSlugs(voices);
     // While Solo plays, the first voice (typically the lead) steps aside.
     const soloOn = voices.some((v) => v.label === "Solo");
-    const ownSig = voiceListSignature(voices.filter((v) => v.label !== "Solo" && v.label !== "Comping"));
+    const ownSig = voiceListSignature(voices.filter((v) => v.label !== "Solo" && !isCompingLabel(v.label)));
     if (!soloOn || ownSig !== ownVoicesSig) leadUnmuted = false;
     ownVoicesSig = ownSig;
     ctx.state.mixerVoices = withSlugs.map((v) => {

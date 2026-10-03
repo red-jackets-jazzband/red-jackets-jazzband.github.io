@@ -92,6 +92,18 @@ function activatesCardButton(event, card) {
   return false;
 }
 
+// State class of chapter `i`'s dot: filled once its chapter is finished, gold for
+// the one being walked, pulsing on the next chapter's while the "chapter done"
+// card is up.
+function dotState(i, step) {
+  if (step.interstitial) {
+    if (i <= step.chapterIndex) return "is-done";
+    return i === step.chapterIndex + 1 ? "is-next" : "";
+  }
+  if (i === step.chapterIndex) return "is-active";
+  return i < step.chapterIndex ? "is-done" : "";
+}
+
 function nextFrame() {
   return new Promise((resolve) => {
     requestAnimationFrame(() => resolve());
@@ -251,16 +263,37 @@ export function createTour(ctx) {
 
   function renderDots(step) {
     clear(refs.dots);
-    refs.dots.append(...content.chapters.map((chapter, i) => el(BUTTON, {
-      type: BUTTON,
-      class: i === step.chapterIndex ? "rj-tour-dot is-active" : "rj-tour-dot",
-      attrs: {
-        title: chapter.title,
-        "aria-label": chapter.title,
-        "aria-current": i === step.chapterIndex ? "step" : null,
-      },
-      on: { click: () => jumpToChapter(i) },
-    })));
+    refs.dots.append(...content.chapters.map((chapter, i) => {
+      const state = dotState(i, step);
+      return el(BUTTON, {
+        type: BUTTON,
+        class: `rj-tour-dot ${state}`.trim(),
+        attrs: {
+          title: chapter.title,
+          "aria-label": chapter.title,
+          "aria-current": state === "is-active" ? "step" : null,
+        },
+        on: { click: () => jumpToChapter(i) },
+      });
+    }));
+  }
+
+  // Numbered, clickable overview of the chapters (title + one-line summary).
+  // On a "chapter done" card finished chapters show a check and the next is
+  // highlighted; on the welcome card none is marked.
+  function buildTopicList(step) {
+    return el("ol", { class: "rj-tour-topics" }, content.chapters.map((chapter, i) => {
+      const state = step.interstitial ? dotState(i, step) : "";
+      return el("li", {}, [
+        el(BUTTON, { type: BUTTON, class: `rj-tour-topic ${state}`.trim(), on: { click: () => jumpToChapter(i) } }, [
+          el("span", { class: "rj-tour-topic-num", text: state === "is-done" ? "✓" : String(i + 1) }),
+          el("span", { class: "rj-tour-topic-text" }, [
+            el("strong", { text: chapter.title }),
+            el("span", { text: ui(`topic${chapter.id.charAt(0).toUpperCase()}${chapter.id.slice(1)}`) }),
+          ]),
+        ]),
+      ]);
+    }));
   }
 
   // Everything textual in the card, for the current step and language.
@@ -268,13 +301,18 @@ export function createTour(ctx) {
     const step = flat[index];
     // Counted over the steps that are actually shown, so a skipped one
     // (no target on this song) doesn't leave a hole in "2/5".
-    const shown = flat.filter((s) => s.chapterIndex === step.chapterIndex && isAvailable(s));
-    refs.progress.textContent = formatTourString(ui("progress"), {
+    const shown = flat.filter((s) => s.chapterIndex === step.chapterIndex && !s.interstitial && isAvailable(s));
+    refs.progress.textContent = step.interstitial ? step.chapterTitle : formatTourString(ui("progress"), {
       chapter: step.chapterTitle, n: shown.indexOf(step) + 1, total: shown.length,
     });
     refs.title.textContent = step.title;
     clear(refs.body);
-    refs.body.append(...renderBlocks(step.body));
+    const blocks = renderBlocks(step.body);
+    // The first card lays out the whole plan, one row per chapter; each "chapter
+    // done" card repeats it with the finished ones checked off.
+    if (index === 0) blocks.splice(1, 0, el("p", { text: ui("topicsIntro") }), buildTopicList(step));
+    else if (step.interstitial) blocks.push(buildTopicList(step));
+    refs.body.append(...blocks);
     refs.langs.setAttribute("aria-label", ui("language"));
     for (const btn of qsa(".rj-tour-lang-btn", refs.langs)) {
       btn.setAttribute("aria-pressed", String(btn.dataset.lang === lang));

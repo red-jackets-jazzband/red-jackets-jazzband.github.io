@@ -157,6 +157,23 @@ test("flattenTourSteps tags each step with its chapter position", () => {
   assert.equal(flat.length, 4);
 });
 
+test("flattenTourSteps adds a 'chapter done' break between chapters when the UI strings exist", () => {
+  const content = parseTourMarkdown(`# ui
+chapterDone: {chapter} done
+chapterNext: Next: **{next}**
+
+${SAMPLE}`);
+  const flat = flattenTourSteps(content);
+  assert.deepEqual(flat.map((s) => s.id), ["search", "print", "chapter-done", "open", "print"]);
+  const brk = flat[2];
+  assert.equal(brk.interstitial, true);
+  assert.equal(brk.chapterIndex, 0);
+  assert.deepEqual(brk.targets, []);
+  assert.equal(brk.title, `${content.chapters[0].title} done`);
+  assert.deepEqual(brk.body[0].tokens.map((t) => t.type), ["text", "strong"]);
+  assert.equal(brk.body[0].tokens[1].text, content.chapters[1].title);
+});
+
 test("resolveTourLang: saved choice beats URL prefix beats browser language beats English", () => {
   assert.equal(resolveTourLang("de", "/nl/songs/", ["nl-NL"]), "de");
   assert.equal(resolveTourLang(null, "/nl/songs/", ["de-DE"]), "nl");

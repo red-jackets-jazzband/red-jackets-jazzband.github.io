@@ -69,12 +69,86 @@ export function createCompingDropdown(ctx) {
   const known = stored === "off" || COMPING_PATTERNS.some((p) => p.value === stored);
   if (stored && known) select.value = stored;
 
+  const split = createCompingSplit(ctx, select);
   select.addEventListener("change", () => {
     writePref(PREF_KEYS.comping, select.value);
+    split.sync();
     ctx.sheet.rerender();
   });
 
-  slot.append(dropdown(select));
+  slot.append(dropdown(select), ...split.nodes);
+  split.sync();
+}
+
+const COMPING_PARTS = ["R", "3", "5"];
+const ARIA_PRESSED = "aria-pressed";
+
+/*
+  The Split button next to the comping dropdown (#compingSplitBtn) and the
+  R / 3 / 5 toggles (.comping-part-btn) it reveals: split replaces the one
+  block-chord staff with a single-note staff per chord tone, and the toggles
+  pick which of those staves are drawn — e.g. just the 3 and the 5 to print.
+  State lives in aria-pressed (sheet.js reads it from there) and is sticky
+  across songs. At least one tone always stays selected. Both are hidden
+  while comping is off; the toggles also while it isn't split.
+*/
+function createCompingSplit(ctx, select) {
+  const validStored = (readPref(PREF_KEYS.compingParts) || "").split(",").filter((p) => COMPING_PARTS.includes(p));
+  const storedParts = validStored.length > 0 ? validStored : COMPING_PARTS;
+  const splitBtn = el("button", {
+    type: "button", class: "sheet-icon-btn", id: "compingSplitBtn",
+    attrs: {
+      [ARIA_PRESSED]: readPref(PREF_KEYS.compingSplit) === "1" ? "true" : "false",
+      title: "Split comping into R / 3 / 5 voices",
+      "aria-label": "Split comping into separate R, 3 and 5 voices",
+    },
+  }, el("span", { class: "fa-solid fa-diagram-predecessor", attrs: { "aria-hidden": "true" } }));
+  const group = el("div", {
+    class: "comping-parts", id: "compingParts", attrs: { role: "group", "aria-label": "Comping voices to show" },
+  });
+  const partBtns = COMPING_PARTS.map((name, index) => el("button", {
+    type: "button", class: "comping-part-btn", text: name,
+    attrs: {
+      "data-part": String(index),
+      [ARIA_PRESSED]: storedParts.includes(name) ? "true" : "false",
+      title: `Show the ${name} voice`,
+    },
+  }));
+  group.append(...partBtns);
+
+  function sync() {
+    const on = select.value !== "off";
+    const split = splitBtn.getAttribute(ARIA_PRESSED) === "true";
+    splitBtn.hidden = !on;
+    splitBtn.classList.toggle("active", split);
+    group.hidden = !(on && split);
+  }
+  function changed() {
+    sync();
+    ctx.sheet.rerender();
+  }
+
+  splitBtn.addEventListener("click", () => {
+    const next = splitBtn.getAttribute(ARIA_PRESSED) !== "true";
+    splitBtn.setAttribute(ARIA_PRESSED, String(next));
+    writePref(PREF_KEYS.compingSplit, next ? "1" : "0");
+    changed();
+  });
+  partBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const pressed = btn.getAttribute(ARIA_PRESSED) === "true";
+      const stillOn = partBtns.filter((b) => b !== btn && b.getAttribute(ARIA_PRESSED) === "true");
+      if (pressed && stillOn.length === 0) return;
+      btn.setAttribute(ARIA_PRESSED, String(!pressed));
+      writePref(
+        PREF_KEYS.compingParts,
+        partBtns.filter((b) => b.getAttribute(ARIA_PRESSED) === "true").map((b) => b.textContent).join(","),
+      );
+      changed();
+    });
+  });
+
+  return { nodes: [splitBtn, group], sync };
 }
 
 /*

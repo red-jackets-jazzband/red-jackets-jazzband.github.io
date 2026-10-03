@@ -111,6 +111,27 @@ test("computeChordOffset counts measures before the first chord", () => {
   assert.equal(computeChordOffset(song), 2);
 });
 
+test("computeChordOffset treats a break annotation as the first onset", () => {
+  const song = {
+    lines: [
+      {
+        staff: [
+          {
+            voices: [
+              [
+                { el_type: "note", chord: [{ name: "_In swing" }, { name: "N.C." }] },
+                { el_type: "bar" },
+                { el_type: "note", chord: [{ name: "C" }] },
+              ],
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  assert.equal(computeChordOffset(song), 0);
+});
+
 test("computeChordOffset returns 0 when there are no lines", () => {
   assert.equal(computeChordOffset({}), 0);
 });
@@ -140,6 +161,26 @@ test("parseChordScheme extracts one chord per measure", () => {
   assert.equal(chords.length, 2);
   assert.deepEqual(chords[0].text, ["C"]);
   assert.deepEqual(chords[1].text, ["F"]);
+});
+
+test("parseChordScheme finds the chord when an annotation like \"_In swing\" precedes it on the same note", () => {
+  const song = {
+    lines: [
+      {
+        staff: [
+          {
+            voices: [
+              [
+                { el_type: "note", chord: [{ name: "_In swing" }, { name: "Dm" }] },
+                { el_type: "bar", type: "bar_thin" },
+              ],
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  assert.deepEqual(parseChordScheme(song)[0].text, ["Dm"]);
 });
 
 test("parseChordScheme keeps the final measure when the body has no trailing barline", () => {

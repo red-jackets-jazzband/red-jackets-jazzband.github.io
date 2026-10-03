@@ -9,133 +9,148 @@ language: Langue
 close: Fermer la visite
 loading: Chargement…
 helpLabel: Lancer la visite
+chapterDone: {chapter} : terminé ✓
+chapterNext: Ensuite : **{next}**. Appuyez sur **Suivant** quand vous êtes prêt.
+topicBasics: Trouver un morceau, ouvrir sa grille, l'écouter et l'imprimer.
+topicAdjust: Changer la tonalité et le tempo, boucler un passage, exporter un MP3.
+topicInspiration: Écouter des enregistrements à côté de la grille et boucler une phrase.
+topicMixer: Régler le volume de la basse, des accords et de chaque partie.
+topicSetlists: Créer, ordonner et imprimer des setlists pour un concert.
+topicComping: Ajouter une portée d'accompagnement écrite.
+topicsIntro: La visite compte six thèmes, que vous parcourez un par un. Chacun est coché quand vous l'avez terminé, et les points en bas indiquent où vous en êtes. Vous pouvez cliquer sur un thème pour y aller directement :
 
 # basics: Les bases
 
 ## welcome: Bienvenue sur la page Songs
-Tous les morceaux que les Red Jackets ont joués, jouent encore, ou joueront peut-être bientôt sont là — cherchez-le, imprimez-le, transposez-le, et faites-en le vôtre. Cette courte visite vous montre comment trouver un morceau, l'écouter et l'imprimer, le transposer, jouer avec un enregistrement, mixer votre propre son, et construire des setlists avec le comping.
+Vous trouverez ici les morceaux que les Red Jackets jouent (ou ont joués, ou joueront peut-être). Vous pouvez les chercher, les imprimer et les transposer.
 
-Utilisez **Suivant** et **Retour**, ou les touches **←** et **→**. **Échap** vous en fait sortir à tout moment, et le bouton **?** ramène la visite quand vous voulez.
+Utilisez **Suivant** et **Retour**, ou les touches **←** et **→**. **Échap** ferme la visite à tout moment, et le bouton **?** la relance.
 
 ## search: Trouver un morceau
-Tapez une partie du titre, et la liste se resserre au fil de la frappe. Appuyez sur **/** n'importe où pour sauter directement dans ce champ, puis **↑** **↓** et **Entrée** pour ouvrir un morceau. Pressé ? La barre **A–Z** à côté de la liste saute directement à une lettre.
+Tapez une partie du titre et la liste se réduit au fil de la frappe. Cliquez dans ce champ, puis utilisez **↑** **↓** et **Entrée** pour ouvrir un morceau. La barre **A–Z** à côté de la liste mène directement à une lettre.
 
 ## open: Votre grille
-Choisissez un morceau, il s'ouvre juste ici — pour la visite, nous avons déjà sorti *Bourbon Street Parade*. D'abord le tableau d'accords, puis la partition complète en dessous. Sur téléphone, la grille occupe tout l'écran ; un bouton **‹ Songs** vous ramène à la liste.
+Quand vous choisissez un morceau, il s'ouvre ici. Pour la visite, nous avons ouvert *Bourbon Street Parade*. Le tableau d'accords vient d'abord, avec la partition complète en dessous. Sur téléphone, la grille occupe tout l'écran, et le bouton **‹ Songs** en haut ramène à la liste.
 
 ## instrument: Lisez votre propre partie
-Plus besoin de transposer de tête. Choisissez votre instrument, et regardez toute la grille se transposer pour lui : hauteur réelle, Concert + Roman (hauteur réelle avec une analyse en chiffres romains dans le tableau d'accords), saxophone alto, clarinette ou trompette en si bémol, saxophone ténor, trombone (clé de fa) ou soubassophone (clé de fa). La page retient votre choix pour la prochaine fois, et la lecture sonne toujours à la hauteur réelle, quelle que soit la partie affichée.
+Choisissez votre instrument et toute la grille est transposée pour lui. Les choix sont : hauteur réelle, Concert + Roman (hauteur réelle avec des chiffres romains dans le tableau d'accords), saxophone alto, clarinette ou trompette en si bémol, saxophone ténor, trombone (clé de fa) ou soubassophone (clé de fa). La page retient votre choix. La lecture sonne toujours à la hauteur réelle, quelle que soit la partie affichée.
 
 ## play: Écoutez le morceau
-Entendre le morceau avant de jouer vous-même, ça aide toujours. Appuyez sur **Play** et les notes s'illuminent sur la grille au fil de la lecture ; **Stop** arrête tout. Ou juste la **barre d'espace**, dès qu'une grille est ouverte — lecture, pause, terminé.
+Il est utile d'entendre un morceau avant de le jouer. **Play** le lance, et les notes s'illuminent sur la grille pendant qu'elles sonnent. **Stop** l'arrête. Tant qu'une grille est ouverte, la **barre d'espace** permet aussi de lancer et de mettre en pause.
 
 ## print: Emportez-le au concert
-Pour le pupitre ou le classeur, mettez-le sur papier. **Print** en fait une page propre — ou choisissez *Enregistrer au format PDF* dans la boîte de dialogue pour garder une copie numérique. Les setlists auront leurs propres boutons d'impression ; on y vient plus tard.
+**Print** transforme la grille en une page propre pour le pupitre ou le classeur. Dans la boîte de dialogue d'impression, vous pouvez choisir *Enregistrer au format PDF* si vous préférez une copie numérique. Les setlists ont leurs propres boutons d'impression, qui viennent plus loin dans la visite.
 
 # adjust: Jouez-le à votre façon
 
-## key: Trouvez votre tonalité
-Un morceau ne tombe pas toujours bien dans la tonalité imprimée. **−** et **+** décalent la tonalité par **demi-tons** — la partition et le son bougent ensemble, si bien que ce que vous jouez et ce que vous entendez restent toujours d'accord. Enregistrez-le dans une setlist personnelle et la nouvelle tonalité suit ce morceau partout.
+## key: Changer la tonalité
+Un morceau ne tombe pas toujours bien dans la tonalité imprimée. **−** et **+** la décalent par **demi-tons**. La partition et le son changent ensemble, donc ils concordent toujours. Si vous enregistrez le morceau dans une setlist personnelle, la nouvelle tonalité reste avec lui.
 
 ## tempo: Travaillez à votre rythme
-Le tempo s'exprime en vrais **battements par minute** et part de l'indication de tempo du morceau. Ralentissez franchement un passage délicat pour l'apprendre, puis remontez le tempo.
+Le tempo est exprimé en **battements par minute** et part de l'indication du morceau lui-même. Ralentissez un passage délicat pour l'apprendre, puis remontez le tempo.
 
-## more: Bouclez un passage difficile
-Relancer un passage à la main casse votre élan. La petite flèche en bas de la barre ouvre **More controls**, où le compteur **Repeat** joue le morceau jusqu'à 20 fois de suite — et saute la levée après le premier passage, pour que la boucle reste propre. Le choix du comping se trouve aussi ici.
+## more: Boucler un passage
+Relancer un passage à la main devient vite pénible. La petite flèche en bas de la barre ouvre **More controls**, où le compteur **Repeat** joue le morceau jusqu'à 20 fois de suite. Après le premier passage, la levée est sautée. Le choix du comping est aussi ici.
 
 ## irealpro: Emmenez un groupe d'accompagnement
-Pour tout morceau avec des accords, ce bouton envoie la grille à l'application **iReal Pro** de votre téléphone, pour avoir un groupe d'accompagnement dans la poche.
+Pour les morceaux avec des accords, ce bouton envoie la grille à l'application **iReal Pro** sur votre téléphone, qui peut la jouer avec un groupe d'accompagnement.
 
-## mp3: Créez un enregistrement pour travailler
-Convertit exactement ce que vous entendez en fichier **.mp3** — instrument, tonalité, tempo, comping, réglages de la table de mixage et nombre de répétitions, tout est dedans. Une piste de travail à emporter chez vous.
+## mp3: Créer un enregistrement pour travailler
+Convertit ce que vous entendez en fichier **.mp3**. L'instrument, la tonalité, le tempo, le comping, les réglages du mixeur et le nombre de répétitions sont inclus, ce qui permet de s'en servir comme piste de travail.
 
-## fullscreen: Lisez-le de près
-Donne tout l'écran à la grille et, si votre navigateur le permet, garde l'écran allumé pendant que vous lisez. Grille dense ? **Zoomer à deux doigts** fonctionne toujours sur téléphone.
+## fullscreen: Lire de près
+Donne tout l'écran à la grille et, si votre navigateur le permet, garde l'écran allumé pendant la lecture. Sur téléphone, le zoom à deux doigts fonctionne toujours.
 
 # inspiration: Écouter et travailler
 
-## button: Entendez d'autres versions
-Envie d'entendre comment d'autres groupes ont joué ce morceau ? Quand un morceau a des enregistrements de référence, un bouton **Inspiration** apparaît — ouvrez-le pour un lecteur flottant juste à côté de votre grille.
+## button: Entendre d'autres versions
+Quand un morceau a des enregistrements de référence, un bouton **Inspiration** apparaît. Il ouvre un lecteur flottant à côté de la grille, pour entendre comment d'autres groupes ont joué le morceau.
 
-## panel: Continuez d'écouter en parcourant les morceaux
-Le lecteur continue de jouer pendant que vous consultez d'autres morceaux — il ne se ferme que lorsque vous le fermez. Faites glisser l'**en-tête** pour le déplacer, le **bord gauche** pour le redimensionner, ou passez d'une taille prédéfinie à l'autre avec le bouton de taille.
+## panel: Continuer d'écouter en parcourant les morceaux
+Le lecteur continue de jouer pendant que vous regardez d'autres morceaux, et ne se ferme que lorsque vous le fermez. Faites glisser l'**en-tête** pour le déplacer et le **bord gauche** pour le redimensionner, ou passez d'une taille prédéfinie à l'autre avec le bouton de taille.
 
-## tabs: Comparez les enregistrements
-Ce morceau a plusieurs enregistrements — passez d'un onglet à l'autre pour les comparer. Un seul joue à la fois.
+## tabs: Comparer les enregistrements
+Ce morceau a plusieurs enregistrements. Les onglets permettent de passer de l'un à l'autre. Un seul joue à la fois.
 
 ## loop: Répéter une phrase
-Faites boucler une phrase difficile toute seule, plutôt que de revenir en arrière à la main sans arrêt. Lancez la vidéo, appuyez sur **A** où la phrase commence et sur **B** où elle se termine, et elle se répète sans fin. Faites glisser les poignées **A** et **B** sur la timeline pour affiner, et **✕** les efface.
+Au lieu de revenir en arrière à la main, vous pouvez laisser une phrase se répéter toute seule. Lancez la vidéo, appuyez sur **A** là où la phrase commence et sur **B** là où elle se termine, et elle tourne en boucle. Faites glisser les poignées **A** et **B** sur la timeline pour les ajuster, et **✕** les efface.
 
-## zoom: Placez votre boucle avec précision
-La bande au-dessus représente tout l'enregistrement. Utilisez les boutons **+** et **−**, ou faites glisser la fenêtre en surbrillance ou ses bords, pour zoomer sur la timeline en dessous — vos repères **A** et **B** se placeront bien plus précisément.
+## zoom: Placer la boucle avec précision
+La bande au-dessus montre tout l'enregistrement. Avec les boutons **+** et **−**, ou en faisant glisser la fenêtre en surbrillance ou ses bords, vous zoomez sur la timeline en dessous. Cela permet de placer les repères **A** et **B** plus précisément.
 
 ## speed: Ralentir
-Baissez — ou augmentez — la **speed** pour apprendre une ligne rapide à votre propre allure, puis jouez avec.
+Baissez la **speed** (ou augmentez-la) pour apprendre une ligne rapide à une allure qui vous convient, puis jouez avec.
 
 ## share: Partager votre boucle
-Copie un lien vers ce morceau **et** votre boucle A–B. Envoyez-le à un musicien du groupe : il arrive sur la même grille, la vidéo déjà réglée sur votre phrase.
+Copie un lien vers ce morceau **et** votre boucle A–B. Si vous l'envoyez à un musicien du groupe, il arrive sur la même grille, avec la vidéo déjà réglée sur votre phrase.
 
-# mixer: Trouvez le bon équilibre
+# mixer: Régler les volumes
 
-## open: Composez votre propre mix
-Le **Mixer** est votre console pour tout ce que vous entendez — un petit panneau sous son bouton sur ordinateur, un volet qui remonte du bas de l'écran sur téléphone.
+## open: Faire votre propre mix
+Le **Mixer** règle le volume de tout ce que vous entendez. Sur ordinateur, c'est un petit panneau sous son bouton, et sur téléphone il remonte depuis le bas de l'écran.
 
-## accompaniment: Ajoutez basse et accords
-Donnez au morceau son propre groupe d'accompagnement : l'**accompagnement automatique** joue une ligne de basse et des accords construits directement à partir des symboles d'accords. Les deux sont **coupés** par défaut : rien ne change tant que vous ne les activez pas — chacun a un bouton **muet**, un **curseur de volume** et un **choix de voix**, et le sélecteur de **motif d'accompagnement** détermine le style.
+## accompaniment: Ajouter basse et accords
+L'**accompagnement automatique** joue une ligne de basse et des accords à partir des symboles d'accords. Les deux sont **coupés** par défaut, donc rien ne change tant que vous ne les activez pas. Chacun a un bouton **muet**, un **curseur de volume** et un **choix de voix**, et le sélecteur de **motif d'accompagnement** détermine le style.
 
-## voices: Mixez chaque voix séparément
-Chaque ligne mélodique du morceau reçoit son propre bouton muet, son volume et son instrument — un morceau avec trompette et soubassophone montre les deux, côte à côte. Réglez-les une fois, et vos choix s'appliquent à tout autre morceau ayant une voix du même nom.
+## voices: Mixer chaque voix séparément
+Chaque ligne mélodique du morceau a son propre bouton muet, son volume et son instrument. Un morceau avec trompette et soubassophone affiche les deux côte à côte. Vos réglages sont conservés pour tout autre morceau qui a une voix du même nom.
 
-## extras: Réglez le feeling
-Assouplissez les croches droites avec le curseur **Swing**, activez un clic avec le métronome **tambour**, ou passez la lecture en meilleure qualité avec le bouton **onde**.
+## extras: Régler le feeling
+Le curseur **Swing** assouplit les croches droites. Le bouton **tambour** active un clic de métronome, et le bouton **onde** améliore la qualité du son.
 
 # setlists: Setlists et impression
 
 ## shelf: Parcourir les setlists
-L'onglet **Setlists** montre les setlists du groupe — en lecture seule — puis **Yours** en dessous. Les vôtres ne vivent que dans ce navigateur, prêtes dès que vous en avez besoin.
+L'onglet **Setlists** montre les setlists du groupe, en lecture seule, puis **Yours** en dessous. Les vôtres ne sont stockées que dans ce navigateur.
 
 ## new: Créer votre propre setlist
-**New setlist** vous permet de partir d'une liste vide, d'une copie d'une setlist existante (un **remix**) ou d'un fichier **.txt** importé. Construisons-en une à partir de zéro, étape par étape.
+**New setlist** permet de partir d'une liste vide, d'une copie d'une setlist existante (un **remix**) ou d'un fichier **.txt** importé. Nous allons en construire une de zéro, étape par étape.
 
-## create: Partez de zéro
-Partir de *Empty* ouvre aussitôt une setlist vide, prête à recevoir des morceaux — celle-ci, nous l'avons appelée *Tour setlist*. Double-cliquez sur un nom (ou son crayon) à tout moment pour renommer la vôtre.
+## create: Partir de zéro
+Si vous choisissez *Empty*, une setlist vide s'ouvre, prête à recevoir des morceaux. Celle-ci, nous l'avons appelée *Tour setlist*. Vous pouvez renommer la vôtre à tout moment en double-cliquant sur son nom ou sur le crayon.
 
 ## addsong: Ajouter un morceau
-Cherchez un titre dans le champ au bas de la liste, puis appuyez sur **Entrée** — ou cliquez sur un résultat — pour l'ajouter.
+Cherchez un titre dans le champ en bas de la liste, puis appuyez sur **Entrée** ou cliquez sur un résultat pour l'ajouter.
 
 ## addsong2: En ajouter un autre
-Ajoutez un second morceau de la même façon. La liste s'allonge vers le bas, une ligne par morceau, prête à être mise en ordre.
+Ajoutez un second morceau de la même façon. La liste s'allonge vers le bas, avec une ligne par morceau.
 
-## reorder: Définissez l'ordre de passage
-Faites glisser la poignée **⋮⋮** d'un morceau vers le haut ou le bas pour le déplacer. Avec une ligne sélectionnée, **Alt** + **↑** **↓** la déplace plutôt d'une place à la fois au clavier.
+## reorder: Définir l'ordre de passage
+Faites glisser la poignée **⋮⋮** d'un morceau vers le haut ou le bas pour le déplacer. Avec une ligne sélectionnée, **Alt** + **↑** **↓** la déplace d'une place à la fois au clavier.
 
-## break: Découpez en sets
-**Add a set break** démarre un nouveau set — pratique pour découper un concert en Set 1, Set 2, etc. Tapez un intitulé, ou laissez-le vide pour un « Set 2 » automatique.
+## break: Découper en sets
+**Add a set break** démarre un nouveau set, par exemple pour diviser un concert en Set 1 et Set 2. Tapez un intitulé, ou laissez le champ vide pour obtenir un « Set 2 » automatique.
 
-## note: Notez quelque chose pour le groupe
-Cliquez sur **+ note** sous un morceau pour noter quelque chose pour le concert — qui joue le solo, un changement de tonalité, un rappel. Cela apparaît sur la setlist imprimée et la liste de scène, jamais sur la partition du morceau lui-même.
+## note: Noter quelque chose pour le groupe
+Cliquez sur **+ note** sous un morceau pour écrire quelque chose pour le concert, par exemple qui joue le solo, un changement de tonalité ou un rappel. Cela apparaît sur la setlist imprimée et la liste de scène, mais pas sur la partition du morceau lui-même.
 
-## open: Parcourez le set
-Ouvrez une setlist, et ses morceaux s'affichent aussitôt dans l'ordre dans la barre latérale, répartis en **sets**. Cliquez sur un morceau pour l'ouvrir dans la même grille interactive, ou parcourez toute la liste avec **↑** **↓** (en balayant sur téléphone). **Listen** ouvre les morceaux de la setlist sur YouTube.
+## open: Parcourir le set
+Quand vous ouvrez une setlist, ses morceaux s'affichent dans l'ordre dans la barre latérale, répartis en **sets**. Cliquez sur un morceau pour l'ouvrir dans la même grille interactive, ou parcourez la liste avec **↑** **↓** (en balayant sur téléphone). **Listen** ouvre les morceaux de la setlist sur YouTube.
 
-## print: Imprimez pour le concert
+## print: Imprimer pour le concert
 - **Setlist** : une grande liste numérotée des titres, pour la scène.
 - **Chordbook** : le titre et le tableau d'accords de chaque morceau.
 - **Songbook** : chaque morceau avec ses accords et sa partition complète.
 
-## exports: Emportez une setlist partout
-Vous pouvez aussi exporter une setlist personnelle en fichier **.txt** et la réimporter sur un autre appareil — l'équivalent, pour une setlist, des exports Print, MP3 et iReal Pro que vous connaissez déjà pour un seul morceau.
+## exports: Utiliser une setlist ailleurs
+Une setlist personnelle peut être exportée en fichier **.txt** et réimportée sur un autre appareil. C'est la version setlist des exports Print, MP3 et iReal Pro que vous avez vus pour un seul morceau.
 
 # comping: Comping
 
-## pick: Ajoutez votre propre accompagnement
-Le comping est un accompagnement en accords, écrit tout du long sur une seconde portée sous la mélodie. Choisissez un **motif** dans la liste — charleston, clave, walking et bien d'autres — et écoutez-le prendre vie.
+## pick: Ajouter votre propre accompagnement
+Le comping est un accompagnement en accords, écrit sur une seconde portée sous la mélodie. Choisissez un **motif** dans la liste, par exemple charleston, clave ou walking, et écoutez-le.
 
 ## notation: Lire les couleurs
-Chaque temps est un accord de trois notes, et la couleur indique le rôle de chaque note : le **noir** est la fondamentale, l'**or** la tierce et le **magenta** la quinte. Les trois lignes se déplacent en douceur d'un accord à l'autre, si bien que l'œil ne perd jamais le fil.
+Chaque temps est un accord de trois notes, et la couleur indique le rôle de chaque note : le **noir** est la fondamentale, l'**or** la tierce et le **magenta** la quinte. Les trois lignes se déplacent en douceur d'un accord à l'autre, ce qui les rend plus faciles à suivre.
 
-## mixer: Intégrez le comping au mix
-Le comping activé, il apparaît dans la table de mixage comme une voix **Comping** à part — coupez-la, montez-la, ou confiez-la à un autre instrument.
+## split: Séparer en voix
+Le bouton **Séparer**, à côté de la liste des motifs, transforme la portée unique à trois notes en une portée par note d'accord : la fondamentale, la tierce et la quinte ont chacune leur propre ligne. C'est pratique quand chaque musicien du groupe prend une note de l'accord.
 
-## done: Voilà, c'est fini
-Voilà, c'est la visite complète ! Relancez-la à tout moment avec ce bouton **?**, et choisissez une autre langue dans le coin de la visite, quand vous voulez.
+## parts: Choisir les voix affichées
+Les boutons **R**, **3** et **5** choisissent quelles portées séparées sont dessinées. Vous pouvez par exemple n'afficher que la tierce et la quinte, et n'imprimer que celles-là. Il en reste toujours au moins une.
+
+## mixer: Intégrer le comping au mix
+Quand le comping est activé, il apparaît dans le mixeur comme une voix **Comping** à part. Vous pouvez la couper, changer son volume ou lui donner un autre instrument. Si vous la séparez, chaque note d'accord a sa propre piste (**Comping R**, **Comping 3**, **Comping 5**), ce qui permet de couper la tierce ou de confier la quinte à un autre instrument.
+
+## done: Fin de la visite
+La visite est terminée. Vous pouvez la relancer avec ce bouton **?**, et choisir une autre langue dans le coin de la visite.

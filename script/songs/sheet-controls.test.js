@@ -152,17 +152,20 @@ test("Spacebar toggles play/pause while the sheet is open", () => {
     pressSpace();
     assert.equal(calls.playPause, 1);
 
-    // ignored when typing in a field or focused on a button
+    // ignored when typing in a field
     pressSpace(document.getElementById("songSearch"));
-    pressSpace(document.getElementById("playPauseBtn"));
     assert.equal(calls.playPause, 1);
+
+    // a focused button (Mixer, Full screen, ...) doesn't swallow it
+    pressSpace(document.getElementById("playPauseBtn"));
+    assert.equal(calls.playPause, 2);
 
     // a focused song-list row still starts playback rather than eating the key
     const row = document.createElement("a");
     row.className = "song-list-item";
     document.getElementById("songList").append(row);
     pressSpace(row);
-    assert.equal(calls.playPause, 2);
+    assert.equal(calls.playPause, 3);
   } finally {
     cleanup();
   }

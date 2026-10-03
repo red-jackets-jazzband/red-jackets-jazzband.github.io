@@ -46,24 +46,40 @@ export const PATTERNS = {
     twobar1: (n) => `z2 ${n}2 z2 ${n}2`,
     twobar2: (n) => `${n} z z ${n}-${n}4`,
     half: (n) => `z2 ${n}2`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n) => `z2 ${n}2`,
+    halfOdd: (n) => `${n} z z ${n}`,
+    half2Odd: (n) => `${n}4`,
   },
   hold_over: {
     twobar1: (n) => `${n}8-`,
     twobar2: (n) => `${n}6 z2`,
     half: (n) => `${n}4`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n) => `${n}4`,
+    halfOdd: (n) => `${n}4`,
+    half2Odd: (n) => `${n}2 z2`,
   },
   hit_and_hold: {
     twobar1: (n) => `${n} z z ${n}-${n}4`,
     twobar2: (n) => `${n} z z ${n}-${n}4`,
     half: (n) => `${n} z z ${n}`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n) => `${n}4`,
+    halfOdd: (n) => `${n} z z ${n}`,
+    half2Odd: (n) => `${n}4`,
   },
   double_hit: {
     twobar1: (n) => `${n} ${n} z2 z4`,
     twobar2: (n) => `${n} ${n} z ${n} z ${n}3`,
     half: (n) => `${n} ${n} z2`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: () => "z4",
+    halfOdd: (n) => `${n} ${n} z ${n}`,
+    half2Odd: (n) => `z ${n}3`,
   },
   whole_note: {
-    twobar1: (n) => `${n}8-`,
+    twobar1: (n) => `${n}8`,
     twobar2: (n) => `${n}8`,
     half: (n) => `${n}4`,
   },
@@ -71,51 +87,94 @@ export const PATTERNS = {
     twobar1: (n) => `${n} z z ${n}-${n}2 z2`,
     twobar2: (n, nd) => `${n} ${n} ${nd} ${n} z4`,
     half: (n) => `${n} z z ${n}`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n) => `${n}2 z2`,
+    halfOdd: (n, nd) => `${n} ${n} ${nd} ${n}`,
+    half2Odd: () => "z4",
   },
   walk_down_b: {
     twobar1: (n, nd) => `z2 ${n} z ${nd} ${n}2 ${nd}`,
     twobar2: (n, nd) => `${n} ${n} ${nd} ${n} z4`,
     half: (n) => `z2 ${n} z`,
+    // Two chords in a bar: keep the full bar's rhythm (hits at slots 2, 4,
+    // 5-6, 7) instead of repeating the first half's figure.
+    half2: (n, nd) => `${nd} ${n}2 ${nd}`,
+    // Odd bars carry twobar2's rhythm (eighth-note run, then silence): the
+    // first chord gets the run, the second half stays silent like the pattern.
+    halfOdd: (n, nd) => `${n} ${n} ${nd} ${n}`,
+    half2Odd: () => "z4",
   },
   whole_then_step: {
     twobar1: (n) => `${n}8`,
     twobar2: (n, nd) => `${nd} z z ${nd} z4`,
     half: (n) => `${n}4`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n) => `${n}4`,
+    halfOdd: (n, nd) => `${nd} z z ${nd}`,
+    half2Odd: () => "z4",
   },
   walk_eighths: {
     twobar1: (n, nd) => `${n} ${n} ${nd} ${nd} ${n} ${n} ${nd} ${nd}`,
     twobar2: (n) => `${n} z z ${n}-${n}4`,
     half: (n, nd) => `${n} ${n} ${nd} ${nd}`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n, nd) => `${n} ${n} ${nd} ${nd}`,
+    halfOdd: (n) => `${n} z z ${n}`,
+    half2Odd: (n) => `${n}4`,
   },
   cross_step: {
     twobar1: (n) => `z2 ${n} z z ${n} z2`,
     twobar2: (n, nd, nu) => `${n} z z ${n}-${n} ${nu} ${nd} z`,
     half: (n) => `z2 ${n} z`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n) => `z ${n} z2`,
+    halfOdd: (n) => `${n} z z ${n}`,
+    half2Odd: (n, nd, nu) => `${n} ${nu} ${nd} z`,
   },
   step_approach: {
     twobar1: (n, nd, nu) => `${n} ${nd} z2 ${nu} ${nd} z2`,
     twobar2: (n, nd, nu) => `${nu}3 ${nd} z4`,
     half: (n, nd) => `${n} ${nd} z2`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n, nd, nu) => `${nu} ${nd} z2`,
+    halfOdd: (n, nd, nu) => `${nu}3 ${nd}`,
+    half2Odd: () => "z4",
   },
   double_then_step: {
     twobar1: (n) => `${n} ${n} z2 ${n} ${n} z2`,
     twobar2: (n, nd, nu) => `${n} z ${nu} ${nd} z4`,
     half: (n) => `${n} ${n} z2`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n) => `${n} ${n} z2`,
+    halfOdd: (n, nd, nu) => `${n} z ${nu} ${nd}`,
+    half2Odd: () => "z4",
   },
   full_walk: {
     twobar1: (n, nd, nu) => `${n} ${n} ${nd} ${n} ${nu} ${n} ${nd} ${n}`,
     twobar2: (n, nd) => `${nd} z z ${n}-${n}4`,
     half: (n, nd) => `${n} ${n} ${nd} ${n}`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n, nd, nu) => `${nu} ${n} ${nd} ${n}`,
+    halfOdd: (n, nd) => `${nd} z z ${n}`,
+    half2Odd: (n) => `${n}4`,
   },
   third_approach: {
     twobar1: (n, nd) => `${n} ${nd} z ${nd}-${n}4`,
     twobar2: (n, nd, nu, nu2) => `${nu2} ${nd} z ${nd}-${n}4`,
     half: (n, nd) => `${n} ${nd} z ${nd}`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n) => `${n}4`,
+    halfOdd: (n, nd, nu, nu2) => `${nu2} ${nd} z ${nd}`,
+    half2Odd: (n) => `${n}4`,
   },
   step_neighbor: {
     twobar1: (n, nd, nu) => `${n} ${nd} z ${nu}-${n}4`,
     twobar2: (n, nd, nu) => `${n} ${nd} z ${nu} z ${n}3`,
     half: (n, nd, nu) => `${n} ${nd} z ${nu}`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n) => `${n}4`,
+    halfOdd: (n, nd, nu) => `${n} ${nd} z ${nu}`,
+    half2Odd: (n) => `z ${n}3`,
   },
   // Charleston: the classic two-note kick — a held chord on beat 1 (a dotted
   // quarter, 3 slots) answered by a short stab on the "and" of beat 2, then
@@ -123,7 +182,11 @@ export const PATTERNS = {
   charleston: {
     twobar1: (n) => `${n}3 ${n} z4`,
     twobar2: (n) => `${n}3 ${n} z4`,
-    half: (n) => `${n}2 ${n} z`,
+    half: (n) => `${n}3 ${n}`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: () => "z4",
+    halfOdd: (n) => `${n}3 ${n}`,
+    half2Odd: () => "z4",
   },
   // Reverse Charleston: the same kick, placed in the back half of the bar
   // instead of the front — silence through beats 1-2, then the held-chord +
@@ -131,29 +194,48 @@ export const PATTERNS = {
   reverse_charleston: {
     twobar1: (n) => `z4 ${n}3 ${n}`,
     twobar2: (n) => `z4 ${n}3 ${n}`,
-    half: (n) => `z ${n}2 ${n}`,
+    half: () => "z4",
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n) => `${n}3 ${n}`,
+    halfOdd: () => "z4",
+    half2Odd: (n) => `${n}3 ${n}`,
   },
   // Son clave, 3-2: bar 1 is the "three side" (tresillo — hits on beat 1,
   // the "and" of 2, and beat 4), bar 2 the "two side" (hits on beat 2 and
-  // the "and" of 3), each chord held until the next clave stroke.
+  // the "and" of 3), each a short staccato stab (one eighth, then silence)
+  // so the comping doesn't drown out a soloist.
   clave_3_2: {
-    twobar1: (n) => `${n}3 ${n}3 ${n}2`,
-    twobar2: (n) => `z2 ${n}3 ${n}3`,
-    half: (n) => `${n}3 ${n}`,
+    twobar1: (n) => `${n} z2 ${n} z2 ${n} z`,
+    twobar2: (n) => `z2 ${n} z2 ${n} z2`,
+    half: (n) => `${n} z2 ${n}`,
+    // Two chords in a bar keep the bar's own clave rhythm: even bars are the
+    // three side (halves 1-2), odd bars the two side.
+    half2: (n) => `z2 ${n} z`,
+    halfOdd: (n) => `z2 ${n} z`,
+    half2Odd: (n) => `z ${n} z2`,
   },
   // Son clave, 2-3: the same two bars in the opposite order — the "two
   // side" first, then the "three side".
   clave_2_3: {
-    twobar1: (n) => `z2 ${n}3 ${n}3`,
-    twobar2: (n) => `${n}3 ${n}3 ${n}2`,
-    half: (n) => `z2 ${n}2`,
+    twobar1: (n) => `z2 ${n} z2 ${n} z2`,
+    twobar2: (n) => `${n} z2 ${n} z2 ${n} z`,
+    half: (n) => `z2 ${n} z`,
+    // Two chords in a bar keep the bar's own clave rhythm: even bars are the
+    // two side, odd bars the three side.
+    half2: (n) => `z ${n} z2`,
+    halfOdd: (n) => `${n} z2 ${n}`,
+    half2Odd: (n) => `z2 ${n} z`,
   },
   // Three hit: a rhythm-section "kick" figure — three quick stabs on beats
   // 1, the "and" of 1, and 2, then held silence through the rest of the bar.
   three_hit: {
     twobar1: (n) => `${n} ${n} ${n} z z4`,
     twobar2: (n) => `${n} ${n} ${n} z z4`,
-    half: (n) => `${n} ${n} z2`,
+    half: (n) => `${n} ${n} ${n} z`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: () => "z4",
+    halfOdd: (n) => `${n} ${n} ${n} z`,
+    half2Odd: () => "z4",
   },
   // I Got a Woman: the gospel/R&B push figure — three separate quarter-note
   // hits (no ties) on beat 2 and the "and" of beat 3 of bar 1, then landing
@@ -161,7 +243,11 @@ export const PATTERNS = {
   i_got_a_woman: {
     twobar1: (n) => `z2 ${n}2 z ${n}2 z`,
     twobar2: (n) => `${n}2 z6`,
-    half: (n) => `z ${n}2 z`,
+    half: (n) => `z2 ${n}2`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n) => `z ${n}2 z`,
+    halfOdd: (n) => `${n}2 z2`,
+    half2Odd: () => "z4",
   },
   // Honky Tonk Riff: the syncopated left-hand riff figure from "Down in
   // Honky Tonk Town" — four punchy off-beat stabs on the beat in bar 1,
@@ -182,6 +268,10 @@ export const PATTERNS = {
     twobar1: (n) => `${n} z ${n} z ${n} z ${n} z`,
     twobar2: (n, nd) => `z ${n} ${nd} ${n} z ${n} z ${n}`,
     half: (n) => `${n} z ${n} z`,
+    // Two chords in a bar: each half carries its slice of the full bar's rhythm.
+    half2: (n) => `${n} z ${n} z`,
+    halfOdd: (n, nd) => `z ${n} ${nd} ${n}`,
+    half2Odd: (n) => `z ${n} z ${n}`,
   },
 };
 
@@ -595,6 +685,27 @@ export function respellBar(fragment, keySig) {
   ));
 }
 
+// The inverse of respellBar: every note spelled with its full, effective
+// accidental (key signature and earlier in-bar accidentals folded in), so a
+// bar respelled for one key can be respelled again for another.
+export function explicitBar(fragment, keySig) {
+  const barAcc = new Map();
+  return String(fragment).replace(
+    /([_^=]{0,2})([A-Ga-g])([,']{0,4})/g,
+    (_all, acc, letterRaw, oct) => {
+      const letterOct = letterRaw + oct;
+      let eff;
+      if (acc === "") {
+        eff = barAcc.has(letterOct) ? barAcc.get(letterOct) : keySig[letterRaw.toUpperCase()] || "";
+      } else {
+        eff = acc.replace(/=/g, "");
+        barAcc.set(letterOct, eff);
+      }
+      return eff + letterOct;
+    },
+  );
+}
+
 // Spread `total` eighth slots across `parts` notes as evenly as possible.
 export function distribute(total, parts) {
   const base = Math.floor(total / parts);
@@ -622,21 +733,22 @@ function readUnit(text) {
   return [1, 8];
 }
 
-function lastKLineIndex(lines) {
-  for (let i = lines.length - 1; i >= 0; i--) {
-    if (lines[i].startsWith("K:")) return i;
-  }
-  return -1;
+// The header's closing K: line. Only the *first* one: a tune that modulates
+// (do_you_know_what_it_means.abc) carries later whole-line K: fields in its
+// body, and splitting on the last would swallow every section before it into
+// the header and leave the comping voice covering only the final section.
+function headerKLineIndex(lines) {
+  return lines.findIndex((line) => line.startsWith("K:"));
 }
 
 /*
    Split an ABC tune string into { header, kLine, body }: header is every line
-   before the last K: line, body is everything after it. Returns null when
+   before the first K: line, body is everything after it. Returns null when
    there is no K: line to split on.
 */
 function splitHeaderBody(text) {
   const lines = text.split("\n");
-  const kIdx = lastKLineIndex(lines);
+  const kIdx = headerKLineIndex(lines);
   if (kIdx === -1) return null;
   return {
     header: lines.slice(0, kIdx),
@@ -721,7 +833,7 @@ function extractInlineVoiceLine(line, targetId, startVoice) {
 // only the target voice's barlines, never another voice's.
 function extractVoiceBody(text, targetId) {
   const lines = text.split("\n");
-  const kIdx = lastKLineIndex(lines);
+  const kIdx = headerKLineIndex(lines);
   let current = null;
   const out = [];
   for (let i = 0; i < lines.length; i++) {
@@ -750,7 +862,7 @@ function extractVoiceBody(text, targetId) {
 // leading bar that shoves the whole comping voice down a system.
 const ALWAYS_STRIP = /^\s*(w:|W:|s:|P:|N:|O:|F:|I:|r:|%)/;
 
-// `splitHeaderBody` splits on the *last* K: line, so a tune that orders its
+// `splitHeaderBody` splits on the K: line, so a tune that orders its
 // header `K:` before `L:`/`M:`/`Q:` (all_of_me, isle_of_capri, jada order K:
 // before L:) drops that field into the body. It carries no note letters on
 // its own, but joined to the pickup segment below it (`L:1/4\nC/F/A/`) its
@@ -761,7 +873,7 @@ const ALWAYS_STRIP = /^\s*(w:|W:|s:|P:|N:|O:|F:|I:|r:|%)/;
 // the comping voice must too, or its later bars fall out of step. Only strip
 // them from the contiguous run of header leakage right after K:, never once
 // music has begun.
-const HEADER_LEAK = /^\s*(L:|M:|Q:)/;
+const HEADER_LEAK = /^\s*(K:|L:|M:|Q:)/;
 
 function stripNonMusicLines(body) {
   const lines = body.split("\n");
@@ -769,8 +881,11 @@ function stripNonMusicLines(body) {
   while (leadEnd < lines.length && (ALWAYS_STRIP.test(lines[leadEnd]) || HEADER_LEAK.test(lines[leadEnd]))) {
     leadEnd++;
   }
+  // A whole-line K: after the music has started is a key change: kept as an
+  // inline [K:...] field so buildVoiceBody carries it onto the next bar.
   return lines
     .filter((line, i) => i >= leadEnd && !ALWAYS_STRIP.test(line))
+    .map((line) => (/^\s*K:/.test(line) ? "[" + line.trim() + "]" : line))
     .join("\n");
 }
 
@@ -796,7 +911,7 @@ const BARLINE = /:(?:\|\d+|\|:?|:)|\|(?:\|:?|:|\]|\d+)?|\[(?:\|:?|\d+(?:[-,]\d+)
    pickup) instead gets an invisible rest of its own measured length, so the
    comping voices stay bar-aligned with the melody.
 */
-export function buildVoiceBody(rawBody, barStrings, leadingRestBars, restToken, lnum, lden) {
+export function buildVoiceBody(rawBody, barStrings, leadingRestBars, restToken, lnum, lden, respellForKey) {
   const rest = restToken || "x8";
   const body = stripNonMusicLines(rawBody);
   const parts = [];
@@ -813,6 +928,7 @@ export function buildVoiceBody(rawBody, barStrings, leadingRestBars, restToken, 
   let patternIdx = 0;
   let seen = 0;
   let out = "";
+  let currentKey = null;
   for (const p of parts) {
     if (p.bar) {
       out += p.s;
@@ -826,7 +942,11 @@ export function buildVoiceBody(rawBody, barStrings, leadingRestBars, restToken, 
       out += p.s;
       continue;
     }
-    const inlineFields = (p.s.match(/\[[A-Za-z]:[^\]]*\]/g) || []).join(" ");
+    const fieldList = p.s.match(/\[[A-Za-z]:[^\]]*\]/g) || [];
+    const inlineFields = fieldList.join(" ");
+    for (const f of fieldList) {
+      if (f.startsWith("[K:")) currentKey = f.slice(3, -1).trim();
+    }
     const leadWs = (p.s.match(/^\s*/) || [""])[0];
     // A melody measure that straddles a source line break carries the newline
     // *inside* this note segment (e.g. "…| F\nFAB||:" once the P: line between
@@ -837,14 +957,17 @@ export function buildVoiceBody(rawBody, barStrings, leadingRestBars, restToken, 
     const measuredRest = (segment) => {
       if (lnum && lden) {
         const slots = measureBarSlots(segment, lnum, lden);
-        if (slots > 0 && slots < 8) return "x" + formatDuration(slots, lnum, lden);
+        if (slots > 0 && slots < 8)
+        {return "x" + formatDuration(slots, lnum, lden);}
       }
       return rest;
     };
     let content;
     let contentIsRest = false;
     const stubSlots =
-      seen >= leadingRestBars && lnum && lden ? measureBarSlots(p.s, lnum, lden) : 0;
+      seen >= leadingRestBars && lnum && lden
+        ? measureBarSlots(p.s, lnum, lden)
+        : 0;
     if (stubSlots > 0 && stubSlots < 8) {
       // A sub-bar measure mid-tune — the `D2` anacrusis at the top of Bei Mir's
       // chorus, or any half-bar lead-in after a `||`. parseChordScheme still
@@ -858,6 +981,7 @@ export function buildVoiceBody(rawBody, barStrings, leadingRestBars, restToken, 
       contentIsRest = true;
     } else if (seen >= leadingRestBars && patternIdx < barStrings.length) {
       content = barStrings[patternIdx++];
+      if (currentKey && respellForKey) content = respellForKey(content, currentKey);
     } else {
       content = measuredRest(p.s);
       contentIsRest = true;
@@ -887,12 +1011,16 @@ export function buildVoiceBody(rawBody, barStrings, leadingRestBars, restToken, 
 // Tonal-backed note math
 // ---------------------------------------------------------------------------
 
-// Undo parseChordScheme's cosmetic unicode so Tonal can read the chord.
+// Undo parseChordScheme's cosmetic unicode so Tonal can read the chord. "Ø"
+// (what "dim" becomes) is spelled "m7b5" rather than back to "dim": a written
+// "AmØ" would otherwise become "Amdim", which Tonal can't read at all, and the
+// triad falls back to C-C-C stacked over three octaves.
 export function plainChordName(name) {
   return String(name)
     .replace(/♭/g, "b")
     .replace(/♯/g, "#")
-    .replace(/Ø/g, "dim")
+    .replace(/Ø7/g, "dim7")
+    .replace(/m?Ø/g, "m7b5")
     .trim();
 }
 
@@ -1252,13 +1380,67 @@ function chordKey(triple) {
 
 // One comping bar fragment per chord-scheme bar, plus the colour order of each
 // chord onset in it (see buildCompingTune's `palette`).
-function compingBars(chords, pat, { keyScale, keySig, lnum, lden }) {
+// Replace every "[low mid high]" chord token in a bar fragment with just its
+// `part`-th note (0 = root voice, 1 = third voice, 2 = fifth voice — the
+// bracket lists them bottom-to-top), keeping the duration and tie that follow
+// it. Rests and everything else pass through untouched, so the result is the
+// same rhythm played by one chord tone alone.
+function pickChordNote(fragment, part) {
+  let out = "";
+  let i = 0;
+  while (i < fragment.length) {
+    const end = fragment[i] === "[" ? scanChordBracket(fragment, i) : -1;
+    if (end === -1) {
+      out += fragment[i];
+      i += 1;
+      continue;
+    }
+    const notes = [];
+    let j = i + 1;
+    let noteEnd = scanNoteLetter(fragment, j, CHORD_NOTE_LETTERS);
+    while (noteEnd !== -1) {
+      notes.push(fragment.slice(j, noteEnd));
+      j = noteEnd;
+      noteEnd = scanNoteLetter(fragment, j, CHORD_NOTE_LETTERS);
+    }
+    out += notes[part] || notes[notes.length - 1];
+    i = end;
+  }
+  return out;
+}
+
+// A single chord-tone voice ties a note into the next one only when that next
+// note is the same pitch: whole_note ties every chord into whatever follows,
+// and once one voice is pulled out of the chord, a tie into a *different*
+// pitch is drawn by abcjs as a deep slur while the voices that happen to hold
+// their note get a shallow tie -- so the voices look unrelated. Strip the
+// dash wherever the next note (in this bar or the next) differs or is a rest.
+function dropCrossPitchTies(fragments) {
+  const bars = fragments.map(tokenizeBar);
+  const notes = bars.flat().filter((t) => !t.annotation);
+  notes.forEach((tok, i) => {
+    const next = notes[i + 1];
+    if (tok.tie && !(next && !next.rest && next.pitch === tok.pitch)) tok.tie = false;
+  });
+  return bars.map((tokens) => tokens.map(formatSlotToken).join(" "));
+}
+
+function formatSlotToken(t) {
+  if (t.annotation) return t.annotation;
+  const dur = t.dur === 1 ? "" : t.dur;
+  return t.pitch + dur + (t.tie ? "-" : "");
+}
+
+// `part` (0-2, or null for the ordinary block-chord voice) narrows every
+// chord to that one voice — see pickChordNote — before respelling, so the
+// accidental bookkeeping only sees the notes that voice actually plays.
+function compingBars(chords, pat, { keyScale, keySig, lnum, lden }, part = null) {
   const voiced = voiceLead(extractChordNotes(chords));
 
   // One comping voice: each pattern slot is a block chord "[low mid high]".
   // compBars[i] is bar i's ABC fragment; compPalettes[i] is a colour order
   // (["R","3","5"] bottom-to-top) per chord onset in that fragment.
-  const compBars = [];
+  let fragments = [];
   const compPalettes = [];
   for (let bar = 0; bar < voiced.length; bar++) {
     const cb = voiced[bar];
@@ -1274,29 +1456,39 @@ function compingBars(chords, pat, { keyScale, keySig, lnum, lden }) {
       } else {
         const fn = bar % 2 === 0 ? pat.twobar1 : pat.twobar2;
         fragment = fn.apply(null, chordArgs(cb[0], keyScale));
-        // twobar1 templates that end in a bare tie (hold_over, whole_note)
-        // commit to holding the same chord into the next bar's first note.
+        // Templates that end in a bare tie (hold_over's twobar1) commit to holding the same chord into the next bar's first note.
         // When that bar actually changes chord -- the far more common case,
         // since the two-bar twobar1/twobar2 split is chosen by bar parity,
         // not by where the chord scheme actually repeats -- a literal "-"
         // ties into an unrelated pitch: abcjs still draws the arc, so it
         // reads as a tangle of tie lines running into the wrong chord.
         // Dropping the dash leaves a plain sustained whole bar instead.
-        if (bar % 2 === 0 && fragment.endsWith("-")) {
+        if (fragment.endsWith("-")) {
           const next = voiced[bar + 1];
-          const continues = next && next.length === 1 && chordKey(next[0]) === chordKey(cb[0]);
+          // A two-chord next bar still continues when its first half is the
+          // same chord (that half is a plain held chord, so the tie lands).
+          const continues = next && next[0] !== null && chordKey(next[0]) === chordKey(cb[0]);
           if (!continues) fragment = fragment.slice(0, -1);
         }
         const order = cb[0].map((v) => v.fn);
         barPalette = new Array(countChords(fragment)).fill(order);
       }
     } else if (cb.length === 2) {
-      const fragA = cb[0] === null ? "z4" : pat.half.apply(null, chordArgs(cb[0], keyScale));
-      const fragB = cb[1] === null ? "z4" : pat.half.apply(null, chordArgs(cb[1], keyScale));
+      const odd = bar % 2 === 1;
+      const halfA = (odd && pat.halfOdd) || pat.half;
+      const halfB = (odd && pat.half2Odd) || pat.half2 || pat.half;
+      const fragA =
+        cb[0] === null ? "z4" : halfA.apply(null, chordArgs(cb[0], keyScale));
+      const fragB =
+        cb[1] === null ? "z4" : halfB.apply(null, chordArgs(cb[1], keyScale));
       fragment = fragA + " " + fragB;
       barPalette = new Array(countChords(fragA))
         .fill(cb[0] === null ? [] : cb[0].map((v) => v.fn))
-        .concat(new Array(countChords(fragB)).fill(cb[1] === null ? [] : cb[1].map((v) => v.fn)));
+        .concat(
+          new Array(countChords(fragB)).fill(
+            cb[1] === null ? [] : cb[1].map((v) => v.fn),
+          ),
+        );
     } else {
       const durs = distribute(8, cb.length);
       fragment = cb
@@ -1304,9 +1496,12 @@ function compingBars(chords, pat, { keyScale, keySig, lnum, lden }) {
         .join(" ");
       barPalette = cb.map((triple) => (triple === null ? [] : triple.map((v) => v.fn)));
     }
-    compBars.push(rebeamBar(respellBar(fragment, keySig), lnum, lden));
+    if (part !== null) fragment = pickChordNote(fragment, part);
+    fragments.push(fragment);
     compPalettes.push(barPalette);
   }
+  if (part !== null) fragments = dropCrossPitchTies(fragments);
+  const compBars = fragments.map((f) => rebeamBar(respellBar(f, keySig), lnum, lden));
   return { compBars, compPalettes };
 }
 
@@ -1396,8 +1591,15 @@ export function appendBarVoice(text, song, makeBars, voice) {
   // Invisible rest: keeps the comping voice bar-aligned with the melody
   // through pickup / intro / tail bars without drawing anything.
   const restToken = "x" + formatDuration(8, lnum, lden);
+  // A mid-tune K: change re-spells each comping bar for the key in effect.
+  const respellForKey = (bar, keyField) => {
+    const m = /^([A-G])([#b]?)\s*([A-Za-z]*)/.exec(keyField);
+    if (!m) return bar;
+    const sig = keySignature(keyScaleNotes({ root: m[1], acc: m[2], mode: m[3] }));
+    return respellBar(explicitBar(bar, keySig), sig);
+  };
   const compBody = buildVoiceBody(
-    patternSourceBody, compBars, leadingRestBars, restToken, lnum, lden,
+    patternSourceBody, compBars, leadingRestBars, restToken, lnum, lden, respellForKey,
   ).trim();
   const clefSuffix = bassClef ? " clef=bass middle=D" : "";
   const headerOut = [];
@@ -1434,7 +1636,12 @@ export function appendBarVoice(text, song, makeBars, voice) {
     // just tacked on the end as its own ungrouped staff, same as it would be
     // appended to the voice declarations themselves, rather than losing the
     // tune's own grouping outright the way stripping-and-not-replacing would.
-    if (layoutLine) headerOut.push(layoutLine.trimEnd() + " " + newVoiceId);
+    // abcjs only draws a multi-staff bracket correctly (it otherwise collapses
+    // onto the last staff) when the layout line precedes the "V:" declarations.
+    if (layoutLine) {
+      const at = headerOut.findIndex((line) => /^V:/.test(line));
+      headerOut.splice(at === -1 ? headerOut.length : at, 0, extendLayout(layoutLine.trimEnd(), newVoiceId, voice.joinBracket));
+    }
     headerOut.push(split.kLine);
     abc =
       headerOut.join("\n") +
@@ -1451,6 +1658,14 @@ export function appendBarVoice(text, song, makeBars, voice) {
       "\nV:2\n" + compBody + "\n";
   }
   return abc;
+}
+
+// Add `id` to a "%%staves" line: tacked on after it as its own ungrouped
+// staff, or (`joinBracket`, for the split comping voices) inside its closing
+// bracket so every chord-tone staff sits in the same group as the first.
+function extendLayout(line, id, joinBracket) {
+  if (joinBracket && line.endsWith("]")) return line.slice(0, -1) + " " + id + "]";
+  return line + " " + id;
 }
 
 /*
@@ -1470,9 +1685,10 @@ export function appendBarVoice(text, song, makeBars, voice) {
                assumed so sheet-decorations.js — which zips it against the
                rendered noteheads and tie arcs — stays correct regardless.
 */
-export function buildCompingTune(text, chords, song, pattern) {
+export function buildCompingTune(text, chords, song, pattern, parts = null) {
   const pat = PATTERNS[pattern];
   if (!pat || !chords || !chords.length) return null;
+  if (parts && parts.length) return buildSplitCompingTune(text, chords, song, pat, pattern, parts);
   let palettes = [];
   const abc = appendBarVoice(text, song, (layout) => {
     const { compBars, compPalettes } = compingBars(chords, pat, layout);
@@ -1488,4 +1704,26 @@ export function buildCompingTune(text, chords, song, pattern) {
     titleSuffix: "  (comping \u2013 " + (PATTERN_LABEL[pattern] || pattern) + ")",
   });
   return abc === null ? null : { abc, palette: palettes };
+}
+
+/*
+   The split flavour of the comping tune: instead of one staff of block
+   chords, one single-note staff per entry of `parts` (indices into R / 3 / 5,
+   ascending), appended one after another like any other generated voice. A
+   subset — say just the 3 and the 5 — gives sheet music for only those
+   voices. Returns { abc, palette: [], parts: ["3", "5"] }, or null when the
+   voice can't apply (see appendBarVoice).
+*/
+function buildSplitCompingTune(text, chords, song, pat, pattern, parts) {
+  const names = parts.map((p) => VOICE_KEYS[p]);
+  const suffix = "  (comping \u2013 " + (PATTERN_LABEL[pattern] || pattern) + ": " + names.join(" + ") + ")";
+  let abc = text;
+  for (let i = 0; i < parts.length && abc !== null; i++) {
+    abc = appendBarVoice(abc, song, (layout) => compingBars(chords, pat, layout, parts[i]).compBars, {
+      name: names[i],
+      titleSuffix: i === 0 ? suffix : "",
+      joinBracket: i > 0,
+    });
+  }
+  return abc === null ? null : { abc, palette: [], parts: names };
 }

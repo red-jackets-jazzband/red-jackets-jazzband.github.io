@@ -302,16 +302,45 @@ export function mergeTourLang(base, overlay) {
  * @param {TourContent} content
  */
 export function flattenTourSteps(content) {
-  return content.chapters.flatMap((chapter, chapterIndex) => chapter.steps.map((step, stepIndex) => ({
-    ...step,
+  const flat = [];
+  content.chapters.forEach((chapter, chapterIndex) => {
+    const position = {
+      chapterId: chapter.id,
+      chapterIndex,
+      chapterTitle: chapter.title,
+      chapterStepCount: chapter.steps.length,
+    };
     // The chapter's own setup first (e.g. "open the demo song"), then the step's.
-    setup: [...new Set([...chapter.setup, ...step.setup])],
-    chapterId: chapter.id,
-    chapterIndex,
-    chapterTitle: chapter.title,
-    stepIndex,
-    chapterStepCount: chapter.steps.length,
-  })));
+    chapter.steps.forEach((step, stepIndex) => flat.push({
+      ...step,
+      setup: [...new Set([...chapter.setup, ...step.setup])],
+      ...position,
+      stepIndex,
+    }));
+    const following = content.chapters[chapterIndex + 1];
+    if (following && content.ui.chapterDone) {
+      flat.push(chapterBreakStep(content.ui, chapter, following, position));
+    }
+  });
+  return flat;
+}
+
+// The pause between two chapters: "<chapter> done ✓ — next up: <chapter>".
+// Built from UI strings (not the markdown steps) so it exists in every language
+// without each file repeating it, and so it can't drift from the chapter titles.
+function chapterBreakStep(ui, chapter, following, position) {
+  const text = formatTourString(ui.chapterNext, { next: following.title });
+  return {
+    id: "chapter-done",
+    title: formatTourString(ui.chapterDone, { chapter: chapter.title }),
+    targets: [],
+    setup: [],
+    interactive: false,
+    interstitial: true,
+    body: [{ list: false, tokens: tokenizeInline(text) }],
+    ...position,
+    stepIndex: chapter.steps.length,
+  };
 }
 
 function structureIds(content) {

@@ -1,4 +1,4 @@
-import { byId } from "../lib/dom.js";
+import { byId, qsa } from "../lib/dom.js";
 import { isSetlistDivider } from "../lib/setlist-format.js";
 import {
   clearPersonalSetlistMarker, copyBandSetlistToPersonal, deletePersonalSetlist, getPersonalSetlist,
@@ -26,6 +26,8 @@ export const COMPING_DEMO_PATTERN = "on_2_and_4";
 // instead of matching on the display name, so a visitor's own real setlist —
 // even one they happen to have named the same — is never swept up with it.
 export const DEMO_SETLIST_NAME = "Tour setlist";
+const COMPING_PART_SELECTOR = ".comping-part-btn";
+const ARIA_PRESSED = "aria-pressed";
 const DEMO_SETLIST_MARKER = "\u0000rj-tour-demo";
 export const DEMO_SETLIST_SONG_1 = "basin_street.abc";
 export const DEMO_SETLIST_SONG_2 = "bill_bailey.abc";
@@ -65,6 +67,8 @@ export const TOUR_ACTION_NAMES = [
   "openMixer",
   "openInspiration",
   "compingOn",
+  "compingSplit",
+  "compingUnsplit",
   "createDemoSetlist",
   "addDemoSong1",
   "addDemoSong2",
@@ -126,6 +130,27 @@ function setDrawer(open) {
 }
 
 // Set the (native) <select> to `value` the way a user's pick would.
+function setCompingSplit(on) {
+  const btn = byId("compingSplitBtn");
+  if (btn && (btn.getAttribute(ARIA_PRESSED) === "true") !== on) btn.click();
+}
+
+// Pressed state of the R / 3 / 5 toggles, in DOM order.
+function compingPartStates() {
+  return qsa(COMPING_PART_SELECTOR).map((b) => b.getAttribute(ARIA_PRESSED) === "true");
+}
+
+// Click the toggles back to `states`: switch the wanted ones on first, so the
+// "at least one tone stays selected" guard never blocks a switch off.
+function setCompingParts(states) {
+  const btns = qsa(COMPING_PART_SELECTOR);
+  const flip = (want) => btns.forEach((b, i) => {
+    if (states[i] === want && (b.getAttribute(ARIA_PRESSED) === "true") !== want) b.click();
+  });
+  flip(true);
+  flip(false);
+}
+
 function chooseComping(value) {
   const select = byId("comping");
   if (!select || select.value === value) return false;
@@ -141,6 +166,20 @@ function chooseComping(value) {
 function leaveSheetIfStacked() {
   const back = byId("sheetBackBtn");
   if (document.body.classList.contains(SHEET_ACTIVE_CLASS) && isShown(back)) back.click();
+}
+
+// Split comping into its R / 3 / 5 voices — the same click on the Split
+// button a visitor would make. Needs comping on first (the button is hidden
+// while it's off), so a step using this also says `setup: compingOn`.
+async function compingSplit() {
+  const btn = byId("compingSplitBtn");
+  if (btn && btn.getAttribute(ARIA_PRESSED) !== "true") btn.click();
+}
+
+// The reverse: back to the single three-note staff, so the steps before the
+// Split step always show the unsplit staff (also when walking Back to them).
+async function compingUnsplit() {
+  setCompingSplit(false);
 }
 
 async function openDrawer() {
@@ -307,6 +346,8 @@ export function createTourActions(ctx) {
     openMixer,
     openInspiration,
     compingOn,
+    compingSplit,
+    compingUnsplit,
     createDemoSetlist,
     addDemoSong1,
     addDemoSong2,
@@ -348,6 +389,8 @@ export function createTourActions(ctx) {
       sheetActive: document.body.classList.contains(SHEET_ACTIVE_CLASS),
       drawerOpen: isDrawerOpen(),
       compingValue: select ? select.value : null,
+      compingSplit: Boolean(byId("compingSplitBtn")) && byId("compingSplitBtn").getAttribute(ARIA_PRESSED) === "true",
+      compingParts: compingPartStates(),
       fullscreen: document.body.classList.contains(FULLSCREEN_CLASS),
       mixerOpen: Boolean(ctx.mixer.isOpen()),
       inspirationOpen: Boolean(ctx.inspiration.isOpen()),
@@ -428,6 +471,8 @@ export function createTourActions(ctx) {
     ctx.mixer.setOpen(false);
     ctx.inspiration.setOpen(false);
     setDrawer(snap.drawerOpen);
+    setCompingParts(snap.compingParts);
+    setCompingSplit(snap.compingSplit);
     if (snap.compingValue !== null) chooseComping(snap.compingValue);
     await restoreLocation(snap);
     restorePanels(snap);

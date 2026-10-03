@@ -8,6 +8,8 @@
 export const PREF_KEYS = {
   instrument: "rj.instrument",
   comping: "rj.comping",
+  compingSplit: "rj.compingSplit",
+  compingParts: "rj.compingParts",
   solo: "rj.solo",
   sheetAdvanced: "rj.sheetAdvanced",
   inspirationWidth: "rj.inspirationWidth",
