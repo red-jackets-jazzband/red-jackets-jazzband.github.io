@@ -253,13 +253,27 @@ function chordTextsEqual(first, second) {
   return true;
 }
 
+// Each measure's chord texts with a continuation (" % ", a bar with no chord
+// of its own) expanded to the chord still sounding from the previous bar, so
+// "C | %" and "C | C" count as the same harmony when looking for repeats.
+function expandContinuations(chords) {
+  const texts = [];
+  chords.forEach((measure, i) => {
+    const prev = i > 0 ? texts[i - 1] : [];
+    const isContinuation = measure.text.length === 1 && measure.text[0] === " % ";
+    texts.push(isContinuation && prev.length > 0 ? [prev[prev.length - 1]] : measure.text);
+  });
+  return texts;
+}
+
 // Is `chords` really just its first `count` measures, repeated `repeats`
 // times with identical content each time?
 function chordsRepeat(chords, count, repeats) {
+  const texts = expandContinuations(chords);
   for (let i = 0; i < count; i++) {
-    const first = chords[i].text;
+    const first = texts[i];
     for (let r = 1; r < repeats; r++) {
-      const second = chords[i + count * r].text;
+      const second = texts[i + count * r];
       if (!chordTextsEqual(first, second)) {
         return false;
       }

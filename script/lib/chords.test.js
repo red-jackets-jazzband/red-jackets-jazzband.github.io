@@ -537,3 +537,8 @@ test("parseChordScheme's stamped key survives a dropped alternate ending, stayin
     [["Bb"], "Bb"],
   ]);
 });
+
+test("simplifySong treats a '%' continuation as the chord it continues when comparing repeats", () => {
+  const chords = ["C", " % ", "G", "G", "C", "C", "G", " % "].map((text) => ({ text: [text] }));
+  assert.equal(simplifySong(chords, 4).length, 4);
+});

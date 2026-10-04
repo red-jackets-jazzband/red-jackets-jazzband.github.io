@@ -255,3 +255,17 @@ test("rerender re-engraves the stored (clef-adjusted) song text", () => {
     cleanup();
   }
 });
+
+test("two W: tables render below the chord table in their source order", () => {
+  const { abcjs, sheet, cleanup } = setup();
+  try {
+    const text = "X:1\nT:Test\nM:4/4\nL:1/8\nW:| 1 | Intro |\nW:\nW:| 2 | Solo |\nK:C\n\"C\" C8 |";
+    withAbcjs(abcjs, () => sheet.render(text));
+    const forms = [...document.querySelectorAll(".songForm")];
+    assert.equal(forms.length, 2);
+    assert.match(forms[0].textContent, /Intro/);
+    assert.match(forms[1].textContent, /Solo/);
+  } finally {
+    cleanup();
+  }
+});

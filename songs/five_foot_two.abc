@@ -5,8 +5,12 @@ L:1/4
 Q:1/4=190
 F:https://www.youtube.com/watch?v=QSc1bhcYrpk
 F:https://secondhandsongs.com/work/137560
-N: Intro Bas/Banjo
-N: Outro repeat last 4 bars (2-5-1)
+W:| 1 | intro: sousaphone; + banjo |
+W:| 2 | collective 2x; sousaphone plays the break |
+W:| 3 | vocals |
+W:| 4 | collective |
+W:| 5 | solos |
+W:| 6 | collective 2x; outro 3x? |
 C:Ray Henderson (1925)
 R:Traditional
 K:Bbmaj
@@ -24,5 +28,5 @@ w:_ Now if you run in-to a five foot two Co-vered with fur,
 w:Dia-mond rings, and all those things, Bet your life it is-n't her _ But
 "Bb"DFD z | "D7" D^FDz|"G7" DGDG | DG/2D/2-DG|
 w:could she love, could she woo, could she, could she, could she coo! _ Has
-"C7" BGBG| "F7" F2G2 | "Bb" B4-|B3 z |]
+"C7" "_outro: repeat last 4 bars (2-5-1)" BGBG| "F7" F2G2 | "Bb" B4-|B3 z |]
 w:an-y-bod-y seen my girl?

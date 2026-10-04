@@ -16,7 +16,7 @@ import {
   page does so through `ctx` or a real click — the same paths a user takes.
 */
 
-export const DEMO_SONG_FILE = "bourbon_street_parade.abc";
+export const DEMO_SONG_FILE = "bill_bailey.abc";
 export const DEMO_SETLIST_FILE = "setlist_2026.txt";
 // A plain, easy-to-read comping pattern (see COMPING_PATTERNS in lib/comping.js).
 export const COMPING_DEMO_PATTERN = "on_2_and_4";

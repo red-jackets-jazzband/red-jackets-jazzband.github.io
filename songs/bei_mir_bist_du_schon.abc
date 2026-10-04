@@ -6,11 +6,10 @@ Q:1/2=100
 F:https://www.youtube.com/watch?v=h7OLgI6Xyyg
 F:https://secondhandsongs.com/work/69924
 C:Jacob Jacobs, Sholom Secunda (1932)
-N:Slow intro
-N:First chorus "Salvation army" style, last chorus stop time for drum solo, repeat last 4 bars 3x as outro
+W:First chorus "Salvation army" style, last chorus stop time for drum solo
 K:Gm
 P:Intro
-D GA |: "Gm" B B2 B- B A2 G | "AmØ" c2 A2 "D7" z D GA |
+"_slow intro" D GA |: "Gm" B B2 B- B A2 G | "AmØ" c2 A2 "D7" z D GA |
 "Gm" B B2 B- B A2 G | "AmØ" c2 A2 z D GA | "Gm" B B2 B- B A2 G |
 "Cm" c c2 c- c B2 A |1 "Eb7" B B2 B- B A2 G | "D7" A4 z D GA :|2 "Eb7" _d d2 d- d c2 B | "D7" =d2 z2 z2 D2 ||
 P:Chorus

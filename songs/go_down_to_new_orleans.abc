@@ -6,20 +6,28 @@ L:1/8
 R:Traditional
 F:https://www.youtube.com/watch?v=iBn0O1kiQYw
 F:https://open.spotify.com/track/0JFGtqDx9opTcAeYid3NPu
+W:| 1 | roll off: drums |
+W:| 2 | collective; + 2nd trumpet harmony |
+W:| 3 | vocals; riff: "Whole note", 7 bars in the B |
+W:| 4 | solos 2x; riff: "Whole note", 7 bars in the B, 1 bar rest, then "Hit and hold" to the end (Kees Tijssen 6) |
+W:| 5 | vocals; same riff |
+W:| 6 | collective as on the recording; 2nd trumpet free; drums solo first 8 bars of the B, band back in bar 9; last 4 bars chromatic (2-5-1?) |
 K:Ebmaj
+P:A1
 G2 A2 || "Eb" B e2 B e2 B2 | G4 E2 F2 | G B2 G B2 G2 | E2 G2 F2 E2 |
 w:See * I know a place to go, Where they nev-er have ice or snow, Why don't you
-"Bb7" D8-|D2 AA G2 F2 | "Eb" E8-|E4 G2 A2|
+"Bb7" D8-|D2 AA G2 F2 | "Eb" E8-|E4 G2 A2||
 w:go _ Down to New Or-leans. _ You can
+P:A2
 "Eb" B e2 B e2 B2 | G4 E2 F2 | G B2 G B2 G2 | E2 G2 F2 E2 |
 w:ride in an old street car, _ _  Ce-le-brate Mar-di Gras, Why don't you
-"Bb7" D8-|D2 AA G2 F2| "Eb" E8-|E4 F2 G2 |
+"Bb7" D8-|D2 AA G2 F2| "Eb" E8-|E4 F2 G2 ||
 w:go _ Down to New Or-leans. _ Try that
+P:B
 "Ab" A c2 A c4 | "Abm" _c2 A2 c2 GA | "Eb" BBBG B2 G2 | "Eb7" B8 |
 w:red beans and rice oh so nice You can ev-en get a big pra-line
-"Ab" Ac2 A c2 A2 | "Abm" _c2 A2 c2 GA | "Bb7" B2 B2 cc ^c2 | d4 G2 A2 |
+"Ab" Ac2 A c2 A2 | "Abm" _c2 A2 c2 GA | "Bb7" B2 B2 cc ^c2 | d4 G2 A2 ||
 w:Vi-sit vieux Car-re ev'-ry day You might see a car-ni-val queen.
-"Eb" B e2 B e2 B2 | G6 z2 | G B2 G B2 G2 | E2 G2 F2 E2 |
-w:List-en to dix-ie-land Played by the great jazz bands, why don't you
-"Bb7" D8-|D2 AA G2 F2 | "Eb" E8-|E6 z2 |]
-w:go _ Down to New Or-leans
+P:A3
+"Eb" B e2 B e2 B2 | G6 z2 | G B2 G B2 G2 | E2 G2 F2 E2 | "Bb7" D8-|D2 AA G2 F2 | "Eb" E8-|E6 z2 |]
+w:List-en to dix-ie-land Played by the great jazz bands, why don't you go _ Down to New Or-leans

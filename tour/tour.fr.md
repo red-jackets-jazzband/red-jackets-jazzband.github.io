@@ -30,7 +30,10 @@ Utilisez **Suivant** et **Retour**, ou les touches **←** et **→**. **Échap*
 Tapez une partie du titre et la liste se réduit au fil de la frappe. Cliquez dans ce champ, puis utilisez **↑** **↓** et **Entrée** pour ouvrir un morceau. La barre **A–Z** à côté de la liste mène directement à une lettre.
 
 ## open: Votre grille
-Quand vous choisissez un morceau, il s'ouvre ici. Pour la visite, nous avons ouvert *Bourbon Street Parade*. Le tableau d'accords vient d'abord, avec la partition complète en dessous. Sur téléphone, la grille occupe tout l'écran, et le bouton **‹ Songs** en haut ramène à la liste.
+Quand vous choisissez un morceau, il s'ouvre ici. Pour la visite, nous avons ouvert *Bill Bailey*. Le tableau d'accords vient d'abord, avec la partition complète en dessous. Sur téléphone, la grille occupe tout l'écran, et le bouton **‹ Songs** en haut ramène à la liste.
+
+## form: Suivre la forme
+La rangée de flèches sous le tableau d'accords est la **forme** du morceau : l'ordre dans lequel les parties sont jouées. Chaque flèche est une étape, avec son numéro et la partie jouée. Les étapes qui jouent la même partie ont la même couleur, et une mention comme *2x* indique combien de fois elle se répète. En dessous figure qui joue : ici la trompette ouvre, puis tout le monde joue ensemble, puis le chant et les solos. Les morceaux sans forme écrite montrent l'ordre de leurs parties (intro, couplet, ...) de la même façon.
 
 ## instrument: Lisez votre propre partie
 Choisissez votre instrument et toute la grille est transposée pour lui. Les choix sont : hauteur réelle, Concert + Roman (hauteur réelle avec des chiffres romains dans le tableau d'accords), saxophone alto, clarinette ou trompette en si bémol, saxophone ténor, trombone (clé de fa) ou soubassophone (clé de fa). La page retient votre choix. La lecture sonne toujours à la hauteur réelle, quelle que soit la partie affichée.

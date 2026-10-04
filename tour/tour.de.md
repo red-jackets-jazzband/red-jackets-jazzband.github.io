@@ -30,7 +30,10 @@ Nutze **Weiter** und **Zurück** oder die Tasten **←** und **→**. Mit **Esc*
 Tipp einen Teil des Titels ein, dann wird die Liste beim Tippen kürzer. Klick in dieses Feld. Mit **↑** **↓** und **Enter** öffnest du dann einen Song. Die **A–Z**-Leiste neben der Liste springt zu einem Buchstaben.
 
 ## open: Dein Leadsheet
-Wenn du einen Song auswählst, öffnet er sich hier. Für die Tour haben wir *Bourbon Street Parade* geöffnet. Zuerst kommt die Akkordtabelle, darunter die vollständige Notation. Auf einem Handy füllt das Leadsheet den ganzen Bildschirm, und mit dem **‹ Songs**-Knopf oben kommst du zurück zur Liste.
+Wenn du einen Song auswählst, öffnet er sich hier. Für die Tour haben wir *Bill Bailey* geöffnet. Zuerst kommt die Akkordtabelle, darunter die vollständige Notation. Auf einem Handy füllt das Leadsheet den ganzen Bildschirm, und mit dem **‹ Songs**-Knopf oben kommst du zurück zur Liste.
+
+## form: Der Form folgen
+Die Pfeilreihe unter der Akkordtabelle ist die **Form** des Stücks: die Reihenfolge, in der die Teile gespielt werden. Jeder Pfeil ist ein Schritt, mit seiner Nummer und dem Teil, der dabei erklingt. Schritte mit demselben Teil haben dieselbe Farbe, und ein Hinweis wie *2x* sagt, wie oft wiederholt wird. Darunter steht, wer spielt: hier eröffnet die Trompete, dann spielen alle zusammen, danach Gesang und Soli. Stücke ohne aufgeschriebene Form zeigen ihre Teilereihenfolge (Intro, Strophe, ...) auf dieselbe Weise.
 
 ## instrument: Lies deine eigene Stimme
 Wähl dein Instrument, dann wird das ganze Leadsheet dafür transponiert. Zur Auswahl stehen Konzerttonhöhe, Concert + Roman (Konzerttonhöhe mit römischen Ziffern in der Akkordtabelle), Altsaxofon, B-Klarinette oder -Trompete, Tenorsaxofon, Posaune (Bassschlüssel) oder Sousaphon (Bassschlüssel). Die Seite merkt sich deine Wahl. Die Wiedergabe klingt immer in Konzerttonhöhe, egal welche Stimme angezeigt wird.

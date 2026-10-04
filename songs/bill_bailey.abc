@@ -8,24 +8,25 @@ C:Hughie Cannon (1902)
 F:https://www.youtube.com/watch?v=UfljtQMT1GU
 F:https://open.spotify.com/track/2EYjaK8Koe0q7PcK1MlB4S
 F:https://secondhandsongs.com/work/117791
+W:| 1 | Intro | trumpet |
+W:| 2 | Verse 2x | collective |
+W:| 3 | Verse | vocals |
+W:| 4 | Verse | solos |
+W:| 5 | Verse 2x | collective; end with the 4-bar intro of Bourbon Street |
 K:Fmaj
 P:intro
-C/2C/2|FC FC/2C/2 | F/2C/2F/A/ z/ F/A/c/ | z/ fd/ c/A/F/c/ | "^Trombone" (C2c2) ||
+"_trumpet signal in G" C/2C/2|FC FC/2C/2 | F/2C/2F/A/ z/ F/A/c/ | z/ fd/ c/A/F/c/ | "^Trombone" (C2c2) ||
 w:
 P:verse
-"F" C D2 F | A3/2 ^G/2 Ac| C D2 F | A4|
-w:Won't you come home. Bill Bai-ley, won't you come home?
-"F"CD2 F| A2 c2 | "C7" c E3-|E4|
-w:She moans the whole day long -_
-"C7" C E2 G | BABc| C E2 G | B4 |
-w:I'll do the cook-ing, dar-lin', I'll pay the rent,
-"C7"C E2 G | c2 d2 | "F" d A3-| A4||
+"F" C D2 F | A3/2 ^G/2 Ac| C D2 F | A4| CD2 F| A2 c2 |
+w:Won't you come home. Bill Bai-ley, won't you come home? She moans the whole day
+"C7" c E3-|E4| "C7" C E2 G | BABc| C E2 G | B4 |
+w:long -_ I'll do the cook-ing, dar-lin', I'll pay the rent,
+"C7" C E2 G | c2 d2 | "F" d A3-| A4||
 w:I know I've done you wrong-
-"F" C D2 F | A3/2 ^G/2 A c | C D2 F | A3 C|
-w:'Mem-ber that rain-y eve that I threw you out, with
-"F7" C C F A | c2 _e2 | "Bb" d4-|d3 F|
-w:noth-ing but a fine tooth comb?-_ I
-"Bb" F F2 F | "Fdim" G2 F2 | "F" c c2 d | "D7" A3 A|
-w:know I'm to blame, well, ain't that a shame? Bill
+"F" C D2 F | A3/2 ^G/2 A c | C D2 F | A3 C| "F7" C C F A | c2 _e2 |
+w:'Mem-ber that rain-y eve that I threw you out, with noth-ing but a fine tooth
+"Bb" d4-|d3 F| "Bb" F F2 F | "Fdim" G2 F2 | "F" c c2 d | "D7" A3 A|
+w:comb?-_ I know I'm to blame, well, ain't that a shame? Bill
 "G7" A G ^F G | "C7" B2 A2 | "F" F4-|Fz z2 ||
 w:Bai-ley, won't you please come home?-

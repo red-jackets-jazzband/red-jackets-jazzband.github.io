@@ -56,7 +56,7 @@
 
 
   
-  <link rel="stylesheet" href="/css/split.min.8bc88fa59421a5cd60b7b4c781dc1d1514c95144f4aaca9fd6e897b819c6eb60.css" type="text/css" media="screen,print" integrity="sha256-i8iPpZQhpc1gt7THgdwdFRTJUUT0qsqf1uiXuBnG62A=" />
+  <link rel="stylesheet" href="/css/split.min.a7dcdeda712bcdf240f85079881d49300b2fd3939602287f0a6d693b49f3e724.css" type="text/css" media="screen,print" integrity="sha256-p9ze2nErzfJA&#43;FB5iB1JMAsv05OWAih/Cm1pO0nz5yQ=" />
 
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
@@ -88,10 +88,11 @@
     
 
     
-    <main class="split-content">
+    <div class="split-content">
       <div class="split-content-vertically-center">
-        
-        <div class="split-intro hideOnprint">
+        <main>
+          
+          <div class="split-intro hideOnprint">
   <div class="split-intro-nav">
     <span class="rj-intro-nav-lang"><a href="/"><img src="/images/Home_Icon.svg" height=19px alt="Red Jackets Jazzband"></a> <a href="/">en</a> | <a href="/nl">nl</a> | <a href="/de">de</a> | <a href="/fr">fr</a></span>
     
@@ -105,10 +106,10 @@
 </div>
 
 
-        
-        
           
-          <div class="split-bio">
+          
+            
+            <div class="split-bio">
   <script src="/script/abcjs_midi_6.7.1-min.js" type="text/javascript" defer></script>
 <script src="/script/tonal.4.6.9-min.js" type="text/javascript" defer></script>
 <script type="module" src="/script/songs-page.js"></script>
@@ -155,7 +156,9 @@
   </div>
 </div>
 <div id="rjSheet" class="rj-sheet">
-<button id="sheetBackBtn" class="rj-sheet-back hideOnprint" type="button"><span class="fa-solid fa-chevron-left" aria-hidden="true"></span><span id="sheetBackLabel">Songs</span></button>
+<div class="rj-sheet-navrow hideOnprint">
+<button id="sheetBackBtn" class="rj-sheet-back" type="button"><span class="fa-solid fa-chevron-left" aria-hidden="true"></span><span id="sheetBackLabel">Songs</span></button>
+</div>
 <div id="sheetmenu" class="hideOnprint">
   <div id="sheetStatus" class="sheet-status"></div>
   <div class="sheet-adjust">
@@ -278,7 +281,7 @@
   <button type="button" id="tourStartLink" class="rj-sheet-empty-tour" hidden>First time here? Take the tour <span class="fa-solid fa-arrow-right" aria-hidden="true"></span></button>
 </div>
 <button id="sheetFullscreenBtn" class="rj-sheet-fullscreen-btn hideOnprint" type="button" title="Full screen" aria-label="Full screen" aria-pressed="false"><span class="fa-solid fa-expand" aria-hidden="true"></span></button>
-<div id="songtitle" class="songtitle"></div>
+<div class="rj-sheet-pager"><button id="sheetPrevBtn" class="rj-sheet-step hideOnprint" type="button" title="Previous song" aria-label="Previous song"><span class="fa-solid fa-chevron-left" aria-hidden="true"></span></button><div id="songtitle" class="songtitle"></div><button id="sheetNextBtn" class="rj-sheet-step hideOnprint" type="button" title="Next song" aria-label="Next song"><span class="fa-solid fa-chevron-right" aria-hidden="true"></span></button></div>
 <div id="chordtable" class="chordtable"></div>
 <div id="notation" class="notation"></div>
 <div id="lyrics" class="lyrics"></div>
@@ -386,12 +389,11 @@ Retrieved from www.redjackets.nl - <span id="instrumentText"></span>
 
 </div>
 
-        
-      </div>
-    </main>
+          
+        </main>
 
-    
-    <div class="split-credit hideOnprint">
+        
+        <div class="split-credit hideOnprint">
   <p>&copy;2019 Red Jackets Jazzband - <a href="https://onepagelove.com/split">Split Template</a> by <a href="https://onepagelove.com">One Page Love</a> - We use cookies for analyzing traffic on our site.</p>
 
   <!--
@@ -401,6 +403,8 @@ Retrieved from www.redjackets.nl - <span id="instrumentText"></span>
   -->
 </div>
 
+      </div>
+    </div>
 
   </div>
 

@@ -17,7 +17,7 @@ import { classifySwipe } from "../lib/swipe.js";
 // text node ("−" / "+") as the target, so climb to its element first.
 function startedOnControl(target) {
   const el = target && target.nodeType === 3 ? target.parentElement : target;
-  return Boolean(el && el.closest && el.closest("#sheetmenu, #sheetBackBtn"));
+  return Boolean(el && el.closest && el.closest("#sheetmenu, .rj-sheet-navrow, .rj-sheet-step"));
 }
 
 export function createSwipeNav(ctx) {
@@ -32,6 +32,10 @@ export function createSwipeNav(ctx) {
   function init() {
     const sheet = byId("rjSheet");
     if (!sheet) return;
+    const prev = byId("sheetPrevBtn");
+    const next = byId("sheetNextBtn");
+    if (prev) prev.addEventListener("click", () => step(-1));
+    if (next) next.addEventListener("click", () => step(1));
     let start = null;
 
     sheet.addEventListener("touchstart", (e) => {

@@ -30,7 +30,10 @@ Gebruik **Volgende** en **Terug**, of de toetsen **←** en **→**. Met **Esc**
 Typ een deel van een titel en de lijst wordt korter terwijl je typt. Klik op dit vak en gebruik daarna **↑** **↓** en **Enter** om een nummer te openen. De **A–Z**-balk naast de lijst springt naar een letter.
 
 ## open: Je leadsheet
-Als je een nummer kiest, opent het hier. Voor de rondleiding hebben we *Bourbon Street Parade* geopend. Eerst komt de akkoordentabel, met de volledige notatie eronder. Op een telefoon vult het leadsheet het hele scherm, en met de **‹ Songs**-knop bovenaan ga je terug naar de lijst.
+Als je een nummer kiest, opent het hier. Voor de rondleiding hebben we *Bill Bailey* geopend. Eerst komt de akkoordentabel, met de volledige notatie eronder. Op een telefoon vult het leadsheet het hele scherm, en met de **‹ Songs**-knop bovenaan ga je terug naar de lijst.
+
+## form: Volg de vorm
+De rij pijlen onder de akkoordentabel is de **vorm** van het nummer: de volgorde waarin de delen gespeeld worden. Elke pijl is één stap, met zijn nummer en het deel dat erin klinkt. Stappen met hetzelfde deel hebben dezelfde kleur, en een aanduiding als *2x* zegt hoe vaak het herhaald wordt. Eronder staat wie speelt: hier opent de trompet, daarna speelt iedereen samen, dan de zang en de solo's. Nummers zonder opgeschreven vorm tonen hun volgorde van delen (intro, couplet, ...) op dezelfde manier.
 
 ## instrument: Lees je eigen partij
 Kies je instrument en het hele leadsheet wordt ervoor getransponeerd. De keuzes zijn concertstemming (C), Concert + Roman (concertstemming met Romeinse cijfers in de akkoordentabel), altsax, Bb-klarinet of -trompet, tenorsax, trombone (bassleutel) of sousafoon (bassleutel). De pagina onthoudt je keuze. Het geluid klinkt altijd in concertstemming, welke partij er ook op het scherm staat.
