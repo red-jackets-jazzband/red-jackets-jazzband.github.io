@@ -29,6 +29,22 @@ export function createSwipeNav(ctx) {
     ctx.library.stepLibrarySong(dir);
   }
 
+  function canStep(dir) {
+    if (ctx.state.activeTab === "setlists") {
+      return ctx.state.setlistsView === "open" && ctx.setlistView.canStep(dir);
+    }
+    return ctx.library.canStepLibrary(dir);
+  }
+
+  // Hide the pager's chevrons at the ends of the list: no previous song, no
+  // left button; no next song, no right button.
+  function updateButtons() {
+    const prev = byId("sheetPrevBtn");
+    const next = byId("sheetNextBtn");
+    if (prev) prev.hidden = !canStep(-1);
+    if (next) next.hidden = !canStep(1);
+  }
+
   function init() {
     const sheet = byId("rjSheet");
     if (!sheet) return;
@@ -56,5 +72,5 @@ export function createSwipeNav(ctx) {
     }, { passive: true });
   }
 
-  return { init };
+  return { init, updateButtons };
 }

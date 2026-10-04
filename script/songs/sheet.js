@@ -31,6 +31,11 @@ const JAZZ_FONTS = [
   return fonts;
 }, {});
 
+// The title and part order are hidden (the page draws its own), so the vertical gaps ABCjs reserves
+// around them are only dead white between the form strip and the composer/style line. These are
+// file-header directives; ABCjs ignores the same keys in the `format` render option.
+const TIGHT_HEADER_SPACING = "%%titlespace 0\n%%composerspace 0\n%%musicspace 0\n%%titlefont MuseJazzText 1\n";
+
 function abcParams(visualTranspose) {
   return {
     visualTranspose,
@@ -226,7 +231,7 @@ function stepWeight(step) {
 function formStep(step, shade) {
   const arrow = el("div", { class: "songForm-arrow", style: { backgroundColor: shade } }, [
     el("span", { class: "songForm-num", text: step.number }),
-    step.part ? el("span", { class: "songForm-part", text: step.part }) : null,
+    ...step.part.split(" ").filter(Boolean).map((name) => el("span", { class: name === "..." ? "songForm-part songForm-part--more" : "songForm-part", text: name })),
     step.repeat ? el("span", { class: "songForm-repeat", text: step.repeat }) : null,
   ]);
   return el("li", { class: "songForm-step", style: { flex: `${stepWeight(step)} 1 0` } }, [
@@ -424,6 +429,12 @@ export function createSheet(ctx) {
     });
   }
 
+  // Show the sheet screen and refresh the prev / next chevrons for this song.
+  function activateSheet() {
+    document.body.classList.add("rj-sheet-active");
+    if (ctx.swipeNav) ctx.swipeNav.updateButtons();
+  }
+
   function engrave(text, opts) {
     const {
       notationId, chordId, titleId,
@@ -464,13 +475,13 @@ export function createSheet(ctx) {
     // #rjSheet / #notation start display:none until a song is active; that must
     // flip before ABCjs measures the container ("responsive: resize" reads its
     // width at render time; a display:none box measures 0).
-    if (!isBooklet) document.body.classList.add("rj-sheet-active");
+    if (!isBooklet) activateSheet();
 
     const notationEl = byId(notationId);
     notationEl.classList.toggle("comping-active", comping.active);
 
     const { abcText: renderTextNoTables } = extractWordsTables(renderText);
-    const visualObjs = ABCJS.renderAbc(notationId, renderTextNoTables, abcParams(visual));
+    const visualObjs = ABCJS.renderAbc(notationId, TIGHT_HEADER_SPACING + renderTextNoTables, abcParams(visual));
 
     colorComping(notationEl, comping);
 
