@@ -172,6 +172,30 @@ export function fitChordTable(container) {
 }
 
 /*
+  Fit the song-form arrow strip(s) under the chord grid the same way: each
+  step keeps at least its own min-content width, so on a phone the strip
+  overflows. Zoom it down by the overflow ratio so the whole flow stays on
+  screen, and re-fit on rotate.
+*/
+export function fitSongForms(chordEl) {
+  const parent = chordEl && chordEl.parentNode; // NOSONAR: `?.` is a SyntaxError on Safari 12 (see Browser support)
+  if (!parent) return;
+  parent.querySelectorAll(".songForm").forEach((form) => {
+    form.style.zoom = "";
+    form.style.width = "";
+    forceReflow(form);
+    const available = form.clientWidth;
+    if (!available) return;
+    form.style.width = "max-content";
+    const natural = form.scrollWidth;
+    form.style.width = "";
+    if (natural <= available + 1) return;
+    form.style.width = `${natural}px`;
+    form.style.zoom = String(available / natural);
+  });
+}
+
+/*
   Read the repeat-section span from a rendered chord grid: the index of the
   first cell carrying `.chordCellLeftRepeat` and the last carrying
   `.chordCellRightRepeat`. Returns { start, end } (both may be undefined), used

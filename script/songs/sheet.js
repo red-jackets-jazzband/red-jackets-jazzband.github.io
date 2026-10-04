@@ -11,7 +11,7 @@ import {
   injectMixerAudio, resolveGchordPattern, parseVoiceList, resolveMixerVoices, isCompingLabel,
 } from "../lib/audio-mix.js";
 import { defaultVoiceProgram } from "../lib/gm-voices.js";
-import { renderChordTable, scanRepeatBoundaries, fitChordTable } from "./chord-table.js";
+import { renderChordTable, scanRepeatBoundaries, fitChordTable, fitSongForms } from "./chord-table.js";
 import { stylePartMarkers, applyCompingColors, applySplitCompingColors } from "./sheet-decorations.js";
 import { updateIrealProLink } from "./irealpro-link.js";
 import { updateInspirationExtLinks } from "./inspiration-links.js";
@@ -62,9 +62,14 @@ function parseTune(text, visualTranspose) {
 // has loaded — the first render can measure the grid under a wider fallback
 // face, which inflates its natural width and over-shrinks the fit.
 function fitLiveChordGrid(chordId) {
-  fitChordTable(byId(chordId));
+  const fit = () => {
+    fitChordTable(byId(chordId));
+    fitSongForms(byId(chordId));
+  };
+  fit();
   if (document.fonts && document.fonts.status !== "loaded") {
-    document.fonts.ready.then(() => fitChordTable(byId(chordId)));
+    // Fit even if the font load fails: the fallback face is still better than no fit.
+    document.fonts.ready.then(fit, fit);
   }
 }
 
@@ -511,7 +516,10 @@ export function createSheet(ctx) {
   let refitTimer;
   window.addEventListener("resize", () => {
     clearTimeout(refitTimer);
-    refitTimer = setTimeout(() => fitChordTable(byId("chordtable")), 150);
+    refitTimer = setTimeout(() => {
+      fitChordTable(byId("chordtable"));
+      fitSongForms(byId("chordtable"));
+    }, 150);
   });
 
   return {
