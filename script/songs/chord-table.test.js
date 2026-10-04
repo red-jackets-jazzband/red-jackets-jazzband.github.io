@@ -259,3 +259,24 @@ test("fitChordTable tolerates a missing container or grid", () => {
     assert.doesNotThrow(() => fitChordTable(container));
   });
 });
+
+test("renderChordTable sets the row after an intro and an outro's row apart with a gap class", () => {
+  inDom((container) => {
+    const intro = [bar(["F"], { part: "Intro" }), bar(["%"]), bar(["%"]), bar(["%"])];
+    const main = Array.from({ length: 8 }, (_, i) => bar([`C${i}`], i === 0 ? { part: "A" } : {}));
+    const outro = Array.from({ length: 6 }, (_, i) => bar([`D${i}`], i === 0 ? { part: "Outro" } : {}));
+    renderChordTable([...intro, ...main, ...outro], container);
+    const gapped = [...container.querySelectorAll(CELL_SELECTOR)].map((cell) =>
+      cell.classList.contains("chordCellSectionGap"),
+    );
+    // Intro row: no gap. First main row (4 cells): gap. Second main row: none.
+    // Outro's first row (4 cells): gap; its second row (2 cells): none.
+    assert.deepEqual(gapped, [
+      ...[false, false, false, false],
+      ...[true, true, true, true],
+      ...[false, false, false, false],
+      ...[true, true, true, true],
+      ...[false, false],
+    ]);
+  });
+});

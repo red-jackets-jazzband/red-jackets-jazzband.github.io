@@ -19,6 +19,16 @@ function partBadgeText(title) {
   return title.length > 2 ? title.slice(0, 1) : title;
 }
 
+// A marker in the grid's leftmost column has no cell to its own left to
+// overlap, so it hangs outside the table instead of inset over the chord
+// text — chordPartMarker--outsideLeft, styled in split.css.
+function partMarker(part, outsideLeft) {
+  return el("span", {
+    class: outsideLeft ? "chordPartMarker chordPartMarker--outsideLeft" : "chordPartMarker",
+    text: partBadgeText(part),
+  });
+}
+
 // Indices of the measures that start the section right after an intro — each
 // must begin a new grid row so the intro always sits on a line of its own
 // (Bugle Boy's 4-bar intro in an 8-column grid, say).
@@ -32,6 +42,17 @@ function introRowBreaks(measures) {
     inIntro = isIntro;
   });
   return breaks;
+}
+
+// Indices of the measures that start an ending section (Outro, Coda) after
+// the main parts. Like the section after an intro, it starts a fresh row set
+// off from the rows above by a little extra space (see renderChordTable).
+function endingRowStarts(measures) {
+  const starts = new Set();
+  measures.forEach((measure, index) => {
+    if (index > 0 && measure.part !== undefined && /\b(outro|coda)\b/i.test(measure.part)) starts.add(index);
+  });
+  return starts;
 }
 
 /*
@@ -85,6 +106,8 @@ export function renderChordTable(chords, container) {
   const grid = el("div", { class: "chordGrid", style: { "--chord-cols": String(cols) } });
 
   const rowStarts = introRowBreaks(measures);
+  const endingStarts = endingRowStarts(measures);
+  let inGapRow = false;
   // 0-based column the next cell lands in — tracked rather than derived from
   // the index, since a forced row start shifts every cell after it.
   let column = 0;
@@ -92,24 +115,19 @@ export function renderChordTable(chords, container) {
   measures.forEach((measure, index) => {
     // Column 1 on the first cell after an intro starts a fresh row without
     // adding filler cells (the flat cell order/count must stay intact).
-    const forceRowStart = rowStarts.has(index) && column !== 0;
+    const startsGap = rowStarts.has(index) || endingStarts.has(index);
+    const forceRowStart = startsGap && column !== 0;
     if (forceRowStart) column = 0;
     const chordDiv = el("div", { class: "chordDiv", html: String(measure.text) });
     const cell = el("div", { class: "chordCell" }, chordDiv);
     if (forceRowStart) cell.style.gridColumnStart = "1";
+    // The first row after an intro, and the first row of an outro, sit a
+    // little apart from what's above. Every cell of that row carries the gap,
+    // so the row grows as a whole and no cell's border stretches into it.
+    if (startsGap) inGapRow = true;
+    if (inGapRow) cell.classList.add("chordCellSectionGap");
 
-    if (hasMultipleParts && measure.part !== undefined) {
-      // A marker in the grid's leftmost column has no cell to its own left to
-      // overlap, so it hangs outside the table instead of inset over the
-      // chord text — chordPartMarker--outsideLeft, styled in split.css.
-      const outsideLeft = column === 0;
-      cell.append(
-        el("span", {
-          class: outsideLeft ? "chordPartMarker chordPartMarker--outsideLeft" : "chordPartMarker",
-          text: partBadgeText(measure.part),
-        }),
-      );
-    }
+    if (hasMultipleParts && measure.part !== undefined) cell.append(partMarker(measure.part, column === 0));
     if (measure.doubeThinBarLeft !== undefined) cell.classList.add("chordCellDoubleThinBarLeft");
     if (measure.doubeThinBarRight !== undefined) cell.classList.add("chordCellDoubleThinBarRight");
 
@@ -127,6 +145,7 @@ export function renderChordTable(chords, container) {
 
     grid.append(cell);
     column = (column + 1) % cols;
+    if (column === 0) inGapRow = false;
   });
 
   clear(container).append(grid);

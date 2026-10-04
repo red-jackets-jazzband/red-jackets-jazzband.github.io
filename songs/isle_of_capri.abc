@@ -6,24 +6,22 @@ F:https://secondhandsongs.com/work/132686
 R:Calypso
 M:4/4
 Q:1/4=127
-W:A-A-B-A, up-tempo; B (bridge) in swing. Drums tick (ride/hi-hat).
-W:2nd trumpet: harmony notes, long notes under the bridge.
-W:Trombone fills; sousaphone, washboard, banjos keep the rhythm tight, the engine.
-W:Riff: "Walk down B", first part as written by Kees Tijssen; under all the A's. Under the B: "Whole note".
+W:2nd trumpet: harmony, long notes under the B. Trombone fills. Drums tick.
 W:| 1 | collective |
-W:| 2 | solos; riff: "Walk down B" under the A's, "Whole note" under the B |
-W:| 3 | collective; different structure on A3 |
+W:| 2 | solos; riff: "Walk down B" (Kees Tijssen) under the A's, "Whole note" under the B |
+W:| 3 | collective |
+W:| 4 | Final chorus; A, A2, B, then the Outro instead of A3 |
 K:Fmaj
 L:1/4
 P:A
-C/F/A/|| "F" c c/d/ c B/A/ | c c z/ C/F/A/ | c c/d/ c B/A/ | "C7" B2 z/ C/E/A/ |
-"C7"B B/c/ B A/G/ | BB/ z/ z c/B/ | "F" A G/F/ "C7" G F/E/ | "F7" F2 z/ C/F/A/ ||
-P:A2
-"F" c c/d/ c B/A/ | cc z/ C/F/A/ | c c/d/c B/A/ | "C7" B2 z/ C/E/A/ | 
-"C7"B B/c/ B A/G/ | B B/ z/ z c/B/ | "F" A G/F/ "C7" G F/E/ | "F" F3 "F7" z ||
+C/F/A/|| "F" c c/d/ c B/A/ | c c z/ C/F/A/ | c c/d/ c B/A/ | "C7" B2 z/ C/E/A/ | B B/c/ B A/G/ | BB/ z/ z c/B/ |
+"F" A G/F/ "C7" G F/E/ | "F7" F2 z/ C/F/A/ || [P:A2] "F" c c/d/ c B/A/ | cc z/ C/F/A/ | c c/d/c B/A/ | "C7" B2 z/ C/E/A/ |
+"C7" B B/c/ B A/G/ | B B/ z/ z c/B/ | "F" A G/F/ "C7" G F/E/ | "F" F3 "F7" z ||
 P:B
 "_In swing" "Bb" D/F/F/G/ F3/ D/ | "F" C A-A2 | "C7" C/G/G/A/ G3/ F/ | "F" A4 "F7" yy |
 "Bb" D/F/F/G/ F3/ D/ | "F" C A2 z |"Dm" F/F/F/G/ "G7" A/G/ F | "C7" G2 z/ C/E/A/ ||
 P:A3
-"F" c c/d/ c B/A/ | c c z/ C/F/A/ | c c/d/ c B/A/ | "C7" B2 z/ C/E/A/ |
-"C7"B B/c/ B A/G/ | B B/ z/ z c/B/ | "F" AG/F/ "C7" G F/E/ | "F" F3 z |]
+"F" c c/d/ c B/A/ | c c z/ C/F/A/ | c c/d/ c B/A/ | "C7" B2 z/ C/E/A/ | B B/c/ B A/G/ | B B/ z/ z c/B/ |
+"F" AG/F/ "C7" G F/E/ | "F" F3 z |]
+P:Outro
+"F" z f c A | f c/c/ "^gliss." z2 | z f c A | "C7" e c/B/ z2 | z e c B | e c/B/ z2 | "F" f/c/d/e/ "C7" f/c/d/e/ | "F" f/f/f/f/ z2 |]
