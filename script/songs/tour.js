@@ -493,11 +493,20 @@ export function createTour(ctx) {
     }
   }
 
+  // The capture-phase scroll listener also hears the card's own inner scroll
+  // area; re-laying out then resets the card (placement removed to measure it
+  // neutrally), which snaps its scroll position back — so the step list on an
+  // overview card couldn't be scrolled once the page itself was scrolled.
+  function onScroll(event) {
+    if (event.target instanceof Node && refs.root.contains(event.target)) return;
+    scheduleLayout();
+  }
+
   function setListeners(on) {
     const method = on ? "addEventListener" : "removeEventListener";
     document[method]("keydown", onKeydown, true);
     window[method]("resize", scheduleLayout);
-    window[method]("scroll", scheduleLayout, true);
+    window[method]("scroll", onScroll, true);
     watchPage(on);
   }
 
