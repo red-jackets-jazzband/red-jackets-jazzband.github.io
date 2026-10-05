@@ -1,12 +1,12 @@
 // Entry point for /agenda/ (and /nl/agenda/, /de/agenda/, /fr/agenda/): fills the upcoming
 // and past show blocks from static/agenda/shows.txt. Upcoming shows are shown
 // loud; the archive is a quiet, year-grouped list under a tally line.
-import { byId } from "./lib/dom.js";
+import { byId } from "./lib/core/dom.js";
 import {
   parseShowList,
   formatShowDateLong,
   splitShows,
-} from "./lib/showlist.js";
+} from "./lib/agenda/showlist.js";
 
 // The Split theme always stamps <html lang="en-US">, so read the language off
 // the URL prefix instead (/nl/agenda/, /de/agenda/, /fr/agenda/).

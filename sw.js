@@ -11,24 +11,31 @@
 // Module service workers aren't universally supported yet (notably older
 // Safari) — on a browser that can't load this file at all, /songs/ simply
 // works the same as it always did, online-only, same as before this existed.
-import { classifyRequest } from "./script/lib/sw-routing.js";
+import { classifyRequest } from "./script/lib/platform/sw-routing.js";
 import {
   findStylesheetHrefs, findCssUrls, findScriptSrcs, findModuleImports,
-} from "./script/lib/precache-scan.js";
+} from "./script/lib/platform/precache-scan.js";
 
-// Bump on any change to this file or to what it should cache, so activate()
-// clears out whatever the previous version left behind instead of it
-// lingering forever.
-const CACHE_VERSION = "v1";
+// Two versions, so activate() can clear out what a previous worker left
+// behind instead of it lingering forever, without throwing away more than it
+// has to:
+// - SHELL_VERSION: bump on any change to this file or to the app's own
+//   files/paths it caches (v2: every module moved into feature folders).
+// - ASSET_VERSION: the third-party soundfont samples and Font Awesome, which
+//   never change once published. Bump only when caching *those* changes —
+//   it deletes the soundfonts visitors downloaded with "Download for
+//   offline", so their offline playback is gone until they download again.
+const SHELL_VERSION = "v2";
+const ASSET_VERSION = "v1";
 // Every cache this worker owns is named under this prefix, and activate()'s
 // cleanup only ever deletes caches under it — CacheStorage is shared across
 // the whole origin, not partitioned per script/scope, so an unprefixed
 // "delete anything not in CURRENT_CACHES" would also delete a cache some
 // other, unrelated feature on this origin created.
 const CACHE_PREFIX = "rj-songs-";
-const SHELL_CACHE = `${CACHE_PREFIX}shell-${CACHE_VERSION}`;
-const SOUNDFONT_CACHE = `${CACHE_PREFIX}soundfont-${CACHE_VERSION}`;
-const FONT_AWESOME_CACHE = `${CACHE_PREFIX}font-awesome-${CACHE_VERSION}`;
+const SHELL_CACHE = `${CACHE_PREFIX}shell-${SHELL_VERSION}`;
+const SOUNDFONT_CACHE = `${CACHE_PREFIX}soundfont-${ASSET_VERSION}`;
+const FONT_AWESOME_CACHE = `${CACHE_PREFIX}font-awesome-${ASSET_VERSION}`;
 const CURRENT_CACHES = new Set([SHELL_CACHE, SOUNDFONT_CACHE, FONT_AWESOME_CACHE]);
 
 // A deliberately small precache — just enough that a fresh install has an
@@ -185,7 +192,7 @@ function fetchAndCache(request, cache) {
 // Cache-first, but always also refetches in the background and updates the
 // cache — an offline visit is instant even off a stale copy, and the next
 // visit (online) picks up whatever changed (a new/edited song, a setlist
-// update, a code fix) without needing a whole new CACHE_VERSION. The
+// update, a code fix) without needing a whole new SHELL_VERSION. The
 // revalidation fetch/cache-write is handed to event.waitUntil() even on a
 // cache hit (where it isn't part of the value returned to the page) — the
 // worker is otherwise free to be killed the instant this promise resolves,
