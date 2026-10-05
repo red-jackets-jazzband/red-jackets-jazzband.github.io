@@ -38,7 +38,8 @@ export function walkSetlist(songs) {
 
   items.forEach((item, index) => {
     if (isSetlistDivider(item)) {
-      setNumber += 1;
+      // A leading divider is the name of set 1 itself, not a break after it.
+      if (index > 0) setNumber += 1;
       songInSet = 0;
       afterHeading = true;
       entries.push({

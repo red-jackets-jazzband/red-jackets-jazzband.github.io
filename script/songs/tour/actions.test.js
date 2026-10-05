@@ -411,6 +411,23 @@ test("addDemoSong1 and addDemoSong2 each add their song once, and never duplicat
   }
 });
 
+test("splitDemoSetlist and unsplitDemoSetlist toggle one divider, idempotently", async () => {
+  const { actions, ctx, storage, cleanup } = setup();
+  try {
+    await actions.apply([CREATE_DEMO_SETLIST, ADD_DEMO_SONG_1, ADD_DEMO_SONG_2, "splitDemoSetlist"]);
+    const items = () => getPersonalSetlist(storage, ctx.state.currentPersonalId).songs;
+    assert.deepEqual(items().map((s) => Boolean(s.divider !== undefined)), [false, true, false]);
+
+    await actions.apply([CREATE_DEMO_SETLIST, ADD_DEMO_SONG_1, ADD_DEMO_SONG_2, "splitDemoSetlist"]);
+    assert.equal(items().length, 3, "a second split adds nothing");
+
+    await actions.apply([CREATE_DEMO_SETLIST, ADD_DEMO_SONG_1, ADD_DEMO_SONG_2, "unsplitDemoSetlist"]);
+    assert.deepEqual(items().map((s) => s.file), [DEMO_SETLIST_SONG_1, DEMO_SETLIST_SONG_2]);
+  } finally {
+    cleanup();
+  }
+});
+
 test("end() deletes the demo setlist, falling back to the shelf when it was the one on screen", async () => {
   // The visitor started the tour already on the Setlists tab, so — unlike the
   // common case below — restoreLocation's own switchTab never fires (same tab,

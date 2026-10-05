@@ -2,7 +2,7 @@ import { byId } from "../../lib/core/dom.js";
 import { isSetlistDivider } from "../../lib/setlists/setlist-format.js";
 import {
   clearPersonalSetlistMarker, copyBandSetlistToPersonal, deletePersonalSetlist, getPersonalSetlist,
-  listPersonalSetlists,
+  insertItemInPersonalSetlist, listPersonalSetlists, removeSongFromPersonalSetlist,
 } from "../../lib/setlists/setlists-store.js";
 
 /*
@@ -71,6 +71,9 @@ export const TOUR_ACTION_NAMES = [
   "addDemoSong1",
   "addDemoSong2",
   "revealDemoNote",
+  "unsplitDemoSetlist",
+  "splitDemoSetlist",
+  "revealDemoSplit",
 ];
 
 const SHEET_ACTIVE_CLASS = "rj-sheet-active";
@@ -83,6 +86,7 @@ const POLL_MS = 50;
 // hovered/focused/selected/being dragged — none of which the tour can do by
 // remote control, so this class is its own direct override instead.
 const TOUR_REVEAL_NOTE_CLASS = "rj-tour-reveal-note";
+const TOUR_REVEAL_SPLIT_CLASS = "rj-tour-reveal-split";
 
 // Not hidden by `hidden`, `display:none` (including a closed <dialog>) or a
 // display:none ancestor — what a user would call "on screen", minus layout.
@@ -144,6 +148,15 @@ async function revealDemoNote() {
   // CLAUDE.md's Browser support section). The `&&` guard is intentional.
   const row = list && list.querySelector(`.setlist-song-row[data-song-file="${DEMO_SETLIST_SONG_1}"]`); // NOSONAR
   if (row) row.classList.add(TOUR_REVEAL_NOTE_CLASS);
+}
+
+// The scissors between two songs only fades in while its gap is hovered or
+// focused, which the tour can't do by remote control, so the split step marks
+// it directly (same reasoning as revealDemoNote; closeUnrequested clears it).
+async function revealDemoSplit() {
+  const list = byId("songList");
+  const btn = list && list.querySelector(".setlist-split-btn"); // NOSONAR: see revealDemoNote
+  if (btn) btn.classList.add(TOUR_REVEAL_SPLIT_CLASS);
 }
 
 export function createTourActions(ctx) {
@@ -259,6 +272,30 @@ export function createTourActions(ctx) {
     addDemoSetlistSong(DEMO_SETLIST_SONG_2);
   }
 
+  // The split and merge steps need the demo setlist in a known shape: one set
+  // (so the scissors has a gap to sit in) or two (so the merge badge exists).
+  // Both go through the store, as the buttons do, and are no-ops once true.
+  function demoSetlistEntry() {
+    return demoSetlistId ? getPersonalSetlist(ctx.storage(), demoSetlistId) : null;
+  }
+
+  async function unsplitDemoSetlist() {
+    const entry = demoSetlistEntry();
+    if (!entry || !entry.songs.some(isSetlistDivider)) return;
+    // back to front, so earlier indexes stay valid as rows go
+    for (let i = entry.songs.length - 1; i >= 0; i -= 1) {
+      if (isSetlistDivider(entry.songs[i])) removeSongFromPersonalSetlist(ctx.storage(), entry.id, i);
+    }
+    ctx.setlistView.refreshOpenPersonal();
+  }
+
+  async function splitDemoSetlist() {
+    const entry = demoSetlistEntry();
+    if (!entry || entry.songs.some(isSetlistDivider)) return;
+    insertItemInPersonalSetlist(ctx.storage(), entry.id, 1, { divider: "" });
+    ctx.setlistView.refreshOpenPersonal();
+  }
+
   async function openMixer() {
     ctx.mixer.setOpen(true);
   }
@@ -300,6 +337,9 @@ export function createTourActions(ctx) {
     addDemoSong1,
     addDemoSong2,
     revealDemoNote,
+    unsplitDemoSetlist,
+    splitDemoSetlist,
+    revealDemoSplit,
   };
 
   // Panels are only ever open because the current step asked for them, so the
@@ -309,6 +349,10 @@ export function createTourActions(ctx) {
     if (!names.includes("openMixer")) ctx.mixer.setOpen(false);
     if (!names.includes("openInspiration")) ctx.inspiration.setOpen(false);
     if (!names.includes("openDrawer")) setDrawer(false);
+    if (!names.includes("revealDemoSplit")) {
+      document.querySelectorAll(`.${TOUR_REVEAL_SPLIT_CLASS}`)
+        .forEach((btn) => btn.classList.remove(TOUR_REVEAL_SPLIT_CLASS));
+    }
     if (!names.includes("revealDemoNote")) {
       document.querySelectorAll(`.${TOUR_REVEAL_NOTE_CLASS}`)
         .forEach((row) => row.classList.remove(TOUR_REVEAL_NOTE_CLASS));

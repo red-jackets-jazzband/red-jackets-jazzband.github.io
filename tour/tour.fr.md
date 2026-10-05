@@ -125,13 +125,13 @@ L'onglet **Setlists** montre les setlists du groupe, en lecture seule, puis **Yo
 **New setlist** permet de partir d'une liste vide, d'une copie d'une setlist existante (un **remix**) ou d'un fichier **.txt** importé. Nous allons en construire une de zéro, étape par étape.
 
 ## create: Partir de zéro
-Si vous choisissez *Empty*, une setlist vide s'ouvre, prête à recevoir des morceaux. Celle-ci, nous l'avons appelée *Tour setlist*. Vous pouvez renommer la vôtre à tout moment en double-cliquant sur son nom ou sur le crayon.
+Si vous choisissez *Empty*, une setlist vide s'ouvre, prête à recevoir des morceaux. Celle-ci, nous l'avons appelée *Tour setlist*. Vous pouvez renommer la vôtre à tout moment en cliquant sur son nom souligné.
 
 ## addsong: Ajouter un morceau
-Cherchez un titre dans le champ en bas de la liste, puis appuyez sur `key:Entrée` ou cliquez sur un résultat pour l'ajouter.
+Cherchez un titre dans la ligne `fa-plus` **Add song** en bas de la liste, puis appuyez sur `key:Entrée` ou cliquez sur un résultat pour l'ajouter.
 
 ## addsong2: En ajouter un autre
-Ajoutez un second morceau de la même façon. La liste s'allonge vers le bas, avec une ligne par morceau.
+Ajoutez un second morceau de la même façon. Le champ reste en place, vous pouvez donc taper aussitôt le titre suivant. La liste s'allonge vers le bas, avec une ligne par morceau.
 
 ## reorder: Définir l'ordre de passage
 Faites glisser la poignée `fa-grip-vertical` d'un morceau vers le haut ou le bas pour le placer où vous voulez.
@@ -139,21 +139,30 @@ Faites glisser la poignée `fa-grip-vertical` d'un morceau vers le haut ou le ba
 > Au clavier, `key:Alt` + `key:↑` `key:↓` déplace d'une place la ligne sélectionnée.
 
 ## break: Découper en sets
-**Add a set break** démarre un nouveau set, par exemple pour diviser un concert en Set 1 et Set 2. Tapez un intitulé, ou laissez le champ vide pour obtenir un « Set 2 » automatique.
+`btn:New set` démarre un nouveau set, par exemple pour diviser un concert en Set 1 et Set 2. Chaque set a sa propre boîte, avec sa propre ligne `fa-plus` **Add song to set 2**. Cliquez sur le nom d'un set pour taper un intitulé, ou laissez-le vide pour obtenir un « Set 2 » automatique.
+
+## split: Couper un set en deux
+Vous avez déjà une liste et voulez la couper en deux ? Survolez l'espace entre deux morceaux et appuyez sur `fa-scissors`. Un nouveau set commence là, et tous les morceaux sous la coupure y passent.
+
+## merge: Rassembler les sets
+Vous avez changé d'avis ? Le bouton `fa-arrows-up-to-line` sur le bord supérieur d'un set le fusionne avec le set précédent. Les morceaux restent, seul l'intitulé disparaît.
 
 ## note: Noter quelque chose pour le groupe
-Cliquez sur **+ note** sous un morceau pour écrire quelque chose pour le concert, par exemple qui joue le solo, un changement de tonalité ou un rappel. Cela apparaît sur la setlist imprimée et la liste de scène, mais pas sur la partition du morceau lui-même.
+Cliquez sur `btn:+ note` sous un morceau pour écrire quelque chose pour le concert, par exemple qui joue le solo, un changement de tonalité ou un rappel. Cela apparaît sur la setlist imprimée et la liste de scène, mais pas sur la partition du morceau lui-même.
 
 ## open: Parcourir le set
-Quand vous ouvrez une setlist, ses morceaux s'affichent dans l'ordre dans la barre latérale, répartis en **sets**. Cliquez sur un morceau pour l'ouvrir dans la même grille interactive, ou parcourez la liste avec `key:↑` `key:↓` (en balayant sur téléphone). **Listen** ouvre les morceaux de la setlist sur YouTube.
+Nous venons d'ouvrir l'une des setlists du groupe. Quand vous ouvrez une setlist, ses morceaux s'affichent dans l'ordre dans la barre latérale, répartis en **sets**. Cliquez sur un morceau pour l'ouvrir dans la même grille interactive, ou parcourez la liste avec `key:↑` `key:↓` (en balayant sur téléphone).
 
 ## print: Imprimer pour le concert
 - **Setlist** : une grande liste numérotée des titres, pour la scène.
 - **Chordbook** : le titre et le tableau d'accords de chaque morceau.
 - **Songbook** : chaque morceau avec ses accords et sa partition complète.
 
+## listen: Écouter tout le set
+Le bouton `fa-youtube` sous **Listen** ouvre à la suite tous les morceaux de la setlist qui ont un lien YouTube, pour entendre tout le set avant le concert. Il est grisé ici, car aucun morceau de cette setlist n'a de lien.
+
 ## exports: Utiliser une setlist ailleurs
-Une setlist personnelle peut être exportée en fichier **.txt** et réimportée sur un autre appareil. C'est la version setlist des exports Print, MP3 et iReal Pro que vous avez vus pour un seul morceau.
+Une setlist personnelle peut être exportée avec le bouton `fa-file-arrow-down` en fichier **.txt** et réimportée sur un autre appareil. C'est la version setlist des exports Print, MP3 et iReal Pro que vous avez vus pour un seul morceau.
 
 # comping: Comping
 

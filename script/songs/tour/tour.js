@@ -158,11 +158,14 @@ function inlineAttrs(token) {
     : { text: token.text };
 }
 
+// Icons from Font Awesome's brands set; every other `fa-…` is a solid one.
+const BRAND_ICONS = new Set(["fa-youtube"]);
+
 // `fa-drum` in the copy draws that Font Awesome icon, as on the real button.
 function renderToken(token) {
   if (token.type === "text") return token.text;
   if (token.type === "code" && token.text.startsWith("fa-")) {
-    const icon = el("span", { class: `fa-solid ${token.text}`, attrs: { "aria-hidden": "true" } });
+    const icon = el("span", { class: `${BRAND_ICONS.has(token.text) ? "fa-brands" : "fa-solid"} ${token.text}`, attrs: { "aria-hidden": "true" } });
     return el("span", { class: "rj-tour-keyicon" }, [icon]);
   }
   const button = token.type === "code" ? BUTTON_WORD.exec(token.text) : null;

@@ -125,13 +125,13 @@ Het tabblad **Setlists** toont de setlists van de band zelf, die alleen-lezen zi
 Met **New setlist** kun je beginnen met een lege lijst, met een kopie van een bestaande setlist (een **remix**), of met een **.txt**-bestand dat je uploadt. We bouwen er stap voor stap een vanaf nul.
 
 ## create: Begin vanaf nul
-Kies je *Empty*, dan opent een lege setlist, klaar voor nummers. Deze hebben we *Tour setlist* genoemd. Je kunt de naam van je eigen setlist altijd veranderen door op de naam of het potloodje te dubbelklikken.
+Kies je *Empty*, dan opent een lege setlist, klaar voor nummers. Deze hebben we *Tour setlist* genoemd. Je kunt de naam van je eigen setlist altijd veranderen door op de onderstreepte naam te klikken.
 
 ## addsong: Voeg een nummer toe
-Zoek een titel in het vak onderaan de lijst en druk op `key:Enter` of klik op een resultaat om het toe te voegen.
+Zoek een titel in de `fa-plus` **Add song**-regel onderaan de lijst en druk op `key:Enter` of klik op een resultaat om het toe te voegen.
 
 ## addsong2: Voeg er nog een toe
-Voeg op dezelfde manier een tweede nummer toe. De lijst groeit naar beneden, met één regel per nummer.
+Voeg op dezelfde manier een tweede nummer toe. Het veld blijft staan, dus je kunt meteen de volgende titel typen. De lijst groeit naar beneden, met één regel per nummer.
 
 ## reorder: Bepaal de volgorde
 Sleep de `fa-grip-vertical`-greep van een nummer omhoog of omlaag om het te verplaatsen.
@@ -139,21 +139,30 @@ Sleep de `fa-grip-vertical`-greep van een nummer omhoog of omlaag om het te verp
 > Met het toetsenbord verplaatst `key:Alt` + `key:↑` `key:↓` een geselecteerde rij één plek.
 
 ## break: Splits op in sets
-**Add a set break** begint een nieuwe set, bijvoorbeeld om een optreden op te delen in Set 1 en Set 2. Typ een label, of laat het leeg voor een automatisch “Set 2”.
+`btn:New set` begint een nieuwe set, bijvoorbeeld om een optreden op te delen in Set 1 en Set 2. Elke set krijgt een eigen vak met een eigen `fa-plus` **Add song to set 2**-regel. Klik op de naam van een set om een label te typen, of laat het leeg voor een automatisch “Set 2”.
+
+## split: Splits een set in tweeën
+Heb je al een lijst en wil je hem doormidden knippen? Hover tussen twee nummers en druk op de `fa-scissors`-knop. Daar begint een nieuwe set, en alle nummers onder de knip verhuizen ernaartoe.
+
+## merge: Voeg sets weer samen
+Bedacht je je? De `fa-arrows-up-to-line`-knop op de bovenrand van een set voegt hem samen met de set erboven. De nummers blijven, alleen de kop verdwijnt.
 
 ## note: Noteer iets voor de band
-Klik op **+ note** onder een nummer om iets voor het optreden op te schrijven, zoals wie er solo speelt, een toonsoortwissel of een herinnering. Het staat op de geprinte setlist en stage list, maar niet op het eigen blad van het nummer.
+Klik op `btn:+ note` onder een nummer om iets voor het optreden op te schrijven, zoals wie er solo speelt, een toonsoortwissel of een herinnering. Het staat op de geprinte setlist en stage list, maar niet op het eigen blad van het nummer.
 
 ## open: Speel de set door
-Open je een setlist, dan staan de nummers op volgorde in de zijbalk, verdeeld in **sets**. Klik op een nummer om het in hetzelfde interactieve leadsheet te openen, of gebruik `key:↑` `key:↓` (of veeg op een telefoon) om door de lijst te lopen. **Listen** opent de nummers van de setlist op YouTube.
+Nu hebben we een van de setlists van de band zelf geopend. Open je een setlist, dan staan de nummers op volgorde in de zijbalk, verdeeld in **sets**. Klik op een nummer om het in hetzelfde interactieve leadsheet te openen, of gebruik `key:↑` `key:↓` (of veeg op een telefoon) om door de lijst te lopen.
 
 ## print: Print voor het optreden
 - **Setlist**: een grote genummerde lijst met titels voor op het podium.
 - **Chordbook**: van elk nummer de titel en de akkoordentabel.
 - **Songbook**: elk nummer met akkoorden en volledige notatie.
 
+## listen: Luister naar de hele set
+De `fa-youtube`-knop onder **Listen** opent alle nummers van de setlist met een YouTube-link achter elkaar, zodat je de hele set kunt horen voor het optreden. Hij is hier grijs omdat geen enkel nummer van deze setlist een link heeft.
+
 ## exports: Neem een setlist ergens anders mee naartoe
-Een eigen setlist kun je als **.txt**-bestand exporteren en op een ander apparaat weer importeren. Het is de setlistversie van de Print-, mp3- en iReal Pro-exports die je al kent van een los nummer.
+Een eigen setlist kun je met de `fa-file-arrow-down`-knop als **.txt**-bestand exporteren en op een ander apparaat weer importeren. Het is de setlistversie van de Print-, mp3- en iReal Pro-exports die je al kent van een los nummer.
 
 # comping: Comping
 

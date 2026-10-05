@@ -11,39 +11,55 @@ function setRowDragTranslate(row, y) {
   row.style.transform = y === 0 ? "" : `translateY(${y}px)`;
 }
 
+// Only songs drag: a set's heading belongs to its container and stays put.
 export function draggableRows() {
   const listEl = byId("songList");
-  return listEl
-    ? Array.from(listEl.querySelectorAll(".setlist-song-row, .setlist-divider-row"))
-    : [];
+  return listEl ? Array.from(listEl.querySelectorAll(".setlist-song-row")) : [];
+}
+
+// The full item order as the DOM now shows it, ready for
+// setPersonalSetlistOrder: each set container's heading (when it has one,
+// i.e. a divider item) followed by its songs, containers top to bottom.
+export function currentOrder() {
+  const listEl = byId("songList");
+  const order = [];
+  if (!listEl) return order;
+  qsa(".setlist-set", listEl).forEach((set) => {
+    const heading = set.querySelector(".setlist-divider-row[data-setlist-index]");
+    if (heading) order.push(Number(heading.dataset.setlistIndex));
+    qsa(".setlist-song-row", set).forEach((row) => order.push(Number(row.dataset.setlistIndex)));
+  });
+  return order;
 }
 
 // Rewrite the number badges / "Set N" placeholders straight from current DOM
-// order — used mid-drag, before any re-render. Mirrors walkSetlist: numbers
-// restart each set when the list has any dividers, else run 1..n.
+// order — used mid-drag, before any re-render. Numbers restart in every set.
 export function renumberOpen() {
   const listEl = byId("songList");
   if (!listEl) return;
-  const rows = qsa(".setlist-song-row, .setlist-divider-row, .setlist-set-heading", listEl);
-  const hasDividers = listEl.querySelector(".setlist-divider-row, .setlist-set-heading") != null;
-  let n = 0;
-  let songInSet = 0;
-  let setNumber = 1;
-  rows.forEach((row) => {
-    if (row.classList.contains("setlist-song-row")) {
-      n += 1;
-      songInSet += 1;
+  qsa(".setlist-set", listEl).forEach((set, i) => {
+    qsa(".setlist-song-row", set).forEach((row, n) => {
       const numEl = row.querySelector(".setlist-song-number");
-      if (numEl) numEl.textContent = String(hasDividers ? songInSet : n);
-      return;
-    }
-    songInSet = 0;
-    if (row.classList.contains("setlist-divider-row")) {
-      setNumber += 1;
-      const input = row.querySelector(".setlist-divider-input");
-      if (input) input.placeholder = `Set ${setNumber}`;
-    }
+      if (numEl) numEl.textContent = String(n + 1);
+    });
+    const input = set.querySelector(".setlist-divider-row[data-setlist-index] .setlist-divider-input");
+    if (input) input.placeholder = `Set ${i + 1}`;
   });
+}
+
+// Where a dragged row goes for pointer height `y`: the set box under (or
+// nearest to) the pointer, and the sibling to insert before inside it.
+function dropTarget(dragged, y) {
+  const sets = qsa(".setlist-set", byId("songList"));
+  if (sets.length === 0) return null;
+  const set = sets.find((candidate) => y < candidate.getBoundingClientRect().bottom)
+    || sets[sets.length - 1];
+  const others = qsa(".setlist-song-row", set).filter((r) => r !== dragged);
+  const before = others.find((r) => {
+    const box = r.getBoundingClientRect();
+    return y < box.top + box.height / 2;
+  });
+  return { set, anchor: before || set.querySelector(".setlist-set-add") };
 }
 
 export function createRowDrag({ onReorder }) {
@@ -72,19 +88,10 @@ export function createRowDrag({ onReorder }) {
     rowDrag.translateY = e.clientY - rowDrag.pointerStartY;
     setRowDragTranslate(dragged, rowDrag.translateY);
 
-    const others = draggableRows().filter((r) => r !== dragged);
-    if (others.length === 0) return;
-
-    let before = null;
-    for (const other of others) {
-      const box = other.getBoundingClientRect();
-      if (e.clientY < box.top + box.height / 2) {
-        before = other;
-        break;
-      }
-    }
-    const anchor = before || others[others.length - 1].nextSibling;
-    if (anchor !== dragged && dragged.nextSibling !== anchor) {
+    const target = dropTarget(dragged, e.clientY);
+    if (!target) return;
+    const { set, anchor } = target;
+    if (anchor !== dragged && (dragged.nextSibling !== anchor || dragged.parentNode !== set)) {
       // Reordering relocates the row within its parent, which would otherwise
       // make it jump by a row's height (its untransformed layout position
       // moves, but the pointer-following translateY doesn't know that yet).
@@ -92,7 +99,7 @@ export function createRowDrag({ onReorder }) {
       // reading as "still under the pointer" instead of snapping.
       const visualTop = dragged.getBoundingClientRect().top;
       setRowDragTranslate(dragged, 0);
-      dragged.parentNode.insertBefore(dragged, anchor);
+      set.insertBefore(dragged, anchor);
       const restingTop = dragged.getBoundingClientRect().top;
       rowDrag.translateY = visualTop - restingTop;
       rowDrag.pointerStartY = e.clientY;
@@ -111,7 +118,7 @@ export function createRowDrag({ onReorder }) {
     document.body.classList.remove("setlist-dragging");
     setRowDragTranslate(drag.row, 0);
     if (!drag.moved) return;
-    onReorder(drag.personalId, draggableRows().map((r) => Number(r.dataset.setlistIndex)));
+    onReorder(drag.personalId, currentOrder());
   }
 
   return { begin };

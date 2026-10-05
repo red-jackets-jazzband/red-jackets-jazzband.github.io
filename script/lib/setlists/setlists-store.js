@@ -109,6 +109,16 @@ export function addSongToPersonalSetlist(storage, id, song) {
   writeStorage(storage, list);
 }
 
+// Insert a song or a set divider at `index` (clamped to the list), shifting
+// everything after it down — how a set is split between two songs, or a
+// song lands at the end of a particular set rather than the whole list.
+export function insertItemInPersonalSetlist(storage, id, index, item) {
+  const list = readStorage(storage);
+  const entry = findEntry(list, id);
+  if (entry) entry.songs.splice(Math.max(0, Math.min(index, entry.songs.length)), 0, item);
+  writeStorage(storage, list);
+}
+
 export function removeSongFromPersonalSetlist(storage, id, index) {
   const list = readStorage(storage);
   const entry = findEntry(list, id);

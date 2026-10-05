@@ -125,13 +125,13 @@ Der Tab **Setlists** zeigt die Setlists der Band, die schreibgeschützt sind, un
 Mit **New setlist** kannst du mit einer leeren Liste anfangen, mit einer Kopie einer bestehenden Setlist (einem **Remix**) oder mit einer hochgeladenen **.txt**-Datei. Wir bauen jetzt Schritt für Schritt eine von null auf.
 
 ## create: Bei null anfangen
-Wenn du *Empty* wählst, öffnet sich eine leere Setlist, bereit für Songs. Diese hier haben wir *Tour setlist* genannt. Du kannst den Namen deiner eigenen jederzeit ändern, indem du auf den Namen oder das Stift-Symbol doppelklickst.
+Wenn du *Empty* wählst, öffnet sich eine leere Setlist, bereit für Songs. Diese hier haben wir *Tour setlist* genannt. Du kannst den Namen deiner eigenen jederzeit ändern, indem du auf den unterstrichenen Namen klickst.
 
 ## addsong: Einen Song hinzufügen
-Such unten in der Liste nach einem Titel und drück `key:Enter` oder klick auf einen Treffer, um ihn hinzuzufügen.
+Such in der `fa-plus` **Add song**-Zeile unten in der Liste nach einem Titel und drück `key:Enter` oder klick auf einen Treffer, um ihn hinzuzufügen.
 
 ## addsong2: Noch einen hinzufügen
-Füg auf die gleiche Weise einen zweiten Song hinzu. Die Liste wächst nach unten, mit einer Zeile pro Song.
+Füg auf die gleiche Weise einen zweiten Song hinzu. Das Feld bleibt stehen, du kannst also gleich den nächsten Titel tippen. Die Liste wächst nach unten, mit einer Zeile pro Song.
 
 ## reorder: Die Reihenfolge festlegen
 Zieh den `fa-grip-vertical`-Griff eines Songs nach oben oder unten, um ihn an die richtige Stelle zu bringen.
@@ -139,21 +139,30 @@ Zieh den `fa-grip-vertical`-Griff eines Songs nach oben oder unten, um ihn an di
 > Per Tastatur verschiebt `key:Alt` + `key:↑` `key:↓` eine ausgewählte Zeile um einen Platz.
 
 ## break: In Sets aufteilen
-**Add a set break** beginnt ein neues Set, zum Beispiel um einen Gig in Set 1 und Set 2 zu teilen. Tipp eine Bezeichnung ein oder lass das Feld leer, dann heißt es automatisch „Set 2“.
+`btn:New set` beginnt ein neues Set, zum Beispiel um einen Gig in Set 1 und Set 2 zu teilen. Jedes Set bekommt eine eigene Box mit einer eigenen `fa-plus` **Add song to set 2**-Zeile. Klick auf den Namen eines Sets, um eine Bezeichnung zu tippen, oder lass ihn leer, dann heißt es automatisch „Set 2“.
+
+## split: Ein Set in zwei teilen
+Du hast schon eine Liste und willst sie zerschneiden? Hover zwischen zwei Songs und drück auf `fa-scissors`. Dort beginnt ein neues Set, und alle Songs unter dem Schnitt wandern hinein.
+
+## merge: Sets wieder verbinden
+Anders überlegt? Der Button `fa-arrows-up-to-line` am oberen Rand eines Sets fügt es mit dem Set darüber zusammen. Die Songs bleiben, nur die Überschrift verschwindet.
 
 ## note: Etwas für die Band notieren
-Klick unter einem Song auf **+ note**, um etwas für den Gig aufzuschreiben, etwa wer das Solo spielt, einen Tonartwechsel oder eine Erinnerung. Es steht auf der gedruckten Setlist und der Bühnenliste, aber nicht auf dem eigenen Blatt des Songs.
+Klick unter einem Song auf `btn:+ note`, um etwas für den Gig aufzuschreiben, etwa wer das Solo spielt, einen Tonartwechsel oder eine Erinnerung. Es steht auf der gedruckten Setlist und der Bühnenliste, aber nicht auf dem eigenen Blatt des Songs.
 
 ## open: Das Set durchspielen
-Wenn du eine Setlist öffnest, stehen ihre Songs der Reihe nach in der Seitenleiste, aufgeteilt in **Sets**. Klick auf einen Song, um ihn im selben interaktiven Leadsheet zu öffnen, oder geh mit `key:↑` `key:↓` (auf dem Handy mit Wischen) durch die Liste. **Listen** öffnet die Songs der Setlist auf YouTube.
+Jetzt haben wir eine der Setlists der Band selbst geöffnet. Wenn du eine Setlist öffnest, stehen ihre Songs der Reihe nach in der Seitenleiste, aufgeteilt in **Sets**. Klick auf einen Song, um ihn im selben interaktiven Leadsheet zu öffnen, oder geh mit `key:↑` `key:↓` (auf dem Handy mit Wischen) durch die Liste.
 
 ## print: Für den Gig drucken
 - **Setlist**: eine große nummerierte Titelliste für die Bühne.
 - **Chordbook**: von jedem Song der Titel und die Akkordtabelle.
 - **Songbook**: jeder Song mit Akkorden und vollständiger Notation.
 
+## listen: Das ganze Set anhören
+Der Button `fa-youtube` unter **Listen** öffnet alle Songs der Setlist mit YouTube-Link nacheinander, damit du das ganze Set vor dem Gig hören kannst. Hier ist er ausgegraut, weil keiner der Songs dieser Setlist einen Link hat.
+
 ## exports: Eine Setlist woanders nutzen
-Eine eigene Setlist kannst du als **.txt**-Datei exportieren und auf einem anderen Gerät wieder importieren. Das ist die Setlist-Version der Print-, MP3- und iReal-Pro-Exporte, die du von einem einzelnen Song schon kennst.
+Eine eigene Setlist kannst du mit dem Button `fa-file-arrow-down` als **.txt**-Datei exportieren und auf einem anderen Gerät wieder importieren. Das ist die Setlist-Version der Print-, MP3- und iReal-Pro-Exporte, die du von einem einzelnen Song schon kennst.
 
 # comping: Comping
 

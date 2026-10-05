@@ -194,19 +194,19 @@ target: .rj-library-new-setlist-btn
 setup: createDemoSetlist
 target: #setlistTitleRow
 interactive: true
-Choosing *Empty* opens a blank setlist, ready for songs. We've called this one *Tour setlist*. You can rename yours at any time by double-clicking the name or its pencil.
+Choosing *Empty* opens a blank setlist, ready for songs. We've called this one *Tour setlist*. You can rename yours at any time by clicking the underlined name.
 
 ## addsong: Add a song
 setup: createDemoSetlist
 target: .rj-library-add-song-field
 interactive: true
-Search for a title in the box at the bottom of the list, then press `key:Enter` or click a match to add it.
+Search for a title in the `fa-plus` **Add song** row at the bottom of the list, then press `key:Enter` or click a match to add it.
 
 ## addsong2: Add another
 setup: createDemoSetlist, addDemoSong1
 target: .rj-library-add-song-field
 interactive: true
-Add a second song the same way. The list grows downward, with one row per song.
+Add a second song the same way. The field stays in place, so you can keep typing titles. The list grows downward, with one row per song.
 
 ## reorder: Set the running order
 setup: createDemoSetlist, addDemoSong1, addDemoSong2
@@ -220,18 +220,30 @@ Drag a song's `fa-grip-vertical` handle up or down to move it where you want it.
 setup: createDemoSetlist, addDemoSong1, addDemoSong2
 target: .setlist-divider-input, .rj-library-add-break
 interactive: true
-**Add a set break** starts a new set, for example to split a gig into Set 1 and Set 2. Type a label, or leave it blank to get an automatic "Set 2".
+`btn:New set` starts a new set, for example to split a gig into Set 1 and Set 2. Each set gets its own box and its own `fa-plus` **Add song to set 2** row. Click a set's name to type a label, or leave it blank to get an automatic "Set 2".
+
+## split: Split a set in two
+setup: createDemoSetlist, addDemoSong1, addDemoSong2, unsplitDemoSetlist, revealDemoSplit
+target: .setlist-split-btn
+interactive: true
+Already have a list and want to cut it in two? Hover between two songs and press the `fa-scissors` button. A new set starts there, with every song below the cut moving into it.
+
+## merge: Join sets again
+setup: createDemoSetlist, addDemoSong1, addDemoSong2, splitDemoSetlist
+target: .setlist-set-merge
+interactive: true
+Changed your mind? The `fa-arrows-up-to-line` button on a set's top edge merges it into the set above. Its songs are kept, only the heading goes.
 
 ## note: Add a note for the band
 setup: createDemoSetlist, addDemoSong1, addDemoSong2, revealDemoNote
 target: .setlist-song-note-add
 interactive: true
-Click **+ note** under a song to write something down for the gig, such as who takes the solo, a key change or a reminder. It appears on the printed setlist and stage list, but not on the song's own sheet.
+Click `btn:+ note` under a song to write something down for the gig, such as who takes the solo, a key change or a reminder. It appears on the printed setlist and stage list, but not on the song's own sheet.
 
 ## open: Play through the set
 setup: openDemoSetlist
-target: #openSetlistTools
-Opening a setlist puts its songs in order in the sidebar, split into **sets**. Click a song to open it in the same interactive sheet, or use `key:↑` `key:↓` (or swipe on a phone) to step through the list. **Listen** opens the setlist's songs on YouTube.
+target: #songList
+Now we've opened one of the band's own setlists. Open any setlist and its songs appear in order in the sidebar, split into **sets**. Click a song to open it in the same interactive sheet, or use `key:↑` `key:↓` (or swipe on a phone) to step through the list.
 
 ## print: Print for the gig
 setup: openDemoSetlist
@@ -241,10 +253,15 @@ interactive: true
 - **Chordbook**: every song's title and chord grid.
 - **Songbook**: every song with its chords and full notation.
 
+## listen: Listen to the whole set
+setup: openDemoSetlist
+target: #listenYoutubeBtn
+The `fa-youtube` button under **Listen** opens every song in the setlist that has a YouTube link, one after the other, so you can hear the whole set before the gig. It's greyed out on this setlist because none of its songs have a link.
+
 ## exports: Take a setlist elsewhere
 setup: createDemoSetlist, addDemoSong1, addDemoSong2
 target: #setlistExportBtn
-A personal setlist can be exported as a **.txt** file and imported again on another device. It's the setlist version of the Print, MP3 and iReal Pro exports you've seen for a single song.
+A personal setlist can be exported with the `fa-file-arrow-down` button as a **.txt** file and imported again on another device. It's the setlist version of the Print, MP3 and iReal Pro exports you've seen for a single song.
 
 # comping: Comping
 setup: openDemoSong

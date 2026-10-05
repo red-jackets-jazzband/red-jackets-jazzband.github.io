@@ -2,13 +2,18 @@ import {
   byId, el, qsa, clear,
 } from "../../lib/core/dom.js";
 import { filterSongsByQuery } from "../../lib/core/song-index.js";
-import { addSongToPersonalSetlist, addDividerToPersonalSetlist } from "../../lib/setlists/setlists-store.js";
+import {
+  addSongToPersonalSetlist,
+  addDividerToPersonalSetlist,
+  insertItemInPersonalSetlist,
+} from "../../lib/setlists/setlists-store.js";
 
 /*
   The "Add to setlist" tray at the foot of an open personal setlist: a
   search-to-add field whose matches open below it (arrow keys walk them,
   Enter or a click adds one, the field clears but keeps focus for the next
-  title), and an "Add a set break" button. `refresh()` re-renders the open
+  title), and a "New set" button. A set's own "Add song" row aims the next add at
+  the end of that set (`targetEnd`) instead of the end of the list. `refresh()` re-renders the open
   setlist after a change; the tray re-focuses itself afterwards when asked to
   (restoreFocus).
 */
@@ -30,10 +35,26 @@ function addSongResultButtons() {
     : [];
 }
 
-export function createAddSongTray(ctx, { refresh }) {
+// With the field empty there are no results to walk, so the arrows leave
+// the tray: Up jumps back into the setlist (its last row's title — never
+// the drag handle, which is a pointer-drag target only, not an arrow-key
+// stop), Down drops onto the "New set" button.
+function focusAdjacentOnEmptyArrow(key) {
+  if (key === "ArrowDown") {
+    const newSet = byId("songList").querySelector(".rj-library-add-break");
+    if (newSet) newSet.focus();
+    return;
+  }
+  const rows = qsa(".setlist-song-title, .setlist-divider-input", byId("songList"));
+  const last = rows[rows.length - 1];
+  if (last) last.focus();
+}
+
+export function createAddSongTray(ctx, { refresh, onInsert }) {
   let addSongQuery = "";
   let addSongActiveIndex = -1; // keyboard-highlighted add-song result, -1 = none
   let focusAfterRender = false;
+  let insertAt = null; // item index the next added song lands at; null = end of list
 
   // Top matches for an add-song query (empty query -> no matches).
   function addSongMatches(query) {
@@ -44,7 +65,14 @@ export function createAddSongTray(ctx, { refresh }) {
   // keep it focused so the next title can be typed straight away.
   function addSongByFile(file) {
     if (!ctx.state.currentPersonalId) return false;
-    addSongToPersonalSetlist(ctx.storage(), ctx.state.currentPersonalId, { file, key: "" });
+    const song = { file, key: "" };
+    if (insertAt === null) {
+      addSongToPersonalSetlist(ctx.storage(), ctx.state.currentPersonalId, song);
+    } else {
+      insertItemInPersonalSetlist(ctx.storage(), ctx.state.currentPersonalId, insertAt, song);
+      if (onInsert) onInsert(insertAt);
+      insertAt += 1; // the next title typed goes right after this one
+    }
     addSongQuery = "";
     focusAfterRender = true;
     refresh();
@@ -96,48 +124,36 @@ export function createAddSongTray(ctx, { refresh }) {
   }
 
   // Enter adds the arrow-highlighted result, or — mirroring the library
-  // search — the lone match when nothing is highlighted, then clears the
+  // search — the top match when nothing is highlighted, then clears the
   // field. Always clears, match or not.
   function submitAddSong(inputEl) {
     const matches = addSongMatches(addSongQuery);
     let chosen = null;
     if (addSongActiveIndex >= 0) chosen = matches[addSongActiveIndex];
-    else if (matches.length === 1) chosen = matches[0];
+    else if (matches.length > 0) chosen = matches[0];
     addSongQuery = "";
     inputEl.value = "";
     renderAddSongResults("");
     if (chosen) addSongByFile(chosen.file);
   }
 
-  function buildAddSongRow() {
-    // With the field empty there are no results to walk, so the arrows leave
-    // the tray: Up jumps back into the setlist (its last row's title — never
-    // the drag handle, which is a pointer-drag target only, not an arrow-key
-    // stop), Down drops onto the "Add a set break" button.
-    function focusAdjacentOnEmptyArrow(key) {
-      if (key === "ArrowDown") {
-        breakBtn.focus();
-        return;
-      }
-      const rows = qsa(".setlist-song-title, .setlist-divider-input", byId("songList"));
-      const last = rows[rows.length - 1];
-      if (last) last.focus();
+  function handleAddSongArrowKey(e) {
+    e.preventDefault();
+    if (!e.target.value.trim()) {
+      focusAdjacentOnEmptyArrow(e.key);
+      return;
     }
+    const move = () => moveAddSongActive(e.key === "ArrowDown" ? 1 : -1);
+    ctx.setlistData.ensureSongsLoaded(move, move);
+  }
 
-    function handleAddSongArrowKey(e) {
-      e.preventDefault();
-      if (!e.target.value.trim()) {
-        focusAdjacentOnEmptyArrow(e.key);
-        return;
-      }
-      const move = () => moveAddSongActive(e.key === "ArrowDown" ? 1 : -1);
-      ctx.setlistData.ensureSongsLoaded(move, move);
-    }
-
+  // `label` is the field's resting text, the same wording as a set's own
+  // "Add song to set N" row so the two read as one control.
+  function buildAddSongRow(label) {
     const search = el("input", {
       type: "search",
       id: "setlistAddSongSearch",
-      placeholder: "Search songs to add…",
+      placeholder: label,
       autocomplete: "off",
       on: {
         input: (e) => {
@@ -161,7 +177,7 @@ export function createAddSongTray(ctx, { refresh }) {
 
     const inputWrap = el("div", {
       class: "rj-library-add-song-inputwrap",
-      html: '<span class="fa-solid fa-magnifying-glass" aria-hidden="true"></span>',
+      html: '<span class="fa-solid fa-plus" aria-hidden="true"></span>',
     });
     inputWrap.append(search);
     inputWrap.append(el("kbd", {
@@ -173,25 +189,27 @@ export function createAddSongTray(ctx, { refresh }) {
       class: "rj-library-add-song-results",
     });
 
-    const breakBtn = el("button", {
+    return el("div", { class: "rj-library-add-song rj-library-add-song-inline" }, [
+      el("div", { class: "rj-library-add-song-field" }, [inputWrap, results]),
+    ]);
+  }
+
+  // The "New set" button that closes the list, after every set box.
+  function buildNewSetButton() {
+    return el("button", {
       type: "button",
       class: "rj-library-add-break",
       html: '<span class="fa-solid fa-plus" aria-hidden="true"></span>'
-        + '<span class="rj-library-add-break-label">Add a set break</span>',
+        + '<span class="rj-library-add-break-label">New set</span>',
       on: {
         click: () => {
           if (!ctx.state.currentPersonalId) return;
           addDividerToPersonalSetlist(ctx.storage(), ctx.state.currentPersonalId);
+          insertAt = null;
           refresh();
         },
       },
     });
-
-    return el("div", { class: "rj-library-add-song rj-library-add-song-inline" }, [
-      el("div", { class: "rj-library-add-label", text: "Add to setlist" }),
-      el("div", { class: "rj-library-add-song-field" }, [inputWrap, results]),
-      breakBtn,
-    ]);
   }
 
   // After a re-render: put focus (and the query in progress) back in the
@@ -210,11 +228,22 @@ export function createAddSongTray(ctx, { refresh }) {
 
   return {
     build: buildAddSongRow,
+    buildNewSet: buildNewSetButton,
+    // Item index the next add lands at, or null for the end of the list.
+    target: () => insertAt,
     addSongByFile,
     restoreFocus,
     // Focus the search field after the next re-render.
     focusAfterRender: () => { focusAfterRender = true; },
     // A band setlist has no tray: forget any query in progress.
-    reset: () => { addSongQuery = ""; },
+    reset: () => { addSongQuery = ""; insertAt = null; },
+    // Aim the next added song at item index `index` (the end of one set): the
+    // re-render moves the search field into that set and focuses it.
+    targetEnd: (index) => {
+      insertAt = index;
+      focusAfterRender = true;
+      refresh();
+    },
+    clearTarget: () => { insertAt = null; },
   };
 }

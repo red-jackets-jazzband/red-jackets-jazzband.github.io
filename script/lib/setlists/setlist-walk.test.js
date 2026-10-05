@@ -41,11 +41,11 @@ test("an unlabelled divider falls back to 'Set N'", () => {
   assert.deepEqual(entries.map((e) => e.label).filter(Boolean), ["Set 1", "Set 2"]);
 });
 
-test("a leading divider is not preceded by an implicit 'Set 1'", () => {
+test("a leading divider names set 1 instead of adding an implicit 'Set 1'", () => {
   const { entries } = walkSetlist([brk("Opener"), song("a")]);
   assert.deepEqual(entries.map((e) => e.kind), ["set-heading", "song"]);
   assert.equal(entries[0].label, "Opener");
-  assert.equal(entries[0].setNumber, 2);
+  assert.equal(entries[0].setNumber, 1); // it names set 1; the next break is Set 2
 });
 
 test("followsHeading marks the song directly under each heading", () => {
