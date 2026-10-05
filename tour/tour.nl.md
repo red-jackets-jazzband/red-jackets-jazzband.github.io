@@ -1,7 +1,7 @@
 # ui
 next: Volgende
 back: Terug
-skip: Rondleiding overslaan
+skip: Misschien later
 done: Klaar
 progress: {chapter} · {n}/{total}
 chapters: Hoofdstukken
@@ -10,39 +10,54 @@ close: Rondleiding sluiten
 loading: Laden…
 helpLabel: Volg de rondleiding
 chapterDone: {chapter}: klaar ✓
-chapterNext: Hierna: **{next}**. Druk op **Volgende** als je eraan toe bent.
+chapterNext: Hierna: **{next}**.
 topicBasics: Zoek een nummer, open het leadsheet, speel het af en druk het af.
 topicAdjust: Verander toonsoort en tempo, herhaal een passage, exporteer een MP3.
 topicInspiration: Luister naar opnames naast het leadsheet en herhaal een frase.
 topicMixer: Stel het volume van bas, akkoorden en elke partij in.
 topicSetlists: Maak, orden en print setlists voor een optreden.
 topicComping: Voeg een uitgeschreven begeleidingsbalk toe.
-topicsIntro: De rondleiding heeft zes onderwerpen, die je een voor een doorloopt. Elk onderwerp wordt afgevinkt als je klaar bent, en de puntjes onderaan laten zien waar je zit. Je kunt op een onderwerp klikken om er meteen naartoe te gaan:
+topicsIntro: Zes korte stops. Tik er een aan om erheen te gaan:
+railComping: Comping
+railSetlists: Sets
+railMixer: Mixen
+railInspiration: Meespelen
+railAdjust: Jouw manier
+railBasics: Vinden
+nextChapter: Door naar het volgende
+start: Laat maar zien
 
 # basics: De basis
 
 ## welcome: Welkom op de songs-pagina
-Hier staan de nummers die de Red Jackets spelen (of speelden, of misschien gaan spelen). Je kunt ze zoeken, printen en transponeren.
+Alle nummers van de Red Jackets staan hier. Zoek er een, speel het in jouw toonsoort, print het voor de lessenaar.
 
-Gebruik **Volgende** en **Terug**, of de toetsen **←** en **→**. Met **Esc** sluit je de rondleiding op elk moment, en met de **?**-knop start je hem opnieuw.
+> Kwijt? De `fa-circle-question`-knop start deze rondleiding opnieuw. Pijltjestoetsen bladeren, `key:Esc` sluit.
 
 ## search: Zoek een nummer
-Typ een deel van een titel en de lijst wordt korter terwijl je typt. Klik op dit vak en gebruik daarna **↑** **↓** en **Enter** om een nummer te openen. De **A–Z**-balk naast de lijst springt naar een letter.
+Begin met typen en de lijst wordt vanzelf korter. Kies een nummer om het leadsheet te openen. De letters naast de lijst springen meteen naar A, B, C…
+
+> Zonder muis kan ook: `key:↑` `key:↓` en `key:Enter` openen een nummer.
 
 ## open: Je leadsheet
-Als je een nummer kiest, opent het hier. Voor de rondleiding hebben we *Bill Bailey* geopend. Eerst komt de akkoordentabel, met de volledige notatie eronder. Op een telefoon vult het leadsheet het hele scherm, en met de **‹ Songs**-knop bovenaan ga je terug naar de lijst.
+Als je een nummer kiest, opent het hier. Voor de rondleiding hebben we *Bill Bailey* geopend. Eerst komt de akkoordentabel, met de volledige notatie eronder.
+
+## back: Terug naar de lijst
+Op een telefoon vult het leadsheet het hele scherm, dus de lijst is uit beeld. Met de `tab:‹ Songs`-knop bovenaan ga je terug.
 
 ## form: Volg de vorm
-De rij pijlen onder de akkoordentabel is de **vorm** van het nummer: de volgorde waarin de delen gespeeld worden. Elke pijl is één stap, met zijn nummer en het deel dat erin klinkt. Stappen met hetzelfde deel hebben dezelfde kleur, en een aanduiding als *2x* zegt hoe vaak het herhaald wordt. Eronder staat wie speelt: hier opent de trompet, daarna speelt iedereen samen, dan de zang en de solo's. Een **...** aan het eind (zoals in *A B ...* bij de solo's) betekent dat het deel zo vaak herhaald wordt als er solisten zijn: iedereen die een solo wil, krijgt een beurt. Nummers zonder opgeschreven vorm tonen hun volgorde van delen (intro, couplet, ...) op dezelfde manier. Een **...** na een deel, zoals *A B ...* bij de solo's, betekent dat de volgorde van delen doorgaat voor zoveel rondes als er solisten zijn: iedereen die een solo wil krijgt er een, en de vorm herhaalt zich tot iedereen aan de beurt is geweest.
+De pijlen onder de akkoordentabel tonen de **vorm**: de volgorde van de delen. Zelfde kleur, zelfde deel. *2x* betekent herhaald. Een `...` aan het eind (zoals `A` `B` `...` bij de solo's) herhaalt zo vaak als er solisten zijn.
 
 ## instrument: Lees je eigen partij
-Kies je instrument en het hele leadsheet wordt ervoor getransponeerd. De keuzes zijn concertstemming (C), Concert + Roman (concertstemming met Romeinse cijfers in de akkoordentabel), altsax, Bb-klarinet of -trompet, tenorsax, trombone (bassleutel) of sousafoon (bassleutel). De pagina onthoudt je keuze. Het geluid klinkt altijd in concertstemming, welke partij er ook op het scherm staat.
+Kies je instrument en het leadsheet wordt ervoor getransponeerd: concertstemming, Concert + Romeinse cijfers, altsax, Bb-klarinet of -trompet, tenorsax, trombone of sousafoon (bassleutel). Het geluid klinkt altijd in concertstemming.
 
 ## play: Luister mee
-Het helpt om een nummer te horen voor je het speelt. Met **Play** start je het, en de noten lichten op in het leadsheet terwijl ze klinken. **Stop** stopt het. Zolang er een leadsheet open staat, kun je ook met de **spatiebalk** afspelen en pauzeren.
+Het helpt om een nummer te horen voordat je het speelt. **Play** (`fa-play`) start het en de noten lichten op in het leadsheet terwijl ze klinken. **Stop** (`fa-stop`) beëindigt het.
+
+> De `key:spatiebalk` start en pauzeert ook, zolang een leadsheet open staat.
 
 ## print: Neem het mee naar het optreden
-**Print** maakt van het leadsheet een nette pagina voor op de lessenaar of in de map. In het afdrukvenster kun je *Opslaan als pdf* kiezen als je liever een digitale kopie wilt. Setlists hebben eigen printknoppen, die komen verderop in de rondleiding.
+**Print** (`fa-print`) maakt van het leadsheet een nette pagina voor op de lessenaar of in de map. In het afdrukvenster kun je *Opslaan als pdf* kiezen als je liever een digitale kopie wilt. Setlists hebben eigen printknoppen, die komen verderop in de rondleiding.
 
 # adjust: Speel het op jouw manier
 
@@ -53,13 +68,13 @@ Een nummer ligt niet altijd lekker in de gedrukte toonsoort. Met **−** en **+*
 Het tempo staat in **slagen per minuut**, met als beginwaarde de tempo-aanduiding van het nummer zelf. Speel een lastige passage langzamer om hem te leren, en zet het tempo daarna weer omhoog.
 
 ## more: Herhaal een passage
-Een passage steeds met de hand opnieuw starten is vervelend. Het kleine pijltje onderaan de knoppenbalk opent **More controls**, waar de **Repeat**-teller het nummer tot 20 keer achter elkaar afspeelt. Na de eerste keer wordt de opmaat overgeslagen. Ook de keuzelijst voor comping staat hier.
+Een passage steeds met de hand opnieuw starten is vervelend. Het kleine pijltje onderaan de knoppenbalk (`fa-angles-right`) opent **More controls**, waar de **Repeat**-teller het nummer tot 20 keer achter elkaar afspeelt. Na de eerste keer wordt de opmaat overgeslagen. Ook de keuzelijst voor comping staat hier.
 
 ## irealpro: Neem een begeleidingsband mee
 Bij nummers met akkoorden stuurt deze knop het leadsheet naar de **iReal Pro**-app op je telefoon, die het met een begeleidingsband kan afspelen.
 
 ## mp3: Maak een oefenopname
-Zet wat je nu hoort om in een **.mp3**-bestand. Instrument, toonsoort, tempo, comping, mixerinstellingen en aantal herhalingen zitten erin, dus je kunt het als oefentrack gebruiken.
+`fa-file-audio` Zet wat je nu hoort om in een **.mp3**-bestand. Instrument, toonsoort, tempo, comping, mixerinstellingen en aantal herhalingen zitten erin, dus je kunt het als oefentrack gebruiken.
 
 ## fullscreen: Lees het van dichtbij
 Geeft het hele scherm aan het leadsheet en houdt, als je browser dat toestaat, het scherm aan terwijl je leest. Op een telefoon kun je nog steeds inzoomen met twee vingers.
@@ -70,36 +85,36 @@ Geeft het hele scherm aan het leadsheet en houdt, als je browser dat toestaat, h
 Heeft een nummer referentie-opnames, dan verschijnt er een **Inspiration**-knop. Die opent een zwevende speler naast je leadsheet, zodat je kunt horen hoe andere bands het nummer speelden.
 
 ## panel: Blijf luisteren terwijl je verder bladert
-De speler blijft doorspelen terwijl je andere nummers bekijkt, en sluit pas als jij hem sluit. Sleep de **kop** om hem te verplaatsen en de **linkerrand** om het formaat te veranderen, of loop met de formaatknop langs vaste groottes.
+De speler blijft doorspelen terwijl je andere nummers bekijkt, en sluit pas als jij hem sluit. Sleep de **kop** om hem te verplaatsen en de **linkerrand** om het formaat te veranderen, of loop met de formaatknop (`fa-up-right-and-down-left-from-center`) langs vaste groottes.
 
 ## tabs: Vergelijk opnames
 Dit nummer heeft meer dan één opname. Met de tabs wissel je ertussen. Er speelt steeds maar één tegelijk.
 
 ## loop: Herhaal een frase
-In plaats van met de hand terug te spoelen, kun je een frase vanzelf laten herhalen. Speel de video af, druk op **A** waar de frase begint en op **B** waar hij eindigt, en hij blijft herhalen. Sleep de **A**- en **B**-handvatten op de tijdlijn om ze bij te stellen, en met **✕** wis je ze.
+In plaats van met de hand terug te spoelen, kun je een frase vanzelf laten herhalen. Speel de video af, druk op `btn:A` waar de frase begint en op `btn:B` waar hij eindigt, en hij blijft herhalen. Sleep de **A**- en **B**-handvatten op de tijdlijn om ze bij te stellen, en met `fa-xmark` wis je ze.
 
 ## zoom: Plaats je lus precies
-De strook hierboven toont de hele opname. Gebruik de knoppen **+** en **−**, of sleep het gemarkeerde venster of de randen ervan, om de tijdlijn eronder in te zoomen. Zo kun je de **A**- en **B**-markeringen nauwkeuriger plaatsen.
+De strook hierboven toont de hele opname. Gebruik de knoppen `fa-magnifying-glass-plus` en `fa-magnifying-glass-minus`, of sleep het gemarkeerde venster of de randen ervan, om de tijdlijn eronder in te zoomen. Zo kun je de **A**- en **B**-markeringen nauwkeuriger plaatsen.
 
 ## speed: Maak het langzamer
 Zet de **speed** lager (of hoger) om een snelle lijn in een tempo te leren dat je aankunt, en speel dan mee.
 
 ## share: Deel je lus
-Kopieert een link naar dit nummer **en** je A–B-lus. Stuur je die naar een bandgenoot, dan opent die hetzelfde leadsheet met de video al op jouw frase gezet.
+`fa-link` Kopieert een link naar dit nummer **en** je A–B-lus. Stuur je die naar een bandgenoot, dan opent die hetzelfde leadsheet met de video al op jouw frase gezet.
 
 # mixer: Stel het volume in
 
 ## open: Maak je eigen mix
-De **Mixer** regelt het volume van alles wat je hoort. Op een desktop is het een klein paneel onder de knop, op een telefoon schuift het van onderaf omhoog.
+De **Mixer** (`fa-sliders`) regelt het volume van alles wat je hoort. Op een desktop is het een klein paneel onder de knop, op een telefoon schuift het van onderaf omhoog.
 
 ## accompaniment: Voeg bas en akkoorden toe
-De **automatische begeleiding** speelt een baslijn en akkoorden op basis van de akkoordsymbolen. Beide staan standaard **gedempt**, dus er verandert niets tot je ze aanzet. Elk heeft een **dempknop**, een **volumeschuif** en een **stemkeuze**, en met de keuze voor het **begeleidingspatroon** bepaal je de stijl.
+De **automatische begeleiding** speelt een baslijn en akkoorden op basis van de akkoordsymbolen. Beide staan standaard **gedempt**, dus er verandert niets tot je ze aanzet. Elk heeft een **dempknop** (`fa-volume-high`), een **volumeschuif** en een **stemkeuze**, en met de keuze voor het **begeleidingspatroon** bepaal je de stijl.
 
 ## voices: Mix elke partij apart
 Elke melodielijn in het nummer heeft een eigen dempknop, volume en instrument. Bij een nummer met trompet en sousafoon staan ze naast elkaar. Je instellingen worden bewaard voor elk ander nummer met een stem met dezelfde naam.
 
 ## extras: Stel de feel af
-Met de **swing**-schuif maak je rechte achtsten losser. De **drum**-knop zet een metronoomklik aan, en de **golf**-knop verhoogt de geluidskwaliteit.
+Met de **swing**-schuif maak je rechte achtsten losser. De **drum**-knop (`fa-drum`) zet een metronoomklik aan, en de **golf**-knop (`fa-wave-square`) verhoogt de geluidskwaliteit.
 
 # setlists: Setlists en afdrukken
 
@@ -113,13 +128,15 @@ Met **New setlist** kun je beginnen met een lege lijst, met een kopie van een be
 Kies je *Empty*, dan opent een lege setlist, klaar voor nummers. Deze hebben we *Tour setlist* genoemd. Je kunt de naam van je eigen setlist altijd veranderen door op de naam of het potloodje te dubbelklikken.
 
 ## addsong: Voeg een nummer toe
-Zoek een titel in het vak onderaan de lijst en druk op **Enter** of klik op een resultaat om het toe te voegen.
+Zoek een titel in het vak onderaan de lijst en druk op `key:Enter` of klik op een resultaat om het toe te voegen.
 
 ## addsong2: Voeg er nog een toe
 Voeg op dezelfde manier een tweede nummer toe. De lijst groeit naar beneden, met één regel per nummer.
 
 ## reorder: Bepaal de volgorde
-Sleep het **⋮⋮**-handvat van een nummer omhoog of omlaag om het te verplaatsen. Met een regel geselecteerd verplaats je hem met **Alt** + **↑** **↓** één plek per keer via het toetsenbord.
+Sleep de `fa-grip-vertical`-greep van een nummer omhoog of omlaag om het te verplaatsen.
+
+> Met het toetsenbord verplaatst `key:Alt` + `key:↑` `key:↓` een geselecteerde rij één plek.
 
 ## break: Splits op in sets
 **Add a set break** begint een nieuwe set, bijvoorbeeld om een optreden op te delen in Set 1 en Set 2. Typ een label, of laat het leeg voor een automatisch “Set 2”.
@@ -128,7 +145,7 @@ Sleep het **⋮⋮**-handvat van een nummer omhoog of omlaag om het te verplaats
 Klik op **+ note** onder een nummer om iets voor het optreden op te schrijven, zoals wie er solo speelt, een toonsoortwissel of een herinnering. Het staat op de geprinte setlist en stage list, maar niet op het eigen blad van het nummer.
 
 ## open: Speel de set door
-Open je een setlist, dan staan de nummers op volgorde in de zijbalk, verdeeld in **sets**. Klik op een nummer om het in hetzelfde interactieve leadsheet te openen, of gebruik **↑** **↓** (of veeg op een telefoon) om door de lijst te lopen. **Listen** opent de nummers van de setlist op YouTube.
+Open je een setlist, dan staan de nummers op volgorde in de zijbalk, verdeeld in **sets**. Klik op een nummer om het in hetzelfde interactieve leadsheet te openen, of gebruik `key:↑` `key:↓` (of veeg op een telefoon) om door de lijst te lopen. **Listen** opent de nummers van de setlist op YouTube.
 
 ## print: Print voor het optreden
 - **Setlist**: een grote genummerde lijst met titels voor op het podium.
@@ -144,7 +161,7 @@ Een eigen setlist kun je als **.txt**-bestand exporteren en op een ander apparaa
 Comping is een akkoordbegeleiding die als tweede notenbalk onder de melodie is uitgeschreven. Kies een **patroon** uit de lijst, zoals Charleston, clave of lopende stappen, en luister ernaar.
 
 ## notation: Lees de kleuren
-Elke aanslag is een akkoord van drie noten, en de kleur laat zien welke rol elke noot heeft: **zwart** is de grondtoon, **goud** de terts en **magenta** de kwint. De drie lijnen bewegen soepel van akkoord naar akkoord, zodat ze makkelijker te volgen zijn.
+Elke aanslag is een akkoord van drie noten, en de kleur laat zien welke rol elke noot heeft: **zwart** is de grondtoon, `gold:goud` de terts en `magenta:magenta` de kwint. De drie lijnen bewegen soepel van akkoord naar akkoord, zodat ze makkelijker te volgen zijn.
 
 ## split: Splits het in stemmen
 De knop **Splitsen** naast de patroonlijst verandert de ene balk met drie noten in een aparte balk per akkoordtoon, dus grondtoon, terts en kwint krijgen elk een eigen lijn. Dat is handig als elke speler in de band één noot van het akkoord neemt.
@@ -156,4 +173,5 @@ Met de knoppen **R**, **3** en **5** kies je welke van de gesplitste balken gete
 Staat comping aan, dan komt het in de mixer als eigen **Comping**-stem. Je kunt het dempen, het volume veranderen of er een ander instrument voor kiezen. Splits je het, dan krijgt elke akkoordtoon een eigen kanaal (**Comping R**, **Comping 3**, **Comping 5**), zodat je de terts kunt dempen of de kwint een ander instrument kunt geven.
 
 ## done: Dat was de rondleiding
-Dat was het einde van de rondleiding. Je start hem opnieuw met deze **?**-knop, en in de hoek van de rondleiding kies je een andere taal.
+Dat was de rondleiding. De `fa-circle-question`-knop haalt hem terug, en het menu bovenaan de kaart wisselt van taal.
+

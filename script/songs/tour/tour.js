@@ -19,6 +19,7 @@ import {
   spotlightClipPath,
   tightenBox,
 } from "../../lib/tour/tour-layout.js";
+import { launchConfetti } from "./confetti.js";
 import { createTourActions, isShown, waitUntil } from "./actions.js";
 
 /*
@@ -41,9 +42,21 @@ const TOUR_BTN_ID = "tourBtn";
 const TOUR_LINK_ID = "tourStartLink";
 const SPOTLIGHT_PAD = 6;
 const TARGET_WAIT_MS = 1500;
+const SETTLE_STILL_FRAMES = 6;
+const SETTLE_MAX_FRAMES = 90;
 const SWALLOWED_KEYS = new Set([" ", "Spacebar", "/", "ArrowUp", "ArrowDown", "Enter"]);
 const INLINE_TAGS = { strong: "strong", em: "em", code: "code" };
+// `gold:word` / `magenta:word` in the copy: a bold word in that note colour.
+const COLOUR_WORD = /^(gold|magenta):(.+)$/;
+// `btn:A` in the copy draws a text-labelled button (the loop bar's A and B).
+const BUTTON_WORD = /^btn:(.+)$/;
+const KEY_WORD = /^key:(.+)$/;
+const TAB_WORD = /^tab:(.+)$/;
 const BUTTON = "button";
+const CONTROL_SELECTOR = "button, a, select, input, textarea";
+const LANG_NAMES = {
+  en: "English", nl: "Nederlands", de: "Deutsch", fr: "Français",
+};
 
 const stepKey = (step) => `${step.chapterId}/${step.id}`;
 
@@ -58,6 +71,9 @@ const toBox = (rect) => ({
 // of the empty space filling out the rest of its own height.
 function targetBox(target) {
   const own = toBox(target.getBoundingClientRect());
+  // A control's own box is the thing to point at: its icon/label is centred
+  // inside it, so tightening to that would shrink the ring to the glyph.
+  if (target.matches(CONTROL_SELECTOR)) return own;
   const children = [...target.children]
     .filter((child) => isShown(child))
     .map((child) => toBox(child.getBoundingClientRect()));
@@ -104,6 +120,14 @@ function dotState(i, step) {
   return i < step.chapterIndex ? "is-done" : "";
 }
 
+// How much of a chapter's bar is filled: all of a finished chapter's, none of
+// a later one's, and the walked one's by how many of its shown steps are reached.
+function fillFraction(state, step, shown) {
+  if (state === "is-done") return 1;
+  if (state !== "is-active" || !shown.length) return 0;
+  return (shown.indexOf(step) + 1) / shown.length;
+}
+
 function nextFrame() {
   return new Promise((resolve) => {
     requestAnimationFrame(() => resolve());
@@ -127,18 +151,44 @@ function firstShown(selectors) {
   return null;
 }
 
+// A "..." part marker is dashed, like the form strip's .songForm-part--more.
+function inlineAttrs(token) {
+  return token.type === "code" && token.text === "..."
+    ? { text: token.text, class: "rj-tour-more" }
+    : { text: token.text };
+}
+
+// `fa-drum` in the copy draws that Font Awesome icon, as on the real button.
+function renderToken(token) {
+  if (token.type === "text") return token.text;
+  if (token.type === "code" && token.text.startsWith("fa-")) {
+    const icon = el("span", { class: `fa-solid ${token.text}`, attrs: { "aria-hidden": "true" } });
+    return el("span", { class: "rj-tour-keyicon" }, [icon]);
+  }
+  const button = token.type === "code" ? BUTTON_WORD.exec(token.text) : null;
+  if (button) return el("span", { class: "rj-tour-keyicon", text: button[1] });
+  const key = token.type === "code" ? KEY_WORD.exec(token.text) : null;
+  if (key) return el("kbd", { text: key[1], class: "rj-tour-key" });
+  const tab = token.type === "code" ? TAB_WORD.exec(token.text) : null;
+  if (tab) return el("span", { class: "rj-tour-tab", text: tab[1] });
+  const colour = token.type === "code" ? COLOUR_WORD.exec(token.text) : null;
+  if (colour) return el("strong", { text: colour[2], class: `rj-tour-${colour[1]}` });
+  return el(INLINE_TAGS[token.type], inlineAttrs(token));
+}
+
 function renderInline(tokens) {
-  return tokens.map((token) => (
-    token.type === "text" ? token.text : el(INLINE_TAGS[token.type], { text: token.text })
-  ));
+  return tokens.map(renderToken);
 }
 
 // Paragraph / bullet blocks → <p> and <ul>, consecutive bullets sharing a list.
 function renderBlocks(blocks) {
   const nodes = [];
+  const tips = [];
   let list = null;
   for (const block of blocks) {
-    if (block.list) {
+    if (block.tip) {
+      tips.push(el("p", { class: "rj-tour-tip" }, renderInline(block.tokens)));
+    } else if (block.list) {
       if (!list) {
         list = el("ul");
         nodes.push(list);
@@ -149,7 +199,7 @@ function renderBlocks(blocks) {
       nodes.push(el("p", {}, renderInline(block.tokens)));
     }
   }
-  return nodes;
+  return [...nodes, ...tips];
 }
 
 // Tab stays inside the card (the page behind it is out of play).
@@ -171,6 +221,14 @@ async function findTarget(step) {
   if (!step.targets.length) return null;
   await waitUntil(() => firstShown(step.targets), { timeout: TARGET_WAIT_MS });
   return firstShown(step.targets);
+}
+
+// A quiet menu rather than a row of buttons: the current language's name
+// (its own endonym) with a native picker behind it.
+function buildLangMenu() {
+  return TOUR_LANGS.map((code) => el("option", {
+    value: code, text: LANG_NAMES[code] || code.toUpperCase(), attrs: { lang: code },
+  }));
 }
 
 export function createTour(ctx) {
@@ -214,17 +272,6 @@ export function createTour(ctx) {
 
   // ---- overlay ------------------------------------------------------
 
-  function buildLangButtons() {
-    return TOUR_LANGS.map((code) => el(BUTTON, {
-      type: BUTTON,
-      class: "rj-tour-lang-btn",
-      text: code.toUpperCase(),
-      dataset: { lang: code },
-      attrs: { "aria-pressed": "false", lang: code },
-      on: { click: () => setLang(code) },
-    }));
-  }
-
   function buildOverlay() {
     if (refs) return;
     const veil = el("div", { class: "rj-tour-veil" });
@@ -234,10 +281,13 @@ export function createTour(ctx) {
     const closeBtn = el(BUTTON, {
       type: BUTTON, class: "rj-tour-close", text: "×", on: { click: () => finish() },
     });
-    const langs = el("div", { class: "rj-tour-lang", attrs: { role: "group" } }, buildLangButtons());
+    const langs = el("select", {
+      class: "rj-tour-lang",
+      on: { change: () => setLang(langs.value) },
+    }, buildLangMenu());
     const title = el("h2", { class: "rj-tour-title", id: "rjTourTitle" });
     const body = el("div", { class: "rj-tour-body", id: "rjTourBody" });
-    const dots = el("div", { class: "rj-tour-dots", attrs: { role: "group" } });
+    const dots = el("div", { class: "rj-tour-rail", attrs: { role: "group" } });
     const skip = el(BUTTON, { type: BUTTON, class: "rj-tour-btn rj-tour-btn--quiet", on: { click: () => finish() } });
     const back = el(BUTTON, { type: BUTTON, class: "rj-tour-btn", on: { click: () => go(-1) } });
     const next = el(BUTTON, { type: BUTTON, class: "rj-tour-btn rj-tour-btn--primary", on: { click: () => go(1) } });
@@ -261,21 +311,35 @@ export function createTour(ctx) {
     };
   }
 
-  function renderDots(step) {
+  // The chapter rail: a numbered mark per chapter (a tick once finished) with a
+  // progress bar under it; only the chapter being walked shows its short name.
+  function renderRail(step, shown) {
     clear(refs.dots);
     refs.dots.append(...content.chapters.map((chapter, i) => {
       const state = dotState(i, step);
+      const current = state === "is-active";
+      const fill = fillFraction(state, step, shown);
       return el(BUTTON, {
         type: BUTTON,
-        class: `rj-tour-dot ${state}`.trim(),
+        class: `rj-tour-rail-item ${state}`.trim(),
         attrs: {
           title: chapter.title,
           "aria-label": chapter.title,
-          "aria-current": state === "is-active" ? "step" : null,
+          "aria-current": current ? "step" : null,
         },
         on: { click: () => jumpToChapter(i) },
-      });
+      }, [
+        el("span", { class: "rj-tour-rail-mark", text: state === "is-done" ? "✓" : String(i + 1) }),
+        el("span", { class: "rj-tour-rail-bar" }, [
+          el("span", { class: "rj-tour-rail-fill", style: { width: `${Math.round(fill * 100)}%` } }),
+        ]),
+        el("span", { class: "rj-tour-rail-label", text: current ? railLabel(chapter) : "" }),
+      ]);
     }));
+  }
+
+  function railLabel(chapter) {
+    return ui(`rail${chapter.id.charAt(0).toUpperCase()}${chapter.id.slice(1)}`) || chapter.title;
   }
 
   // Numbered, clickable overview of the chapters (title + one-line summary).
@@ -296,6 +360,19 @@ export function createTour(ctx) {
     }));
   }
 
+  // On a "chapter done" card the next chapter's row can sit below the fold of
+  // the card's own scroll area; bring it into view (scrollTop, not
+  // scrollIntoView, so only that area moves — never the page behind).
+  function revealNextTopic() {
+    const row = refs.body.querySelector(".rj-tour-topic.is-next");
+    const area = row && row.closest(".rj-tour-scroll");
+    if (!area) return;
+    const areaBox = area.getBoundingClientRect();
+    const rowBox = row.getBoundingClientRect();
+    if (rowBox.bottom > areaBox.bottom) area.scrollTop += rowBox.bottom - areaBox.bottom + 8;
+    else if (rowBox.top < areaBox.top) area.scrollTop -= areaBox.top - rowBox.top + 8;
+  }
+
   // Everything textual in the card, for the current step and language.
   function renderCard() {
     const step = flat[index];
@@ -314,18 +391,21 @@ export function createTour(ctx) {
     else if (step.interstitial) blocks.push(buildTopicList(step));
     refs.body.append(...blocks);
     refs.langs.setAttribute("aria-label", ui("language"));
-    for (const btn of qsa(".rj-tour-lang-btn", refs.langs)) {
-      btn.setAttribute("aria-pressed", String(btn.dataset.lang === lang));
-      btn.classList.toggle("is-active", btn.dataset.lang === lang);
-    }
+    refs.langs.value = lang;
     refs.dots.setAttribute("aria-label", ui("chapters"));
-    renderDots(step);
+    renderRail(step, shown);
     refs.closeBtn.setAttribute("aria-label", ui("close"));
     refs.skip.textContent = ui("skip");
     refs.back.textContent = ui("back");
     const hasNext = nextStepIndex(flat, index, 1, isAvailable) >= 0;
-    refs.next.textContent = hasNext ? ui("next") : ui("done");
+    refs.next.textContent = hasNext ? primaryLabel(step) : ui("done");
     refs.back.disabled = nextStepIndex(flat, index, -1, isAvailable) < 0;
+  }
+
+  // First card invites ("Show me around"), a chapter break moves on ("On to the next").
+  function primaryLabel(step) {
+    if (index === 0) return ui("start") || ui("next");
+    return (step.interstitial && ui("nextChapter")) || ui("next");
   }
 
   function positionRing(box) {
@@ -378,6 +458,28 @@ export function createTour(ctx) {
     });
   }
 
+  // A target can still be moving when the step is laid out (a CSS transition,
+  // a toolbar reflowing after the scroll, a late-loading font) — none of which
+  // fires a resize/scroll/mutation. Keep re-measuring each frame until its box
+  // has held still for a few frames (bounded), so the ring lands on where the
+  // control ends up, not where it was mid-move.
+  function settleLayout(token) {
+    let last = "";
+    let still = 0;
+    let frames = 0;
+    const tick = () => {
+      if (!active || token !== seq) return;
+      const rect = currentTarget ? currentTarget.getBoundingClientRect() : null;
+      const key = rect ? `${rect.left},${rect.top},${rect.width},${rect.height}` : "";
+      still = key === last ? still + 1 : 0;
+      if (key !== last) layout(currentTarget);
+      last = key;
+      frames += 1;
+      if (still < SETTLE_STILL_FRAMES && frames < SETTLE_MAX_FRAMES) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
   // An interactive step's real target can change shape after the visitor
   // touches it — search results dropping in below the add-song field, a
   // set-break's label row appearing once the button is clicked — with
@@ -426,8 +528,11 @@ export function createTour(ctx) {
     currentTarget = target;
     renderCard();
     layout(target);
+    settleLayout(token);
+    revealNextTopic();
     refs.root.classList.remove("is-busy");
     refs.next.focus({ preventScroll: true });
+    if (nextStepIndex(flat, index, 1, isAvailable) < 0) launchConfetti(refs.root, refs.card);
   }
 
   // `to` is the next index in direction `dir`, or -1 when that way is exhausted.

@@ -16,13 +16,14 @@
 //   interactive: true
 //                           <- blank line, then the body: paragraphs, `- ` bullets
 //   Type part of a **title**.
+//   > A `> ` line is a small tip, shown muted under the body.
 //
 // The English file is canonical for structure (targets, setup, interactive); a
 // translation only repeats ids + titles + bodies, in the same order.
 
 /**
  * @typedef {{ type: "text" | "strong" | "em" | "code", text: string }} InlineToken
- * @typedef {{ list: boolean, tokens: InlineToken[] }} TourBlock
+ * @typedef {{ list: boolean, tip?: boolean, tokens: InlineToken[] }} TourBlock
  * @typedef {{
  *   id: string, title: string, targets: string[], setup: string[],
  *   interactive: boolean, body: TourBlock[],
@@ -36,6 +37,7 @@ export const TOUR_LANGS = ["en", "nl", "de", "fr"];
 const META_KEYS = new Set(["target", "setup", "interactive"]);
 const UI_SECTION = "ui";
 const LIST_MARKER = "- ";
+const TIP_MARKER = "> ";
 
 // Longest marker first, so `**` is never read as two `*`.
 /** @type {[string, "strong" | "code" | "em"][]} */
@@ -117,7 +119,7 @@ export function tokenizeInline(text) {
 }
 
 /**
- * Body lines → blocks: each `- ` line is its own list item; other consecutive
+ * Body lines → blocks: each `- ` line is its own list item; each `> ` line a tip; other consecutive
  * lines join into one paragraph; a blank line ends a paragraph.
  * @param {string[]} lines
  * @returns {TourBlock[]}
@@ -137,6 +139,9 @@ export function parseBody(lines) {
     } else if (line.startsWith(LIST_MARKER)) {
       flush();
       blocks.push({ list: true, tokens: tokenizeInline(line.slice(LIST_MARKER.length).trim()) });
+    } else if (line.startsWith(TIP_MARKER)) {
+      flush();
+      blocks.push({ list: false, tip: true, tokens: tokenizeInline(line.slice(TIP_MARKER.length).trim()) });
     } else {
       paragraph.push(line);
     }

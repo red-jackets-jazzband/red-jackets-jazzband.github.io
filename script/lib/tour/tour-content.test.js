@@ -70,6 +70,12 @@ test("tokenizeInline reads ** as strong, never two em markers", () => {
   ]);
 });
 
+test("parseBody turns a `> ` line into a tip block of its own", () => {
+  const blocks = parseBody(["Body text.", "> Press **Esc**.", "More."]);
+  assert.deepEqual(blocks.map((b) => Boolean(b.tip)), [false, true, false]);
+  assert.equal(blocks[1].tokens[1].type, "strong");
+});
+
 test("parseBody joins a paragraph's lines, splits on blank lines and lists each bullet", () => {
   const blocks = parseBody(["one", "two", "", "- a", "- b", "after"]);
   assert.deepEqual(blocks.map((b) => [b.list, b.tokens.map((t) => t.text).join("")]), [

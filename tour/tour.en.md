@@ -1,7 +1,7 @@
 # ui
 next: Next
 back: Back
-skip: Skip tour
+skip: Maybe later
 done: Done
 progress: {chapter} · {n}/{total}
 chapters: Chapters
@@ -10,56 +10,73 @@ close: Close the tour
 loading: Loading…
 helpLabel: Take the tour
 chapterDone: {chapter}: done ✓
-chapterNext: Next up: **{next}**. Press **Next** when you're ready.
+chapterNext: Next up: **{next}**.
 topicBasics: Find a song, open its lead sheet, play it and print it.
 topicAdjust: Change the key and tempo, loop a passage, export an MP3.
 topicInspiration: Listen to recordings alongside the sheet and loop a phrase.
 topicMixer: Set the level of bass, chords and each part.
 topicSetlists: Build, order and print setlists for a gig.
 topicComping: Add a written-out accompaniment staff.
-topicsIntro: The tour has six topics, taken one at a time. Each one is ticked off when you finish it, and the dots at the bottom show where you are. You can click a topic to jump straight to it:
+topicsIntro: Six short stops. Tap one to jump there:
+railComping: Comp
+railSetlists: Sets
+railMixer: Mix
+railInspiration: Play along
+railAdjust: Your way
+railBasics: Find it
+nextChapter: On to the next
+start: Show me around
 
 # basics: The basics
 
 ## welcome: Welcome to the songs page
 setup: showLibrary
-This is where the tunes the Red Jackets play (or have played, or might play) are kept. You can search them, print them and transpose them.
+Every tune the Red Jackets play lives here. Find one, play it in your key, print it for the stand.
 
-Use **Next** and **Back**, or the **←** and **→** keys. **Esc** closes the tour at any point, and the **?** button starts it again.
+> Lost? The `fa-circle-question` button restarts this tour. Arrow keys step, `key:Esc` closes.
 
 ## search: Find a song
 setup: showLibrary
 target: #songSearch
 interactive: true
-Type part of a title and the list gets shorter as you go. Click this box, then use **↑** **↓** and **Enter** to open a song. The **A–Z** strip beside the list jumps to a letter.
+Start typing a title and the list narrows as you go. Pick a tune to open its lead sheet. The letters beside the list jump straight to A, B, C…
+
+> No mouse needed: `key:↑` `key:↓` and `key:Enter` open a song.
 
 ## open: Your lead sheet
 setup: openDemoSong
-target: #sheetBackBtn, .rj-sheet-paper
-Picking a song opens it here. For the tour we've opened *Bill Bailey*. The chord table comes first, with the full notation below it. On a phone the sheet fills the screen, and the **‹ Songs** button at the top takes you back to the list.
+target: .rj-sheet-paper
+Picking a song opens it here. For the tour we've opened *Bill Bailey*. The chord table comes first, with the full notation below it.
+
+## back: Back to the list
+setup: openDemoSong
+target: #sheetBackBtn
+On a phone the sheet fills the whole screen, so the list is out of sight. The `tab:‹ Songs` button at the top takes you back to it.
 
 ## form: Follow the form
 setup: openDemoSong
 target: .songForm
-The strip of arrows under the chord table is the **form** of the tune: the order in which the parts are played. Each arrow is one step, with its number and the part it plays. Steps that play the same part share a colour, and a note such as *2x* says how often it repeats. Underneath it says who plays: here the trumpet opens, then everybody plays together, then the vocals and the solos. A trailing **...** (as in *A B ...* for the solos) means the part goes on for as many repeats as there are soloists: everyone who wants a solo takes a turn. Tunes without a written form show their part order (intro, verse, ...) the same way. A **...** after a part, like *A B ...* on the solos step, means the part order continues for as many choruses as there are soloists: everyone who wants a solo gets one, and the form repeats until they have all had their turn.
+The arrows under the chord table show the **form**: the order the parts are played. Same colour, same part. *2x* means repeated. A trailing `...` (as in `A` `B` `...` on the solos) repeats for as many choruses as there are soloists.
 
 ## instrument: Read your own part
 setup: openDemoSong
 target: #instrument
 interactive: true
-Pick your instrument and the whole sheet is transposed for it. The choices are concert pitch, Concert + Roman (concert pitch with Roman numerals added to the chord table), alto sax, B♭ clarinet or trumpet, tenor sax, trombone (bass clef) or sousaphone (bass clef). The page remembers your choice. Playback always sounds at concert pitch, whichever part is on screen.
+Pick your instrument and the sheet is transposed for it: concert, Concert + Roman numerals, alto sax, B♭ clarinet or trumpet, tenor sax, trombone or sousaphone (bass clef). Playback always sounds at concert pitch.
 
 ## play: Listen along
 setup: openDemoSong
 target: .sheet-transport
 interactive: true
-It helps to hear a tune before you play it. **Play** starts it and the notes light up on the sheet as they sound. **Stop** ends it. While a sheet is open, the **Spacebar** also toggles play and pause.
+It helps to hear a tune before you play it. **Play** (`fa-play`) starts it and the notes light up on the sheet as they sound. **Stop** (`fa-stop`) ends it.
+
+> The `key:Spacebar` also plays and pauses while a sheet is open.
 
 ## print: Take it to the gig
 setup: openDemoSong
 target: #printLink
 interactive: true
-**Print** turns the chart into a clean page for a stand or a folder. In the print dialog you can choose *Save as PDF* if you want a digital copy instead. Setlists have their own print buttons, which come later in the tour.
+**Print** (`fa-print`) turns the chart into a clean page for a stand or a folder. In the print dialog you can choose *Save as PDF* if you want a digital copy instead. Setlists have their own print buttons, which come later in the tour.
 
 # adjust: Play it your way
 setup: openDemoSong
@@ -78,7 +95,7 @@ The tempo is in **beats per minute**, starting from the tune's own marking. Slow
 setup: openDrawer
 target: #repeatStepper
 interactive: true
-Restarting a passage by hand gets tedious. The small arrow at the bottom of the toolbar opens **More controls**, where the **Repeat** stepper plays the tune up to 20 times in a row. After the first pass it skips the lead-in bar. The comping picker is in here too.
+Restarting a passage by hand gets tedious. The small arrow at the bottom of the toolbar (`fa-angles-right`) opens **More controls**, where the **Repeat** stepper plays the tune up to 20 times in a row. After the first pass it skips the lead-in bar. The comping picker is in here too.
 
 ## irealpro: Bring a backing band
 target: #iRealPro
@@ -86,7 +103,7 @@ For tunes with chords, this button sends the chart to the **iReal Pro** app on y
 
 ## mp3: Make a practice recording
 target: #exportMp3Btn
-Renders what you're hearing right now into an **.mp3** file. Instrument, key, tempo, comping, mixer settings and repeat count are all included, so you can use it as a practice track.
+`fa-file-audio` Renders what you're hearing right now into an **.mp3** file. Instrument, key, tempo, comping, mixer settings and repeat count are all included, so you can use it as a practice track.
 
 ## fullscreen: Read it up close
 target: #sheetFullscreenBtn
@@ -104,7 +121,7 @@ If a song has reference recordings, an **Inspiration** button appears. It opens 
 setup: openInspiration
 target: #inspirationPanel
 interactive: true
-The player keeps going while you look at other songs, and only closes when you close it. Drag its **header** to move it and its **left edge** to resize it, or use the resize button to step between sizes.
+The player keeps going while you look at other songs, and only closes when you close it. Drag its **header** to move it and its **left edge** to resize it, or use the resize button (`fa-up-right-and-down-left-from-center`) to step between sizes.
 
 ## tabs: Compare recordings
 setup: openInspiration
@@ -116,13 +133,13 @@ This song has more than one recording. Use the tabs to switch between them. Only
 setup: openInspiration
 target: #inspirationLoopBar
 interactive: true
-Instead of rewinding by hand, you can let a phrase repeat on its own. Play the video, press **A** where the phrase starts and **B** where it ends, and it loops. Drag the **A** and **B** handles on the timeline to adjust them, and **✕** clears them.
+Instead of rewinding by hand, you can let a phrase repeat on its own. Play the video, press `btn:A` where the phrase starts and `btn:B` where it ends, and it loops. Drag the **A** and **B** handles on the timeline to adjust them, and `fa-xmark` clears them.
 
 ## zoom: Place your loop precisely
 setup: openInspiration
 target: .inspiration-loop-overview-row
 interactive: true
-The strip above shows the whole recording. Use the **+** and **−** buttons, or drag the highlighted window or its edges, to zoom the timeline below. That makes it easier to put the **A** and **B** markers in the right place.
+The strip above shows the whole recording. Use the `fa-magnifying-glass-plus` and `fa-magnifying-glass-minus` buttons, or drag the highlighted window or its edges, to zoom the timeline below. That makes it easier to put the **A** and **B** markers in the right place.
 
 ## speed: Slow it down
 setup: openInspiration
@@ -134,20 +151,20 @@ Lower the **speed** (or raise it) to learn a fast line at a pace you can manage,
 setup: openInspiration
 target: #inspirationShareBtn
 interactive: true
-Copies a link to this song **and** your A–B loop. If you send it to a bandmate, they get the same sheet with the video already set to your phrase.
+`fa-link` Copies a link to this song **and** your A–B loop. If you send it to a bandmate, they get the same sheet with the video already set to your phrase.
 
 # mixer: Set the levels
 
 ## open: Make your own mix
 setup: openMixer
 target: #mixerPanel
-The **Mixer** controls the level of everything you hear. On desktop it's a small panel under its button, and on a phone it slides up from the bottom.
+The **Mixer** (`fa-sliders`) controls the level of everything you hear. On desktop it's a small panel under its button, and on a phone it slides up from the bottom.
 
 ## accompaniment: Add bass and chords
 setup: openMixer
 target: #mixerSectionAccompaniment
 interactive: true
-The **auto-accompaniment** plays a bass line and chords based on the chord symbols. Both start **muted**, so nothing changes until you switch them on. Each has a **mute** button, a **volume** fader and a **voice** picker, and the **accompaniment pattern** picker sets the style.
+The **auto-accompaniment** plays a bass line and chords based on the chord symbols. Both start **muted**, so nothing changes until you switch them on. Each has a **mute** button (`fa-volume-high`), a **volume** fader and a **voice** picker, and the **accompaniment pattern** picker sets the style.
 
 ## voices: Mix each part separately
 setup: openMixer
@@ -159,7 +176,7 @@ Each melody line in the song gets its own mute, volume and instrument. A tune wi
 setup: openMixer
 target: #mixerStripSwing
 interactive: true
-The **swing** fader loosens up straight eighth notes. The **drum** button switches on a metronome click, and the **wave** button raises the sound quality.
+The **swing** fader loosens up straight eighth notes. The **drum** button (`fa-drum`) switches on a metronome click, and the **wave** button (`fa-wave-square`) raises the sound quality.
 
 # setlists: Setlists and printing
 
@@ -183,7 +200,7 @@ Choosing *Empty* opens a blank setlist, ready for songs. We've called this one *
 setup: createDemoSetlist
 target: .rj-library-add-song-field
 interactive: true
-Search for a title in the box at the bottom of the list, then press **Enter** or click a match to add it.
+Search for a title in the box at the bottom of the list, then press `key:Enter` or click a match to add it.
 
 ## addsong2: Add another
 setup: createDemoSetlist, addDemoSong1
@@ -195,7 +212,9 @@ Add a second song the same way. The list grows downward, with one row per song.
 setup: createDemoSetlist, addDemoSong1, addDemoSong2
 target: #songList
 interactive: true
-Drag a song's **⋮⋮** handle up or down to move it. With a row focused, **Alt** + **↑** **↓** moves it one place at a time from the keyboard.
+Drag a song's `fa-grip-vertical` handle up or down to move it where you want it.
+
+> From the keyboard, `key:Alt` + `key:↑` `key:↓` moves a focused row one place.
 
 ## break: Split into sets
 setup: createDemoSetlist, addDemoSong1, addDemoSong2
@@ -212,7 +231,7 @@ Click **+ note** under a song to write something down for the gig, such as who t
 ## open: Play through the set
 setup: openDemoSetlist
 target: #openSetlistTools
-Opening a setlist puts its songs in order in the sidebar, split into **sets**. Click a song to open it in the same interactive sheet, or use **↑** **↓** (or swipe on a phone) to step through the list. **Listen** opens the setlist's songs on YouTube.
+Opening a setlist puts its songs in order in the sidebar, split into **sets**. Click a song to open it in the same interactive sheet, or use `key:↑` `key:↓` (or swipe on a phone) to step through the list. **Listen** opens the setlist's songs on YouTube.
 
 ## print: Print for the gig
 setup: openDemoSetlist
@@ -239,7 +258,7 @@ Comping is a chord accompaniment written out as a second staff under the melody.
 ## notation: Read the colours
 setup: openDrawer, compingOn, compingUnsplit
 target: #notation
-Each hit is a three-note chord, and the colour shows the role of each note: **black** is the root, **gold** the third and **magenta** the fifth. The three lines move smoothly from chord to chord, which makes them easier to follow.
+Each hit is a three-note chord, and the colour shows the role of each note: **black** is the root, `gold:gold` the third and `magenta:magenta` the fifth. The three lines move smoothly from chord to chord, which makes them easier to follow.
 
 ## split: Split it into voices
 setup: openDrawer, compingOn, compingUnsplit
@@ -262,4 +281,5 @@ With comping on, it appears in the mixer as its own **Comping** voice. You can m
 ## done: That's the tour
 setup: showLibrary
 target: #tourBtn
-That's the end of the tour. You can run it again with this **?** button, and the tour's corner lets you pick another language.
+That's the tour. The `fa-circle-question` button brings it back, and the menu at the top of the card changes language.
+

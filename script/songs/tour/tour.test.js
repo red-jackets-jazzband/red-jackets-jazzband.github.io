@@ -246,10 +246,10 @@ test("chapter dots jump to a chapter's first available step", async () => {
   try {
     byId("tourBtn").click();
     await settle();
-    rootEl().querySelectorAll(".rj-tour-dot")[1].click();
+    rootEl().querySelectorAll(".rj-tour-rail-item")[1].click();
     await settle();
     assert.equal(title(), "Last step", "chapter two's first step is skipped for lack of a target");
-    assert.equal(rootEl().querySelectorAll(".rj-tour-dot")[1].classList.contains("is-active"), true);
+    assert.equal(rootEl().querySelectorAll(".rj-tour-rail-item")[1].classList.contains("is-active"), true);
   } finally {
     cleanup();
   }
@@ -344,10 +344,12 @@ test("the language switcher re-renders the step in place and remembers the choic
     await settle();
     assert.equal(title(), "First step");
 
-    rootEl().querySelector('[data-lang="nl"]').click();
+    const langMenu = rootEl().querySelector(".rj-tour-lang");
+    langMenu.value = "nl";
+    langMenu.dispatchEvent(new window.Event("change"));
     await waitUntil(() => title() === "Eerste stap", { timeout: 2000, interval: 10 });
     assert.equal(title(), "Eerste stap");
-    assert.equal(rootEl().querySelector('[data-lang="nl"]').getAttribute("aria-pressed"), "true");
+    assert.equal(langMenu.value, "nl");
     assert.equal(window.localStorage.getItem(PREF_KEYS.tourLang), "nl");
     assert.equal(byId("tourBtn").getAttribute("aria-label"), "Volg de rondleiding");
     assert.equal(primaryBtn().textContent, "Volgende");
