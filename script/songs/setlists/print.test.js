@@ -287,6 +287,23 @@ test("buildBooklet collects each song's YouTube F: link into a deduped watch_vid
   }
 });
 
+test("buildBooklet hands the listen handler every song's title and sources, in setlist order", async () => {
+  const { print, settle, cleanup } = setup();
+  try {
+    let latest = null;
+    print.setListenChangeHandler((_url, songs) => { latest = songs; });
+    withAbcjs(createAbcjsStub(), () => { print.buildBooklet("Gig", SONGS, ""); });
+    await settle();
+    assert.equal(print.getListenTitle(), "Gig");
+    assert.deepEqual(latest.map((song) => song.title), ["A", "B", "A"]);
+    assert.equal(latest[0].sources.youtubeId, "aaaaaaaaaaa");
+    assert.equal(latest[1].sources.youtubeId, null);
+    assert.equal(print.getListenSongs(), latest);
+  } finally {
+    cleanup();
+  }
+});
+
 test("buildBooklet reports no listen URL once a setlist with no YouTube links has loaded", async () => {
   const { print, settle, cleanup } = setup();
   try {

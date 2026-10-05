@@ -21,6 +21,7 @@ import {
   createRowDrag, draggableRows, currentOrder, renumberOpen,
 } from "./row-drag.js";
 import { createAddSongTray } from "./add-song.js";
+import { createPlaylistExport } from "./playlist-export.js";
 
 const emptyRow = (text) => el("div", { class: "song-list-empty", text });
 // A read-only set heading (band setlists): the same row as a personal set's
@@ -864,17 +865,22 @@ export function createSetlistView(ctx) {
     });
   }
 
-  // "Listen" button, under the Print row: opens every song in the open
-  // setlist that has a YouTube F: link as one ad-hoc YouTube playlist (see
-  // lib/setlist-listen.js). Its enabled state tracks ctx.setlistPrint's own
-  // per-song reads (already fetching every setlist song's .abc to build the
-  // print booklet), so it's never clickable mid-load or with nothing to play.
+  // "Listen" buttons, under the Print row. YouTube opens every song in the
+  // open setlist that has a YouTube F: link as one ad-hoc YouTube playlist;
+  // Export saves the whole setlist as a playlist on the visitor's own
+  // streaming account through Soundiiz (see playlist-export.js). Their enabled state
+  // tracks ctx.setlistPrint's own per-song reads (already fetching every
+  // setlist song's .abc to build the print booklet), so neither is clickable
+  // mid-load or with nothing to play.
   function initListen() {
     const btn = byId("listenYoutubeBtn");
     if (!btn) return;
-    ctx.setlistPrint.setListenChangeHandler((url) => {
+    const playlistExport = createPlaylistExport(ctx);
+    playlistExport.init();
+    ctx.setlistPrint.setListenChangeHandler((url, songs) => {
       btn.disabled = !url;
       btn.title = url ? "Open this setlist’s songs on YouTube" : "No YouTube links in this setlist";
+      playlistExport.update(songs || []);
     });
     on("listenYoutubeBtn", "click", () => {
       const url = ctx.setlistPrint.getListenUrl();

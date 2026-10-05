@@ -56,7 +56,7 @@
 
 
   
-  <link rel="stylesheet" href="/css/split.min.410965ceaaf82858084a104e70939c62c56e188d899af988dbf2673cb154a2be.css" type="text/css" media="screen,print" integrity="sha256-QQllzqr4KFgIShBOcJOcYsVuGI2JmvmI2/JnPLFUor4=" />
+  <link rel="stylesheet" href="/css/split.min.87d8bacc26e77611275913416b37d6939c5beb4a56aa8eb4fbd3fcc7abc03b19.css" type="text/css" media="screen,print" integrity="sha256-h9i6zCbndhEnWRNBazfWk5xb60pWqo60&#43;9P8x6vAOxk=" />
 
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
@@ -145,7 +145,9 @@
         <span class="rj-library-print-label" id="rjListenLabel">Listen</span>
         <div class="rj-library-print-seg">
           <button type="button" id="listenYoutubeBtn" class="rj-library-print-btn" disabled title="No YouTube links in this setlist" aria-label="Open this setlist’s songs on YouTube"><span class="fa-brands fa-youtube" aria-hidden="true"></span> YouTube</button>
+          <button type="button" id="listenExportBtn" class="rj-library-print-btn" disabled title="No songs in this setlist" aria-label="Export this setlist as a playlist to Spotify, Apple Music, YouTube Music… (via Soundiiz)"><span class="fa-solid fa-share-from-square" aria-hidden="true"></span> Export</button>
         </div>
+        <output class="rj-library-print-status" id="listenStatus" aria-live="polite" hidden></output>
       </div>
     </div>
   </div>
