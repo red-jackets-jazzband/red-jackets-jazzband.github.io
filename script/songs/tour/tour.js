@@ -538,14 +538,20 @@ export function createTour(ctx) {
     if (nextStepIndex(flat, index, 1, isAvailable) < 0) launchConfetti(refs.root, refs.card);
   }
 
+  // Nothing awaits a step from the event handlers below, so a failure while
+  // setting one up is logged instead of becoming an unhandled rejection.
+  function showStepSafely(nextIndex, dir) {
+    showStep(nextIndex, dir).catch((error) => console.error("Tour step failed", error));
+  }
+
   // `to` is the next index in direction `dir`, or -1 when that way is exhausted.
   function advance(to, dir) {
     if (to >= 0) {
-      showStep(to, dir);
+      showStepSafely(to, dir);
     } else if (dir > 0) {
       finish();
     } else {
-      showStep(nextStepIndex(flat, index, 1, isAvailable), 1);
+      showStepSafely(nextStepIndex(flat, index, 1, isAvailable), 1);
     }
   }
 
@@ -555,7 +561,7 @@ export function createTour(ctx) {
 
   function jumpToChapter(chapterIndex) {
     const target = firstStepOfChapter(flat, chapterIndex);
-    if (active && target >= 0) showStep(target, 1);
+    if (active && target >= 0) showStepSafely(target, 1);
   }
 
   async function setLang(code) {
@@ -626,7 +632,7 @@ export function createTour(ctx) {
     refs.root.hidden = true;
     refs.root.classList.remove("is-busy");
     currentTarget = null;
-    actions.end();
+    actions.end().catch((error) => console.error("Tour cleanup failed", error));
     if (returnFocus && returnFocus.focus) returnFocus.focus({ preventScroll: true });
   }
 

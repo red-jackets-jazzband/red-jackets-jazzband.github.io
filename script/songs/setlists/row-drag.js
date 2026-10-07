@@ -99,7 +99,8 @@ export function createRowDrag({ onReorder }) {
       // reading as "still under the pointer" instead of snapping.
       const visualTop = dragged.getBoundingClientRect().top;
       setRowDragTranslate(dragged, 0);
-      set.insertBefore(dragged, anchor);
+      if (anchor) anchor.before(dragged);
+      else set.append(dragged);
       const restingTop = dragged.getBoundingClientRect().top;
       rowDrag.translateY = visualTop - restingTop;
       rowDrag.pointerStartY = e.clientY;

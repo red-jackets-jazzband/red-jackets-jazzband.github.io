@@ -245,8 +245,8 @@ function chordTextsEqual(first, second) {
   if (first.length !== second.length) {
     return false;
   }
-  for (let c = 0; c < first.length; c++) {
-    if (first[c] !== second[c]) {
+  for (const [c, element] of first.entries()) {
+    if (element !== second[c]) {
       return false;
     }
   }
@@ -309,25 +309,40 @@ export function simplifySong(chords, count) {
 // Counts how many measures precede the first chord annotation. Used to
 // align _abcMeasureIdx (which counts from measure 0 including intros) with
 // chord table cell indices (which start at the first chord measure).
+// Whether `el` carries a chord symbol that is a real chord (or a break marker).
+function carriesChord(el) {
+  if (!el.chord || el.chord.length === 0) return false;
+  const chordName = pickChordName(el.chord);
+  return chordName !== null && (isValidChordName(chordName) || isBreakChordName(chordName));
+}
+
+// The first voice of a rendered line's first staff, or null when it has none.
+function firstVoiceOf(line) {
+  const staff = line.staff && line.staff[0];
+  return staff && staff.voices ? staff.voices[0] || [] : null;
+}
+
+// Every element of the first voice of each rendered line, in order.
+function firstVoiceElements(song) {
+  const elements = [];
+  for (const line of song.lines) {
+    const voice = firstVoiceOf(line);
+    if (voice) elements.push(...voice);
+  }
+  return elements;
+}
+
 export function computeChordOffset(song) {
   if (!song.lines) return 0;
   let measureCount = 0;
   let hasNotesInMeasure = false;
-  for (let i = 0; i < song.lines.length; i++) {
-    const line = song.lines[i];
-    if (!line.staff || !line.staff[0] || !line.staff[0].voices) continue;
-    const voice = line.staff[0].voices[0] || [];
-    for (let j = 0; j < voice.length; j++) {
-      const el = voice[j];
-      const chordName = el.chord && el.chord.length > 0 ? pickChordName(el.chord) : null;
-      if (chordName !== null && (isValidChordName(chordName) || isBreakChordName(chordName))) {
-        return measureCount;
-      }
-      if (el.el_type === "note") hasNotesInMeasure = true;
-      if (el.el_type === "bar") {
-        if (hasNotesInMeasure) measureCount++;
-        hasNotesInMeasure = false;
-      }
+  for (const el of firstVoiceElements(song)) {
+    if (carriesChord(el)) return measureCount;
+    if (el.el_type === "note") {
+      hasNotesInMeasure = true;
+    } else if (el.el_type === "bar") {
+      if (hasNotesInMeasure) measureCount++;
+      hasNotesInMeasure = false;
     }
   }
   return 0;

@@ -1042,12 +1042,12 @@ test("buildCompingTune distributes three-plus chords in one bar evenly, one hit 
   assert.equal(out.palette.length, 4);
   const roots = ["C", "F", "G", "C"];
   const pcChroma = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-  for (let i = 0; i < roots.length; i++) {
+  for (const [i, root] of roots.entries()) {
     // the bottom voice of each hit sounds *a* tone of its own chord (not
     // necessarily the root, since it's still voice-led from the previous
     // hit) — but every voice must land on that chord's own pitch classes.
-    const expectedPcs = new Set([0, 4, 7].map((step) => (pcChroma[roots[i]] + step) % 12));
-    for (const midi of bars[i]) assert.ok(expectedPcs.has(midi % 12), `bar ${i} tone ${midi % 12} in chord ${roots[i]}`);
+    const expectedPcs = new Set([0, 4, 7].map((step) => (pcChroma[root] + step) % 12));
+    for (const midi of bars[i]) assert.ok(expectedPcs.has(midi % 12), `bar ${i} tone ${midi % 12} in chord ${root}`);
   }
 });
 

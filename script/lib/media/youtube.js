@@ -26,7 +26,7 @@ export function extractYouTubeId(url) {
   const id = host === "youtu.be" || host === "www.youtu.be"
     ? parsed.pathname.slice(1)
     : parsed.searchParams.get("v")
-      || (parsed.pathname.match(/^\/(?:embed|v|shorts)\/([^/?#]+)/) || [])[1]
+      || (/^\/(?:embed|v|shorts)\/([^/?#]+)/.exec(parsed.pathname) || [])[1]
       || "";
   return VIDEO_ID.test(id) ? id : null;
 }

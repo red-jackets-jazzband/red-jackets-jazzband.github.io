@@ -81,7 +81,7 @@ function fitLiveChordGrid(chordId) {
 function stylePartMarkersWhenReady(notationEl) {
   stylePartMarkers(notationEl);
   if (document.fonts && document.fonts.status !== "loaded") {
-    document.fonts.ready.then(() => stylePartMarkers(notationEl));
+    document.fonts.ready.then(() => stylePartMarkers(notationEl)).catch(() => false); // never rejects
   }
 }
 

@@ -17,9 +17,7 @@ export const qsa = (selector, root = document) =>
 // support section); this codebase's floor is Safari 12, where it doesn't
 // exist and throws the instant anything tries to clear a list.
 export function clear(node) {
-  if (node) {
-    while (node.firstChild) node.removeChild(node.firstChild);
-  }
+  if (node) node.textContent = "";
   return node;
 }
 
@@ -86,9 +84,9 @@ const PROP_HANDLERS = {
   assigned as a direct DOM property. `children` is a node, a string, or an
   array of them; nullish / false entries are skipped.
 */
-export function el(tag, props = {}, children) {
+export function el(tag, props, children) {
   const node = document.createElement(tag);
-  for (const [key, value] of Object.entries(props)) {
+  for (const [key, value] of Object.entries(props === undefined ? {} : props)) {
     if (value == null) continue;
     const handler = PROP_HANDLERS[key];
     if (handler) handler(node, value);

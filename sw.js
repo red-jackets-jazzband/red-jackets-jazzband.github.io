@@ -103,23 +103,23 @@ function precacheUrl(absoluteUrl, required) {
   return required ? attempt : attempt.catch(() => null);
 }
 
-function precacheStylesheetAndFonts(href) {
+async function precacheStylesheetAndFonts(href) {
   const absoluteHref = new URL(href, self.location.origin).href;
   const required = new URL(absoluteHref).origin === self.location.origin;
-  return precacheUrl(absoluteHref, required).then((response) => {
-    if (!response) return null;
-    return response.clone().text().then((css) => Promise.all(
-      findCssUrls(css)
-        // A url() reference isn't always a real network resource — split.css's
-        // hand-drawn dropdown chevron (see its own comment) is an inline
-        // `url("data:image/svg+xml,...")`, already fully self-contained in the
-        // stylesheet's own bytes. Cache.put() rejects a data: request outright
-        // ("Request scheme 'data' is unsupported"), and there'd be nothing
-        // worth fetching/caching there anyway.
-        .filter((url) => !url.startsWith("data:"))
-        .map((url) => precacheUrl(new URL(url, absoluteHref).href, required)),
-    ));
-  });
+  const response = await precacheUrl(absoluteHref, required);
+  if (!response) return null;
+  const css = await response.clone().text();
+  return Promise.all(
+    findCssUrls(css)
+      // A url() reference isn't always a real network resource — split.css's
+      // hand-drawn dropdown chevron (see its own comment) is an inline
+      // `url("data:image/svg+xml,...")`, already fully self-contained in the
+      // stylesheet's own bytes. Cache.put() rejects a data: request outright
+      // ("Request scheme 'data' is unsupported"), and there'd be nothing
+      // worth fetching/caching there anyway.
+      .filter((url) => !url.startsWith("data:"))
+      .map((url) => precacheUrl(new URL(url, absoluteHref).href, required)),
+  );
 }
 
 // A same-origin <script>'s own src, plus — for a type="module" entry point —
@@ -131,16 +131,16 @@ function precacheStylesheetAndFonts(href) {
 // so this is a one-step fetch for those. Every script this app serves is
 // same-origin, so this is always `required` (see precacheUrl's own doc
 // comment) — a missing script/module means the app can't run at all.
-function precacheScriptAndImports(src, seen) {
+async function precacheScriptAndImports(src, seen) {
   const absoluteSrc = new URL(src, self.location.origin).href;
-  if (seen.has(absoluteSrc)) return Promise.resolve(null);
+  if (seen.has(absoluteSrc)) return null;
   seen.add(absoluteSrc);
-  return precacheUrl(absoluteSrc, true).then((response) => {
-    if (!response) return null;
-    return response.clone().text().then((js) => Promise.all(
-      findModuleImports(js).map((spec) => precacheScriptAndImports(new URL(spec, absoluteSrc).href, seen)),
-    ));
-  });
+  const response = await precacheUrl(absoluteSrc, true);
+  if (!response) return null;
+  const js = await response.clone().text();
+  return Promise.all(
+    findModuleImports(js).map((spec) => precacheScriptAndImports(new URL(spec, absoluteSrc).href, seen)),
+  );
 }
 
 function precacheShell() {
@@ -230,13 +230,17 @@ function cacheFirstOnly(request, cacheName) {
 // the next offline reload would serve that broken response as if it were
 // the real fallback. The cache write itself goes through event.waitUntil()
 // for the same early-termination reason cacheFirstRevalidate's does above.
-function navigate(request, event) {
-  return fetch(request).then((response) => {
+async function navigate(request, event) {
+  try {
+    const response = await fetch(request);
     if (response.ok) {
       event.waitUntil(caches.open(SHELL_CACHE).then((cache) => cache.put(request, response.clone())));
     }
     return response;
-  }).catch(() => caches.match(request).then((cached) => cached || caches.match("/songs/")));
+  } catch {
+    const cached = await caches.match(request);
+    return cached || caches.match("/songs/");
+  }
 }
 
 const STRATEGIES = {

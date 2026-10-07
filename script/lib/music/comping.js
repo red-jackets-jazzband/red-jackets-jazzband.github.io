@@ -836,8 +836,7 @@ function extractVoiceBody(text, targetId) {
   const kIdx = headerKLineIndex(lines);
   let current = null;
   const out = [];
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  for (const [i, line] of lines.entries()) {
     const decl = /^V:\s*(\S+)/.exec(line);
     if (decl) {
       current = decl[1];
@@ -896,7 +895,10 @@ function stripNonMusicLines(body) {
 // `\|\d+` must come before the optional-colon form: an unqualified `:?`
 // would otherwise "succeed" on zero characters and misparse ":|2" as ":|"
 // followed by a bare "2".
-const BARLINE = /:(?:\|\d+|\|:?|:)|\|(?:\|:?|:|\]|\d+)?|\[(?:\|:?|\d+(?:[-,]\d+)*)/g;
+const COLON_BAR = String.raw`:(?:\|\d+|\|:?|:)`;
+const PIPE_BAR = String.raw`\|(?:\|:?|:|\]|\d+)?`;
+const BRACKET_BAR = String.raw`\[(?:\|:?|\d+(?:[-,]\d+)*)`;
+const BARLINE = new RegExp(`${COLON_BAR}|${PIPE_BAR}|${BRACKET_BAR}`, "g");
 
 /*
    Walk a melody body's barlines and, for every segment that carries notes,
@@ -911,98 +913,105 @@ const BARLINE = /:(?:\|\d+|\|:?|:)|\|(?:\|:?|:|\]|\d+)?|\[(?:\|:?|\d+(?:[-,]\d+)
    pickup) instead gets an invisible rest of its own measured length, so the
    comping voices stay bar-aligned with the melody.
 */
-export function buildVoiceBody(rawBody, barStrings, leadingRestBars, restToken, lnum, lden, respellForKey) {
-  const rest = restToken || "x8";
-  const body = stripNonMusicLines(rawBody);
+// Split a melody body into alternating note segments and barline tokens.
+function splitAtBarlines(body) {
   const parts = [];
   let lastIdx = 0;
   let m;
   BARLINE.lastIndex = 0;
   while ((m = BARLINE.exec(body)) !== null) {
-    parts.push({ bar: false, s: body.slice(lastIdx, m.index) });
-    parts.push({ bar: true, s: m[0] });
+    parts.push({ bar: false, s: body.slice(lastIdx, m.index) }, { bar: true, s: m[0] });
     lastIdx = m.index + m[0].length;
   }
   parts.push({ bar: false, s: body.slice(lastIdx) });
+  return parts;
+}
 
-  let patternIdx = 0;
-  let seen = 0;
-  let out = "";
-  let currentKey = null;
-  for (const p of parts) {
-    if (p.bar) {
-      out += p.s;
-      continue;
+// Whether a segment holds any note or rest once chord symbols, decorations
+// and inline fields are stripped.
+function carriesNotes(segment) {
+  const stripped = segment
+    .replace(/"[^"]*"/g, "")
+    .replace(/![^!]*!/g, "")
+    .replace(/\[[A-Za-z]:[^\]]*\]/g, "");
+  return /[A-Ga-gxz]/.test(stripped);
+}
+
+// An invisible rest of a segment's own length when it is shorter than a full
+// bar (a pickup or sub-bar stub), else null.
+function subBarRest(segment, lnum, lden) {
+  if (!lnum || !lden) return null;
+  const slots = measureBarSlots(segment, lnum, lden);
+  return slots > 0 && slots < 8 ? "x" + formatDuration(slots, lnum, lden) : null;
+}
+
+// What one note segment becomes in the comping voice, advancing the running
+// `state` (pattern index, bars seen, the key in effect).
+function segmentContent(segment, cfg, state) {
+  const { barStrings, leadingRestBars, rest, lnum, lden, respellForKey } = cfg;
+  const pastLead = state.seen >= leadingRestBars;
+  const stub = pastLead ? subBarRest(segment, lnum, lden) : null;
+  if (stub !== null) {
+    // A sub-bar measure mid-tune — the `D2` anacrusis at the top of Bei Mir's
+    // chorus, or any half-bar lead-in after a `||`. parseChordScheme still
+    // emits a (continuation) chord measure for it, so step past that pattern
+    // bar, but draw only an invisible rest of the melody's own length here so
+    // the following barline stays aligned between the two staves. (A leading
+    // pickup, `seen < leadingRestBars`, has no such phantom measure and is
+    // handled by the measured rest below.)
+    if (state.patternIdx < barStrings.length) state.patternIdx++;
+    return { content: stub, isRest: true };
+  }
+  if (pastLead && state.patternIdx < barStrings.length) {
+    const content = barStrings[state.patternIdx++];
+    const respelled = state.currentKey && respellForKey ? respellForKey(content, state.currentKey) : content;
+    return { content: respelled, isRest: false };
+  }
+  return { content: subBarRest(segment, lnum, lden) || rest, isRest: true };
+}
+
+// The comping text for one note segment: its leading whitespace and inline
+// fields kept verbatim, then `content`.
+function renderSegment(segment, fieldList, { content, isRest }, lnum, lden) {
+  const leadWs = (segment.match(/^\s*/) || [""])[0];
+  // A melody measure that straddles a source line break carries the newline
+  // *inside* this note segment (e.g. "…| F\nFAB||:" once the P: line between
+  // is stripped). Keep it, so the comping voice wraps its lines exactly where
+  // the melody does and the two staves stay in step — otherwise the first
+  // pattern bar rides up onto the previous system.
+  const innerBreak = !leadWs.includes("\n") && segment.includes("\n");
+  const inlineFields = fieldList.join(" ");
+  const prefix = leadWs + (inlineFields ? inlineFields + " " : "");
+  if (innerBreak && isRest && lnum && lden) {
+    // The melody splits this measure across the line break; split the comping
+    // rest at the same point (its slots before / after the newline) so the
+    // barline that follows still lines up between the two staves.
+    const nl = segment.indexOf("\n");
+    const head = measureBarSlots(segment.slice(0, nl), lnum, lden);
+    const tail = measureBarSlots(segment.slice(nl + 1), lnum, lden);
+    if (head > 0 && tail > 0) {
+      return prefix + "x" + formatDuration(head, lnum, lden) + "\nx" + formatDuration(tail, lnum, lden) + " ";
     }
-    const stripped = p.s
-      .replace(/"[^"]*"/g, "")
-      .replace(/![^!]*!/g, "")
-      .replace(/\[[A-Za-z]:[^\]]*\]/g, "");
-    if (!/[A-Ga-gxz]/.test(stripped)) {
+  }
+  return prefix + content + (innerBreak ? "\n" : " ");
+}
+
+export function buildVoiceBody(rawBody, barStrings, leadingRestBars, restToken, lnum, lden, respellForKey) {
+  const cfg = { barStrings, leadingRestBars, rest: restToken || "x8", lnum, lden, respellForKey };
+  const state = { patternIdx: 0, seen: 0, currentKey: null };
+  let out = "";
+  for (const p of splitAtBarlines(stripNonMusicLines(rawBody))) {
+    if (p.bar || !carriesNotes(p.s)) {
       out += p.s;
       continue;
     }
     const fieldList = p.s.match(/\[[A-Za-z]:[^\]]*\]/g) || [];
-    const inlineFields = fieldList.join(" ");
     for (const f of fieldList) {
-      if (f.startsWith("[K:")) currentKey = f.slice(3, -1).trim();
+      if (f.startsWith("[K:")) state.currentKey = f.slice(3, -1).trim();
     }
-    const leadWs = (p.s.match(/^\s*/) || [""])[0];
-    // A melody measure that straddles a source line break carries the newline
-    // *inside* this note segment (e.g. "…| F\nFAB||:" once the P: line between
-    // is stripped). Keep it, so the comping voice wraps its lines exactly where
-    // the melody does and the two staves stay in step — otherwise the first
-    // pattern bar rides up onto the previous system.
-    const innerBreak = !leadWs.includes("\n") && p.s.includes("\n");
-    const measuredRest = (segment) => {
-      if (lnum && lden) {
-        const slots = measureBarSlots(segment, lnum, lden);
-        if (slots > 0 && slots < 8)
-        {return "x" + formatDuration(slots, lnum, lden);}
-      }
-      return rest;
-    };
-    let content;
-    let contentIsRest = false;
-    const stubSlots =
-      seen >= leadingRestBars && lnum && lden
-        ? measureBarSlots(p.s, lnum, lden)
-        : 0;
-    if (stubSlots > 0 && stubSlots < 8) {
-      // A sub-bar measure mid-tune — the `D2` anacrusis at the top of Bei Mir's
-      // chorus, or any half-bar lead-in after a `||`. parseChordScheme still
-      // emits a (continuation) chord measure for it, so step past that pattern
-      // bar, but draw only an invisible rest of the melody's own length here so
-      // the following barline stays aligned between the two staves. (A leading
-      // pickup, `seen < leadingRestBars`, has no such phantom measure and is
-      // handled by measuredRest below.)
-      if (patternIdx < barStrings.length) patternIdx++;
-      content = "x" + formatDuration(stubSlots, lnum, lden);
-      contentIsRest = true;
-    } else if (seen >= leadingRestBars && patternIdx < barStrings.length) {
-      content = barStrings[patternIdx++];
-      if (currentKey && respellForKey) content = respellForKey(content, currentKey);
-    } else {
-      content = measuredRest(p.s);
-      contentIsRest = true;
-    }
-    seen++;
-    const prefix = leadWs + (inlineFields ? inlineFields + " " : "");
-    if (innerBreak && contentIsRest && lnum && lden) {
-      // The melody splits this measure across the line break; split the comping
-      // rest at the same point (its slots before / after the newline) so the
-      // barline that follows still lines up between the two staves.
-      const nl = p.s.indexOf("\n");
-      const head = measureBarSlots(p.s.slice(0, nl), lnum, lden);
-      const tail = measureBarSlots(p.s.slice(nl + 1), lnum, lden);
-      if (head > 0 && tail > 0) {
-        out += prefix +
-          "x" + formatDuration(head, lnum, lden) + "\n" +
-          "x" + formatDuration(tail, lnum, lden) + " ";
-        continue;
-      }
-    }
-    out += prefix + content + (innerBreak ? "\n" : " ");
+    const segment = segmentContent(p.s, cfg, state);
+    state.seen++;
+    out += renderSegment(p.s, fieldList, segment, lnum, lden);
   }
   return out;
 }
@@ -1071,8 +1080,8 @@ function scaleShift(pc, keyScale, steps) {
     const target = pcChromaVal(pc);
     let best = 0;
     let bestDist = 99;
-    for (let i = 0; i < keyScale.length; i++) {
-      const raw = Math.abs(pcChromaVal(keyScale[i]) - target);
+    for (const [i, element] of keyScale.entries()) {
+      const raw = Math.abs(pcChromaVal(element) - target);
       const dist = Math.min(raw, 12 - raw);
       if (dist < bestDist) {
         bestDist = dist;
@@ -1151,21 +1160,21 @@ function voiceNear(pcs, refMidis) {
 */
 function closeStack(pcs, bottomOct) {
   const out = [];
-  for (let i = 0; i < pcs.length; i++) {
+  for (const [i, pc] of pcs.entries()) {
     const prev = out[i - 1];
     let oct = i === 0 ? bottomOct : prev.oct - 1;
-    let midi = Tonal.Note.midi(pcs[i] + oct);
+    let midi = Tonal.Note.midi(pc + oct);
     // Lift by whole octaves until this note clears the one below it. Bounded by
     // a fixed span so an unparseable pitch class can't spin forever.
     if (prev) {
       for (let lift = 0; lift < 12 && midi != null && midi <= prev.midi; lift++) {
         oct += 1;
-        midi = Tonal.Note.midi(pcs[i] + oct);
+        midi = Tonal.Note.midi(pc + oct);
       }
     }
     let resolvedMidi = midi;
     if (resolvedMidi == null) resolvedMidi = prev ? prev.midi + 4 : 60;
-    out.push({ pc: pcs[i], oct, midi: resolvedMidi });
+    out.push({ pc, oct, midi: resolvedMidi });
   }
   return out;
 }
@@ -1296,69 +1305,66 @@ function seedRefs(curr) {
    Returns extractChordNotes' shape with each { pc } re-ordered bottom-to-top
    as the chosen inversion placed it, tagged with its voice key and octave.
 */
-function voiceLead(bars) {
-  let prevMidis = null;
-  let prevBassIdx = null;
-  let prevPcKey = null;
-  let homeRefs = null;
-  const out = [];
-  for (const bar of bars) {
-    const voicedBar = [];
-    for (const curr of bar) {
-      // A break ("N.C.") slot: pass the rest through untouched, and leave
-      // the voice-leading memory alone so the next real chord still leads
-      // on from whatever came before the silence.
-      if (curr === null) {
-        voicedBar.push(null);
-        continue;
-      }
-      if (!homeRefs) homeRefs = seedRefs(curr);
-      const pcKey = curr.map((t) => t.pc).join(",");
-      const chordChanged = prevPcKey !== null && pcKey !== prevPcKey;
-      let refs;
-      if (!prevMidis) {
-        refs = seedRefs(curr);
-      } else if (chordChanged) {
-        refs = prevMidis.map((r, i) => r + REGISTER_HOMING * (homeRefs[i] - r));
-      } else {
-        refs = prevMidis;
-      }
-      let best = null;
-      for (const perm of VOICE_PERMS) {
-        const pcs = perm.map((ci) => curr[ci].pc);
-        const baseOct = nearestOctave(pcs[0], refs[0]);
-        for (const d of [-1, 0, 1]) {
-          const placed = closeStack(pcs, baseOct + d);
-          let cost = placed.reduce(
-            (sum, p, i) => sum + Math.abs(p.midi - refs[i]),
-            0,
-          );
-          if (chordChanged && perm[0] === prevBassIdx) {
-            cost += PARALLEL_INVERSION_PENALTY;
-          }
-          if (!best || cost < best.cost) best = { perm, placed, cost };
-        }
-      }
-      // Nudge back by an octave if the stack has drifted off the staff.
-      const lo = best.placed[0].midi;
-      const hi = best.placed[best.placed.length - 1].midi;
-      const staffCenter = (lo + hi) / 2;
-      let shift = 0;
-      if (staffCenter < 55) shift = 12;
-      else if (staffCenter > 78) shift = -12;
-      const pick = best.perm.map((ci, i) => ({
-        pc: curr[ci].pc,
-        fn: VOICE_KEYS[i],
-        oct: best.placed[i].oct + shift / 12,
-      }));
-      voicedBar.push(pick);
-      prevMidis = best.placed.map((p) => p.midi + shift);
-      prevBassIdx = best.perm[0];
-      prevPcKey = pcKey;
-    }
-    out.push(voicedBar);
+// The midi target of each voice slot when leading into chord `curr`: seeded
+// fresh the first time, pulled back toward home on a chord change, otherwise
+// simply where the voices already are.
+function leadRefs(curr, state, chordChanged) {
+  if (!state.prevMidis) return seedRefs(curr);
+  if (chordChanged) {
+    return state.prevMidis.map((r, i) => r + REGISTER_HOMING * (state.homeRefs[i] - r));
   }
-  return out;
+  return state.prevMidis;
+}
+
+// The cheapest inversion + octave placement of `curr` against `refs`;
+// `penalisedBass` is the bass chord-tone a repeat of which counts as a
+// parallel inversion (null when nothing is penalised).
+function bestPlacement(curr, refs, penalisedBass) {
+  let best = null;
+  for (const perm of VOICE_PERMS) {
+    const pcs = perm.map((ci) => curr[ci].pc);
+    const baseOct = nearestOctave(pcs[0], refs[0]);
+    for (const d of [-1, 0, 1]) {
+      const placed = closeStack(pcs, baseOct + d);
+      let cost = placed.reduce((sum, p, i) => sum + Math.abs(p.midi - refs[i]), 0);
+      if (perm[0] === penalisedBass) cost += PARALLEL_INVERSION_PENALTY;
+      if (!best || cost < best.cost) best = { perm, placed, cost };
+    }
+  }
+  return best;
+}
+
+// Nudge back by an octave if the stack has drifted off the staff.
+function staffShift(placed) {
+  const staffCenter = (placed[0].midi + placed[placed.length - 1].midi) / 2;
+  if (staffCenter < 55) return 12;
+  return staffCenter > 78 ? -12 : 0;
+}
+
+// Voice-lead one real chord, updating the running `state` (the previous
+// voicing, its bass tone and chord identity, and the home register).
+function voiceLeadChord(curr, state) {
+  if (!state.homeRefs) state.homeRefs = seedRefs(curr);
+  const pcKey = curr.map((t) => t.pc).join(",");
+  const chordChanged = state.prevPcKey !== null && pcKey !== state.prevPcKey;
+  const refs = leadRefs(curr, state, chordChanged);
+  const best = bestPlacement(curr, refs, chordChanged ? state.prevBassIdx : null);
+  const shift = staffShift(best.placed);
+  state.prevMidis = best.placed.map((p) => p.midi + shift);
+  state.prevBassIdx = best.perm[0];
+  state.prevPcKey = pcKey;
+  return best.perm.map((ci, i) => ({
+    pc: curr[ci].pc,
+    fn: VOICE_KEYS[i],
+    oct: best.placed[i].oct + shift / 12,
+  }));
+}
+
+function voiceLead(bars) {
+  const state = { prevMidis: null, prevBassIdx: null, prevPcKey: null, homeRefs: null };
+  // A break ("N.C.") slot passes through untouched and leaves the voice-leading
+  // memory alone, so the next real chord still leads on from before the silence.
+  return bars.map((bar) => bar.map((curr) => (curr === null ? null : voiceLeadChord(curr, state))));
 }
 
 // The [ tokens in an ABC bar fragment == the chord onsets ABCjs will draw.
@@ -1431,6 +1437,57 @@ function formatSlotToken(t) {
   return t.pitch + dur + (t.tie ? "-" : "");
 }
 
+// A bar with a single chord slot: a plain rest for a break ("N.C."), else the
+// pattern's two-bar template chosen by bar parity.
+function oneChordBar(cb, bar, voiced, pat, keyScale) {
+  if (cb[0] === null) return { fragment: "z8", barPalette: [] };
+  const fn = bar % 2 === 0 ? pat.twobar1 : pat.twobar2;
+  let fragment = fn(...chordArgs(cb[0], keyScale));
+  // Templates that end in a bare tie (hold_over's twobar1) commit to holding the same chord into the next bar's first note.
+  // When that bar actually changes chord -- the far more common case,
+  // since the two-bar twobar1/twobar2 split is chosen by bar parity,
+  // not by where the chord scheme actually repeats -- a literal "-"
+  // ties into an unrelated pitch: abcjs still draws the arc, so it
+  // reads as a tangle of tie lines running into the wrong chord.
+  // Dropping the dash leaves a plain sustained whole bar instead.
+  if (fragment.endsWith("-")) {
+    const next = voiced[bar + 1];
+    // A two-chord next bar still continues when its first half is the
+    // same chord (that half is a plain held chord, so the tie lands).
+    const continues = next && next[0] !== null && chordKey(next[0]) === chordKey(cb[0]);
+    if (!continues) fragment = fragment.slice(0, -1);
+  }
+  const order = cb[0].map((v) => v.fn);
+  return { fragment, barPalette: new Array(countChords(fragment)).fill(order) };
+}
+
+// The colour order of each chord tone in a voiced triple (none for a break).
+function triplePalette(triple) {
+  return triple === null ? [] : triple.map((v) => v.fn);
+}
+
+// A bar split in two halves, each its own chord (or a half-bar rest).
+function twoChordBar(cb, bar, pat, keyScale) {
+  const odd = bar % 2 === 1;
+  const halfA = (odd && pat.halfOdd) || pat.half;
+  const halfB = (odd && pat.half2Odd) || pat.half2 || pat.half;
+  const fragA = cb[0] === null ? "z4" : halfA(...chordArgs(cb[0], keyScale));
+  const fragB = cb[1] === null ? "z4" : halfB(...chordArgs(cb[1], keyScale));
+  const barPalette = new Array(countChords(fragA)).fill(triplePalette(cb[0]))
+    .concat(new Array(countChords(fragB)).fill(triplePalette(cb[1])));
+  return { fragment: fragA + " " + fragB, barPalette };
+}
+
+// A bar with three or more chords: the bar's eighths shared out evenly, one
+// plain chord (or rest) each.
+function manyChordBar(cb, keyScale) {
+  const durs = distribute(8, cb.length);
+  const fragment = cb
+    .map((triple, i) => (triple === null ? "z" + durs[i] : chordArgs(triple, keyScale)[0] + durs[i]))
+    .join(" ");
+  return { fragment, barPalette: cb.map(triplePalette) };
+}
+
 // `part` (0-2, or null for the ordinary block-chord voice) narrows every
 // chord to that one voice — see pickChordNote — before respelling, so the
 // accidental bookkeeping only sees the notes that voice actually plays.
@@ -1439,67 +1496,19 @@ function compingBars(chords, pat, { keyScale, keySig, lnum, lden }, part = null)
 
   // One comping voice: each pattern slot is a block chord "[low mid high]".
   // compBars[i] is bar i's ABC fragment; compPalettes[i] is a colour order
-  // (["R","3","5"] bottom-to-top) per chord onset in that fragment.
+  // (["R","3","5"] bottom-to-top) per chord onset in that fragment. A `null`
+  // triple is a break ("N.C.") slot: it draws a plain rest and contributes no
+  // palette entries (a rest draws no notehead onset for sheet-decorations.js).
   let fragments = [];
   const compPalettes = [];
-  for (let bar = 0; bar < voiced.length; bar++) {
-    const cb = voiced[bar];
-    let fragment;
-    let barPalette;
-    // A `null` triple is a break ("N.C.") slot: draw a plain rest instead of
-    // a chord pattern, and contribute no palette entries (a rest draws no
-    // notehead onset for sheet-decorations.js to colour).
-    if (cb.length === 1) {
-      if (cb[0] === null) {
-        fragment = "z8";
-        barPalette = [];
-      } else {
-        const fn = bar % 2 === 0 ? pat.twobar1 : pat.twobar2;
-        fragment = fn.apply(null, chordArgs(cb[0], keyScale));
-        // Templates that end in a bare tie (hold_over's twobar1) commit to holding the same chord into the next bar's first note.
-        // When that bar actually changes chord -- the far more common case,
-        // since the two-bar twobar1/twobar2 split is chosen by bar parity,
-        // not by where the chord scheme actually repeats -- a literal "-"
-        // ties into an unrelated pitch: abcjs still draws the arc, so it
-        // reads as a tangle of tie lines running into the wrong chord.
-        // Dropping the dash leaves a plain sustained whole bar instead.
-        if (fragment.endsWith("-")) {
-          const next = voiced[bar + 1];
-          // A two-chord next bar still continues when its first half is the
-          // same chord (that half is a plain held chord, so the tie lands).
-          const continues = next && next[0] !== null && chordKey(next[0]) === chordKey(cb[0]);
-          if (!continues) fragment = fragment.slice(0, -1);
-        }
-        const order = cb[0].map((v) => v.fn);
-        barPalette = new Array(countChords(fragment)).fill(order);
-      }
-    } else if (cb.length === 2) {
-      const odd = bar % 2 === 1;
-      const halfA = (odd && pat.halfOdd) || pat.half;
-      const halfB = (odd && pat.half2Odd) || pat.half2 || pat.half;
-      const fragA =
-        cb[0] === null ? "z4" : halfA.apply(null, chordArgs(cb[0], keyScale));
-      const fragB =
-        cb[1] === null ? "z4" : halfB.apply(null, chordArgs(cb[1], keyScale));
-      fragment = fragA + " " + fragB;
-      barPalette = new Array(countChords(fragA))
-        .fill(cb[0] === null ? [] : cb[0].map((v) => v.fn))
-        .concat(
-          new Array(countChords(fragB)).fill(
-            cb[1] === null ? [] : cb[1].map((v) => v.fn),
-          ),
-        );
-    } else {
-      const durs = distribute(8, cb.length);
-      fragment = cb
-        .map((triple, i) => (triple === null ? "z" + durs[i] : chordArgs(triple, keyScale)[0] + durs[i]))
-        .join(" ");
-      barPalette = cb.map((triple) => (triple === null ? [] : triple.map((v) => v.fn)));
-    }
-    if (part !== null) fragment = pickChordNote(fragment, part);
-    fragments.push(fragment);
-    compPalettes.push(barPalette);
-  }
+  voiced.forEach((cb, bar) => {
+    let built;
+    if (cb.length === 1) built = oneChordBar(cb, bar, voiced, pat, keyScale);
+    else if (cb.length === 2) built = twoChordBar(cb, bar, pat, keyScale);
+    else built = manyChordBar(cb, keyScale);
+    fragments.push(part === null ? built.fragment : pickChordNote(built.fragment, part));
+    compPalettes.push(built.barPalette);
+  });
   if (part !== null) fragments = dropCrossPitchTies(fragments);
   const compBars = fragments.map((f) => rebeamBar(respellBar(f, keySig), lnum, lden));
   return { compBars, compPalettes };
@@ -1541,6 +1550,85 @@ function compingBars(chords, pat, { keyScale, keySig, lnum, lden }, part = null)
    Returns the augmented ABC, or null when the voice can't apply (an
    unsupported meter, no K: line, no bars).
 */
+// Every voice id the tune names: whole-line "V:" declarations first, then
+// any that are only ever switched into inline.
+//
+// findVoiceIds alone only sees a whole-line "V:" declaration -- a voice
+// that's only ever switched into inline (findInlineVoiceIds) is just as
+// real and just as much a collision risk for the id nextVoiceId is about
+// to hand the generated Comping voice, so both are merged before that
+// allocation runs. Declared ids come first so voiceIds[0] still means "the
+// tune's own first/melody voice" even when it's undeclared and only ever
+// named inline (a tune with no "V:" line at all, interleaving
+// "[V:1] ... [V:2] ..." from its very first body line).
+function collectVoiceIds(text) {
+  const declared = findVoiceIds(text);
+  const inline = findInlineVoiceIds(text).filter((id) => !declared.includes(id));
+  return [...declared, ...inline];
+}
+
+// A mid-tune K: change re-spells each comping bar for the key in effect.
+function makeRespellForKey(keySig) {
+  return (bar, keyField) => {
+    const m = /^([A-G])([#b]?)\s*([A-Za-z]*)/.exec(keyField);
+    if (!m) return bar;
+    const sig = keySignature(keyScaleNotes({ root: m[1], acc: m[2], mode: m[3] }));
+    return respellBar(explicitBar(bar, keySig), sig);
+  };
+}
+
+// The tune's header with its own L: dropped (re-added for the comping unit),
+// the title tagged, and the %%score / %%staves layout line set aside.
+function rewriteHeader(header, lnum, lden, titleSuffix) {
+  const headerOut = [];
+  let layoutLine = null;
+  for (const line of header) {
+    if (line.startsWith("L:")) continue;
+    if (/^%%(score|staves)\b/.test(line)) {
+      layoutLine = line;
+      continue;
+    }
+    headerOut.push(line.startsWith("T:") ? line + titleSuffix : line);
+  }
+  headerOut.push("L:" + lnum + "/" + lden);
+  return { headerOut, layoutLine };
+}
+
+// Stitch header, the tune's own body and the generated voice into one tune.
+function assembleTune({ headerOut, layoutLine, split, explicitVoices, newVoiceId, voice, compBody, clefSuffix }) {
+  // Stacked 5 / 3 / R label at the staff's left, naming the chord tones the
+  // three notehead colours pick out (fifth / third / root, top to bottom —
+  // the label's own stacking order mirrors the notes' vertical stacking in
+  // the chord, root at the bottom).
+  const compingVoiceLine = "V:" + newVoiceId + " name=\"" + voice.name + "\"" + clefSuffix;
+  const existingBody = split.body.trimEnd();
+  if (!explicitVoices) {
+    // %%staves (not %%score) so ABCjs draws the barlines connecting the
+    // melody staff to the comping staff — they read as one system. The
+    // bracket [ ] groups them.
+    headerOut.push("%%staves [1 2]", "V:1", compingVoiceLine, split.kLine);
+    return headerOut.join("\n") + "\nV:1\n" + existingBody + "\nV:2\n" + compBody + "\n";
+  }
+  // The tune already declares its own voice(s) — inside the body itself
+  // for honky_tonk_town_riffs.abc, which puts them right after K:. Leave
+  // all of that untouched and simply append the new voice, declaring it
+  // (name="...") the first and only time it's used, same as any of the
+  // tune's own voices would.
+  // A chart that already lays out its own staves (bracing/grouping a brass
+  // section, say) keeps that layout verbatim — the new comping voice is
+  // just tacked on the end as its own ungrouped staff, same as it would be
+  // appended to the voice declarations themselves, rather than losing the
+  // tune's own grouping outright the way stripping-and-not-replacing would.
+  // abcjs only draws a multi-staff bracket correctly (it otherwise collapses
+  // onto the last staff) when the layout line precedes the "V:" declarations.
+  if (layoutLine) {
+    const at = headerOut.findIndex((line) => line.startsWith("V:"));
+    headerOut.splice(at === -1 ? headerOut.length : at, 0, extendLayout(layoutLine.trimEnd(), newVoiceId, voice.joinBracket));
+  }
+  headerOut.push(split.kLine);
+  return headerOut.join("\n") + "\n" + existingBody + "\n" + compingVoiceLine + "\n" + compBody + "\n";
+}
+
 export function appendBarVoice(text, song, makeBars, voice) {
   if (!song || !song.lines || !song.lines[0] || !song.lines[0].staff) return null;
 
@@ -1554,19 +1642,8 @@ export function appendBarVoice(text, song, makeBars, voice) {
   const key = song.lines[0].staff[0].key || { root: "C", acc: "", mode: "" };
   const keyScale = keyScaleNotes(key);
   const keySig = keySignature(keyScale);
-  const bassClef = /clef\s*=\s*bass/.test(split.kLine);
 
-  // findVoiceIds alone only sees a whole-line "V:" declaration -- a voice
-  // that's only ever switched into inline (findInlineVoiceIds) is just as
-  // real and just as much a collision risk for the id nextVoiceId is about
-  // to hand the generated Comping voice, so both are merged before that
-  // allocation runs. Declared ids come first so voiceIds[0] below still
-  // means "the tune's own first/melody voice" even when it's undeclared and
-  // only ever named inline (a tune with no "V:" line at all, interleaving
-  // "[V:1] ... [V:2] ..." from its very first body line).
-  const declaredVoiceIds = findVoiceIds(text);
-  const inlineVoiceIds = findInlineVoiceIds(text).filter((id) => !declaredVoiceIds.includes(id));
-  const voiceIds = [...declaredVoiceIds, ...inlineVoiceIds];
+  const voiceIds = collectVoiceIds(text);
   const explicitVoices = voiceIds.length > 0;
   // An ordinary tune has no "V:" of its own, but always ends up as V:1 below
   // (the synthesized "%%staves [1 2]\nV:1\n..." block), so that's the id to
@@ -1587,77 +1664,15 @@ export function appendBarVoice(text, song, makeBars, voice) {
   const compBars = makeBars({ keyScale, keySig, lnum, lden });
   if (!compBars) return null;
 
-  const leadingRestBars = computeChordOffset(song) || 0;
   // Invisible rest: keeps the comping voice bar-aligned with the melody
   // through pickup / intro / tail bars without drawing anything.
   const restToken = "x" + formatDuration(8, lnum, lden);
-  // A mid-tune K: change re-spells each comping bar for the key in effect.
-  const respellForKey = (bar, keyField) => {
-    const m = /^([A-G])([#b]?)\s*([A-Za-z]*)/.exec(keyField);
-    if (!m) return bar;
-    const sig = keySignature(keyScaleNotes({ root: m[1], acc: m[2], mode: m[3] }));
-    return respellBar(explicitBar(bar, keySig), sig);
-  };
   const compBody = buildVoiceBody(
-    patternSourceBody, compBars, leadingRestBars, restToken, lnum, lden, respellForKey,
+    patternSourceBody, compBars, computeChordOffset(song) || 0, restToken, lnum, lden, makeRespellForKey(keySig),
   ).trim();
-  const clefSuffix = bassClef ? " clef=bass middle=D" : "";
-  const headerOut = [];
-  let layoutLine = null;
-  for (const line of split.header) {
-    if (/^L:/.test(line)) continue;
-    if (/^%%(score|staves)\b/.test(line)) {
-      layoutLine = line;
-      continue;
-    }
-    if (/^T:/.test(line)) {
-      headerOut.push(line + voice.titleSuffix);
-      continue;
-    }
-    headerOut.push(line);
-  }
-  headerOut.push("L:" + lnum + "/" + lden);
-  // Stacked 5 / 3 / R label at the staff's left, naming the chord tones the
-  // three notehead colours pick out (fifth / third / root, top to bottom —
-  // the label's own stacking order mirrors the notes' vertical stacking in
-  // the chord, root at the bottom).
-  const compingVoiceLine =
-    "V:" + newVoiceId + " name=\"" + voice.name + "\"" + clefSuffix;
-  const existingBody = split.body.trimEnd();
-  let abc;
-  if (explicitVoices) {
-    // The tune already declares its own voice(s) — inside the body itself
-    // for honky_tonk_town_riffs.abc, which puts them right after K:. Leave
-    // all of that untouched and simply append the new voice, declaring it
-    // (name="...") the first and only time it's used, same as any of the
-    // tune's own voices would.
-    // A chart that already lays out its own staves (bracing/grouping a brass
-    // section, say) keeps that layout verbatim — the new comping voice is
-    // just tacked on the end as its own ungrouped staff, same as it would be
-    // appended to the voice declarations themselves, rather than losing the
-    // tune's own grouping outright the way stripping-and-not-replacing would.
-    // abcjs only draws a multi-staff bracket correctly (it otherwise collapses
-    // onto the last staff) when the layout line precedes the "V:" declarations.
-    if (layoutLine) {
-      const at = headerOut.findIndex((line) => /^V:/.test(line));
-      headerOut.splice(at === -1 ? headerOut.length : at, 0, extendLayout(layoutLine.trimEnd(), newVoiceId, voice.joinBracket));
-    }
-    headerOut.push(split.kLine);
-    abc =
-      headerOut.join("\n") +
-      "\n" + existingBody +
-      "\n" + compingVoiceLine + "\n" + compBody + "\n";
-  } else {
-    // %%staves (not %%score) so ABCjs draws the barlines connecting the
-    // melody staff to the comping staff — they read as one system. The
-    // bracket [ ] groups them.
-    headerOut.push("%%staves [1 2]", "V:1", compingVoiceLine, split.kLine);
-    abc =
-      headerOut.join("\n") +
-      "\nV:1\n" + existingBody +
-      "\nV:2\n" + compBody + "\n";
-  }
-  return abc;
+  const { headerOut, layoutLine } = rewriteHeader(split.header, lnum, lden, voice.titleSuffix);
+  const clefSuffix = /clef\s*=\s*bass/.test(split.kLine) ? " clef=bass middle=D" : "";
+  return assembleTune({ headerOut, layoutLine, split, explicitVoices, newVoiceId, voice, compBody, clefSuffix });
 }
 
 // Add `id` to a "%%staves" line: tacked on after it as its own ungrouped

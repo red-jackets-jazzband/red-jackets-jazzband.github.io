@@ -13,26 +13,26 @@ export function irealProFromAbc(song, chords) {
 
   const irealProHeader = title + "=" + composer + "=" + style + "=" + key + "=n=T" + num + denom;
   let irealProText = "";
-  for (let i = 0; i < chords.length; i++) {
+  for (const [i, chord] of chords.entries()) {
     // A measure carrying `part` (an ABC P: field's title, e.g. "Chorus") is
     // the first measure of that section — iReal Pro's own rehearsal-mark
     // token is "*" plus exactly one word character, drawn as a boxed letter
     // right before the barline of the measure it labels, so a multi-letter
     // title is reduced to its first letter the same way the on-screen chord
     // table already badges it (chord-table.js's partBadgeText).
-    if (chords[i].part !== undefined) {
-      irealProText += "*" + chords[i].part.trim().charAt(0).toUpperCase();
+    if (chord.part !== undefined) {
+      irealProText += "*" + chord.part.trim().charAt(0).toUpperCase();
     }
 
-    if (chords[i].leftRepeat !== undefined) {
+    if (chord.leftRepeat !== undefined) {
       irealProText += "{";
-    } else if (chords[i].doubeThinBarLeft !== undefined) {
+    } else if (chord.doubeThinBarLeft !== undefined) {
       irealProText += "[";
     } else if (i === 0) {
       irealProText += "|";
     }
 
-    const cell = chords[i].text.toString().replace(/,/g, " ,");
+    const cell = chord.text.toString().replace(/,/g, " ,");
     const spaceCount = ((cell || "").match(/ /g) || []).length;
     irealProText += cell;
 
@@ -47,9 +47,9 @@ export function irealProFromAbc(song, chords) {
         break;
     }
 
-    if (chords[i].rightRepeat !== undefined) {
+    if (chord.rightRepeat !== undefined) {
       irealProText += "}";
-    } else if (chords[i].doubeThinBarRight !== undefined) {
+    } else if (chord.doubeThinBarRight !== undefined) {
       irealProText += "ZY|";
     } else {
       irealProText += "|";

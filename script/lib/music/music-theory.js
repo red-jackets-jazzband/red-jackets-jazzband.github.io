@@ -27,9 +27,9 @@ export function noteChroma(noteName) {
   const letter = (normalized[0] || "C").toUpperCase();
   const rest = normalized.slice(1);
   let c = CHROMAS[letter] !== undefined ? CHROMAS[letter] : 0;
-  for (let i = 0; i < rest.length; i++) {
-    if (rest[i] === "b") c--;
-    else if (rest[i] === "#") c++;
+  for (const accidental of rest) {
+    if (accidental === "b") c--;
+    else if (accidental === "#") c++;
   }
   return ((c % 12) + 12) % 12;
 }

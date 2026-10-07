@@ -11,7 +11,7 @@ import {
 // The Split theme always stamps <html lang="en-US">, so read the language off
 // the URL prefix instead (/nl/agenda/, /de/agenda/, /fr/agenda/).
 function pageLang() {
-  const first = window.location.pathname.split("/").filter(Boolean)[0];
+  const first = window.location.pathname.split("/").find(Boolean);
   return first === "nl" || first === "de" || first === "fr" ? first : "en";
 }
 

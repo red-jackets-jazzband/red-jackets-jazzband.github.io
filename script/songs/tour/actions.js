@@ -29,13 +29,13 @@ export const DEMO_SETLIST_NAME = "Tour setlist";
 const DEMO_SETLIST_MARKER = "\u0000rj-tour-demo";
 export const DEMO_SETLIST_SONG_1 = "basin_street.abc";
 export const DEMO_SETLIST_SONG_2 = "bill_bailey.abc";
-const DEMO_SETLIST_FILES = [DEMO_SETLIST_SONG_1, DEMO_SETLIST_SONG_2];
+const DEMO_SETLIST_FILES = new Set([DEMO_SETLIST_SONG_1, DEMO_SETLIST_SONG_2]);
 
 // Whether `song` is still exactly one of the demo's own two scripted songs —
 // never a divider, a transposed one, or one already counted.
 function isPlainDemoSong(song, filesSoFar) {
   return !isSetlistDivider(song) && !song.key && !song.note
-    && DEMO_SETLIST_FILES.includes(song.file) && !filesSoFar.includes(song.file);
+    && DEMO_SETLIST_FILES.has(song.file) && !filesSoFar.includes(song.file);
 }
 
 // True while a demo setlist entry still holds nothing but what the tour's own
@@ -364,7 +364,9 @@ export function createTourActions(ctx) {
     closeUnrequested(names);
     for (const name of names) {
       const action = actions[name];
-      if (action) await action();
+      // Setup actions must run in order: each builds on the page state the previous one made.
+      // eslint-disable-next-line no-await-in-loop
+      if (action) await action(); // NOSONAR
     }
   }
 

@@ -53,9 +53,9 @@ function concatChunks(chunks) {
   const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
   const result = new Uint8Array(totalLength);
   let offset = 0;
-  for (let i = 0; i < chunks.length; i += 1) {
-    result.set(chunks[i], offset);
-    offset += chunks[i].length;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.length;
   }
   return result;
 }

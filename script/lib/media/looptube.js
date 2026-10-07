@@ -152,7 +152,7 @@ export function loopLeadSeconds(playbackRate, intervalMs) {
 // drifted well before A — i.e. it's time to seek back to A.
 export function shouldLoopSeek(currentTime, a, b, lead) {
   const t = Number(currentTime);
-  if (!isFinite(t)) return false;
+  if (!Number.isFinite(t)) return false;
   if (t >= b - (lead || 0)) return true;
   if (t < a - 0.5) return true;
   return false;
@@ -172,8 +172,8 @@ function nearestIndex(list, value) {
   const v = Number(value) || 1;
   let best = 0;
   let bestDist = Infinity;
-  for (let i = 0; i < list.length; i++) {
-    const d = Math.abs(list[i] - v);
+  for (const [i, element] of list.entries()) {
+    const d = Math.abs(element - v);
     if (d < bestDist) { bestDist = d; best = i; }
   }
   return best;

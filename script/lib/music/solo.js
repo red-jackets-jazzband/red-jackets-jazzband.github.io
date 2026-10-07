@@ -135,7 +135,7 @@ function toProgression(names) {
 // with flats elsewhere (sharps only in a sharp key).
 function createSpeller(keyScale) {
   const byChroma = new Map(keyScale.map((pc) => [pcChromaVal(pc), pc]));
-  const sharpKey = keyScale.filter((pc) => pc.includes("#")).length > 0;
+  const sharpKey = keyScale.some((pc) => pc.includes("#"));
   const chromatic = sharpKey
     ? ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     : ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];

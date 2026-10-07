@@ -100,7 +100,7 @@ export function createSetlistModal(ctx) {
         songs: parsed.songs,
       }));
     };
-    reader.readAsText(file);
+    reader.readAsText(file); // NOSONAR: Blob#text() is Safari 14+, FileReader is the Safari 12 spelling
   }
 
   function createFromRemix(name) {

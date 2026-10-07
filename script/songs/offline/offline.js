@@ -106,7 +106,9 @@ async function fetchAll(paths, onProgress) {
   let failures = 0;
   for (let i = 0; i < paths.length; i += 1) {
     try {
-      const response = await fetch(paths[i]);
+      // Sequential on purpose: a rehearsal-room connection chokes on ~150 parallel requests.
+      // eslint-disable-next-line no-await-in-loop
+      const response = await fetch(paths[i]); // NOSONAR
       if (!response.ok) failures += 1;
     } catch {
       failures += 1;
@@ -147,7 +149,9 @@ async function warmSoundfont(highQualityAudio, onProgress) {
   const soundFontUrl = highQualityAudio ? HIGH_QUALITY_SOUNDFONT_URL : STANDARD_SOUNDFONT_URL;
   let failures = 0;
   for (let i = 0; i < GM_VOICES.length; i += 1) {
-    if (await warmInstrument(GM_VOICES[i].value, soundFontUrl)) failures += 1;
+    // Sequential on purpose: one synth at a time keeps memory flat.
+    // eslint-disable-next-line no-await-in-loop
+    if (await warmInstrument(GM_VOICES[i].value, soundFontUrl)) failures += 1; // NOSONAR
     onProgress(i + 1, GM_VOICES.length);
   }
   return failures;
@@ -306,7 +310,8 @@ export function createOffline(ctx) {
     }
     installBtn = btn;
     on("offlineBtn", "click", downloadForOffline);
-    registerServiceWorker();
+    // registerServiceWorker() resolves false on failure instead of rejecting.
+    registerServiceWorker().catch(() => false);
 
     window.addEventListener("beforeinstallprompt", (event) => {
       event.preventDefault();
