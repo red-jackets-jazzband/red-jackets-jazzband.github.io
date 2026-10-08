@@ -4,22 +4,22 @@ C:William H. Tyers (1911)
 F:https://secondhandsongs.com/work/217916
 M:4/4
 L:1/8
-K:F
+K:Eb
 P:Intro
-c=B_B | "F"A2 cA cAcd- | "Fdim"d2 z2 z cd^d | "C7"e2 _e2 d2 _d2 | c4 z2 cd ||
+B=A_A | "Eb"G2 BG BGBc- | "Ebdim"c2 z2 z Bc^c | "Bb7"d2 _d2 c2 _c2 | B4 z2 Bc ||
 P:A
-|:"F"f2 f2 f3 d | "C7"e2 d c3 GA | c2 c2 c3 G | "F"A2 G F4 z | F2 F2 F3 D | "C7"E2 E2 c4 | E2 E2 c4 | "F"F2 F2 c2 cd |
-"F"f2 f2 f3 d | "C7"e2 d c3 GA | c2 c2 c3 G | "F"A2 G F4 z | "Bb"d2 d2 d3 A | "F"c2 =B2 "D7"_B4 | "G7"A2 A2 "C7"cA G2 |1 "F"F4 z2 cd :|2 "F"F2 f2 f2 f2 ||
+|:"Eb"e2 e2 e3 c | "Bb7"d2 c B3 FG | B2 B2 B3 F | "Eb"G2 F E4 z | E2 E2 E3 C | "Bb7"D2 D2 B4 | D2 D2 B4 | "Eb"E2 E2 B2 Bc |
+"Eb"e2 e2 e3 c | "Bb7"d2 c B3 FG | B2 B2 B3 F | "Eb"G2 F E4 z | "Ab"c2 c2 c3 G | "Eb"B2 =A2 "C7"_A4 | "F7"G2 G2 "Bb7"BG F2 |1 "Eb"E4 z2 Bc :|2 "Eb"E2 e2 e2 e2 ||
 P:B
-"Bb"f d2 d2 z ^de- | "E7"e z e2 e2 e2 | "F"e c2 c2 z ^cd- | "D7"d z d2 d2 d2 | "G7"A4 G4 | "C7"z2 B2 B2 B2 | "F"A^GA c4- c | "F7"z2 f2 f2 f2 |
-"Bb"f d2 d2 z ^de- | "E7"e z e2 e2 e2 | "F"e c2 c2 z ^cd- | "D7"d z d2 d2 d2 | "G7"A4 G4 | "C7"cccc A2 G2 | "F"F8 | "F7"z2 FG ABc^c ||
+"Ab"e c2 c2 z ^cd- | "D7"d z d2 d2 d2 | "Eb"d B2 B2 z =Bc- | "C7"c z c2 c2 c2 | "F7"G4 F4 | "Bb7"z2 A2 A2 A2 | "Eb"G^FG B4- B | "Eb7"z2 e2 e2 e2 |
+"Ab"e c2 c2 z ^cd- | "D7"d z d2 d2 d2 | "Eb"d B2 B2 z =Bc- | "C7"c z c2 c2 c2 | "F7"G4 F4 | "Bb7"BBBB G2 F2 | "Eb"E8 | "Eb7"z2 EF GAB=B ||
 P:C
-K:Bb
-"Bb"d4 d4 | "Bb7"d6 d2 | "Cm"d2 c2 =B c2 G- | G4 GAB=B | "F7"c4 c4 | c6 c2 | "Bb"c2 B2 A2 BF- | "F7"F2 FG ABc^c |
-"Bb"d4 d4 | "Gm"d8 | "Dm"z2 d2 ^c d2 f- | f4 z f2 d | "A7"f =e2 ^c2 A2 z | f =e2 ^c2 A2 z | "Dm"d2 d2 ^c2 d2 | "F7"f2 d2 f2 d2 ||
+K:Ab
+"Ab"c4 c4 | "Ab7"c6 c2 | "Bbm"c2 B2 =A B2 F- | F4 FGA=A | "Eb7"B4 B4 | B6 B2 | "Ab"B2 A2 G2 AE- | "Eb7"E2 EF GAB=B |
+"Ab"c4 c4 | "Fm"c8 | "Cm"z2 c2 =B c2 e- | e4 z e2 c | "G7"e =d2 =B2 G2 z | e =d2 =B2 G2 z | "Cm"c2 c2 =B2 c2 | "Eb7"e2 c2 e2 c2 ||
 P:D
-|:"Bb"c B2 B4- B | z2 AB cBAG | "F7"B A2 A4- A | z2 ^d2 g2 d2 | d c2 c4- c | z2 =Bc dc_BA | "Bb"cBA B4- B | z2 f2 f2 d2 |
-"Bb7"c B2 B4- B | z2 f2 f2 f2 | "Eb"f ^d2 d3 B _d- | "Ebm"_d8 | "Bb"d2 d2 dc B2 | "F7"c2 c2 cBAB | "Bb"B8 | z2 d2 d2 d2 :|
+|:"Ab"B A2 A4- A | z2 GA BAGF | "Eb7"A G2 G4- G | z2 ^c2 f2 c2 | c B2 B4- B | z2 =AB cB_AG | "Ab"BAG A4- A | z2 e2 e2 c2 |
+"Ab7"B A2 A4- A | z2 e2 e2 e2 | "Db"e ^c2 c3 A _c- | "Dbm"_c8 | "Ab"c2 c2 cB A2 | "Eb7"B2 B2 BAGA | "Ab"A8 | z2 c2 c2 c2 :|
 P:E
-|:"Bb"d8- | d ccB BAAG | "F7"GF ^D6 | z2 c2 c2 c2 | c8- | c BBA AGGF | "Bb"FE D6 | z2 d2 d2 d2 |
-"Bb7"d8 | c4 B2 _A2 | "Eb"G4 B2 G2 | "Ebm"_G6 d2 | "Bb"B6 d2 | "F7"c6 d2 |1 "Bb"B8- | B2 d2 d2 d2 :|2 "Bb"B8- | B4 z4 |]
+|:"Ab"c8- | c BBA AGGF | "Eb7"FE ^C6 | z2 B2 B2 B2 | B8- | B AAG GFFE | "Ab"ED C6 | z2 c2 c2 c2 |
+"Ab7"c8 | B4 A2 _G2 | "Db"F4 A2 F2 | "Dbm"_F6 c2 | "Ab"A6 c2 | "Eb7"B6 c2 |1 "Ab"A8- | A2 c2 c2 c2 :|2 "Ab"A8- | A4 z4 |]
