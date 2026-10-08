@@ -90,6 +90,7 @@ Just a little talk with Jesus,little_talk.abc
 Just a little while,just_a_little_while.abc
 Just over in the Gloryland,gloryland.abc
 King of the Second Line,king_of_the_second_line.abc
+La Vie en Rose,la_vie_en_rose.abc
 Lady be good,lady_be_good.abc
 Lay my burden down,lay_my_burden_down.abc
 Li'l Liza Jane,lil_liza_jane.abc
