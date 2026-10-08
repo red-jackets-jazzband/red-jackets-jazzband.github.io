@@ -1,5 +1,6 @@
 import { byId, el, qsa } from "../../lib/core/dom.js";
 import { extractWordsTables, parseFormStep } from "../../lib/music/words-table.js";
+import { historyParagraphs, stripHistory } from "../../lib/music/history.js";
 import { findInstrument } from "../../lib/music/instruments.js";
 import {
   buildRenderPlan, effectiveSheetSettings, mixRenderText,
@@ -215,7 +216,9 @@ function paint(plan, renderText, targets, { titlePrefix = "", voices = [] } = {}
   const notationEl = byId(targets.notationId);
   notationEl.classList.toggle("comping-active", plan.comping.active);
 
-  const { abcText: renderTextNoTables } = extractWordsTables(renderText);
+  // H: text is shown behind the drawer's History button (history.js), not
+  // printed at the foot of the sheet.
+  const { abcText: renderTextNoTables } = extractWordsTables(stripHistory(renderText));
   const visualObjs = ABCJS.renderAbc(
     targets.notationId, TIGHT_HEADER_SPACING + renderTextNoTables, abcParams(plan.visualTranspose),
   );
@@ -344,6 +347,7 @@ export function createSheet(ctx) {
       songSerial,
       title: plan.song.metaText.title,
       inspirationLinks: parseInspirationLinks(plan.song.metaText.url),
+      history: historyParagraphs(plan.song.metaText.history),
       hasChords: plan.hasChords,
       compingActive: plan.comping.active,
       soloActive: solo.program !== null,

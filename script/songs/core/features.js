@@ -9,6 +9,7 @@ import { createSheet } from "../sheet/sheet.js";
 import { initSheetControls } from "../sheet/controls.js";
 import { createInstrumentDropdown, createCompingDropdown } from "../sheet/selects.js";
 import { createFullscreen } from "../sheet/fullscreen.js";
+import { createSongHistory } from "../sheet/history.js";
 import { createSwipeNav } from "../sheet/swipe-nav.js";
 import { createInspiration } from "../inspiration/inspiration.js";
 import { createLibraryTab } from "../library/library-tab.js";
@@ -93,6 +94,7 @@ export const FEATURES = [
   { name: "inspiration", create: createInspiration, init: (ctx) => ctx.inspiration.init() },
   { name: "swipeNav", create: createSwipeNav, init: (ctx) => ctx.swipeNav.init() },
   { name: "fullscreen", create: createFullscreen, init: (ctx) => ctx.fullscreen.init() },
+  { name: "history", create: createSongHistory, init: (ctx) => ctx.history.init() },
   { name: "library", create: createLibraryTab },
   { name: "setlistData", create: createSetlistData },
   { name: "setlistHome", create: createSetlistHome },

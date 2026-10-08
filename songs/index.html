@@ -56,7 +56,7 @@
 
 
   
-  <link rel="stylesheet" href="/css/split.min.96d150e416edfcffaf2904d67e38be9034c3191441fbd54b491bd6bc9d1f2652.css" type="text/css" media="screen,print" integrity="sha256-ltFQ5Bbt/P&#43;vKQTWfji&#43;kDTDGRRB&#43;9VLSRvWvJ0fJlI=" />
+  <link rel="stylesheet" href="/css/split.min.4b7681a6b83e4c5e4602f31be651803183bbd06845aba5e51c8a083f422b6a33.css" type="text/css" media="screen,print" integrity="sha256-S3aBprg&#43;TF5GAvMb5lGAMYO70GhFq6XlHIoIP0IrajM=" />
 
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
@@ -215,6 +215,7 @@
   </div>
   <div id="compingSlot" class="sheet-comping"></div>
   <div id="soloSlot" class="sheet-comping"></div>
+  <button id="historyBtn" class="sheet-icon-btn" type="button" hidden title="History" aria-label="Show this tune's history" aria-expanded="false" aria-controls="songHistory"><span class="fa-solid fa-book-open" aria-hidden="true"></span></button>
   </div>
   <dialog id="mixerPanel" class="mixer-panel" aria-label="Mixer">
     <div id="mixerSectionAccompaniment" class="mixer-section">
@@ -283,6 +284,7 @@
 </div>
 <button id="sheetFullscreenBtn" class="rj-sheet-fullscreen-btn hideOnprint" type="button" title="Full screen" aria-label="Full screen" aria-pressed="false"><span class="fa-solid fa-expand" aria-hidden="true"></span></button>
 <div class="rj-sheet-pager"><button id="sheetPrevBtn" class="rj-sheet-step hideOnprint" type="button" title="Previous song" aria-label="Previous song"><span class="fa-solid fa-chevron-left" aria-hidden="true"></span></button><div id="songtitle" class="songtitle"></div><button id="sheetNextBtn" class="rj-sheet-step hideOnprint" type="button" title="Next song" aria-label="Next song"><span class="fa-solid fa-chevron-right" aria-hidden="true"></span></button></div>
+<div id="songHistory" class="song-history" hidden></div>
 <div id="chordtable" class="chordtable"></div>
 <div id="notation" class="notation"></div>
 <div id="lyrics" class="lyrics"></div>
