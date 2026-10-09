@@ -1,15 +1,18 @@
 X:0
-L:1/4
 T:Let the light from the lighthouse (Shine on me)
+C:Traditional spiritual
 F:https://youtu.be/wEBP4RTrLpc
 F:https://secondhandsongs.com/work/117420
-K:Bbmaj
 M:4/4
-FB [| "Bb" d2 d2 | d3 d | "Eb" c2 B G | "Bb" B2 B A |
-"Bb" F2 B B | F/2 B3/2-B2 | d2 "Bbdim" ^c2 | "F7" c2 F c |
-"Bb" d2 d2 | d3 d | "Eb" c2 B G | "Bb" B2 B G |
-"Bb" F2 B B | F/2 B3/2- B2 | d2 "F7" c2 | "Bb" B f "F7" f/2e/2f/2f/2 |
-"Bb" d d3- | d d e d | "Eb" B G3- | G2 B G |
-"Bb" F2 G F | B B3 | d2 "Bbdim" ^c2 | "F7" c3/2 f/2 f e |
-"Bb" d/2 B3/2- B2 | z B c B | "Eb" B G3-| G2 B G |
-"Bb" F2 G B | d/2 d3/2-d2 | d2 "F7" c2 | "Bb" B3 z |]
+L:1/4
+K:Bbmaj
+P:A
+F B ||: "Bb" d3 d | d3 c | "Eb" B3 B | B2 B G | "Bb" F2 B G | F B3 | d2 B2 | "F7" c2 F B |
+w: My _ | Lord he's done just what he said Let the light from the light-house shine on me He _
+"Bb" d3 d | d3 c | "Eb" B3 B | B2 B G | "Bb" F2 B G | F B3 | "F7" d2 c2 | "Bb" B2 F B ||
+w: heal the sick and rise the dead Let the light from the light-house shine on me Let it
+P:B
+"Bb" d2 d2- | d2 d c | "Eb" B2 B2- | B2 B G | "Bb" F2 B G | F B3 | d2 B2 | "F7" c2 F B |
+w: shine on _ let it shine on _ Let the light from the light-house shine on me Let it
+"Bb" d2 d2- | d2 d c | "Eb" B2 B2- | B2 B G | "Bb" F2 B G | F B3 | "F7" d2 c2 | "Bb" B3 z :|]
+w: shine on, _ let it shine on _ Let the light from the light-house shine on me
