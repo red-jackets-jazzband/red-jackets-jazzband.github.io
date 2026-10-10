@@ -66,6 +66,17 @@ export const LAYERS = [
     annotate: () => [],
   },
   {
+    id: "outside-chords",
+    group: "Harmony",
+    label: "Outside chords",
+    hint: "Shades in magenta each chord that has a note outside the key. With Chord skeleton on, the ghost notes that aren't in the key are tinted too.",
+    order: 5, // unused: it writes no annotation
+    availableFor: () => true,
+    appliesTo: () => true,
+    // Drawn as SVG after ABCjs engraves (songs/layers/overlays/outside-chords.js).
+    annotate: () => [],
+  },
+  {
     id: "scale-degrees",
     group: "Melody",
     label: "Scale degrees",

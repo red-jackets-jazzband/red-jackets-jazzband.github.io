@@ -24,8 +24,9 @@ function clampTopToViewBox(txt, y) {
 }
 
 /*
-  Draw a thin square outline around every part marker (an ABC `P:` field), so
-  the black letter reads as a labelled section box. Reuses (and re-measures)
+  Draw a thin square outline, filled solid white, around every part marker (an
+  ABC `P:` field), so the black letter reads as a labelled section box that
+  sits in front of anything drawn behind it (a layer's progression band). Reuses (and re-measures)
   an existing box rather than skipping it, so a re-run — e.g. once the
   MuseJazzText face `partsfont` uses has actually finished loading, see the
   document.fonts.ready re-run in sheet.js — corrects a box that was first
@@ -54,7 +55,7 @@ export function stylePartMarkers(container) {
     rect.setAttribute("y", y);
     rect.setAttribute("width", bbox.width + 2 * padX);
     rect.setAttribute("height", bottom - y);
-    rect.setAttribute("fill", "none");
+    rect.setAttribute("fill", "#fff");
     rect.setAttribute("stroke", "#000");
     rect.setAttribute("stroke-width", String(STROKE_WIDTH));
     if (!reuse) txt.parentNode.insertBefore(rect, txt);

@@ -2,7 +2,9 @@
   Draws the "Chord skeleton" layer (lib/music/chord-skeleton.js) after
   ABCjs has engraved the sheet: each chord's notes as faint grey noteheads on
   the staff, just left of the note the chord symbol sits on, so no melody
-  note or stem covers one. They are SVG
+  note or stem covers one (when the previous element is too close to leave
+  room, the stack slides right until its heads at most touch the note's left
+  edge). They are SVG
   shapes only — nothing goes into the ABC, so nothing is played — and each is
   inserted just under its column's own note group, so the staff lines are
   drawn over it.
@@ -20,6 +22,8 @@ const TOP_LINE = 10;
 // Gap before the note, and the sideways shift of a second, in head radii.
 const GAP_RX = 0.6;
 const SECOND_SHIFT_RX = 1.9;
+// How far the stack's right edge may reach into the note's left edge, in head radii.
+const OVERLAP_RX = 0.1;
 
 // The element's noteheads' boxes, top first.
 function headBoxes(group) {
@@ -85,14 +89,29 @@ function stepFrom(references) {
   return null;
 }
 
-// The line a melody element is printed on.
-function lineOf(visualObj) {
+// Where each first-voice element sits: { line, previous } (the element
+// before it in the same voice, or null).
+function placesOf(visualObj) {
   const map = new Map();
   (visualObj.lines || []).forEach((line, index) => {
     const staff = line.staff && line.staff[0]; // NOSONAR
-    if (staff && staff.voices) (staff.voices[0] || []).forEach((el) => map.set(el, index)); // NOSONAR
+    if (!staff || !staff.voices) return; // NOSONAR
+    const voice = staff.voices[0] || [];
+    voice.forEach((el, i) => map.set(el, { line: index, previous: i > 0 ? voice[i - 1] : null }));
   });
   return map;
+}
+
+// The right edge of what an element draws (heads, rests, bar lines — not its
+// chord symbol, annotations or lyrics, which can reach past it), or null.
+function drawnRight(el) {
+  const group = el ? noteGroup(el) : null;
+  if (!group) return null;
+  const boxes = [...group.querySelectorAll("path, rect, line")]
+    .filter((node) => !node.closest(".abcjs-chord, .abcjs-annotation, .abcjs-lyric"))
+    .map(bboxOf)
+    .filter(Boolean);
+  return boxes.length === 0 ? null : Math.max(...boxes.map((b) => b.x + b.width));
 }
 
 // Does the chord have two notes a step apart (drawn side by side)?
@@ -120,7 +139,7 @@ function ledgerPositions(vp) {
   y. A note a second above its neighbour moves to the right of it, as on a
   printed chord.
 */
-function buildStack(notes, x, yOf, step) {
+function buildStack(notes, x, yOf, step, markOutside) {
   const { rx, ry } = headSize(step);
   const group = svgEl("g", { class: "rj-layer-skeleton", "pointer-events": "none" });
   const ordered = notes.slice().sort((a, b) => a.vp - b.vp);
@@ -136,14 +155,15 @@ function buildStack(notes, x, yOf, step) {
         x1: cx - rx * 1.5, x2: cx + rx * 1.5, y1: yOf(at), y2: yOf(at),
       }));
     });
+    const tint = markOutside && note.outside ? " rj-layer-skeleton--outside" : "";
     group.append(svgEl("ellipse", {
-      class: "rj-layer-skeleton-note",
+      class: `rj-layer-skeleton-note${tint}`,
       cx, cy, rx, ry, transform: `rotate(-20 ${cx} ${cy})`,
     }));
     if (note.accidental) {
       const sign = svgEl("text", {
-        class: "rj-layer-skeleton-accidental",
-        x: cx - rx * 1.5, y: cy, "text-anchor": "end", "dominant-baseline": "central", "font-size": step * 3.4,
+        class: `rj-layer-skeleton-accidental${tint}`,
+        x: x - rx * 1.5, y: cy, "text-anchor": "end", "dominant-baseline": "central", "font-size": step * 5,
       });
       sign.textContent = note.accidental;
       group.append(sign);
@@ -152,26 +172,40 @@ function buildStack(notes, x, yOf, step) {
   return group;
 }
 
-export function drawChordSkeleton(visualObj) {
+// `markOutside`: tint the notes that aren't in the key (the Outside chords layer).
+export function drawChordSkeleton(visualObj, { markOutside = false } = {}) {
   const skeletons = chordSkeletons(visualObj);
   if (skeletons.length === 0) return;
   const references = lineReferences(visualObj);
   const step = stepFrom(references);
   if (step === null) return;
-  const lines = lineOf(visualObj);
+  const places = placesOf(visualObj);
   skeletons.forEach((skeleton) => {
     const group = noteGroup(skeleton.el);
     if (!group || !group.parentNode) return; // NOSONAR
-    const found = references[lines.get(skeleton.el)];
+    const place = places.get(skeleton.el) || { line: -1, previous: null };
+    const found = references[place.line];
     const left = columnLeft(group);
     const anchor = found && found.length > 0 ? found[0] : staffReference(group); // NOSONAR
     if (left === null || anchor === null) return;
     const notes = skeleton.notes.map((n) => ({ ...n }));
     const { rx } = headSize(step);
-    // The stack's right edge sits a little before the note's left edge; a
-    // second in the chord pushes one head right, so it needs the room too.
-    const x = left - GAP_RX * rx - (hasSecond(notes) ? SECOND_SHIFT_RX + 1 : 1) * rx;
-    const stack = buildStack(notes, x, (vp) => anchor.y + (anchor.vp - vp) * step, step);
+    // The stack sits just left of the note, its right edge a little before the
+    // note's left edge (a second in the chord pushes one head right, so it
+    // needs the room too).
+    const reach = hasSecond(notes) ? SECOND_SHIFT_RX + 1 : 1;
+    const hasSign = notes.some((n) => n.accidental);
+    const before = drawnRight(place.previous);
+    const ideal = left - GAP_RX * rx - reach * rx;
+    // With the previous element (a bar line, the clef/key/meter) too close to
+    // leave that room, it slides right to clear it - but never past the note:
+    // the stack's right edge (its shifted head too, when the chord has a
+    // second) at most touches the melody note's left edge, so it still reads
+    // as sitting before it, not on it.
+    const signRoom = hasSign ? 2.2 : 0;
+    const clear = before === null ? ideal : before + (1.8 + signRoom) * rx;
+    const x = Math.min(Math.max(ideal, clear), left - (reach - OVERLAP_RX) * rx);
+    const stack = buildStack(notes, x, (vp) => anchor.y + (anchor.vp - vp) * step, step, markOutside);
     group.before(stack);
   });
 }

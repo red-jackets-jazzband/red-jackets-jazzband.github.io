@@ -65,3 +65,10 @@ test("a bar with no chord, or an unreadable symbol, gets nothing", () => {
   assert.deepEqual(chordSkeletons(parse("C D E F |")), []);
   assert.deepEqual(chordSkeletons(parse('"N.C." C D E F |')), []);
 });
+
+test("skeleton notes outside the key's scale are flagged", () => {
+  const [diatonic] = chordSkeletons(parse('"G7" B d f d |'));
+  assert.ok(diatonic.notes.every((n) => n.outside === false));
+  const [a7] = chordSkeletons(parse('"A7" c e g e |'));
+  assert.equal(a7.notes.filter((n) => n.outside).length, 1); // C#
+});

@@ -10,7 +10,8 @@
                            written on, `vp` the abcjs verticalPos to draw at,
                            `accidental` "♯"/"♭"/"♮"/… when the note isn't
                            already in the key (or earlier in the bar), else
-                           null
+                           null, and `outside` true when the note isn't in
+                           the key's scale at all (diatonic.js)
 
   A chord's span is from its symbol to the next symbol or the bar line,
   whichever comes first. Its notes are stacked in close position — root,
@@ -22,6 +23,7 @@
   has a D and an F, never an E♯.
 */
 import { chordName, parseChordSymbol, splitChordSymbol } from "./chord-symbol.js";
+import { keyScale } from "./diatonic.js";
 import { noteMidi, walkMelody } from "./melody-walk.js";
 import { chordIntervals } from "./scale-degrees.js";
 
@@ -138,6 +140,7 @@ function toDrawn(note, state) {
   return {
     vp: 7 * note.octave + note.letter + shift,
     accidental: accidentalFor(note, state),
+    outside: state.scale !== null && !state.scale.has(mod12(LETTER_SEMITONES[note.letter] + note.alter)),
   };
 }
 
@@ -176,6 +179,7 @@ function collectSpans(song) {
           clef: state.clef,
           keyAccidentals: state.keyAccidentals,
           barAccidentals: new Map(state.barAccidentals),
+          scale: keyScale(state.key, state.keyAccidentals),
         },
       };
     }
