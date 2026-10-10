@@ -5,6 +5,7 @@ All by Myself,all_by_myself.abc
 All of me,all_of_me.abc
 All the girls go crazy,all_the_girls.abc
 Amazing Grace,amazing_grace.abc
+Apple tree,in_the_shade_of_the_old_apple_tree.abc
 Auld Lang Syne,auld_lang_syne.abc
 Back Home Again in Indiana,indiana.abc
 Bare Necessities,bare_necessities.abc
@@ -72,6 +73,7 @@ I'm Walking,im_walking.abc
 I've Found a New Baby,found_a_new_baby.abc
 I've got a woman,gotta_woman.abc
 Ice Cream,ice_cream.abc
+In the shade of the old apple tree,in_the_shade_of_the_old_apple_tree.abc
 In the Sweet Bye and Bye,in_the_sweet_bye_and_bye.abc
 Indiana,indiana.abc
 Isle of Capri,isle_of_capri.abc
