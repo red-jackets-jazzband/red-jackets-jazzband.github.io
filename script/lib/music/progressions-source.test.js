@@ -24,8 +24,8 @@ const halves = (...chords) => {
   return `${out.join(" | ")} |`;
 };
 
-test("the vocabulary is the five progressions the blog names", () => {
-  assert.deepEqual([...PROGRESSION_NAMES].sort(), ["Apple Tree", "Four-Leaf", "Georgia", "Salty Dog", "Sunshine"]);
+test("the vocabulary is the six progressions the blog names", () => {
+  assert.deepEqual([...PROGRESSION_NAMES].sort(), ["Apple Tree", "Four-Leaf", "Georgia", "Salty Dog", "Sunshine", "Sweet Sue"]);
 });
 
 const link = (body) => found(body)[0].url;
@@ -36,6 +36,7 @@ test("every match links to the post that defines it", () => {
   assert.match(link(bars("C", "E7", "A7")), /2013\/01\/the-georgia-chord-progression/);
   assert.match(link(bars("F", "Fm", "C", "A7", "D7", "G7", "C", "C")), /2017\/11\/post-565/);
   assert.match(link(bars("C", "F", "C")), /2013\/06\/the-apple-tree-chord-progression/);
+  assert.match(link(bars("G7", "C")), /2013\/01\/the-sweet-sue-chord-progression/);
 });
 
 // --- Post 92: Salty Dog = VI7-II7-V7-I ---------------------------------
@@ -161,6 +162,30 @@ test("Post 77 — Apple Tree: \"the first three chords would be C - F - C\"", ()
 
 test("Post 77 — it is how a tune opens: the same chords mid-part are no Apple Tree", () => {
   assert.deepEqual(names("\"C\" c4 | \"G7\" c4 | \"C\" c4 | \"F\" c4 | \"C\" c4 |"), []);
+});
+
+// --- Post 148: Sweet Sue = V7-I ----------------------------------------
+
+test("Post 148 — Sweet Sue: \"in the key of C you begin on G7th (usually two bars) and then move on to C\"", () => {
+  assert.deepEqual(names("\"G7\" c4 | c4 | \"C\" c4 | c4 |"), ["Sweet Sue"]);
+  assert.deepEqual(names(bars("G7", "C")), ["Sweet Sue"]);
+});
+
+test("Post 148 — it works in every key (Bb: F7 then Bb)", () => {
+  assert.deepEqual(names(bars("F7", "Bb"), "M:4/4\nL:1/4\nK:Bb"), ["Sweet Sue"]);
+});
+
+test("Post 148 — it begins on the dominant 7th: a plain triad or another chord is no Sweet Sue", () => {
+  assert.deepEqual(names(bars("G", "C")), []);
+  assert.deepEqual(names(bars("D7", "C")), []);
+});
+
+test("Post 148 — it is how a tune opens: V7 | I mid-part (a cadence) is no Sweet Sue", () => {
+  assert.deepEqual(names("\"C\" c4 | \"F\" c4 | \"G7\" c4 | \"C\" c4 |"), []);
+});
+
+test("Post 148 — \"often this pattern is then repeated\": each V7 | I at a part start is labelled", () => {
+  assert.deepEqual(names(bars("G7", "C", "G7", "C")), ["Sweet Sue"]);
 });
 
 // --- all of them: major keys only --------------------------------------

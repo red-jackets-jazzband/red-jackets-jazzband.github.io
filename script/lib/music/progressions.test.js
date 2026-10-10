@@ -60,7 +60,7 @@ test("Sunshine compressed into half-bars still counts; IV IVm I alone does not",
 
 test("Apple Tree only counts as an opening", () => {
   assert.deepEqual(names(parse('P:A\n"Bb" B4 | "Eb" G4 | "Bb" F4 | F4 |')), ["Apple Tree"]);
-  assert.deepEqual(names(parse('"F7" A4 | "Bb" B4 | "Eb" G4 | "Bb" F4 |')), []);
+  assert.deepEqual(names(parse('"Gm" A4 | "Bb" B4 | "Eb" G4 | "Bb" F4 |')), []);
 });
 
 test("Apple Tree is just I IV I, not the V that follows (Just a Little While)", () => {
