@@ -184,8 +184,17 @@ test("Post 148 — it is how a tune opens: V7 | I mid-part (a cadence) is no Swe
   assert.deepEqual(names("\"C\" c4 | \"F\" c4 | \"G7\" c4 | \"C\" c4 |"), []);
 });
 
-test("Post 148 — \"often this pattern is then repeated\": each V7 | I at a part start is labelled", () => {
-  assert.deepEqual(names(bars("G7", "C", "G7", "C")), ["Sweet Sue"]);
+test("Post 148 — \"often this pattern is then repeated\": V - I - V - I is one band, not two", () => {
+  const [match, ...rest] = found(bars("G7", "C", "G7", "C"));
+  assert.equal(match.name, "Sweet Sue");
+  assert.equal(rest.length, 0);
+  assert.deepEqual(match.chordNotes, [0, 1, 2, 3]);
+  const twoBarsEach = found("\"G7\" c4 | c4 | \"C\" c4 | c4 | \"G7\" c4 | c4 | \"C\" c4 | c4 |");
+  assert.deepEqual(twoBarsEach.map((m) => m.name), ["Sweet Sue"]);
+});
+
+test("Post 148 — a pair that is not repeated is still Sweet Sue", () => {
+  assert.deepEqual(found(bars("G7", "C", "F", "C")).map((m) => [m.name, m.chordNotes.length]), [["Sweet Sue", 2]]);
 });
 
 // --- all of them: major keys only --------------------------------------

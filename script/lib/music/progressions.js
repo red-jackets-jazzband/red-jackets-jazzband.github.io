@@ -35,11 +35,12 @@
     Apple Tree   I | IV | I               Post 77. "The first three chords":
                                             an opening, so only matched where a
                                             part starts.
-    Sweet Sue    V7 | I                  Post 148. "It begins on the Dominant
-                                            7th, with the Tonic as the next
-                                            chord" (usually two bars on the
-                                            V7); an opening, so only matched
-                                            where a part starts.
+    Sweet Sue    V7 | I (| V7 | I)       Post 148, "V - I - V - I". "It begins
+                                            on the Dominant 7th, with the Tonic
+                                            as the next chord" (usually two
+                                            bars on the V7), "often" repeated;
+                                            an opening, so only matched where
+                                            a part starts.
 
   findNamedProgressions(song) walks the parsed tune's chord symbols (first
   voice) and returns where each one sits: [{ id, name, url, startNote,
@@ -144,8 +145,12 @@ const PATTERNS = [
   // Post 139: I | III | VI, the VI major, dominant or minor.
   { id: "georgia", name: "Georgia", url: GEORGIA_URL, steps: [[I], [III_OR_III7], [VI_ANY, VIm]] },
   { id: "apple-tree", name: "Apple Tree", url: APPLE_TREE_URL, steps: [[I], [IV], [I]], minBars: 0.5, opening: true },
-  // Post 148: V7 then I at the opening of a tune. Only a part start: V7 | I
-  // is the end of nearly every cadence, so anywhere else it is no label.
+  // Post 148, V - I - V - I: the pair "is then repeated" (Sweet Sue itself,
+  // Gatemouth), so the whole of it is one band; a pair that isn't repeated
+  // is the same progression, matched by the entry after it. Only a part
+  // start: V7 | I is the end of nearly every cadence, so anywhere else it
+  // is no label.
+  { id: "sweet-sue", name: "Sweet Sue", url: SWEET_SUE_URL, steps: [[V7], [I], [V7], [I]], opening: true },
   { id: "sweet-sue", name: "Sweet Sue", url: SWEET_SUE_URL, steps: [[V7], [I]], opening: true },
 ];
 
