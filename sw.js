@@ -20,12 +20,13 @@ import {
 // behind instead of it lingering forever, without throwing away more than it
 // has to:
 // - SHELL_VERSION: bump on any change to this file or to the app's own
-//   files/paths it caches (v2: every module moved into feature folders).
+//   files/paths it caches (v2: every module moved into feature folders;
+//   v4: the Layers panel's new modules; v5: its edge.js).
 // - ASSET_VERSION: the third-party soundfont samples and Font Awesome, which
 //   never change once published. Bump only when caching *those* changes —
 //   it deletes the soundfonts visitors downloaded with "Download for
 //   offline", so their offline playback is gone until they download again.
-const SHELL_VERSION = "v3";
+const SHELL_VERSION = "v5";
 const ASSET_VERSION = "v1";
 // Every cache this worker owns is named under this prefix, and activate()'s
 // cleanup only ever deletes caches under it — CacheStorage is shared across

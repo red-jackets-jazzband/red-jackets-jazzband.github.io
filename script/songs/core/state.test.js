@@ -19,7 +19,7 @@ function memory(initial = {}) {
 test("every slice key is unique, so ctx.state can be one flat view", () => {
   assert.doesNotThrow(() => createAppStore());
   const names = APP_SLICES.map((s) => s.name);
-  assert.deepEqual(names, ["catalog", "nav", "settings", "tune", "mixer", "playback"]);
+  assert.deepEqual(names, ["catalog", "nav", "settings", "tune", "mixer", "playback", "layers"]);
 });
 
 test("createAppStore starts at the defaults, with nothing read from storage", () => {

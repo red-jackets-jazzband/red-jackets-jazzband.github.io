@@ -20,6 +20,7 @@ import { createSetlistPrint } from "../setlists/print.js";
 import { createSetlistView } from "../setlists/view.js";
 import { createTour } from "../tour/tour.js";
 import { createOffline } from "../offline/offline.js";
+import { createLayersPanel } from "../layers/panel.js";
 
 /*
   The songs page's feature registry — the whole dependency graph in one
@@ -95,6 +96,7 @@ export const FEATURES = [
   { name: "swipeNav", create: createSwipeNav, init: (ctx) => ctx.swipeNav.init() },
   { name: "fullscreen", create: createFullscreen, init: (ctx) => ctx.fullscreen.init() },
   { name: "history", create: createSongHistory, init: (ctx) => ctx.history.init() },
+  { name: "layers", create: createLayersPanel, init: (ctx) => ctx.layers.init() },
   { name: "library", create: createLibraryTab },
   { name: "setlistData", create: createSetlistData },
   { name: "setlistHome", create: createSetlistHome },

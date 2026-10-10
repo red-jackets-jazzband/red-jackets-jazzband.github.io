@@ -13,6 +13,7 @@ import { parseInspirationLinks } from "../../lib/media/inspiration-links.js";
 import { renderChordTable, scanRepeatBoundaries, fitChordTable, fitSongForms } from "./chord-table.js";
 import { stylePartMarkers, applyCompingColors, applySplitCompingColors } from "./decorations.js";
 import { updateIrealProLink } from "./irealpro-link.js";
+import { decorateLayers } from "../layers/overlays.js";
 import { RENDER, isRenderWrite } from "../core/state.js";
 
 const LIVE_TARGETS = { notationId: "notation", chordId: "chordtable", titleId: "songtitle" };
@@ -224,6 +225,7 @@ function paint(plan, renderText, targets, { titlePrefix = "", voices = [] } = {}
   );
 
   colorComping(notationEl, plan.comping, voices);
+  decorateLayers(notationEl, visualObjs && visualObjs[0], plan); // NOSONAR
 
   notationEl.querySelectorAll(".abcjs-title, .abcjs-part-order").forEach((node) => {
     node.setAttribute("display", "none");
@@ -267,7 +269,8 @@ const MIXER_RENDER_KEYS = new Set(["mixer", "gchordPattern", "swing", "highQuali
 
 /*
   Call `rerender` whenever a store change needs the live sheet re-engraved:
-  any `settings` change, or a render-affecting Mixer key — except writes a
+  any `settings` change, a render-affecting Mixer key, or a Layers panel
+  switch (the `layers` slice's activeLayers) — except writes a
   render makes itself (tagged RENDER: the Key stepper seeded by render(), the
   Mixer's voice list), which must not loop back. Exported so a test double of
   the sheet re-renders on exactly the same changes (tests/helpers/ctx.js).
@@ -279,9 +282,13 @@ export function subscribeRerender(store, rerender) {
   const offMixer = store.subscribe("mixer", (_mixer, changed, _name, meta) => {
     if (!isRenderWrite(meta) && changed.some((key) => MIXER_RENDER_KEYS.has(key))) rerender();
   });
+  const offLayers = store.subscribe("layers", (_layers, changed) => {
+    if (changed.includes("activeLayers")) rerender();
+  });
   return () => {
     offSettings();
     offMixer();
+    offLayers();
   };
 }
 
@@ -314,7 +321,7 @@ export function createSheet(ctx) {
   function renderLive(text, { fresh = false } = {}) {
     const settingsState = ctx.store.get("settings");
     updateInstrumentFooter(settingsState.instrument);
-    const settings = effectiveSheetSettings(settingsState);
+    const settings = effectiveSheetSettings(settingsState, { layers: ctx.store.get("layers").activeLayers });
     const plan = buildRenderPlan(text, settings, { parse: parseTune });
 
     // Like comping, a solo needs chords to play over.

@@ -27,6 +27,12 @@ export const PREF_KEYS = {
   tourLang: "rj.tourLang",
 };
 
+// A Layers-panel switch's own key (rj.layer.<id>, lib/music/layers.js's
+// LAYERS ids) — dynamic, so a new layer needs no entry above.
+export function layerPrefKey(id) {
+  return `rj.layer.${id}`;
+}
+
 // The raw Storage object, or null when it can't be reached. Callers that hand
 // this to setlists-store.js want the object itself.
 export function safeStorage() {

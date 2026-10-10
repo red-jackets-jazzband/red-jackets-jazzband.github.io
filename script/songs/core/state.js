@@ -10,6 +10,7 @@
     tune       sheet/sheet.js                what the live sheet is showing
     mixer      audio/mixer.js                channels, pattern, swing, voices
     playback   audio/player + metronome      tempo, repeat, metronome
+    layers     layers/panel.js               Layers panel: switches, open
 
   Only a slice's owner writes it; everyone else reads it (ctx.state.<key>, or
   ctx.store.get(slice)) and, to react to a change, subscribes
@@ -23,6 +24,7 @@ import { createStore } from "../../lib/core/store.js";
 import { loadPersisted, bindPersisted } from "../../lib/core/persisted.js";
 import { SETTINGS_SLICE, TUNE_SLICE } from "../sheet/state.js";
 import { MIXER_SLICE, PLAYBACK_SLICE } from "../audio/state.js";
+import { LAYERS_SLICE } from "../layers/state.js";
 
 export const CATALOG_SLICE = {
   name: "catalog",
@@ -66,7 +68,7 @@ export function isRenderWrite(meta) {
   return Boolean(meta) && meta.source === RENDER.source;
 }
 
-export const APP_SLICES = [CATALOG_SLICE, NAV_SLICE, SETTINGS_SLICE, TUNE_SLICE, MIXER_SLICE, PLAYBACK_SLICE];
+export const APP_SLICES = [CATALOG_SLICE, NAV_SLICE, SETTINGS_SLICE, TUNE_SLICE, MIXER_SLICE, PLAYBACK_SLICE, LAYERS_SLICE];
 
 const NOTHING_STORED = () => null;
 

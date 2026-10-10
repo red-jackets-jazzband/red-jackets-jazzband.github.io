@@ -22,6 +22,7 @@ import { convertChordsToRoman } from "./music-theory.js";
 import { buildCompingTune } from "./comping.js";
 import { extractWordsTables, extractPartOrderRows } from "./words-table.js";
 import { injectMixerAudio, resolveGchordPattern } from "../audio/audio-mix.js";
+import { annotateLayers } from "./layers.js";
 import { defaultVoiceProgram } from "../audio/gm-voices.js";
 
 const ROMAN_INSTRUMENT = "concert_+_roman";
@@ -33,11 +34,14 @@ const ROMAN_INSTRUMENT = "concert_+_roman";
   chart), and Solo only once its picker exists (`soloEnabled`). Both also
   need chords — buildRenderPlan checks that itself. The Key stepper is a
   live-sheet control too: a booklet's transposition comes only from its
-  setlist row's own override.
+  setlist row's own override. The Layers panel's switches (`layers`, the
+  layers slice's activeLayers) are live-sheet only as well: a booklet prints
+  the plain chart.
 */
-export function effectiveSheetSettings(settings, { booklet = false } = {}) {
+export function effectiveSheetSettings(settings, { booklet = false, layers = {} } = {}) {
   const drawer = !booklet && settings.advancedOpen;
   return {
+    layers: booklet ? {} : layers,
     instrument: settings.instrument,
     transpose: booklet ? 0 : settings.transpose,
     comping: drawer ? settings.comping : "off",
@@ -95,6 +99,11 @@ export function concertMaterial(abcText, parse) {
     comping         { active, renderText, palette, parts } — renderText is
                     the tune plus the generated comping staff when active
     concert         concertMaterial(), when comping or a solo needs it
+    progressions    the named progressions the Layers panel's band marks
+                    (lib/music/progressions.js), [] when that layer is off
+    layersApplied   ids of the layers drawn on this render (a switched-on
+                    layer that doesn't apply, e.g. fingerings for a sax,
+                    isn't)
     wordsTables     the form strip's rows: the W: pipe tables, else the P:
                     part order as one table
 */
@@ -109,11 +118,18 @@ export function buildRenderPlan(text, settings, { parse, extraTransposeSteps = 0
   const needsConcert = hasChords && (settings.comping !== "off" || settings.solo !== "off");
   const concert = needsConcert ? concertMaterial(abcText, parse) : null;
 
+  // The active layers' annotations go into the text that gets engraved —
+  // never into abcText itself, which rerender() re-reads and the comping /
+  // solo generators parse.
+  const layered = annotateLayers(abcText, song, {
+    active: settings.layers, instrument: settings.instrument, ownVoices: hasInstrumentVoices(text),
+  });
+
   let comping = {
-    active: false, renderText: abcText, palette: null, parts: null,
+    active: false, renderText: layered.text, palette: null, parts: null,
   };
   if (hasChords && settings.comping !== "off") {
-    const built = buildCompingTune(abcText, concert.chords, concert.song, settings.comping, settings.compingParts);
+    const built = buildCompingTune(layered.text, concert.chords, concert.song, settings.comping, settings.compingParts);
     if (built) {
       comping = {
         active: true, renderText: built.abc, palette: built.palette, parts: built.parts || null,
@@ -137,6 +153,8 @@ export function buildRenderPlan(text, settings, { parse, extraTransposeSteps = 0
     comping,
     concert,
     wordsTables,
+    progressions: layered.progressions,
+    layersApplied: layered.applied,
   };
 }
 

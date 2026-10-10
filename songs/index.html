@@ -56,7 +56,7 @@
 
 
   
-  <link rel="stylesheet" href="/css/split.min.48b26f9f0829dcceee5c336d658ad21a9ba1a37bf131510e5c2c412ce8adf613.css" type="text/css" media="screen,print" integrity="sha256-SLJvnwgp3M7uXDNtZYrSGpuho3vxMVEOXCxBLOit9hM=" />
+  <link rel="stylesheet" href="/css/split.min.d7f049d76833ccb9ae46a068855cdb53bcfb676e1344cd0bdc086c1c95cb766d.css" type="text/css" media="screen,print" integrity="sha256-1/BJ12gzzLmuRqBohVzbU7z7Z24TRM0L3AhsHJXLdm0=" />
 
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
@@ -289,6 +289,28 @@
 <div id="notation" class="notation"></div>
 <div id="lyrics" class="lyrics"></div>
 </div>
+<!-- The Layers panel (songs/layers/panel.js): the tab that opens it, the
+     panel itself (rows built from lib/music/layers.js's LAYERS into
+     #layersList, each preview cloned from its <template> below), and the
+     mobile bottom sheet's backdrop. Kept as one HTML block — no blank
+     lines — so Goldmark doesn't wrap any of it in a <p>. -->
+<button type="button" id="layersTab" class="rj-layers-tab hideOnprint" aria-controls="layersPanel" aria-expanded="false" aria-label="Layers" title="Layers"><svg class="rj-layers-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 8 12 13l9.5-5L12 3Z"/><path d="m2.5 12 9.5 5 9.5-5"/><path d="m2.5 16 9.5 5 9.5-5"/></svg><span class="rj-layers-tab-label">Layers</span><span id="layersTabCount" class="rj-layers-count" hidden></span></button>
+<aside id="layersPanel" class="rj-layers-panel hideOnprint" aria-labelledby="layersPanelTitle" hidden>
+  <div class="rj-layers-grip" aria-hidden="true"></div>
+  <div class="rj-layers-head">
+    <svg class="rj-layers-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 8 12 13l9.5-5L12 3Z"/><path d="m2.5 12 9.5 5 9.5-5"/><path d="m2.5 16 9.5 5 9.5-5"/></svg>
+    <h2 id="layersPanelTitle" class="rj-layers-title">Layers</h2>
+    <span id="layersPanelCount" class="rj-layers-count" hidden></span>
+    <button type="button" id="layersResetBtn" class="rj-layers-reset">Reset all</button>
+    <button type="button" id="layersCloseBtn" class="rj-layers-close" aria-label="Close layers"><span class="fa-solid fa-xmark" aria-hidden="true"></span></button>
+  </div>
+  <p class="rj-layers-intro">Extra help on the sheet. Switch on what you need, the chart stays the same underneath.</p>
+  <div id="layersList" class="rj-layers-list"></div>
+  <p class="rj-layers-foot"><span class="fa-solid fa-check" aria-hidden="true"></span> Remembered on this device</p>
+</aside>
+<div id="layersBackdrop" class="rj-layers-backdrop hideOnprint" hidden></div>
+<template id="layerPreview-progressions"><svg class="rj-layer-mini" viewBox="0 0 88 44" aria-hidden="true"><rect width="88" height="44" fill="#fff"/><g class="rj-layer-preview-ov"><rect x="4" y="2.5" width="76" height="14.5" rx="4" fill="#f8e2b3" stroke="#c98500" stroke-width="0.6"/><text x="9" y="8.2" font-family="Montserrat,sans-serif" font-size="4.4" font-weight="700" fill="#6b4300">Salty Dog</text><text x="9" y="13.6" font-family="Montserrat,sans-serif" font-size="4.4" font-weight="700" fill="#6b4300">progression</text></g><text x="38" y="12.4" font-family="Lora,serif" font-weight="700" font-size="9" fill="#111">A7</text><text x="62" y="12.4" font-family="Lora,serif" font-weight="700" font-size="9" fill="#111">D7</text><g stroke="#333" stroke-width="0.6"><line x1="4" x2="84" y1="18" y2="18"/><line x1="4" x2="84" y1="22" y2="22"/><line x1="4" x2="84" y1="26" y2="26"/><line x1="4" x2="84" y1="30" y2="30"/><line x1="4" x2="84" y1="34" y2="34"/><line x1="84" x2="84" y1="18" y2="34"/></g><g fill="#111"><ellipse cx="22" cy="34" rx="3.4" ry="2.5" transform="rotate(-20 22 34)"/><ellipse cx="42" cy="28" rx="3.4" ry="2.5" transform="rotate(-20 42 28)"/><ellipse cx="66" cy="34" rx="3.4" ry="2.5" transform="rotate(-20 66 34)"/></g><g stroke="#111" stroke-width="0.9"><line x1="25.2" x2="25.2" y1="33" y2="19"/><line x1="45.2" x2="45.2" y1="27" y2="20"/><line x1="69.2" x2="69.2" y1="33" y2="19"/></g><g class="rj-layer-preview-ov"><text x="38" y="12.4" font-family="Lora,serif" font-weight="700" font-size="9" fill="#6b4300">A7</text><text x="62" y="12.4" font-family="Lora,serif" font-weight="700" font-size="9" fill="#6b4300">D7</text></g></svg></template>
+<template id="layerPreview-fingerings"><svg class="rj-layer-mini" viewBox="0 0 88 44" aria-hidden="true"><rect width="88" height="44" fill="#fff"/><g stroke="#333" stroke-width="0.6"><line x1="4" x2="84" y1="4" y2="4"/><line x1="4" x2="84" y1="8" y2="8"/><line x1="4" x2="84" y1="12" y2="12"/><line x1="4" x2="84" y1="16" y2="16"/><line x1="4" x2="84" y1="20" y2="20"/><line x1="84" x2="84" y1="4" y2="20"/></g><g fill="#111"><ellipse cx="22" cy="20" rx="3.4" ry="2.5" transform="rotate(-20 22 20)"/><ellipse cx="42" cy="14" rx="3.4" ry="2.5" transform="rotate(-20 42 14)"/><ellipse cx="66" cy="20" rx="3.4" ry="2.5" transform="rotate(-20 66 20)"/></g><g stroke="#111" stroke-width="0.9"><line x1="25.2" x2="25.2" y1="19" y2="6"/><line x1="45.2" x2="45.2" y1="13" y2="1"/><line x1="69.2" x2="69.2" y1="19" y2="6"/></g><g class="rj-layer-preview-ov"><circle cx="22" cy="28" r="2.5" fill="#1b1b1b"/><text x="22" y="28" text-anchor="middle" dominant-baseline="central" font-family="Montserrat,sans-serif" font-size="3.8" font-weight="700" fill="#fff">1</text><circle cx="22" cy="33.2" r="2.5" fill="#1b1b1b"/><text x="22" y="33.2" text-anchor="middle" dominant-baseline="central" font-family="Montserrat,sans-serif" font-size="3.8" font-weight="700" fill="#fff">2</text><circle cx="22" cy="38.4" r="1" fill="#9a9a9a"/><circle cx="42" cy="28" r="1" fill="#9a9a9a"/><circle cx="42" cy="33.2" r="2.5" fill="#1b1b1b"/><text x="42" y="33.2" text-anchor="middle" dominant-baseline="central" font-family="Montserrat,sans-serif" font-size="3.8" font-weight="700" fill="#fff">2</text><circle cx="42" cy="38.4" r="1" fill="#9a9a9a"/><circle cx="66" cy="28" r="2.5" fill="#fff" stroke="#1b1b1b" stroke-width="0.7"/><text x="66" y="28" text-anchor="middle" dominant-baseline="central" font-family="Montserrat,sans-serif" font-size="3.8" font-weight="700" fill="#1b1b1b">0</text></g></svg></template>
 <div id="songPrintFooter" class="songPrintFooter hideOnScreen">
 Retrieved from www.redjackets.nl - <span id="instrumentText"></span>
 </div>

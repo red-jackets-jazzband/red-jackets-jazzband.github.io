@@ -625,6 +625,8 @@ export function createAudioPlayer(ctx) {
   }
 
   function handleNotationClick(e) {
+    // A progression's name is a link to its blog post, not a place to seek to.
+    if (e.target.closest && e.target.closest("a.rj-layer-prog-link")) return; // NOSONAR
     const notation = byId("notation");
     let node = e.target;
     while (node && node !== notation) {

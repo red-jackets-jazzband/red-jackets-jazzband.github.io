@@ -44,6 +44,28 @@ test("effectiveSheetSettings: a booklet ignores the Key stepper and the drawer",
   assert.equal(booklet.comping, "off");
 });
 
+test("effectiveSheetSettings: layers are live-sheet only", () => {
+  const layers = { fingerings: true };
+  assert.deepEqual(effectiveSheetSettings(SETTINGS, { layers }).layers, layers);
+  assert.deepEqual(effectiveSheetSettings(SETTINGS, { booklet: true, layers }).layers, {});
+  assert.deepEqual(effectiveSheetSettings(SETTINGS).layers, {});
+});
+
+test("buildRenderPlan: layer annotations reach the engraved text, never abcText", () => {
+  const tune = 'X:1\nT:Salty\nM:4/4\nL:1/4\nK:C\n"A7" E4 | "D7" E4 | "G7" E4 | "C" E4 |';
+  const settings = {
+    ...effectiveSheetSettings({ ...SETTINGS, instrument: "trumpet" }, { layers: { fingerings: true, progressions: true } }),
+  };
+  const plan = buildRenderPlan(tune, settings, { parse });
+  assert.equal(plan.abcText.includes('"_'), false, "rerender() re-reads the plain text");
+  assert.match(plan.comping.renderText, /"_\u00B7\\n2\\n\u00B7""_Salty Dog progression"/, "F#4 written: valve 2, then the label");
+  assert.deepEqual(plan.progressions.map((p) => p.name), ["Salty Dog"]);
+  assert.deepEqual(plan.layersApplied, ["progressions", "fingerings"]);
+  const plain = buildRenderPlan(tune, effectiveSheetSettings(SETTINGS), { parse });
+  assert.equal(plain.comping.renderText, plain.abcText);
+  assert.deepEqual(plain.layersApplied, []);
+});
+
 test("effectiveSheetSettings: split parts only apply while Split is on", () => {
   assert.equal(effectiveSheetSettings(SETTINGS).compingParts, null);
   assert.deepEqual(effectiveSheetSettings({ ...SETTINGS, compingSplit: true, compingParts: [1] }).compingParts, [1]);
