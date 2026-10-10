@@ -62,15 +62,21 @@ function seventhOf(quality, rest) {
   return SEVENTH_BY_QUALITY[quality];
 }
 
-// The triad's intervals, with the fifth moved by an altered-fifth symbol.
+// The triad's intervals as { semitones, step } (step = how many letters
+// above the root: a third is 2), the fifth moved by an altered-fifth symbol.
 function triadOf(quality, rest) {
   const third = ["min", "dim", "hdim"].includes(quality) ? 3 : 4;
   let fifth = 7;
   if (quality === "dim" || quality === "hdim" || hasAny(rest, ["b5", "♭5"])) fifth = 6;
   if (quality === "aug" || hasAny(rest, ["#5", "♯5", "+"])) fifth = 8;
-  if (rest.includes("sus")) return [0, rest.includes("sus2") ? 2 : 5, fifth];
-  return [0, third, fifth];
+  let second = { semitones: third, step: 2 };
+  if (rest.includes("sus2")) second = { semitones: 2, step: 1 };
+  else if (rest.includes("sus")) second = { semitones: 5, step: 3 };
+  return [{ semitones: 0, step: 0 }, second, { semitones: fifth, step: 4 }];
 }
+
+// Does the symbol spell out a seventh (or a 9/11/13, which carry one)?
+const WRITTEN_SEVENTH = ["7", "9", "11", "13", "\u0394", "\u00F8"];
 
 const SIXTH_PREFIXES = ["6", "m6", "min6", "-6", "maj6", "Maj6", "M6", "Δ6"];
 
@@ -79,15 +85,27 @@ function hasSixth(rest) {
   return SIXTH_PREFIXES.some((p) => rest.startsWith(p)) || rest.includes("6/9");
 }
 
-export function chordTones(name) {
+/*
+  A chord's own notes, lowest first, as { semitones, step } above the root:
+  triad, the seventh, and the sixth of a 6 chord. `impliedSeventh` adds the
+  seventh a plain triad gets in this method (the 1 chord is 1-3-5-7); with
+  it off, a seventh is there only when the symbol writes one.
+*/
+export function chordIntervals(name, impliedSeventh) {
   const split = splitChordSymbol(name);
   const parsed = parseChordSymbol(name);
-  if (split === null || parsed === null) return new Set();
-  const { root, rest } = split;
+  if (split === null || parsed === null) return [];
+  const { rest } = split;
   const intervals = triadOf(parsed.quality, rest);
-  intervals.push(seventhOf(parsed.quality, rest));
-  if (hasSixth(rest)) intervals.push(9);
-  const tones = new Set(intervals.map((i) => (root + i) % 12));
+  if (impliedSeventh || hasAny(rest, WRITTEN_SEVENTH)) intervals.push({ semitones: seventhOf(parsed.quality, rest), step: 6 });
+  if (hasSixth(rest)) intervals.push({ semitones: 9, step: 5 });
+  return intervals;
+}
+
+export function chordTones(name) {
+  const split = splitChordSymbol(name);
+  if (split === null || parseChordSymbol(name) === null) return new Set();
+  const tones = new Set(chordIntervals(name, true).map((i) => (split.root + i.semitones) % 12));
   const bass = name.includes("/") ? parseChordSymbol(name.slice(name.indexOf("/") + 1)) : null;
   if (bass !== null) tones.add(bass.root);
   return tones;

@@ -110,7 +110,9 @@ test("Reset all switches everything off", () => {
     click(row("fingerings"));
     click(row("progressions"));
     click(document.getElementById("layersResetBtn"));
-    assert.deepEqual(ctx.store.get("layers").activeLayers, { progressions: false, "scale-degrees": false, fingerings: false });
+    assert.deepEqual(ctx.store.get("layers").activeLayers, {
+      progressions: false, "chord-skeleton": false, "scale-degrees": false, fingerings: false,
+    });
   } finally {
     cleanup();
   }

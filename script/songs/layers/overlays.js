@@ -17,7 +17,7 @@
 
   Called by sheet.js's paint() right after ABCjs draws, for the live sheet
   and a booklet alike (a booklet's plan simply has no layers on). One module
-  per layer in overlays/ (progression-bands, degrees, fingerings), a
+  per layer in overlays/ (progression-bands, chord-skeleton, degrees, fingerings), a
   shared svg.js, and viewbox.js for the chord-letter clipping; the
   arithmetic is in lib/music/layer-geometry.js.
 */
@@ -25,6 +25,7 @@
 import { drawProgressions } from "./overlays/progression-bands.js";
 import { styleDegrees } from "./overlays/degrees.js";
 import { styleFingerings } from "./overlays/fingerings.js";
+import { drawChordSkeleton } from "./overlays/chord-skeleton.js";
 import { uncropChords } from "./overlays/viewbox.js";
 
 export function decorateLayers(notationEl, visualObj, plan) {
@@ -32,6 +33,7 @@ export function decorateLayers(notationEl, visualObj, plan) {
   const applied = plan.layersApplied || [];
   const progressions = plan.progressions || [];
   if (applied.length > 0 || progressions.length > 0) uncropChords(notationEl);
+  if (applied.includes("chord-skeleton")) drawChordSkeleton(visualObj);
   if (progressions.length > 0) drawProgressions(visualObj, progressions);
   if (applied.includes("fingerings")) styleFingerings(notationEl, plan.instrument);
   if (applied.includes("scale-degrees")) styleDegrees(notationEl);

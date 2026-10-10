@@ -54,6 +54,18 @@ export const LAYERS = [
     },
   },
   {
+    id: "chord-skeleton",
+    group: "Harmony",
+    label: "Chord skeleton",
+    hint: "Each chord's notes as faint ghost notes on the staff, in the inversion that sits under most of the bar's melody. Only a visual reminder: they are not played.",
+    order: 4, // unused: it writes no annotation
+    availableFor: () => true,
+    appliesTo: () => true,
+    // Drawn as SVG after ABCjs engraves (songs/layers/chord-skeleton.js), so
+    // nothing is written into the tune text.
+    annotate: () => [],
+  },
+  {
     id: "scale-degrees",
     group: "Melody",
     label: "Scale degrees",
