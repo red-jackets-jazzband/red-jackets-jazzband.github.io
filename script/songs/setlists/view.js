@@ -2,7 +2,7 @@ import {
   byId, el, clear, on, downloadBlob,
 } from "../../lib/core/dom.js";
 import { isSetlistDivider } from "../../lib/setlists/setlist-format.js";
-import { walkSetlist } from "../../lib/setlists/setlist-walk.js";
+import { setLabel, walkSetlist } from "../../lib/setlists/setlist-walk.js";
 import { extractKeyFromAbc, setlistTransposeSteps } from "../../lib/music/music-theory.js";
 import {
   getPersonalSetlist,
@@ -22,6 +22,7 @@ import {
 } from "./row-drag.js";
 import { createAddSongTray } from "./add-song.js";
 import { createPlaylistExport } from "./playlist-export.js";
+import { tl } from "../../lib/core/i18n.js";
 
 const emptyRow = (text) => el("div", { class: "song-list-empty", text });
 // A read-only set heading (band setlists): the same row as a personal set's
@@ -56,7 +57,7 @@ function applyOpenChrome(name, isPersonal) {
     // A personal setlist's name is editable: dashed underline, focusable,
     // click (or Tab + focus) to rename.
     titleText.classList.toggle("is-editable", isPersonal);
-    titleText.title = isPersonal ? "Click to rename" : "";
+    titleText.title = isPersonal ? tl("setlist_rename_hint", "Click to rename") : "";
     if (isPersonal) titleText.tabIndex = 0;
     else titleText.removeAttribute("tabindex");
   }
@@ -154,7 +155,9 @@ function keyboardSlot(row, dir) {
 
 // Wording of a set's "add a song" control, button and search field alike.
 function addLabel(setNumber, split) {
-  return split ? `Add song to set ${setNumber}` : "Add song";
+  return split
+    ? tl("setlist_add_song_to_set", "Add song to set {n}", { n: setNumber })
+    : tl("setlist_add_song", "Add song");
 }
 
 /*
@@ -237,9 +240,9 @@ export function createSetlistView(ctx) {
     const handle = el("button", {
       type: "button",
       class: "setlist-drag-handle",
-      title: "Drag to reorder",
+      title: tl("setlist_drag", "Drag to reorder"),
       html: '<span class="fa-solid fa-grip-vertical" aria-hidden="true"></span>',
-      attrs: { "aria-label": "Drag to reorder" },
+      attrs: { "aria-label": tl("setlist_drag", "Drag to reorder") },
       on: {
         pointerdown: (e) => rowDrag.begin(e, handle, row, personalEntry.id),
         keydown: (e) => {
@@ -255,9 +258,9 @@ export function createSetlistView(ctx) {
     row.append(el("button", {
       type: "button",
       class: "setlist-song-btn setlist-song-remove",
-      title: "Remove",
+      title: tl("remove", "Remove"),
       html: '<span class="fa-solid fa-trash-can" aria-hidden="true"></span>',
-      attrs: { "aria-label": "Remove" },
+      attrs: { "aria-label": tl("remove", "Remove") },
       on: {
         click: () => removeRow(row, personalEntry.id),
       },
@@ -275,12 +278,12 @@ export function createSetlistView(ctx) {
       el("input", {
         type: "text",
         class: "setlist-divider-input",
-        placeholder: "Set 1",
-        value: label === "Set 1" ? "" : label,
+        placeholder: setLabel(1),
+        value: label === setLabel(1) ? "" : label,
         on: {
           change: (e) => {
             const value = e.target.value.trim();
-            if (value && value !== "Set 1") {
+            if (value && value !== setLabel(1)) {
               insertItemInPersonalSetlist(ctx.storage(), personalId, 0, { divider: value });
               shiftOpenIndex(0, 1);
             }
@@ -292,7 +295,7 @@ export function createSetlistView(ctx) {
   }
 
   function dividerRow(item, index, personalEntry, setNumber) {
-    if (!personalEntry) return setHeaderRow(item.divider || `Set ${setNumber}`);
+    if (!personalEntry) return setHeaderRow(item.divider || setLabel(setNumber));
 
     const row = el("div", {
       class: "song-list-item setlist-divider-row",
@@ -301,7 +304,7 @@ export function createSetlistView(ctx) {
     row.append(el("input", {
       type: "text",
       class: "setlist-divider-input",
-      placeholder: `Set ${setNumber}`,
+      placeholder: setLabel(setNumber),
       value: item.divider || "",
       on: {
         change: (e) => {
@@ -322,9 +325,9 @@ export function createSetlistView(ctx) {
     row.append(el("button", {
       type: "button",
       class: "setlist-set-merge",
-      title: "Merge into previous set",
+      title: tl("setlist_merge_set", "Merge into previous set"),
       html: '<span class="fa-solid fa-arrows-up-to-line" aria-hidden="true"></span>',
-      attrs: { "aria-label": "Merge into previous set" },
+      attrs: { "aria-label": tl("setlist_merge_set", "Merge into previous set") },
       on: { click: () => removeRow(row, personalEntry.id) },
     }));
     return row;
@@ -337,9 +340,9 @@ export function createSetlistView(ctx) {
     return el("div", { class: "setlist-split-gap" }, el("button", {
       type: "button",
       class: "setlist-split-btn",
-      title: "Start a new set here",
+      title: tl("setlist_split_set", "Start a new set here"),
       html: '<span class="fa-solid fa-scissors" aria-hidden="true"></span>',
-      attrs: { "aria-label": "Start a new set here" },
+      attrs: { "aria-label": tl("setlist_split_set", "Start a new set here") },
       on: {
         click: () => {
           tray.clearTarget();
@@ -385,12 +388,12 @@ export function createSetlistView(ctx) {
       hidden: !hasNote,
     });
     const addBtn = el("button", {
-      type: "button", class: "setlist-song-note-add", text: "+ note", hidden: hasNote,
+      type: "button", class: "setlist-song-note-add", text: tl("setlist_note_add", "+ note"), hidden: hasNote,
     });
     const inputEl = el("textarea", {
       class: "setlist-song-note-input",
-      placeholder: "Add a note (e.g. who solos)…",
-      title: "Ctrl+Enter to finish, Esc to cancel",
+      placeholder: tl("setlist_note_placeholder", "Add a note (e.g. who solos)…"),
+      title: tl("setlist_note_hint", "Ctrl+Enter to finish, Esc to cancel"),
       value: song.note || "",
       rows: 2,
       hidden: true,
@@ -481,7 +484,7 @@ export function createSetlistView(ctx) {
         type: "button",
         class: "setlist-song-title",
         text: ctx.songName(song.file),
-        ...(personalEntry ? { title: "Alt+↑/↓ to reorder" } : {}),
+        ...(personalEntry ? { title: tl("setlist_reorder_hint", "Alt+↑/↓ to reorder") } : {}),
         on: { click: () => openSetlistSong(song, index) },
       }),
     ]);
@@ -561,7 +564,9 @@ export function createSetlistView(ctx) {
     });
     if (songs.length === 0) {
       listEl.append(emptyRow(
-        isPersonal ? "No songs yet — add one below." : "This setlist has no songs.",
+        isPersonal
+          ? tl("setlist_empty_personal", "No songs yet — add one below.")
+          : tl("setlist_empty_band", "This setlist has no songs."),
       ));
       if (isPersonal) openBox();
     }
@@ -767,7 +772,7 @@ export function createSetlistView(ctx) {
     const commit = () => {
       if (!ctx.state.currentPersonalId) return;
       renamePersonalSetlist(
-        ctx.storage(), ctx.state.currentPersonalId, nameInput.value.trim() || "Untitled setlist",
+        ctx.storage(), ctx.state.currentPersonalId, nameInput.value.trim() || tl("setlist_untitled", "Untitled setlist"),
       );
       refreshOpenPersonal();
     };
@@ -879,7 +884,9 @@ export function createSetlistView(ctx) {
     playlistExport.init();
     ctx.setlistPrint.setListenChangeHandler((url, songs) => {
       btn.disabled = !url;
-      btn.title = url ? "Open this setlist’s songs on YouTube" : "No YouTube links in this setlist";
+      btn.title = url
+        ? tl("listen_youtube_open", "Open this setlist’s songs on YouTube")
+        : tl("listen_youtube_none", "No YouTube links in this setlist");
       playlistExport.update(songs || []);
     });
     on("listenYoutubeBtn", "click", () => {

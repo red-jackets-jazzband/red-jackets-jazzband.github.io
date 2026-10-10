@@ -1,5 +1,6 @@
 import { byId, on } from "../../lib/core/dom.js";
 import { TEMPO_STEP } from "../../lib/music/tempo.js";
+import { tl } from "../../lib/core/i18n.js";
 
 /*
   Strip any leftover setlist-booklet print classes from <body>. The setlist
@@ -70,7 +71,7 @@ function initAdvancedToggle(ctx) {
     const open = ctx.state.advancedOpen;
     menu.classList.toggle("show-advanced", open);
     btn.setAttribute("aria-expanded", open ? "true" : "false");
-    btn.title = open ? "Fewer controls" : "More controls";
+    btn.title = open ? tl("controls_fewer", "Fewer controls") : tl("controls_more", "More controls");
   };
   draw();
   ctx.store.subscribe("settings", draw);

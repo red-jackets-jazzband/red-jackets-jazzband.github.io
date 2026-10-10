@@ -1,6 +1,8 @@
 // Service worker for /songs/ — the one page on the site worth working
 // offline (see CLAUDE.md's "Offline / PWA" section). Registered from
-// songs/offline.js with an explicit `{ scope: "/songs/" }` even though this
+// songs/offline.js with an explicit `{ scope: "/songs/" }` (or the page's own
+// `/nl/songs/`, `/de/songs/`, `/fr/songs/` — one registration per language
+// page, all of them this same script) even though this
 // file lives at the site root (so it can be registered at all with that
 // scope, since a worker's own default scope is only its containing
 // directory) — every other page on the site is untouched by it.
@@ -21,12 +23,14 @@ import {
 // has to:
 // - SHELL_VERSION: bump on any change to this file or to the app's own
 //   files/paths it caches (v2: every module moved into feature folders;
-//   v4: the Layers panel's new modules; v5: its edge.js).
+//   v4: the Layers panel's new modules; v5: its edge.js; v6: the page is
+//   served in four languages, so the worker is registered once per language
+//   page and precaches/falls back to its own scope's page, not /songs/; v7: one manifest per language).
 // - ASSET_VERSION: the third-party soundfont samples and Font Awesome, which
 //   never change once published. Bump only when caching *those* changes —
 //   it deletes the soundfonts visitors downloaded with "Download for
 //   offline", so their offline playback is gone until they download again.
-const SHELL_VERSION = "v5";
+const SHELL_VERSION = "v7";
 const ASSET_VERSION = "v1";
 // Every cache this worker owns is named under this prefix, and activate()'s
 // cleanup only ever deletes caches under it — CacheStorage is shared across
@@ -50,7 +54,13 @@ const CURRENT_CACHES = new Set([SHELL_CACHE, SOUNDFONT_CACHE, FONT_AWESOME_CACHE
 // discover the URLs for — see that file's own doc comment).
 // lamejs is loaded on demand by the Export MP3 button, so it has no <script>
 // tag for the scan below to find — list it here to have it offline.
-const PRECACHE_URLS = ["/songs/", "/manifest.webmanifest", "/script/lamejs-1.2.1-min.js"];
+// The page this registration serves: its own scope, "/songs/" or one of the
+// translated "/nl/songs/", "/de/songs/", "/fr/songs/".
+const PAGE_URL = new URL(self.registration.scope).pathname;
+// Its own language's manifest: /manifest.webmanifest, /manifest.nl.webmanifest ...
+const LANG_PREFIX = /^\/(nl|de|fr)\//.exec(PAGE_URL);
+const MANIFEST_URL = LANG_PREFIX ? `/manifest.${LANG_PREFIX[1]}.webmanifest` : "/manifest.webmanifest";
+const PRECACHE_URLS = [PAGE_URL, MANIFEST_URL, "/script/lamejs-1.2.1-min.js"];
 
 // A page's own <head>/<body> — its stylesheet(s), the webfonts they declare
 // via @font-face, and its own <script> tags (including, for the type="module"
@@ -146,7 +156,7 @@ async function precacheScriptAndImports(src, seen) {
 
 function precacheShell() {
   return caches.open(SHELL_CACHE)
-    .then((cache) => cache.addAll(PRECACHE_URLS).then(() => cache.match("/songs/")))
+    .then((cache) => cache.addAll(PRECACHE_URLS).then(() => cache.match(PAGE_URL)))
     .then((shellPage) => shellPage.text())
     .then((html) => {
       const seenScripts = new Set();
@@ -240,7 +250,7 @@ async function navigate(request, event) {
     return response;
   } catch {
     const cached = await caches.match(request);
-    return cached || caches.match("/songs/");
+    return cached || caches.match(PAGE_URL);
   }
 }
 

@@ -1,5 +1,6 @@
 import { nextVoiceId } from "../music/voice-id.js";
 import { execAll } from "../core/regex-exec-all.js";
+import { tl } from "../core/i18n.js";
 
 // Pure helpers for the sheet's Mixer panel (songs/mixer.js).
 //
@@ -110,15 +111,15 @@ export const DEFAULT_PROGRAM = {
       trad-jazz tenor banjo plays under a verse.
 */
 export const GCHORD_PATTERNS = [
-  { value: "default", label: "Default", pattern: null },
-  { value: "jazz", label: "Jazz (root+chord, chord)", pattern: "bzczbzcz" },
-  { value: "two-beat", label: "New Orleans Two-beat (root, chord)", pattern: "fzczfzcz" },
-  { value: "four-beat", label: "Four-beat (root+chord each beat)", pattern: "bzbzbzbz" },
-  { value: "waltz", label: "Waltz (root, chord, chord)", pattern: "fzczcz" },
-  { value: "charleston", label: "Charleston (dixieland kick)", pattern: "bzzczzzz" },
-  { value: "second-line", label: "Second Line (brass band tresillo)", pattern: "bzzczzfz" },
-  { value: "calypso", label: "Calypso (downbeat + off-beat chords)", pattern: "bczczczc" },
-  { value: "arpeggio", label: "Banjo Roll (trad jazz, rolled chord)", pattern: "gzhzizjz" },
+  { value: "default", label: tl("gchord_default", "Default"), pattern: null },
+  { value: "jazz", label: tl("gchord_jazz_root_chord_chord", "Jazz (root+chord, chord)"), pattern: "bzczbzcz" },
+  { value: "two-beat", label: tl("gchord_new_orleans_two_beat_root_chord", "New Orleans Two-beat (root, chord)"), pattern: "fzczfzcz" },
+  { value: "four-beat", label: tl("gchord_four_beat_root_chord_each_beat", "Four-beat (root+chord each beat)"), pattern: "bzbzbzbz" },
+  { value: "waltz", label: tl("gchord_waltz_root_chord_chord", "Waltz (root, chord, chord)"), pattern: "fzczcz" },
+  { value: "charleston", label: tl("gchord_charleston_dixieland_kick", "Charleston (dixieland kick)"), pattern: "bzzczzzz" },
+  { value: "second-line", label: tl("gchord_second_line_brass_band_tresillo", "Second Line (brass band tresillo)"), pattern: "bzzczzfz" },
+  { value: "calypso", label: tl("gchord_calypso_downbeat_off_beat_chords", "Calypso (downbeat + off-beat chords)"), pattern: "bczczczc" },
+  { value: "arpeggio", label: tl("gchord_banjo_roll_trad_jazz_rolled_chord", "Banjo Roll (trad jazz, rolled chord)"), pattern: "gzhzizjz" },
 ];
 
 export const DEFAULT_GCHORD_PATTERN_VALUE = "two-beat";

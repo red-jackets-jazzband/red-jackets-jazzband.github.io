@@ -6,6 +6,7 @@ import {
   transposeKeyName,
   tempoBpmFromAbc,
 } from "../music/music-theory.js";
+import { tl } from "../core/i18n.js";
 
 // Per-song and per-booklet facts the printed setlist forms show. Pure: the
 // selected instrument comes in as its <option> value, not read from the DOM.
@@ -19,19 +20,19 @@ export function instrumentTransposes(instrumentValue) {
 
 export function instrumentLabel(instrumentValue) {
   const found = findInstrument(instrumentValue);
-  return found ? found.label : "Concert pitch";
+  return found ? found.label : tl("concert_pitch", "Concert pitch");
 }
 
 // The front-matter line naming what the booklet is engraved for.
 export function exportInstrumentLine(instrumentValue) {
   if (instrumentValue === "concert_pitch" || instrumentValue === "concert_+_roman") {
-    return "Concert pitch";
+    return tl("concert_pitch", "Concert pitch");
   }
   if (instrumentTransposes(instrumentValue)) {
-    return `Transposed for ${instrumentLabel(instrumentValue)}`;
+    return tl("export_transposed_for", "Transposed for {instrument}", { instrument: instrumentLabel(instrumentValue) });
   }
   // e.g. trombone — bass clef, but still concert pitch
-  return `${instrumentLabel(instrumentValue)} — concert pitch`;
+  return tl("export_concert_pitch_for", "{instrument} — concert pitch", { instrument: instrumentLabel(instrumentValue) });
 }
 
 /*

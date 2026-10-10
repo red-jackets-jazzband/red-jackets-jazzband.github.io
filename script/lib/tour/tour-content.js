@@ -51,23 +51,6 @@ export function isTourLang(value) {
   return TOUR_LANGS.includes(value);
 }
 
-/*
-  Which language the tour opens in: an explicit earlier choice, else the URL
-  prefix (/nl/…, /de/…, /fr/… — the site's own convention, since the theme always
-  stamps <html lang="en-US">), else the first browser language we translate,
-  else English.
-*/
-export function resolveTourLang(saved, pathname, navigatorLanguages) {
-  if (isTourLang(saved)) return saved;
-  const first = String(pathname || "").split("/").find(Boolean);
-  if (isTourLang(first)) return first;
-  for (const tag of navigatorLanguages || []) {
-    const base = String(tag).slice(0, 2).toLowerCase();
-    if (isTourLang(base)) return base;
-  }
-  return "en";
-}
-
 // `{n}`-style placeholders in a UI string ("Step {n} of {total}").
 export function formatTourString(template, values = {}) {
   let out = template === null || template === undefined ? "" : String(template);

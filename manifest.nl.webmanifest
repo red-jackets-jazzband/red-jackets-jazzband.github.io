@@ -1,0 +1,32 @@
+{
+  "name": "Red Jackets Jazzband Songs",
+  "short_name": "RJ Songs",
+  "description": "Bekijk en speel traditionele jazz-leadsheets en setlijsten uit het repertoire van de Red Jackets Jazzband, met akkoorden, transpositie en audio — werkt offline zodra het is geïnstalleerd.",
+  "id": "/nl/songs/",
+  "start_url": "/nl/songs/",
+  "scope": "/nl/songs/",
+  "display": "standalone",
+  "background_color": "#1b1b1b",
+  "theme_color": "#1b1b1b",
+  "lang": "nl",
+  "icons": [
+    {
+      "src": "/images/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

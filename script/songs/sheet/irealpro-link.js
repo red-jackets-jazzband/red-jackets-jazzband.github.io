@@ -1,5 +1,6 @@
 import { byId, el } from "../../lib/core/dom.js";
 import { irealProFromAbc } from "../../lib/music/irealpro.js";
+import { tl } from "../../lib/core/i18n.js";
 
 /*
   Keep the sheet's iReal Pro button in sync with the current tune: an icon-only
@@ -25,9 +26,9 @@ export function updateIrealProLink(song, chords) {
     id: "iRealPro",
     class: "sheet-icon-btn",
     href: url,
-    title: "Open in iReal Pro",
+    title: tl("irealpro_open", "Open in iReal Pro"),
     html: '<img src="/images/irealpro_mark_white.webp" alt="" aria-hidden="true" class="irealpro-logo">',
-    attrs: { "aria-label": "Open in iReal Pro" },
+    attrs: { "aria-label": tl("irealpro_open", "Open in iReal Pro") },
   });
   const actions = byId("sheetActions");
   if (actions) actions.append(link);

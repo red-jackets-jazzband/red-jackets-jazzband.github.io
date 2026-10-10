@@ -2,10 +2,9 @@ import { byId, on } from "../../lib/core/dom.js";
 import { GM_VOICES } from "../../lib/audio/gm-voices.js";
 import { parseSongIndex } from "../../lib/core/song-index.js";
 import { STANDARD_SOUNDFONT_URL, HIGH_QUALITY_SOUNDFONT_URL } from "../audio/player.js";
+import { pageLanguage, tl } from "../../lib/core/i18n.js";
 
 const SW_URL = "/sw.js";
-const SW_SCOPE = "/songs/";
-const TOUR_LANGS = ["en", "nl", "de", "fr"];
 
 // The 12 semitones of a chromatic octave, sharps only (no need to spell both
 // enharmonic names — a soundfont has one sample per pitch regardless of how
@@ -48,16 +47,25 @@ function setStatus(text) {
   node.hidden = !text;
 }
 
-const DOWNLOAD_LABEL = "Download for offline";
-const INSTALL_LABEL = "Install app & download for offline";
+const DOWNLOAD_LABEL = tl("offline_download", "Download for offline");
+const INSTALL_LABEL = tl("offline_install", "Install app & download for offline");
 
 function serviceWorkerSupported() {
   return "serviceWorker" in navigator;
 }
 
+// The worker's scope is this page's own: "/songs/", or "/nl/songs/" etc. on a
+// translated page (a page is only controlled by a worker whose scope covers it).
+const SONGS_SCOPE = /^(?:\/(?:nl|de|fr))?\/songs\//;
+
+function serviceWorkerScope() {
+  const match = SONGS_SCOPE.exec(window.location.pathname);
+  return match ? match[0] : "/songs/";
+}
+
 function registerServiceWorker() {
   if (!serviceWorkerSupported()) return Promise.resolve(false);
-  return navigator.serviceWorker.register(SW_URL, { scope: SW_SCOPE, type: "module" })
+  return navigator.serviceWorker.register(SW_URL, { scope: serviceWorkerScope(), type: "module" })
     .then(() => true)
     .catch(() => false);
 }
@@ -176,15 +184,15 @@ function uniqueFiles(entries) {
 }
 
 async function runDownload(ctx) {
-  setStatus("Getting ready…");
+  setStatus(tl("offline_getting_ready", "Getting ready…"));
   const registered = await registerServiceWorker();
   if (!registered) {
-    setStatus("Offline mode isn't supported in this browser.");
+    setStatus(tl("offline_unsupported", "Offline mode isn't supported in this browser."));
     return;
   }
   await navigator.serviceWorker.ready;
   if (!(await waitForController())) {
-    setStatus("Reload this page normally (not a forced/hard reload) to enable offline mode.");
+    setStatus(tl("offline_reload", "Reload this page normally (not a forced/hard reload) to enable offline mode."));
     return;
   }
 
@@ -196,33 +204,36 @@ async function runDownload(ctx) {
       fetchIndex("/setlists/index_of_setlists.txt"),
     ]);
   } catch {
-    setStatus("Couldn't reach the song library — try again when you're back online.");
+    setStatus(tl("offline_unreachable", "Couldn't reach the song library — try again when you're back online."));
     return;
   }
 
   let failures = 0;
   failures += await fetchAll(
     uniqueFiles(songs).map((file) => `/songs/${file}`),
-    (done, total) => setStatus(`Songs: ${done} of ${total}`),
+    (done, total) => setStatus(tl("offline_progress_songs", "Songs: {done} of {total}", { done, total })),
   );
   failures += await fetchAll(
     uniqueFiles(setlists).map((file) => `/setlists/${file}`),
-    (done, total) => setStatus(`Setlists: ${done} of ${total}`),
+    (done, total) => setStatus(tl("offline_progress_setlists", "Setlists: {done} of {total}", { done, total })),
   );
-  await fetchAll(TOUR_LANGS.map((lang) => `/tour/tour.${lang}.md`), () => {});
+  // The tour loads English first and overlays the page's language on it.
+  const tourLanguages = pageLanguage() === "en" ? ["en"] : ["en", pageLanguage()];
+  await fetchAll(tourLanguages.map((lang) => `/tour/tour.${lang}.md`), () => {});
 
   failures += await warmSoundfont(
     ctx.state.highQualityAudio,
-    (done, total) => setStatus(`Sounds: ${done} of ${total}`),
+    (done, total) => setStatus(tl("offline_progress_sounds", "Sounds: {done} of {total}", { done, total })),
   );
 
   setStatus(downloadStatus(failures));
 }
 
 function downloadStatus(failures) {
-  if (failures === 0) return "Available offline.";
-  const noun = failures === 1 ? "item" : "items";
-  return `Available offline (${failures} ${noun} couldn't be downloaded — try again for full coverage).`;
+  if (failures === 0) return tl("offline_done", "Available offline.");
+  return failures === 1
+    ? tl("offline_partial_one", "Available offline (1 item couldn't be downloaded — try again for full coverage).")
+    : tl("offline_partial_many", "Available offline ({count} items couldn't be downloaded — try again for full coverage).", { count: failures });
 }
 
 /*
@@ -297,7 +308,7 @@ export function createOffline(ctx) {
     downloading = true;
     return promptInstall()
       .then(() => runDownload(ctx))
-      .catch(() => setStatus("Couldn't finish downloading — try again when you're back online."))
+      .catch(() => setStatus(tl("offline_failed", "Couldn't finish downloading — try again when you're back online.")))
       .finally(() => { downloading = false; });
   }
 

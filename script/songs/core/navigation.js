@@ -1,6 +1,18 @@
 import { byId, qsa } from "../../lib/core/dom.js";
 import { parseSongsParams, buildSongsHash } from "../../lib/core/song-hash.js";
 import { getPersonalSetlist } from "../../lib/setlists/setlists-store.js";
+import { tl } from "../../lib/core/i18n.js";
+
+// The header's language links go to this page in each language; give them
+// the same hash so switching language keeps the song / setlist open. (A
+// language with no translation links to its home page: no hash there.)
+function syncLangLinks(hash) {
+  qsa(".rj-intro-nav-lang a[data-lang]").forEach((link) => {
+    if (!link.dataset.base) link.dataset.base = link.getAttribute("href");
+    const base = link.dataset.base;
+    link.setAttribute("href", hash && base.endsWith("/songs/") ? `${base}#${hash}` : base);
+  });
+}
 
 // The `.abc` filename -> its slug (basename), used in the `s=` hash param.
 function songSlug(file) {
@@ -78,6 +90,7 @@ export function createNavigation(ctx) {
   function syncHash() {
     const { currentSongFile, currentSetlistId } = store.get("nav");
     const hash = buildSongsHash({ song: songSlug(currentSongFile), setlist: currentSetlistId });
+    syncLangLinks(hash);
     const current = window.location.hash.replace(/^#/, "");
     if (current === hash) return;
     if (window.history && window.history.replaceState) {
@@ -103,7 +116,7 @@ export function createNavigation(ctx) {
       patch.currentLibrarySongName = row.name;
     }
     setNav(patch);
-    setSheetBackLabel("Songs");
+    setSheetBackLabel(tl("back_songs", "Songs"));
     ctx.sheet.renderFromFile(song.file);
   }
 
@@ -148,7 +161,7 @@ export function createNavigation(ctx) {
 
   function selectSetlistSong(file, index) {
     setNav({ currentSongFile: file, currentSetlistSongIndex: index == null ? null : Number(index) });
-    setSheetBackLabel("Setlist");
+    setSheetBackLabel(tl("back_setlist", "Setlist"));
   }
 
   // Back at the setlists home: no setlist open any more. The song itself may

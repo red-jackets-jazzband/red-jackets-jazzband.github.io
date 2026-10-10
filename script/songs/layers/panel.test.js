@@ -42,7 +42,7 @@ test("the scale-degrees row credits Improvise for Real with a link", () => {
   }
 });
 
-test("the tab opens the panel, the close button and Escape close it", () => {
+test("the tab opens the panel and collapses it again; so does Escape", () => {
   const { ctx, cleanup } = setup();
   try {
     const tab = document.getElementById("layersTab");
@@ -53,7 +53,9 @@ test("the tab opens the panel, the close button and Escape close it", () => {
     assert.equal(panel.hidden, false);
     assert.equal(tab.getAttribute("aria-expanded"), "true");
     assert.ok(document.body.classList.contains("rj-layers-open"));
-    click(document.getElementById("layersCloseBtn"));
+    assert.equal(tab.getAttribute("aria-label"), "Layers");
+    assert.equal(tab.title, "Close layers");
+    click(tab);
     assert.equal(panel.hidden, true);
     click(tab);
     document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape" }));

@@ -5,6 +5,7 @@ import {
 import { computeVoicesOff, percentToAbcjsSwing } from "../../lib/audio/audio-mix.js";
 import { beatsPerMeasure } from "../../lib/audio/metronome.js";
 import { REPEAT_COUNT_MIN, REPEAT_COUNT_MAX, REPEAT_COUNT_DEFAULT } from "./state.js";
+import { tl } from "../../lib/core/i18n.js";
 
 // Two of the three classic MIDI.js soundfont sets (see lib/gm-voices.js's
 // doc comment for the third, MusyngKite's own sibling FluidR3_GM, not
@@ -209,12 +210,12 @@ export function createAudioPlayer(ctx) {
     if (!btn) return;
     if (state.isLoadingPlayback) {
       btn.innerHTML = LOADING_ICON;
-      btn.title = "Loading…";
+      btn.title = tl("play_loading", "Loading…");
       btn.classList.remove("playing");
       return;
     }
     btn.innerHTML = state.isPlaying ? PAUSE_ICON : PLAY_ICON;
-    btn.title = state.isPlaying ? "Pause" : "Play";
+    btn.title = state.isPlaying ? tl("pause", "Pause") : tl("play", "Play");
     btn.classList.toggle("playing", state.isPlaying);
   }
 
@@ -226,8 +227,8 @@ export function createAudioPlayer(ctx) {
     if (!label) return;
     const total = ctx.state.repeatCount;
     label.textContent = state.isPlaying && total > 1
-      ? `${state.repeatsPlayed + 1} of ${total}`
-      : "repeats";
+      ? tl("repeat_progress", "{n} of {total}", { n: state.repeatsPlayed + 1, total })
+      : tl("repeats_unit", "repeats");
   }
 
   // Every place playback starts/stops/pauses funnels through here — one spot

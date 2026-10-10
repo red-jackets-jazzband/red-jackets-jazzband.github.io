@@ -22,6 +22,7 @@ import { byId, clear, el } from "../../lib/core/dom.js";
 import { LAYERS, activeLayers } from "../../lib/music/layers.js";
 import { findInstrument, INSTRUMENTS } from "../../lib/music/instruments.js";
 import { trackRightEdge } from "./edge.js";
+import { listOf, tl } from "../../lib/core/i18n.js";
 
 function brassLabels() {
   return INSTRUMENTS.filter((i) => LAYERS.find((l) => l.id === "fingerings").availableFor(i.value)).map((i) => i.label);
@@ -34,13 +35,13 @@ function previewFor(id) {
 
 // "A, B or C".
 function orList(names) {
-  return names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} or ${names[names.length - 1]}`;
+  return listOf(names, "or");
 }
 
 function unavailableHint(instrument) {
   const found = findInstrument(instrument);
   const names = orList(brassLabels());
-  return `Not for ${found ? found.label : "this instrument"} — pick ${names} under Instrument.`;
+  return tl("layers_unavailable", "Not for {instrument}. Pick {names} under Instrument.", { instrument: found ? found.label : tl("layers_this_instrument", "this instrument"), names });
 }
 
 // "<prefix><link>" — the row's click toggles the layer, so the link keeps its
@@ -105,6 +106,14 @@ function updateRow({ row, switchBtn, hintText, credit, layer }, active, instrume
   if (credit) credit.hidden = !available;
 }
 
+// The tab's accessible name stays "Layers" (aria-expanded says open/closed);
+// only the on-count rides along.
+function tabLabel(count) {
+  return count > 0
+    ? tl("layers_tab_count", "Layers ({count} on)", { count })
+    : tl("layers_tab", "Layers");
+}
+
 function updateCount(active, instrument) {
   const count = activeLayers(active, instrument).length;
   ["layersTabCount", "layersPanelCount"].forEach((id) => {
@@ -114,7 +123,7 @@ function updateCount(active, instrument) {
     badge.hidden = count === 0;
   });
   const tab = byId("layersTab");
-  if (tab) tab.setAttribute("aria-label", count > 0 ? `Layers (${count} on)` : "Layers");
+  if (tab) tab.setAttribute("aria-label", tabLabel(count));
 }
 
 // The chord table measures its container, and the open panel narrows it —
@@ -132,7 +141,10 @@ function showOpen(open) {
   const backdrop = byId("layersBackdrop");
   if (panel) panel.hidden = !open;
   if (backdrop) backdrop.hidden = !open;
-  if (tab) tab.setAttribute("aria-expanded", open ? "true" : "false");
+  if (tab) {
+    tab.setAttribute("aria-expanded", open ? "true" : "false");
+    tab.title = open ? tl("layers_close", "Close layers") : tl("layers_tab", "Layers");
+  }
   document.body.classList.toggle("rj-layers-open", open);
   announceResize();
 }
@@ -175,13 +187,6 @@ export function createLayersPanel(ctx) {
     rows = buildList(listEl, toggle);
     const tab = byId("layersTab");
     if (tab) tab.addEventListener("click", () => setOpen(!ctx.store.get("layers").layersOpen));
-    const close = byId("layersCloseBtn");
-    if (close) {
-      close.addEventListener("click", () => {
-        setOpen(false);
-        if (tab) tab.focus();
-      });
-    }
     const reset = byId("layersResetBtn");
     if (reset) reset.addEventListener("click", resetAll);
     const backdrop = byId("layersBackdrop");

@@ -12,6 +12,7 @@ import { updateInspirationExtLinks } from "./links.js";
 import {
   firstYoutubeUrl, firstSpotifyUrl, firstSoundcloudUrl,
 } from "../../lib/media/inspiration-links.js";
+import { tl } from "../../lib/core/i18n.js";
 
 /*
   The Inspiration picture-in-picture panel: a docked, draggable player that
@@ -135,7 +136,7 @@ export function createInspiration(ctx) {
     if (btn) return btn;
     btn = document.createElement("button");
     btn.type = "button";
-    btn.textContent = "Inspiration";
+    btn.textContent = tl("inspiration", "Inspiration");
     btn.id = "inspirationLink";
     btn.className = "sheet-inspiration-link";
     btn.addEventListener("click", () => togglePanel({
@@ -230,7 +231,7 @@ export function createInspiration(ctx) {
     panelKey = sourcesKey(sources);
 
     const titleEl = byId("inspirationPanelTitle");
-    if (titleEl) titleEl.textContent = title || "Inspiration";
+    if (titleEl) titleEl.textContent = title || tl("inspiration", "Inspiration");
 
     panel.hidden = false;
     setLinkActive(true);

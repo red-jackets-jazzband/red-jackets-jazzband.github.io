@@ -1,6 +1,7 @@
 import { byId, el, clear } from "../../lib/core/dom.js";
 import { listPersonalSetlists, deletePersonalSetlist } from "../../lib/setlists/setlists-store.js";
 import { songCountLabel, countSetlistSongs } from "./data.js";
+import { tl } from "../../lib/core/i18n.js";
 
 const emptyRow = (text) => el("div", { class: "song-list-empty", text });
 
@@ -19,9 +20,9 @@ function setlistRow(title, count, onOpen, onDelete) {
     row.append(el("button", {
       type: "button",
       class: "setlist-row-delete",
-      title: "Delete setlist",
+      title: tl("setlist_delete", "Delete setlist"),
       html: '<span class="fa-solid fa-trash-can" aria-hidden="true"></span>',
-      attrs: { "aria-label": `Delete setlist “${title}”` },
+      attrs: { "aria-label": tl("setlist_delete_named", "Delete setlist “{name}”", { name: title }) },
       on: {
         click(e) {
           e.stopPropagation();
@@ -53,7 +54,7 @@ export function createSetlistHome(ctx) {
       countSetlistSongs(entry.songs),
       () => ctx.setlistView.openPersonal(entry.id),
       () => {
-        if (!window.confirm(`Delete “${entry.name}”? This can't be undone.`)) return;
+        if (!window.confirm(tl("setlist_delete_confirm", "Delete “{name}”? This can't be undone.", { name: entry.name }))) return;
         deletePersonalSetlist(ctx.storage(), entry.id);
         ctx.nav.forgetPersonal(entry.id);
         render();
@@ -65,9 +66,11 @@ export function createSetlistHome(ctx) {
     return el("button", {
       type: "button",
       class: "rj-library-new-setlist-btn",
-      html: '<span class="fa-solid fa-plus" aria-hidden="true"></span><span>New setlist</span>',
       on: { click: () => ctx.setlistModal.open() },
-    });
+    }, [
+      el("span", { class: "fa-solid fa-plus", attrs: { "aria-hidden": "true" } }),
+      el("span", { text: tl("setlist_new", "New setlist") }),
+    ]);
   }
 
   function render() {
@@ -75,17 +78,17 @@ export function createSetlistHome(ctx) {
     if (!listEl) return;
     clear(listEl);
 
-    listEl.append(heading("From the band"));
+    listEl.append(heading(tl("setlists_from_band", "From the band")));
     if (ctx.state.setlistIndex.length === 0) {
-      listEl.append(emptyRow("No setlists published yet."));
+      listEl.append(emptyRow(tl("setlists_none_published", "No setlists published yet.")));
     } else {
       ctx.state.setlistIndex.forEach((entry) => listEl.append(bandRow(entry)));
     }
 
-    listEl.append(heading("Yours"));
+    listEl.append(heading(tl("setlists_yours", "Yours")));
     const mine = listPersonalSetlists(ctx.storage());
     if (mine.length === 0) {
-      listEl.append(emptyRow("No personal setlists yet on this device."));
+      listEl.append(emptyRow(tl("setlists_none_personal", "No personal setlists yet on this device.")));
     } else {
       mine.forEach((entry) => listEl.append(personalRow(entry)));
     }

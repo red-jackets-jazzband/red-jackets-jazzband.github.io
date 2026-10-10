@@ -21,6 +21,7 @@ import { createSetlistView } from "../setlists/view.js";
 import { createTour } from "../tour/tour.js";
 import { createOffline } from "../offline/offline.js";
 import { createLayersPanel } from "../layers/panel.js";
+import { tl } from "../../lib/core/i18n.js";
 
 /*
   The songs page's feature registry — the whole dependency graph in one
@@ -49,7 +50,7 @@ function loadCatalog(ctx) {
   ctx.readFile("/songs/index_of_songs.txt", (data) => {
     ctx.store.set("catalog", { allSongs: parseSongIndex(data), allSongsLoaded: true });
     const countEl = byId("songCount");
-    if (countEl) countEl.textContent = `${ctx.state.allSongs.length} lead sheets`;
+    if (countEl) countEl.textContent = tl("library_count", "{count} lead sheets", { count: ctx.state.allSongs.length });
     if (ctx.state.activeTab === "library") ctx.library.render("");
   });
 

@@ -6,6 +6,7 @@
 // vendored display fonts (Saniretro, Akura Popo — see split.css @font-face),
 // so a non-N.O.A.D.S. setlist can read "Red Jackets" / its own name instead.
 
+import { tl } from "../../lib/core/i18n.js";
 const SVGNS = "http://www.w3.org/2000/svg";
 
 // The SVG's viewBox is 210x297 user units over a 210mm x 297mm page, i.e. one
@@ -135,7 +136,7 @@ export function buildTitlePage({ isNoads, setlistName, instrumentText }) {
     y: "79.431496",
     "font-size": "32.286",
   });
-  subtitle.textContent = "songbook";
+  subtitle.textContent = tl("titlepage_songbook", "songbook");
   svg.append(subtitle);
 
   const name = svgEl("text", {

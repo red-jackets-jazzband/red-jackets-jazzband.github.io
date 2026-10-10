@@ -2,6 +2,7 @@ import { byId, clear, el } from "../../lib/core/dom.js";
 import {
   buildSoundiizPayload, soundiizShareUrl, SOUNDIIZ_ENDPOINT,
 } from "../../lib/setlists/setlist-listen.js";
+import { tl } from "../../lib/core/i18n.js";
 
 /*
   The Listen group's "Export" button: saves the open setlist as a playlist
@@ -19,8 +20,8 @@ import {
   above all) would swallow it.
 */
 
-const BUSY_TEXT = "Sending the setlist to Soundiiz…";
-const FAIL_TEXT = "Couldn’t reach Soundiiz — try again in a moment.";
+const BUSY_TEXT = tl("soundiiz_busy", "Sending the setlist to Soundiiz…");
+const FAIL_TEXT = tl("soundiiz_fail", "Couldn’t reach Soundiiz — try again in a moment.");
 
 // How long to wait for Soundiiz before giving up: a request that never
 // settles would otherwise leave the button busy and the blank tab open.
@@ -87,7 +88,9 @@ export function updateExportButton(songs) {
   if (!btn) return;
   const ready = songs.some((song) => song && song.title); // NOSONAR: `?.` is a SyntaxError on Safari 12 (see Browser support)
   btn.disabled = !ready;
-  btn.title = ready ? "Export this setlist as a playlist to Spotify, Apple Music, YouTube Music… (via Soundiiz)" : "No songs in this setlist";
+  btn.title = ready
+    ? tl("soundiiz_export_title", "Export this setlist as a playlist to Spotify, Apple Music, YouTube Music… (via Soundiiz)")
+    : tl("soundiiz_export_none", "No songs in this setlist");
   setStatus(null);
 }
 
@@ -113,7 +116,7 @@ export function createPlaylistExport(ctx, options = {}) {
           tab.location.replace(url);
           setStatus(null);
         } else {
-          setStatus(el("a", { href: url, target: "_blank", rel: "noopener", text: "Open the playlist on Soundiiz" }));
+          setStatus(el("a", { href: url, target: "_blank", rel: "noopener", text: tl("soundiiz_open", "Open the playlist on Soundiiz") }));
         }
       })
       .catch((err) => {

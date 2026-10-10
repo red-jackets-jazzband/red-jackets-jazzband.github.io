@@ -218,8 +218,10 @@ test("downloadForOffline fetches the indexes, every song/setlist/tour file, warm
     assert.ok(fetchCalls.includes("/songs/bourbon_street_parade.abc"));
     assert.ok(fetchCalls.includes("/songs/five_foot_two.abc"));
     assert.ok(fetchCalls.includes("/setlists/setlist_2026.txt"));
-    for (const lang of ["en", "nl", "de", "fr"]) {
-      assert.ok(fetchCalls.includes(`/tour/tour.${lang}.md`));
+    // Only the page's own language's tour copy (the tour no longer switches).
+    assert.ok(fetchCalls.includes("/tour/tour.en.md"));
+    for (const lang of ["nl", "de", "fr"]) {
+      assert.ok(!fetchCalls.includes(`/tour/tour.${lang}.md`));
     }
 
     assert.equal(document.getElementById("offlineStatus").textContent, "Available offline.");

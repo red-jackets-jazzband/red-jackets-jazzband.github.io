@@ -1,4 +1,5 @@
 import { isSetlistDivider } from "./setlist-format.js";
+import { tl } from "../core/i18n.js";
 
 // One traversal of a setlist's items, producing the ordering and numbering that
 // the open-setlist list, the drag renumberer, the printed stage list, the
@@ -20,6 +21,12 @@ import { isSetlistDivider } from "./setlist-format.js";
 //       displayNumber - what to show before the title (per-set when split)
 //       followsHeading - true when this song sits directly under a heading
 //         (the booklet uses it to keep the pair on one page)
+// The default caption of the nth set ("Set 2"): what the heading shows until
+// the setlist names it, and the placeholder of its rename field.
+export function setLabel(setNumber) {
+  return tl("set_label", "Set {n}", { n: setNumber });
+}
+
 export function walkSetlist(songs) {
   const items = Array.isArray(songs) ? songs : [];
   const hasDividers = items.some(isSetlistDivider);
@@ -32,7 +39,7 @@ export function walkSetlist(songs) {
 
   const leadWithHeading = hasDividers && !(items.length > 0 && isSetlistDivider(items[0]));
   if (leadWithHeading) {
-    entries.push({ kind: "set-heading", label: "Set 1", setNumber: 1 });
+    entries.push({ kind: "set-heading", label: setLabel(1), setNumber: 1 });
     afterHeading = true;
   }
 
@@ -44,7 +51,7 @@ export function walkSetlist(songs) {
       afterHeading = true;
       entries.push({
         kind: "set-heading",
-        label: item.divider || `Set ${setNumber}`,
+        label: item.divider || setLabel(setNumber),
         setNumber,
         index,
         item,

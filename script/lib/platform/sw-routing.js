@@ -14,12 +14,13 @@ const FONT_AWESOME_ORIGIN = "https://cdnjs.cloudflare.com";
 // site's own self-hosted webfonts split.css's @font-face rules point at —
 // Montserrat/Lora/JetBrainsMono for the UI, Saniretro/AkuraPopo/MuseJazzText
 // for the print/booklet titling), its data (song/setlist/tour text), and its
-// own icons/manifest. Everything else same-origin (other language pages,
-// /agenda/, ...) is out of scope: this PWA is /songs/ only, matching its
-// manifest's own start_url/scope.
+// own icons/manifest. Everything else same-origin (/agenda/, ...) is out of
+// scope: this PWA is the songs page only (its translated copies at /nl/songs/
+// etc. are served by their own registration of the same worker, but they
+// share these data/asset paths), matching its manifest's start_url/scope.
 const CACHEABLE_PATH_PREFIXES = [
   "/songs/", "/script/", "/setlists/", "/tour/", "/css/", "/fonts/",
-  "/images/icons/", "/manifest.webmanifest",
+  "/images/icons/", "/manifest.",
 ];
 
 function isCacheablePath(pathname) {

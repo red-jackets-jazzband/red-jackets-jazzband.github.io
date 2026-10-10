@@ -1,4 +1,5 @@
 import { byId, on } from "../../lib/core/dom.js";
+import { tl } from "../../lib/core/i18n.js";
 
 /*
   The sheet's "full screen" toggle: #sheetFullscreenBtn (content/songs.md)
@@ -75,7 +76,7 @@ export function createFullscreen() {
     document.body.classList.toggle(FULLSCREEN_CLASS, active);
     const btn = byId("sheetFullscreenBtn");
     if (btn) {
-      const label = active ? "Exit full screen" : "Full screen";
+      const label = active ? tl("fullscreen_exit", "Exit full screen") : tl("fullscreen_enter", "Full screen");
       btn.title = label;
       btn.setAttribute("aria-label", label);
       btn.setAttribute("aria-pressed", active ? "true" : "false");

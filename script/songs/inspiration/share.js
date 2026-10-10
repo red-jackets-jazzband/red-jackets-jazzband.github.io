@@ -4,6 +4,7 @@
 
 // Doesn't touch the panel/ctx state, so it lives at module scope rather than
 // nested inside createInspiration.
+import { tl } from "../../lib/core/i18n.js";
 function runExecCopy(url) {
   const ta = document.createElement("textarea");
   ta.value = url;
@@ -36,7 +37,7 @@ function execCopy(url) {
 
 export function fallbackCopy(url, btn) {
   if (execCopy(url)) flashShareBtn(btn);
-  else window.prompt("Copy this link:", url);
+  else window.prompt(tl("copy_link_prompt", "Copy this link:"), url);
 }
 
 export function flashShareBtn(btn) {

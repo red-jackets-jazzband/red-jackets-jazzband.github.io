@@ -6,7 +6,6 @@ import {
   mergeTourLang,
   parseBody,
   parseTourMarkdown,
-  resolveTourLang,
   tokenizeInline,
   tourStructureProblems,
 } from "./tour-content.js";
@@ -178,16 +177,6 @@ ${SAMPLE}`);
   assert.equal(brk.title, `${content.chapters[0].title} done`);
   assert.deepEqual(brk.body[0].tokens.map((t) => t.type), ["text", "strong"]);
   assert.equal(brk.body[0].tokens[1].text, content.chapters[1].title);
-});
-
-test("resolveTourLang: saved choice beats URL prefix beats browser language beats English", () => {
-  assert.equal(resolveTourLang("de", "/nl/songs/", ["nl-NL"]), "de");
-  assert.equal(resolveTourLang(null, "/nl/songs/", ["de-DE"]), "nl");
-  assert.equal(resolveTourLang(null, "/songs/", ["es-ES", "de-AT", "nl"]), "de");
-  assert.equal(resolveTourLang(null, "/songs/", ["fr-FR"]), "fr");
-  assert.equal(resolveTourLang(null, "/songs/", ["es-ES"]), "en");
-  assert.equal(resolveTourLang("xx", "/songs/", undefined), "en");
-  assert.equal(resolveTourLang(null, undefined, ["NL-be"]), "nl");
 });
 
 test("formatTourString fills {placeholders}", () => {

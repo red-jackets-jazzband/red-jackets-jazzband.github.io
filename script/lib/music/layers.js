@@ -30,18 +30,19 @@
 import { fingeringGlyphs, instrumentHasFingerings, melodyFingerings } from "./fingerings.js";
 import { PROGRESSION_NAMES, findNamedProgressions, progressionLabel } from "./progressions.js";
 import { degreeText, melodyDegrees } from "./scale-degrees.js";
+import { listOf, tl } from "../core/i18n.js";
 
 function nameList(names) {
-  return names.length < 2 ? names.join("") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+  return listOf(names, "and");
 }
 
 export const LAYERS = [
   {
     id: "progressions",
-    group: "Harmony",
-    label: "Named progressions",
-    hint: `Labels the stock trad-jazz chord patterns (${nameList(PROGRESSION_NAMES)}) and highlights the chords that make them up in one bar.`,
-    credit: { prefix: "Names from Pops Coffee's blog ", text: "Playing Traditional Jazz", href: "https://playing-traditional-jazz.blogspot.com/" },
+    group: tl("layers_group_harmony", "Harmony"),
+    label: tl("layer_progressions_label", "Named progressions"),
+    hint: tl("layer_progressions_hint", "Labels the stock trad-jazz chord patterns ({names}) and highlights the chords that make them up in one bar.", { names: nameList(PROGRESSION_NAMES) }),
+    credit: { prefix: tl("layer_progressions_credit", "Names from Pops Coffee's blog "), text: "Playing Traditional Jazz", href: "https://playing-traditional-jazz.blogspot.com/" },
     order: 3,
     availableFor: () => true,
     appliesTo: () => true,
@@ -55,9 +56,9 @@ export const LAYERS = [
   },
   {
     id: "chord-skeleton",
-    group: "Harmony",
-    label: "Chord skeleton",
-    hint: "Each chord's notes as faint ghost notes on the staff, in the inversion that sits under most of the bar's melody. Only a visual reminder: they are not played.",
+    group: tl("layers_group_harmony", "Harmony"),
+    label: tl("layer_chord_skeleton_label", "Chord skeleton"),
+    hint: tl("layer_chord_skeleton_hint", "Each chord's notes as faint ghost notes on the staff, in the inversion that sits under most of the bar's melody. Only a visual reminder: they are not played."),
     order: 4, // unused: it writes no annotation
     availableFor: () => true,
     appliesTo: () => true,
@@ -67,9 +68,9 @@ export const LAYERS = [
   },
   {
     id: "outside-chords",
-    group: "Harmony",
-    label: "Outside chords",
-    hint: "Shades in magenta each chord that has a note outside the key. With Chord skeleton on, the ghost notes that aren't in the key are tinted too.",
+    group: tl("layers_group_harmony", "Harmony"),
+    label: tl("layer_outside_chords_label", "Outside chords"),
+    hint: tl("layer_outside_chords_hint", "Shades in magenta each chord that has a note outside the key. With Chord skeleton on, the ghost notes that aren't in the key are tinted too."),
     order: 5, // unused: it writes no annotation
     availableFor: () => true,
     appliesTo: () => true,
@@ -78,10 +79,10 @@ export const LAYERS = [
   },
   {
     id: "scale-degrees",
-    group: "Melody",
-    label: "Scale degrees",
-    hint: "Each note's number in the key (1-7), with the notes of the chord under it circled.",
-    credit: { prefix: "Method from David Reed's ", text: "Improvise for Real", href: "https://www.improviseforreal.com/" },
+    group: tl("layers_group_melody", "Melody"),
+    label: tl("layer_scale_degrees_label", "Scale degrees"),
+    hint: tl("layer_scale_degrees_hint", "Each note's number in the key (1-7), with the notes of the chord under it circled."),
+    credit: { prefix: tl("layer_scale_degrees_credit", "Method from David Reed's "), text: "Improvise for Real", href: "https://www.improviseforreal.com/" },
     order: 2,
     availableFor: () => true,
     appliesTo: () => true,
@@ -89,9 +90,9 @@ export const LAYERS = [
   },
   {
     id: "fingerings",
-    group: "Performance",
-    label: "Fingerings",
-    hint: "Valves for trumpet and sousaphone, slide positions for trombone",
+    group: tl("layers_group_performance", "Performance"),
+    label: tl("layer_fingerings_label", "Fingerings"),
+    hint: tl("layer_fingerings_hint", "Valves for trumpet and sousaphone, slide positions for trombone"),
     order: 1,
     availableFor: instrumentHasFingerings,
     appliesTo: (chart) => !chart.ownVoices,

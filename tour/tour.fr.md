@@ -45,7 +45,7 @@ Commencez à taper un titre et la liste se réduit au fil de la frappe. Choisiss
 Quand vous choisissez un morceau, il s'ouvre ici. Pour la visite, nous avons ouvert *Bill Bailey*. Le tableau d'accords vient d'abord, avec la partition complète en dessous.
 
 ## back: Retour à la liste
-Sur téléphone, la grille occupe tout l'écran et la liste n'est plus visible. Le bouton `tab:‹ Songs` en haut vous y ramène.
+Sur téléphone, la grille occupe tout l'écran et la liste n'est plus visible. Le bouton `tab:‹ Morceaux` en haut vous y ramène.
 
 ## form: Suivre la forme
 Les flèches sous le tableau d'accords montrent la **forme** : l'ordre des parties. Même couleur, même partie. *2x* veut dire répété. Un `...` final (comme `A` `B` `...` aux solos) se répète autant de fois qu'il y a de solistes.
@@ -54,12 +54,12 @@ Les flèches sous le tableau d'accords montrent la **forme** : l'ordre des parti
 Choisissez votre instrument et la grille est transposée : concert, Concert + chiffres romains, sax alto, clarinette ou trompette en si♭, sax ténor, trombone ou sousaphone (clé de fa). La lecture sonne toujours en concert.
 
 ## play: Écoutez le morceau
-Il est utile d'entendre un morceau avant de le jouer. **Play** (`fa-play`) le lance, et les notes s'illuminent sur la grille pendant qu'elles sonnent. **Stop** (`fa-stop`) l'arrête.
+Il est utile d'entendre un morceau avant de le jouer. **Lecture** (`fa-play`) le lance, et les notes s'illuminent sur la grille pendant qu'elles sonnent. **Stop** (`fa-stop`) l'arrête.
 
 > La `key:barre d'espace` lance et met aussi en pause tant qu'une grille est ouverte.
 
 ## print: Emportez-le au concert
-**Print** (`fa-print`) transforme la grille en une page propre pour le pupitre ou le classeur. Dans la boîte de dialogue d'impression, vous pouvez choisir *Enregistrer au format PDF* si vous préférez une copie numérique. Les setlists ont leurs propres boutons d'impression, qui viennent plus loin dans la visite.
+**Imprimer** (`fa-print`) transforme la grille en une page propre pour le pupitre ou le classeur. Dans la boîte de dialogue d'impression, vous pouvez choisir *Enregistrer au format PDF* si vous préférez une copie numérique. Les setlists ont leurs propres boutons d'impression, qui viennent plus loin dans la visite.
 
 # adjust: Jouez-le à votre façon
 
@@ -70,7 +70,7 @@ Un morceau ne tombe pas toujours bien dans la tonalité imprimée. **−** et **
 Le tempo est exprimé en **battements par minute** et part de l'indication du morceau lui-même. Ralentissez un passage délicat pour l'apprendre, puis remontez le tempo.
 
 ## more: Boucler un passage
-Relancer un passage à la main devient vite pénible. La petite flèche en bas de la barre (`fa-angles-right`) ouvre **More controls**, où le compteur **Repeat** joue le morceau jusqu'à 20 fois de suite. Après le premier passage, la levée est sautée. Le choix du comping est aussi ici.
+Relancer un passage à la main devient vite pénible. La petite flèche en bas de la barre (`fa-angles-right`) ouvre **Plus d'options**, où le compteur **Répétition** joue le morceau jusqu'à 20 fois de suite. Après le premier passage, la levée est sautée. Le choix du comping est aussi ici.
 
 ## irealpro: Emmenez un groupe d'accompagnement
 Pour les morceaux avec des accords, ce bouton envoie la grille à l'application **iReal Pro** sur votre téléphone, qui peut la jouer avec un groupe d'accompagnement.
@@ -107,7 +107,7 @@ Baissez la **speed** (ou augmentez-la) pour apprendre une ligne rapide à une al
 # mixer: Régler les volumes
 
 ## open: Faire votre propre mix
-Le **Mixer** (`fa-sliders`) règle le volume de tout ce que vous entendez. Sur ordinateur, c'est un petit panneau sous son bouton, et sur téléphone il remonte depuis le bas de l'écran.
+Le **Mixeur** (`fa-sliders`) règle le volume de tout ce que vous entendez. Sur ordinateur, c'est un petit panneau sous son bouton, et sur téléphone il remonte depuis le bas de l'écran.
 
 ## accompaniment: Ajouter basse et accords
 L'**accompagnement automatique** joue une ligne de basse et des accords à partir des symboles d'accords. Les deux sont **coupés** par défaut, donc rien ne change tant que vous ne les activez pas. Chacun a un bouton **muet** (`fa-volume-high`), un **curseur de volume** et un **choix de voix**, et le sélecteur de **motif d'accompagnement** détermine le style.
@@ -121,16 +121,16 @@ Le curseur **Swing** assouplit les croches droites. Le bouton **tambour** (`fa-d
 # setlists: Setlists et impression
 
 ## shelf: Parcourir les setlists
-L'onglet **Setlists** montre les setlists du groupe, en lecture seule, puis **Yours** en dessous. Les vôtres ne sont stockées que dans ce navigateur.
+L'onglet **Setlists** montre les setlists du groupe, en lecture seule, puis **Les vôtres** en dessous. Les vôtres ne sont stockées que dans ce navigateur.
 
 ## new: Créer votre propre setlist
-**New setlist** permet de partir d'une liste vide, d'une copie d'une setlist existante (un **remix**) ou d'un fichier **.txt** importé. Nous allons en construire une de zéro, étape par étape.
+**Nouvelle setlist** permet de partir d'une liste vide, d'une copie d'une setlist existante (un **remix**) ou d'un fichier **.txt** importé. Nous allons en construire une de zéro, étape par étape.
 
 ## create: Partir de zéro
-Si vous choisissez *Empty*, une setlist vide s'ouvre, prête à recevoir des morceaux. Celle-ci, nous l'avons appelée *Tour setlist*. Vous pouvez renommer la vôtre à tout moment en cliquant sur son nom souligné.
+Si vous choisissez *Vide*, une setlist vide s'ouvre, prête à recevoir des morceaux. Celle-ci, nous l'avons appelée *Tour setlist*. Vous pouvez renommer la vôtre à tout moment en cliquant sur son nom souligné.
 
 ## addsong: Ajouter un morceau
-Cherchez un titre dans la ligne `fa-plus` **Add song** en bas de la liste, puis appuyez sur `key:Entrée` ou cliquez sur un résultat pour l'ajouter.
+Cherchez un titre dans la ligne `fa-plus` **Ajouter un morceau** en bas de la liste, puis appuyez sur `key:Entrée` ou cliquez sur un résultat pour l'ajouter.
 
 ## addsong2: En ajouter un autre
 Ajoutez un second morceau de la même façon. Le champ reste en place, vous pouvez donc taper aussitôt le titre suivant. La liste s'allonge vers le bas, avec une ligne par morceau.
@@ -141,7 +141,7 @@ Faites glisser la poignée `fa-grip-vertical` d'un morceau vers le haut ou le ba
 > Au clavier, `key:Alt` + `key:↑` `key:↓` déplace d'une place la ligne sélectionnée.
 
 ## break: Découper en sets
-`btn:New set` démarre un nouveau set, par exemple pour diviser un concert en Set 1 et Set 2. Chaque set a sa propre boîte, avec sa propre ligne `fa-plus` **Add song to set 2**. Cliquez sur le nom d'un set pour taper un intitulé, ou laissez-le vide pour obtenir un « Set 2 » automatique.
+`btn:Nouveau set` démarre un nouveau set, par exemple pour diviser un concert en Set 1 et Set 2. Chaque set a sa propre boîte, avec sa propre ligne `fa-plus` **Ajouter un morceau au set 2**. Cliquez sur le nom d'un set pour taper un intitulé, ou laissez-le vide pour obtenir un « Set 2 » automatique.
 
 ## split: Couper un set en deux
 Vous avez déjà une liste et voulez la couper en deux ? Survolez l'espace entre deux morceaux et appuyez sur `fa-scissors`. Un nouveau set commence là, et tous les morceaux sous la coupure y passent.
@@ -157,11 +157,11 @@ Nous venons d'ouvrir l'une des setlists du groupe. Quand vous ouvrez une setlist
 
 ## print: Imprimer pour le concert
 - **Setlist** : une grande liste numérotée des titres, pour la scène.
-- **Chordbook** : le titre et le tableau d'accords de chaque morceau.
-- **Songbook** : chaque morceau avec ses accords et sa partition complète.
+- **Recueil d'accords** : le titre et le tableau d'accords de chaque morceau.
+- **Recueil complet** : chaque morceau avec ses accords et sa partition complète.
 
 ## listen: Écouter tout le set
-Le bouton `fa-youtube` sous **Listen** ouvre à la suite tous les morceaux de la setlist qui ont un lien YouTube, pour entendre tout le set avant le concert. Il est grisé ici, car aucun morceau de cette setlist n'a de lien.
+Le bouton `fa-youtube` sous **Écouter** ouvre à la suite tous les morceaux de la setlist qui ont un lien YouTube, pour entendre tout le set avant le concert. Il est grisé ici, car aucun morceau de cette setlist n'a de lien.
 
 ## exports: Utiliser une setlist ailleurs
 Une setlist personnelle peut être exportée avec le bouton `fa-file-arrow-down` en fichier **.txt** et réimportée sur un autre appareil. C'est la version setlist des exports Print, MP3 et iReal Pro que vous avez vus pour un seul morceau.
@@ -185,8 +185,8 @@ Quand le comping est activé, il apparaît dans le mixeur comme une voix **Compi
 
 # layers: Calques
 
-## button: Trouver le bouton Layers
-Le bouton **Layers** est à droite : un onglet fin sur le bord droit de l'écran sur ordinateur, un petit onglet en bas à droite sur téléphone. Touchez-le pour ouvrir le panneau.
+## button: Trouver le bouton Calques
+Le bouton **Calques** est à droite : un onglet fin sur le bord droit de l'écran sur ordinateur, un petit onglet en bas à droite sur téléphone. Touchez-le pour ouvrir le panneau.
 
 ## open: Une aide en plus sur la grille
 Ce panneau contient des extras que vous pouvez dessiner sur la grille. Chacun est un interrupteur. Tout éteint, la grille est exactement celle que vous connaissez, et ce que vous allumez s'imprime avec.
@@ -198,7 +198,7 @@ Le jazz traditionnel repose sur quelques enchaînements d'accords classiques qui
 Chaque progression reçoit une bande colorée derrière ses accords avec son nom, et la même progression a toujours la même couleur. Regardez la seconde moitié de la partie B de Bill Bailey pour un Sunshine.
 
 ## degrees: Numéroter la mélodie
-La couche **Scale degrees** écrit sous chaque note de la mélodie son numéro dans la tonalité : 1 est la tonique, 5 la quinte, et `♭3` ou `♯4` pour une note hors de la gamme majeure. C'est ainsi que David Reed enseigne l'improvisation dans *Improvise for Real*. Activez-la et regardez la grille.
+La couche **Degrés de la gamme** écrit sous chaque note de la mélodie son numéro dans la tonalité : 1 est la tonique, 5 la quinte, et `♭3` ou `♯4` pour une note hors de la gamme majeure. C'est ainsi que David Reed enseigne l'improvisation dans *Improvise for Real*. Activez-la et regardez la grille.
 
 ## degrees-chart: Les notes de l'accord sont entourées
 Une note qui appartient à l'accord qui sonne dessous, donc sa fondamentale, sa tierce, sa quinte ou sa septième, a son numéro dans un **cercle magenta**. Les numéros sans cercle sont des notes de passage et de couleur. Visez les notes entourées sur les temps forts et prenez les autres comme pas entre elles.
@@ -207,8 +207,8 @@ Une note qui appartient à l'accord qui sonne dessous, donc sa fondamentale, sa 
 Pour la **trompette**, le **trombone** et le **sousaphone**, cela écrit la combinaison de pistons ou la position de coulisse sous chaque note. Il est grisé pour les autres instruments, choisissez donc d'abord un cuivre sous **Instrument**.
 
 ## remember: Vos choix restent
-Les calques que vous allumez sont retenus sur cet appareil, la prochaine visite aura le même aspect. **Reset all** éteint tous les calques d'un coup. Le panneau lui-même démarre toujours fermé.
+Les calques que vous allumez sont retenus sur cet appareil, la prochaine visite aura le même aspect. **Tout réinitialiser** éteint tous les calques d'un coup. Le panneau lui-même démarre toujours fermé.
 
 ## done: Fin de la visite
-Voilà la visite. Le bouton `fa-circle-question` la ramène, et le menu en haut de la carte change la langue.
+Voilà la visite. Le bouton `fa-circle-question` la ramène.
 

@@ -3,6 +3,7 @@ import { INSTRUMENTS } from "../../lib/music/instruments.js";
 import { COMPING_PATTERNS } from "../../lib/music/comping.js";
 import { SOLO_STYLES } from "../../lib/music/solo.js";
 import { COMPING_PARTS } from "./state.js";
+import { tl } from "../../lib/core/i18n.js";
 
 function dropdown(select) {
   return el("div", { class: "dropdown" }, select);
@@ -21,7 +22,7 @@ export function createInstrumentDropdown(ctx) {
     id: "instrument",
     // aria-label only — a stray text node leaks into the styleable
     // (appearance: base-select) picker as a phantom first row.
-    attrs: { "aria-label": "Instrument" },
+    attrs: { "aria-label": tl("instrument", "Instrument") },
   }, INSTRUMENTS.map((instrument) => el("option", {
     value: instrument.value,
     text: instrument.label.toUpperCase(),
@@ -52,7 +53,7 @@ export function createCompingDropdown(ctx) {
   if (!slot) return;
 
   const select = el("select", { class: "dropbtn", id: "comping" },
-    el("option", { value: "off", text: "COMPING: OFF" }));
+    el("option", { value: "off", text: tl("comping_off", "COMPING: OFF") }));
 
   const groups = new Map();
   for (const pattern of COMPING_PATTERNS) {
@@ -96,19 +97,19 @@ function createCompingSplit(ctx) {
     type: "button", class: "sheet-icon-btn", id: "compingSplitBtn",
     attrs: {
       [ARIA_PRESSED]: "false",
-      title: "Split comping into R / 3 / 5 voices",
-      "aria-label": "Split comping into separate R, 3 and 5 voices",
+      title: tl("comping_split_title", "Split comping into R / 3 / 5 voices"),
+      "aria-label": tl("comping_split_aria", "Split comping into separate R, 3 and 5 voices"),
     },
   }, el("span", { class: "fa-solid fa-diagram-predecessor", attrs: { "aria-hidden": "true" } }));
   const group = el("div", {
-    class: "comping-parts", id: "compingParts", attrs: { role: "group", "aria-label": "Comping voices to show" },
+    class: "comping-parts", id: "compingParts", attrs: { role: "group", "aria-label": tl("comping_parts_aria", "Comping voices to show") },
   });
   const partBtns = COMPING_PARTS.map((name, index) => el("button", {
     type: "button", class: "comping-part-btn", text: name,
     attrs: {
       "data-part": String(index),
       [ARIA_PRESSED]: "false",
-      title: `Show the ${name} voice`,
+      title: tl("comping_part_show", "Show the {name} voice", { name }),
     },
   }));
   group.append(...partBtns);
@@ -152,7 +153,7 @@ export function createSoloDropdown(ctx) {
   if (!slot) return;
 
   const select = el("select", { class: "dropbtn", id: "solo" },
-    el("option", { value: "off", text: "SOLO: OFF" }));
+    el("option", { value: "off", text: tl("solo_off", "SOLO: OFF") }));
   for (const style of SOLO_STYLES) {
     select.append(el("option", { value: style.value, text: style.label.toUpperCase() }));
   }

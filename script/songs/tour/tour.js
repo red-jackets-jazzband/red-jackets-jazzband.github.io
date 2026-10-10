@@ -1,14 +1,12 @@
 import {
   byId, clear, el, qsa,
 } from "../../lib/core/dom.js";
-import { PREF_KEYS, readPref, writePref } from "../../lib/core/preferences.js";
+import { pageLanguage } from "../../lib/core/i18n.js";
 import {
-  TOUR_LANGS,
   flattenTourSteps,
   formatTourString,
   mergeTourLang,
   parseTourMarkdown,
-  resolveTourLang,
 } from "../../lib/tour/tour-content.js";
 import {
   dockScrollDelta,
@@ -54,9 +52,6 @@ const KEY_WORD = /^key:(.+)$/;
 const TAB_WORD = /^tab:(.+)$/;
 const BUTTON = "button";
 const CONTROL_SELECTOR = "button, a, select, input, textarea";
-const LANG_NAMES = {
-  en: "English", nl: "Nederlands", de: "Deutsch", fr: "Français",
-};
 
 const stepKey = (step) => `${step.chapterId}/${step.id}`;
 
@@ -226,14 +221,6 @@ async function findTarget(step) {
   return firstShown(step.targets);
 }
 
-// A quiet menu rather than a row of buttons: the current language's name
-// (its own endonym) with a native picker behind it.
-function buildLangMenu() {
-  return TOUR_LANGS.map((code) => el("option", {
-    value: code, text: LANG_NAMES[code] || code.toUpperCase(), attrs: { lang: code },
-  }));
-}
-
 export function createTour(ctx) {
   const actions = createTourActions(ctx);
   const fileCache = new Map(); // language code -> Promise<parsed file | null>
@@ -284,10 +271,6 @@ export function createTour(ctx) {
     const closeBtn = el(BUTTON, {
       type: BUTTON, class: "rj-tour-close", text: "×", on: { click: () => finish() },
     });
-    const langs = el("select", {
-      class: "rj-tour-lang",
-      on: { change: () => setLang(langs.value) },
-    }, buildLangMenu());
     const title = el("h2", { class: "rj-tour-title", id: "rjTourTitle" });
     const body = el("div", { class: "rj-tour-body", id: "rjTourBody" });
     const dots = el("div", { class: "rj-tour-rail", attrs: { role: "group" } });
@@ -300,7 +283,7 @@ export function createTour(ctx) {
         role: "dialog", "aria-modal": "true", "aria-labelledby": "rjTourTitle", "aria-describedby": "rjTourBody",
       },
     }, [
-      el("div", { class: "rj-tour-card-head" }, [progress, langs, closeBtn]),
+      el("div", { class: "rj-tour-card-head" }, [progress, closeBtn]),
       el("div", { class: "rj-tour-scroll" }, [title, body, dots]),
       el("div", { class: "rj-tour-actions" }, [skip, el("span", { class: "rj-tour-spacer" }), back, next]),
     ]);
@@ -310,7 +293,7 @@ export function createTour(ctx) {
     root.addEventListener("click", (event) => event.stopPropagation());
     document.body.append(root);
     refs = {
-      root, veil, shield, ring, card, progress, closeBtn, langs, title, body, dots, skip, back, next,
+      root, veil, shield, ring, card, progress, closeBtn, title, body, dots, skip, back, next,
     };
   }
 
@@ -393,8 +376,6 @@ export function createTour(ctx) {
     if (index === 0) blocks.splice(1, 0, el("p", { text: ui("topicsIntro") }), buildTopicList(step));
     else if (step.interstitial) blocks.push(buildTopicList(step));
     refs.body.append(...blocks);
-    refs.langs.setAttribute("aria-label", ui("language"));
-    refs.langs.value = lang;
     refs.dots.setAttribute("aria-label", ui("chapters"));
     renderRail(step, shown);
     refs.closeBtn.setAttribute("aria-label", ui("close"));
@@ -564,20 +545,6 @@ export function createTour(ctx) {
     if (active && target >= 0) showStepSafely(target, 1);
   }
 
-  async function setLang(code) {
-    const next = await loadContent(code);
-    if (!next) return;
-    lang = code;
-    content = next;
-    flat = flattenTourSteps(content);
-    writePref(PREF_KEYS.tourLang, code);
-    labelHelpButton();
-    if (active) {
-      renderCard();
-      layout(currentTarget);
-    }
-  }
-
   // ---- keyboard / lifecycle ------------------------------------------
 
   function onKeydown(event) {
@@ -662,7 +629,7 @@ export function createTour(ctx) {
     fetched the button stays hidden.
   */
   async function init() {
-    lang = resolveTourLang(readPref(PREF_KEYS.tourLang), window.location.pathname, window.navigator.languages);
+    lang = pageLanguage();
     content = await loadContent(lang);
     if (!content) return;
     flat = flattenTourSteps(content);

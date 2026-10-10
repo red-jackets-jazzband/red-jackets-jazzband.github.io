@@ -3,6 +3,7 @@ import {
 } from "./comping.js";
 import { computeChordOffset } from "./chords.js";
 import { generateSolo, startSolo } from "./solo-ga.js";
+import { tl } from "../core/i18n.js";
 
 /*
   Solo voice for the sheet: the same shape as lib/comping.js's Comping voice
@@ -16,11 +17,11 @@ import { generateSolo, startSolo } from "./solo-ga.js";
 
 // The Solo dropdown's entries (value = a lib/solo-ga.js STYLES key).
 export const SOLO_STYLES = [
-  { value: "trumpet", label: "Trumpet" },
-  { value: "armstrong", label: "Armstrong" },
-  { value: "clarinet", label: "Clarinet" },
-  { value: "trombone", label: "Trombone (tailgate)" },
-  { value: "solo", label: "Free solo" },
+  { value: "trumpet", label: tl("solo_trumpet", "Trumpet") },
+  { value: "armstrong", label: tl("solo_armstrong", "Armstrong") },
+  { value: "clarinet", label: tl("solo_clarinet", "Clarinet") },
+  { value: "trombone", label: tl("solo_trombone_tailgate", "Trombone (tailgate)") },
+  { value: "solo", label: tl("solo_free_solo", "Free solo") },
 ];
 
 // General MIDI instrument for each style (the Mixer's Solo voice default).

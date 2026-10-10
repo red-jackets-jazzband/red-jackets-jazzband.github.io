@@ -15,6 +15,7 @@ import { stylePartMarkers, applyCompingColors, applySplitCompingColors } from ".
 import { updateIrealProLink } from "./irealpro-link.js";
 import { decorateLayers } from "../layers/overlays.js";
 import { RENDER, isRenderWrite } from "../core/state.js";
+import { tl } from "../../lib/core/i18n.js";
 
 const LIVE_TARGETS = { notationId: "notation", chordId: "chordtable", titleId: "songtitle" };
 
@@ -125,7 +126,7 @@ function applySolo(renderText, plan, style, compose) {
 function showSoloStatus(fraction) {
   const status = byId("soloStatus");
   if (!status) return;
-  status.textContent = fraction === null ? "" : `Composing solo… ${Math.round(fraction * 100)}%`;
+  status.textContent = fraction === null ? "" : tl("solo_composing", "Composing solo… {percent}%", { percent: Math.round(fraction * 100) });
 }
 
 // Shade of the `index`th of `count` kinds of step in the form strip: very light grey to light grey (dark text on top, to save ink).

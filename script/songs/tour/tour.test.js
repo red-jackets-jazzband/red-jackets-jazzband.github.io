@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountPage } from "../../../../tests/helpers/dom.js";
 import { makeCtx } from "../../../../tests/helpers/ctx.js";
-import { PREF_KEYS } from "../../lib/core/preferences.js";
+import { setMessages, resetMessages } from "../../lib/core/i18n.js";
 import { createTour } from "./tour.js";
 import { waitUntil } from "./actions.js";
 
@@ -112,8 +112,10 @@ test("if the tour files can't be fetched, nothing is shown at all", async () => 
   }
 });
 
-test("the browser language picks NL, and a missing NL step falls back to English", async () => {
-  const { cleanup } = await setup({ storage: { [PREF_KEYS.tourLang]: "nl" } });
+test("the page language picks NL, and a missing NL step falls back to English", async () => {
+  setMessages({}, "nl");
+  const { cleanup: cleanupDom } = await setup();
+  const cleanup = () => { cleanupDom(); resetMessages(); };
   try {
     assert.equal(byId("tourBtn").getAttribute("aria-label"), "Volg de rondleiding");
     byId("tourBtn").click();
@@ -332,27 +334,6 @@ test("clicks inside the tour don't reach page-level click listeners", async () =
     await settle();
     primaryBtn().click();
     assert.equal(pageClicks, afterLaunch);
-  } finally {
-    cleanup();
-  }
-});
-
-test("the language switcher re-renders the step in place and remembers the choice", async () => {
-  const { cleanup } = await setup();
-  try {
-    byId("tourBtn").click();
-    await settle();
-    assert.equal(title(), "First step");
-
-    const langMenu = rootEl().querySelector(".rj-tour-lang");
-    langMenu.value = "nl";
-    langMenu.dispatchEvent(new window.Event("change"));
-    await waitUntil(() => title() === "Eerste stap", { timeout: 2000, interval: 10 });
-    assert.equal(title(), "Eerste stap");
-    assert.equal(langMenu.value, "nl");
-    assert.equal(window.localStorage.getItem(PREF_KEYS.tourLang), "nl");
-    assert.equal(byId("tourBtn").getAttribute("aria-label"), "Volg de rondleiding");
-    assert.equal(primaryBtn().textContent, "Volgende");
   } finally {
     cleanup();
   }

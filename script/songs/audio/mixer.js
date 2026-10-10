@@ -6,6 +6,7 @@ import { GM_VOICES, defaultVoiceProgram } from "../../lib/audio/gm-voices.js";
 import { GCHORD_PATTERNS, DEFAULT_PROGRAM, isCompingLabel } from "../../lib/audio/audio-mix.js";
 import { CHANNELS } from "./state.js";
 import { RENDER } from "../core/state.js";
+import { tl } from "../../lib/core/i18n.js";
 
 // A fader drag is committed to the store — and so re-engraved by the sheet,
 // the only way to change what plays (see lib/audio/audio-mix.js) — only once
@@ -188,12 +189,43 @@ function voiceListSignature(voices) {
 // match is enough to give it its "fills" subtitle and the extra breathing
 // room that sets it apart from the tune's own voices above it (split.css's
 // .mixer-strip--comping).
-const GENERATED_VOICE_SUBLABEL = { Comping: "fills", Solo: "improvised" };
+const GENERATED_VOICE_SUBLABEL = {
+  Comping: () => tl("mixer_sublabel_comping", "fills"),
+  Solo: () => tl("mixer_sublabel_solo", "improvised"),
+};
+
+// What a voice is called on screen. Its English label stays the identity (the
+// Mixer's sticky settings are keyed by it, and so are the comparisons below);
+// only the three names the app generates itself are translated — a chart's
+// own named staves ("Sousaphone") are shown as written.
+function voiceDisplayName(label) {
+  if (label === "Melody") return tl("mixer_voice_melody", "Melody");
+  if (label === "Comping") return tl("mixer_voice_comping", "Comping");
+  if (label === "Solo") return tl("mixer_voice_solo", "Solo");
+  const numbered = /^(Melody|Comping) (.+)$/.exec(label);
+  if (numbered) return `${voiceDisplayName(numbered[1])} ${numbered[2]}`;
+  return label;
+}
+
+// Mute/Unmute for a named strip (a fixed channel or one of the tune's voices).
+function muteLabel(muted, name) {
+  return muted
+    ? tl("mixer_unmute", "Unmute {name}", { name })
+    : tl("mixer_mute", "Mute {name}", { name });
+}
+
+function channelDisplayName(channel) {
+  return channel === "chords"
+    ? tl("mixer_channel_chords", "chords")
+    : tl("mixer_channel_bass", "bass");
+}
 
 function buildVoiceLabel(voice) {
-  const nameSpan = el("span", { class: "mixer-strip-label", text: voice.label, attrs: { title: voice.label } });
-  const sublabel = GENERATED_VOICE_SUBLABEL[isCompingLabel(voice.label) ? "Comping" : voice.label];
-  if (sublabel === undefined) return nameSpan;
+  const shownName = voiceDisplayName(voice.label);
+  const nameSpan = el("span", { class: "mixer-strip-label", text: shownName, attrs: { title: shownName } });
+  const makeSublabel = GENERATED_VOICE_SUBLABEL[isCompingLabel(voice.label) ? "Comping" : voice.label];
+  if (makeSublabel === undefined) return nameSpan;
+  const sublabel = makeSublabel();
   return el("div", { class: "mixer-strip-label-wrap" }, [
     nameSpan,
     el("span", { class: "mixer-strip-sublabel", text: sublabel }),
@@ -215,7 +247,7 @@ function buildVoiceStrip(voice) {
     min: "0",
     max: "100",
     value: String(voice.volume),
-    attrs: { "aria-label": `${voice.label} volume` },
+    attrs: { "aria-label": tl("mixer_voice_volume", "{name} volume", { name: voiceDisplayName(voice.label) }) },
   });
   const readout = el("span", { class: "mixer-readout", text: `${voice.volume}%` });
   const muteIcon = el("span", { class: "fa-solid fa-volume-high", attrs: { "aria-hidden": "true" } });
@@ -223,12 +255,14 @@ function buildVoiceStrip(voice) {
     type: "button",
     class: "mixer-mute-btn",
     attrs: {
-      "aria-pressed": "false", title: `Mute ${voice.label}`, "aria-label": `Mute ${voice.label}`,
+      "aria-pressed": "false",
+      title: muteLabel(false, voiceDisplayName(voice.label)),
+      "aria-label": muteLabel(false, voiceDisplayName(voice.label)),
     },
   }, muteIcon);
   const select = el("select", {
     class: "mixer-voice-select",
-    attrs: { "aria-label": `${voice.label} voice` },
+    attrs: { "aria-label": tl("mixer_voice_picker", "{name} voice", { name: voiceDisplayName(voice.label) }) },
   });
   buildVoiceOptions(select);
 
@@ -276,7 +310,7 @@ function updateVoiceRowVisual({
   muteBtn.setAttribute("aria-pressed", silent ? "true" : "false");
   muteIcon.classList.toggle("fa-volume-xmark", silent);
   muteIcon.classList.toggle("fa-volume-high", !silent);
-  const label = `${silent ? "Unmute" : "Mute"} ${v.label}`;
+  const label = muteLabel(silent, voiceDisplayName(v.label));
   muteBtn.title = label;
   muteBtn.setAttribute("aria-label", label);
 }
@@ -483,7 +517,7 @@ export function createMixer(ctx) {
       const icon = muteBtn.querySelector(".fa-solid");
       if (icon) icon.classList.toggle("fa-volume-xmark", muted);
       if (icon) icon.classList.toggle("fa-volume-high", !muted);
-      const label = `${muted ? "Unmute" : "Mute"} ${channel}`;
+      const label = muteLabel(muted, channelDisplayName(channel));
       muteBtn.title = label;
       muteBtn.setAttribute("aria-label", label);
     }
@@ -541,7 +575,9 @@ export function createMixer(ctx) {
     const enabled = ctx.state.highQualityAudio;
     btn.classList.toggle("is-active", enabled);
     btn.setAttribute("aria-pressed", enabled ? "true" : "false");
-    const label = `${enabled ? "Disable" : "Enable"} high quality audio`;
+    const label = enabled
+      ? tl("mixer_hq_disable", "Disable high quality audio")
+      : tl("mixer_hq_enable", "Enable high quality audio");
     btn.title = label;
     btn.setAttribute("aria-label", label);
   }
@@ -553,7 +589,7 @@ export function createMixer(ctx) {
     const fill = byId("mixerSwingFill");
     if (fill) fill.style.width = `${percent}%`;
     const readout = byId("mixerSwingReadout");
-    if (readout) readout.textContent = percent === 0 ? "Off" : `${percent}%`;
+    if (readout) readout.textContent = percent === 0 ? tl("off", "Off") : `${percent}%`;
   }
 
   function refresh() {

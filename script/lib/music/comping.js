@@ -1,6 +1,7 @@
 import { computeChordOffset, BREAK_CHORD } from "./chords.js";
 import { nextVoiceId } from "./voice-id.js";
 import { execAll } from "../core/regex-exec-all.js";
+import { tl } from "../core/i18n.js";
 
 /*
    Chord-tone comping generator.
@@ -275,37 +276,37 @@ export const PATTERNS = {
   },
 };
 
-const GROUP_BASE = "Base patterns";
-const GROUP_STEP_DOWN = "Step down";
-const GROUP_STEP_UP_DOWN = "Step up & down";
-const GROUP_TRADITIONAL = "Named grooves";
+const GROUP_BASE = tl("comping_group_base_patterns", "Base patterns");
+const GROUP_STEP_DOWN = tl("comping_group_step_down", "Step down");
+const GROUP_STEP_UP_DOWN = tl("comping_group_step_up_down", "Step up & down");
+const GROUP_TRADITIONAL = tl("comping_group_named_grooves", "Named grooves");
 
 // Ordered list for the sheet's <select>, grouped like the prototype's optgroups.
 // Named grooves leads the list so the clave/Charleston feels are the first
 // options a musician sees, ahead of the more generic base/step patterns.
 export const COMPING_PATTERNS = [
-  { value: "charleston", label: "Charleston", group: GROUP_TRADITIONAL },
-  { value: "reverse_charleston", label: "Reverse Charleston", group: GROUP_TRADITIONAL },
-  { value: "clave_3_2", label: "3-2 clave", group: GROUP_TRADITIONAL },
-  { value: "clave_2_3", label: "2-3 clave", group: GROUP_TRADITIONAL },
-  { value: "three_hit", label: "3 hit", group: GROUP_TRADITIONAL },
-  { value: "i_got_a_woman", label: "I Got a Woman", group: GROUP_TRADITIONAL },
-  { value: "honky_tonk_riff", label: "Honky Tonk Riff", group: GROUP_TRADITIONAL },
-  { value: "on_2_and_4", label: "On 2 and 4", group: GROUP_BASE },
-  { value: "hold_over", label: "Hold over", group: GROUP_BASE },
-  { value: "hit_and_hold", label: "Hit and hold", group: GROUP_BASE },
-  { value: "double_hit", label: "Double hit", group: GROUP_BASE },
-  { value: "whole_note", label: "Whole note", group: GROUP_BASE },
-  { value: "walk_down_a", label: "Walk down A", group: GROUP_STEP_DOWN },
-  { value: "walk_down_b", label: "Walk down B", group: GROUP_STEP_DOWN },
-  { value: "whole_then_step", label: "Whole then step", group: GROUP_STEP_DOWN },
-  { value: "walk_eighths", label: "Walk eighths", group: GROUP_STEP_DOWN },
-  { value: "cross_step", label: "Cross step", group: GROUP_STEP_UP_DOWN },
-  { value: "step_approach", label: "Step approach", group: GROUP_STEP_UP_DOWN },
-  { value: "double_then_step", label: "Double then step", group: GROUP_STEP_UP_DOWN },
-  { value: "full_walk", label: "Full walk", group: GROUP_STEP_UP_DOWN },
-  { value: "third_approach", label: "Third approach", group: GROUP_STEP_UP_DOWN },
-  { value: "step_neighbor", label: "Step neighbor", group: GROUP_STEP_UP_DOWN },
+  { value: "charleston", label: tl("comping_charleston", "Charleston"), group: GROUP_TRADITIONAL },
+  { value: "reverse_charleston", label: tl("comping_reverse_charleston", "Reverse Charleston"), group: GROUP_TRADITIONAL },
+  { value: "clave_3_2", label: tl("comping_3_2_clave", "3-2 clave"), group: GROUP_TRADITIONAL },
+  { value: "clave_2_3", label: tl("comping_2_3_clave", "2-3 clave"), group: GROUP_TRADITIONAL },
+  { value: "three_hit", label: tl("comping_3_hit", "3 hit"), group: GROUP_TRADITIONAL },
+  { value: "i_got_a_woman", label: tl("comping_i_got_a_woman", "I Got a Woman"), group: GROUP_TRADITIONAL },
+  { value: "honky_tonk_riff", label: tl("comping_honky_tonk_riff", "Honky Tonk Riff"), group: GROUP_TRADITIONAL },
+  { value: "on_2_and_4", label: tl("comping_on_2_and_4", "On 2 and 4"), group: GROUP_BASE },
+  { value: "hold_over", label: tl("comping_hold_over", "Hold over"), group: GROUP_BASE },
+  { value: "hit_and_hold", label: tl("comping_hit_and_hold", "Hit and hold"), group: GROUP_BASE },
+  { value: "double_hit", label: tl("comping_double_hit", "Double hit"), group: GROUP_BASE },
+  { value: "whole_note", label: tl("comping_whole_note", "Whole note"), group: GROUP_BASE },
+  { value: "walk_down_a", label: tl("comping_walk_down_a", "Walk down A"), group: GROUP_STEP_DOWN },
+  { value: "walk_down_b", label: tl("comping_walk_down_b", "Walk down B"), group: GROUP_STEP_DOWN },
+  { value: "whole_then_step", label: tl("comping_whole_then_step", "Whole then step"), group: GROUP_STEP_DOWN },
+  { value: "walk_eighths", label: tl("comping_walk_eighths", "Walk eighths"), group: GROUP_STEP_DOWN },
+  { value: "cross_step", label: tl("comping_cross_step", "Cross step"), group: GROUP_STEP_UP_DOWN },
+  { value: "step_approach", label: tl("comping_step_approach", "Step approach"), group: GROUP_STEP_UP_DOWN },
+  { value: "double_then_step", label: tl("comping_double_then_step", "Double then step"), group: GROUP_STEP_UP_DOWN },
+  { value: "full_walk", label: tl("comping_full_walk", "Full walk"), group: GROUP_STEP_UP_DOWN },
+  { value: "third_approach", label: tl("comping_third_approach", "Third approach"), group: GROUP_STEP_UP_DOWN },
+  { value: "step_neighbor", label: tl("comping_step_neighbor", "Step neighbor"), group: GROUP_STEP_UP_DOWN },
 ];
 
 const PATTERN_LABEL = COMPING_PATTERNS.reduce((acc, p) => {

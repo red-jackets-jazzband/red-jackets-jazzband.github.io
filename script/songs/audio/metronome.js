@@ -3,6 +3,7 @@ import { resolveBpm } from "../../lib/music/tempo.js";
 import {
   hasBackbeat, introDelaySeconds, pickupStartBeatIndex, scheduleClicks,
 } from "../../lib/audio/metronome.js";
+import { tl } from "../../lib/core/i18n.js";
 
 // The lookahead-scheduler constants (Chris Wilson's "A Tale of Two Clocks"
 // pattern): poll often (25ms) and always keep the next 100ms of clicks
@@ -295,7 +296,9 @@ export function createMetronome(ctx) {
     const enabled = ctx.state.metronomeEnabled;
     btn.classList.toggle("is-active", enabled);
     btn.setAttribute("aria-pressed", enabled ? "true" : "false");
-    const label = `${enabled ? "Disable" : "Enable"} metronome`;
+    const label = enabled
+      ? tl("metronome_disable", "Disable metronome")
+      : tl("metronome_enable", "Enable metronome");
     btn.title = label;
     btn.setAttribute("aria-label", label);
   }

@@ -8,11 +8,16 @@ import {
 import { clearBookletPrintState, printWithTitle } from "../sheet/controls.js";
 import { buildTitlePage, fitTitlePage } from "./titlepage.js";
 import { listenSourcesFromAbc, buildYoutubePlaylistUrl } from "../../lib/setlists/setlist-listen.js";
+import { tl } from "../../lib/core/i18n.js";
 
 const NOADS_SETLIST_ID = "noads_songbook";
 
 const PRINT_MODES = ["setlist", "chordbook", "songbook"];
-const PRINT_MODE_LABELS = { setlist: "Setlist", chordbook: "Chordbook", songbook: "Songbook" };
+function printModeLabel(mode) {
+  if (mode === "setlist") return tl("print_mode_setlist", "Setlist");
+  if (mode === "chordbook") return tl("print_mode_chordbook", "Chordbook");
+  return tl("print_mode_songbook", "Songbook");
+}
 
 const bookletSetHeading = (text) =>
   el("div", { class: "setlist-booklet-set-heading pageBreakBefore", text });
@@ -105,8 +110,8 @@ export function createSetlistPrint(ctx) {
       return;
     }
     const done = totalReads - pendingReads;
-    const label = (PRINT_MODE_LABELS[mode] || "Songbook").toLowerCase();
-    node.textContent = `Preparing the ${label} — ${done} of ${totalReads} songs ready…`;
+    const label = printModeLabel(mode).toLowerCase();
+    node.textContent = tl("print_preparing", "Preparing the {what} — {done} of {total} songs ready…", { what: label, done, total: totalReads });
     node.hidden = false;
   }
 
@@ -143,7 +148,7 @@ export function createSetlistPrint(ctx) {
     const showInstr = instrumentTransposes(instrument());
     const columns = ["num", "song", "concert", ...(showInstr ? ["instr"] : []), "tempo"];
     const headings = {
-      num: "", song: "", concert: "Concert", instr: instrumentLabel(instrument()), tempo: "bpm",
+      num: "", song: "", concert: tl("print_concert", "Concert"), instr: instrumentLabel(instrument()), tempo: tl("tempo_unit", "bpm"),
     };
 
     const headRow = el("tr", {}, columns.map((col) =>
@@ -241,7 +246,7 @@ export function createSetlistPrint(ctx) {
 
     return el("div", { class: "setlist-booklet-frontmatter" }, [
       el("h1", { class: "setlist-booklet-fm-title", text: name }),
-      el("div", { class: "setlist-booklet-fm-sub", id: "setlistBookletFmSub", text: "Songbook" }),
+      el("div", { class: "setlist-booklet-fm-sub", id: "setlistBookletFmSub", text: tl("print_mode_songbook", "Songbook") }),
       el("div", { class: "setlist-booklet-fm-meta" }, [
         el("div", { text: exportInstrumentLine(instrument()) }),
         el("div", { text: when }),
@@ -349,7 +354,7 @@ export function createSetlistPrint(ctx) {
     waitingMode = null;
     clearBookletPrintState();
     const sub = byId("setlistBookletFmSub");
-    if (sub) sub.textContent = PRINT_MODE_LABELS[mode] || "Songbook";
+    if (sub) sub.textContent = printModeLabel(mode);
     document.body.classList.add("export-booklet-mode");
     PRINT_MODES.forEach((m) => document.body.classList.toggle(`export-mode-${m}`, m === mode));
     window.addEventListener("afterprint", function restore() {
@@ -360,7 +365,7 @@ export function createSetlistPrint(ctx) {
     // Name the print for its "Save as PDF" filename / page header, e.g.
     // "Setlist 2026 — Chordbook".
     const name = ctx.state.currentOpenSetlistName;
-    printWithTitle([name, PRINT_MODE_LABELS[mode]].filter(Boolean).join(" — "));
+    printWithTitle([name, printModeLabel(mode)].filter(Boolean).join(" — "));
   }
 
   return {

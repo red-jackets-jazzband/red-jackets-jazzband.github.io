@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { walkSetlist } from "./setlist-walk.js";
+import { walkSetlist, setLabel } from "./setlist-walk.js";
+import { setMessages, resetMessages } from "../core/i18n.js";
 
 const song = (file) => ({ file, key: "" });
 const brk = (label = "") => ({ divider: label });
@@ -66,4 +67,15 @@ test("original array indices are preserved on every entry", () => {
 test("empty / nullish input yields nothing", () => {
   assert.deepEqual(walkSetlist([]), { hasDividers: false, entries: [] });
   assert.deepEqual(walkSetlist(null), { hasDividers: false, entries: [] });
+});
+
+test("an unnamed set's caption follows the page language", () => {
+  try {
+    setMessages({ js_set_label: "Optreden {n}" }, "nl");
+    assert.equal(setLabel(2), "Optreden 2");
+    const headings = walkSetlist([song("a"), brk(), song("b")]).entries.filter((e) => "label" in e);
+    assert.deepEqual(headings.map((h) => h.label), ["Optreden 1", "Optreden 2"]);
+  } finally {
+    resetMessages();
+  }
 });

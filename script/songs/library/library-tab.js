@@ -2,6 +2,7 @@ import { byId, el, clear } from "../../lib/core/dom.js";
 import {
   groupSongsByLetter, filterSongsByQuery, songTitleSlug,
 } from "../../lib/core/song-index.js";
+import { tl } from "../../lib/core/i18n.js";
 
 function renderRail(railEl, groups) {
   clear(railEl);
@@ -9,7 +10,7 @@ function renderRail(railEl, groups) {
     railEl.append(el("button", {
       type: "button",
       text: group.letter,
-      title: `Jump to ${group.letter}`,
+      title: tl("library_jump", "Jump to {letter}", { letter: group.letter }),
       on: {
         click() {
           const target = byId(`letter-${group.letter}`);
@@ -138,7 +139,7 @@ export function createLibraryTab(ctx) {
 
     if (query.trim().length > 0) {
       if (filtered.length === 0) {
-        listEl.append(el("div", { class: "song-list-empty", text: "No songs match your search." }));
+        listEl.append(el("div", { class: "song-list-empty", text: tl("library_no_match", "No songs match your search.") }));
       } else {
         filtered.forEach((song) => listEl.append(buildSongRow(song)));
       }

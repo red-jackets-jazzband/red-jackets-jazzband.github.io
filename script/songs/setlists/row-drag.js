@@ -1,4 +1,5 @@
 import { byId, qsa } from "../../lib/core/dom.js";
+import { setLabel } from "../../lib/setlists/setlist-walk.js";
 
 /*
   Reordering an open personal setlist's rows by pointer drag (the drag
@@ -43,7 +44,7 @@ export function renumberOpen() {
       if (numEl) numEl.textContent = String(n + 1);
     });
     const input = set.querySelector(".setlist-divider-row[data-setlist-index] .setlist-divider-input");
-    if (input) input.placeholder = `Set ${i + 1}`;
+    if (input) input.placeholder = setLabel(i + 1);
   });
 }
 

@@ -54,12 +54,12 @@ Die Pfeile unter der Akkordtabelle zeigen die **Form**: die Reihenfolge der Teil
 Wähl dein Instrument, und das Leadsheet wird dafür transponiert: Konzerttonart, Concert + römische Ziffern, Altsax, B♭-Klarinette oder -Trompete, Tenorsax, Posaune oder Sousafon (Bassschlüssel). Wiedergabe klingt immer in Konzerttonart.
 
 ## play: Hör es dir an
-Es hilft, einen Song zu hören, bevor man ihn spielt. **Play** (`fa-play`) startet ihn, und die Noten leuchten im Leadsheet auf, während sie erklingen. **Stop** (`fa-stop`) beendet die Wiedergabe.
+Es hilft, einen Song zu hören, bevor man ihn spielt. **Abspielen** (`fa-play`) startet ihn, und die Noten leuchten im Leadsheet auf, während sie erklingen. **Stop** (`fa-stop`) beendet die Wiedergabe.
 
 > Die `key:Leertaste` spielt und pausiert ebenfalls, solange ein Leadsheet offen ist.
 
 ## print: Nimm es mit zum Gig
-**Print** (`fa-print`) macht aus dem Leadsheet eine saubere Seite für den Notenständer oder die Mappe. Im Druckdialog kannst du *Als PDF speichern* wählen, wenn du lieber eine digitale Kopie willst. Setlists haben eigene Druckknöpfe, die kommen später in der Tour.
+**Drucken** (`fa-print`) macht aus dem Leadsheet eine saubere Seite für den Notenständer oder die Mappe. Im Druckdialog kannst du *Als PDF speichern* wählen, wenn du lieber eine digitale Kopie willst. Setlists haben eigene Druckknöpfe, die kommen später in der Tour.
 
 # adjust: Spiel es auf deine Art
 
@@ -70,7 +70,7 @@ Nicht jeder Song liegt in der gedruckten Tonart gut. Mit **−** und **+** versc
 Das Tempo wird in **Schlägen pro Minute** angegeben und beginnt bei der Tempoangabe des Songs selbst. Spiel eine schwierige Stelle langsamer, um sie zu lernen, und mach danach wieder schneller.
 
 ## more: Eine Stelle wiederholen
-Eine Stelle immer wieder von Hand neu zu starten ist mühsam. Der kleine Pfeil am unteren Rand der Leiste (`fa-angles-right`) öffnet **More controls**, wo der **Repeat**-Zähler den Song bis zu 20 Mal hintereinander spielt. Nach dem ersten Durchgang wird der Auftakt übersprungen. Auch die Auswahl für das Comping ist hier.
+Eine Stelle immer wieder von Hand neu zu starten ist mühsam. Der kleine Pfeil am unteren Rand der Leiste (`fa-angles-right`) öffnet **Mehr Optionen**, wo der **Wiederholen**-Zähler den Song bis zu 20 Mal hintereinander spielt. Nach dem ersten Durchgang wird der Auftakt übersprungen. Auch die Auswahl für das Comping ist hier.
 
 ## irealpro: Eine Begleitband mitnehmen
 Bei Songs mit Akkorden schickt dieser Knopf das Leadsheet an die **iReal Pro**-App auf deinem Handy, die es mit einer Begleitband abspielen kann.
@@ -121,16 +121,16 @@ Mit dem **Swing**-Regler werden gerade Achtel lockerer. Der **Trommel**-Knopf (`
 # setlists: Setlists und Drucken
 
 ## shelf: Setlists durchsehen
-Der Tab **Setlists** zeigt die Setlists der Band, die schreibgeschützt sind, und darunter **Yours**. Deine eigenen werden nur in diesem Browser gespeichert.
+Der Tab **Setlists** zeigt die Setlists der Band, die schreibgeschützt sind, und darunter **Deine**. Deine eigenen werden nur in diesem Browser gespeichert.
 
 ## new: Eine eigene Setlist erstellen
-Mit **New setlist** kannst du mit einer leeren Liste anfangen, mit einer Kopie einer bestehenden Setlist (einem **Remix**) oder mit einer hochgeladenen **.txt**-Datei. Wir bauen jetzt Schritt für Schritt eine von null auf.
+Mit **Neue Setlist** kannst du mit einer leeren Liste anfangen, mit einer Kopie einer bestehenden Setlist (einem **Remix**) oder mit einer hochgeladenen **.txt**-Datei. Wir bauen jetzt Schritt für Schritt eine von null auf.
 
 ## create: Bei null anfangen
-Wenn du *Empty* wählst, öffnet sich eine leere Setlist, bereit für Songs. Diese hier haben wir *Tour setlist* genannt. Du kannst den Namen deiner eigenen jederzeit ändern, indem du auf den unterstrichenen Namen klickst.
+Wenn du *Leer* wählst, öffnet sich eine leere Setlist, bereit für Songs. Diese hier haben wir *Tour setlist* genannt. Du kannst den Namen deiner eigenen jederzeit ändern, indem du auf den unterstrichenen Namen klickst.
 
 ## addsong: Einen Song hinzufügen
-Such in der `fa-plus` **Add song**-Zeile unten in der Liste nach einem Titel und drück `key:Enter` oder klick auf einen Treffer, um ihn hinzuzufügen.
+Such in der `fa-plus` **Song hinzufügen**-Zeile unten in der Liste nach einem Titel und drück `key:Enter` oder klick auf einen Treffer, um ihn hinzuzufügen.
 
 ## addsong2: Noch einen hinzufügen
 Füg auf die gleiche Weise einen zweiten Song hinzu. Das Feld bleibt stehen, du kannst also gleich den nächsten Titel tippen. Die Liste wächst nach unten, mit einer Zeile pro Song.
@@ -141,7 +141,7 @@ Zieh den `fa-grip-vertical`-Griff eines Songs nach oben oder unten, um ihn an di
 > Per Tastatur verschiebt `key:Alt` + `key:↑` `key:↓` eine ausgewählte Zeile um einen Platz.
 
 ## break: In Sets aufteilen
-`btn:New set` beginnt ein neues Set, zum Beispiel um einen Gig in Set 1 und Set 2 zu teilen. Jedes Set bekommt eine eigene Box mit einer eigenen `fa-plus` **Add song to set 2**-Zeile. Klick auf den Namen eines Sets, um eine Bezeichnung zu tippen, oder lass ihn leer, dann heißt es automatisch „Set 2“.
+`btn:Neues Set` beginnt ein neues Set, zum Beispiel um einen Gig in Set 1 und Set 2 zu teilen. Jedes Set bekommt eine eigene Box mit einer eigenen `fa-plus` **Song zu Set 2 hinzufügen**-Zeile. Klick auf den Namen eines Sets, um eine Bezeichnung zu tippen, oder lass ihn leer, dann heißt es automatisch „Set 2“.
 
 ## split: Ein Set in zwei teilen
 Du hast schon eine Liste und willst sie zerschneiden? Hover zwischen zwei Songs und drück auf `fa-scissors`. Dort beginnt ein neues Set, und alle Songs unter dem Schnitt wandern hinein.
@@ -150,18 +150,18 @@ Du hast schon eine Liste und willst sie zerschneiden? Hover zwischen zwei Songs 
 Anders überlegt? Der Button `fa-arrows-up-to-line` am oberen Rand eines Sets fügt es mit dem Set darüber zusammen. Die Songs bleiben, nur die Überschrift verschwindet.
 
 ## note: Etwas für die Band notieren
-Klick unter einem Song auf `btn:+ note`, um etwas für den Gig aufzuschreiben, etwa wer das Solo spielt, einen Tonartwechsel oder eine Erinnerung. Es steht auf der gedruckten Setlist und der Bühnenliste, aber nicht auf dem eigenen Blatt des Songs.
+Klick unter einem Song auf `btn:+ Notiz`, um etwas für den Gig aufzuschreiben, etwa wer das Solo spielt, einen Tonartwechsel oder eine Erinnerung. Es steht auf der gedruckten Setlist und der Bühnenliste, aber nicht auf dem eigenen Blatt des Songs.
 
 ## open: Das Set durchspielen
 Jetzt haben wir eine der Setlists der Band selbst geöffnet. Wenn du eine Setlist öffnest, stehen ihre Songs der Reihe nach in der Seitenleiste, aufgeteilt in **Sets**. Klick auf einen Song, um ihn im selben interaktiven Leadsheet zu öffnen, oder geh mit `key:↑` `key:↓` (auf dem Handy mit Wischen) durch die Liste.
 
 ## print: Für den Gig drucken
 - **Setlist**: eine große nummerierte Titelliste für die Bühne.
-- **Chordbook**: von jedem Song der Titel und die Akkordtabelle.
+- **Akkordbuch**: von jedem Song der Titel und die Akkordtabelle.
 - **Songbook**: jeder Song mit Akkorden und vollständiger Notation.
 
 ## listen: Das ganze Set anhören
-Der Button `fa-youtube` unter **Listen** öffnet alle Songs der Setlist mit YouTube-Link nacheinander, damit du das ganze Set vor dem Gig hören kannst. Hier ist er ausgegraut, weil keiner der Songs dieser Setlist einen Link hat.
+Der Button `fa-youtube` unter **Anhören** öffnet alle Songs der Setlist mit YouTube-Link nacheinander, damit du das ganze Set vor dem Gig hören kannst. Hier ist er ausgegraut, weil keiner der Songs dieser Setlist einen Link hat.
 
 ## exports: Eine Setlist woanders nutzen
 Eine eigene Setlist kannst du mit dem Button `fa-file-arrow-down` als **.txt**-Datei exportieren und auf einem anderen Gerät wieder importieren. Das ist die Setlist-Version der Print-, MP3- und iReal-Pro-Exporte, die du von einem einzelnen Song schon kennst.
@@ -185,8 +185,8 @@ Ist das Comping an, erscheint es im Mixer als eigene **Comping**-Stimme. Du kann
 
 # layers: Ebenen
 
-## button: Den Layers-Knopf finden
-Der **Layers**-Knopf sitzt rechts: am Computer ein schmaler Reiter am rechten Bildschirmrand, am Handy ein kleiner Reiter unten rechts. Tippe darauf, um das Panel zu öffnen.
+## button: Den Ebenen-Knopf finden
+Der **Ebenen**-Knopf sitzt rechts: am Computer ein schmaler Reiter am rechten Bildschirmrand, am Handy ein kleiner Reiter unten rechts. Tippe darauf, um das Panel zu öffnen.
 
 ## open: Zusatzhilfen im Leadsheet
 Dieses Panel enthält Extras, die du ins Leadsheet einzeichnen kannst. Jedes ist ein Schalter. Ist alles aus, ist das Leadsheet genau das Blatt, das du kennst, und was du einschaltest, wird mitgedruckt.
@@ -198,17 +198,17 @@ Traditioneller Jazz besteht aus ein paar festen Akkordmustern mit Namen, etwa de
 Jeder Verlauf bekommt einen farbigen Balken hinter seinen Akkorden mit seinem Namen, und derselbe Verlauf hat immer dieselbe Farbe. Schau dir die zweite Hälfte von Teil B in Bill Bailey an, dort steht ein Sunshine.
 
 ## degrees: Die Melodie nummerieren
-Die Ebene **Scale degrees** schreibt unter jede Melodienote ihre Nummer in der Tonart: 1 ist der Grundton, 5 die Quinte, und `♭3` oder `♯4` für eine Note außerhalb der Dur-Tonleiter. So lehrt David Reed das Improvisieren in *Improvise for Real*. Schalte sie ein und schau aufs Leadsheet.
+Die Ebene **Stufen** schreibt unter jede Melodienote ihre Nummer in der Tonart: 1 ist der Grundton, 5 die Quinte, und `♭3` oder `♯4` für eine Note außerhalb der Dur-Tonleiter. So lehrt David Reed das Improvisieren in *Improvise for Real*. Schalte sie ein und schau aufs Leadsheet.
 
 ## degrees-chart: Akkordtöne sind eingekreist
 Eine Note, die zum darunter klingenden Akkord gehört, also Grundton, Terz, Quinte oder Septime, hat ihre Nummer in einem **magentafarbenen Kreis**. Nummern ohne Kreis sind Durchgangsnoten und Farbe. Ziele auf den betonten Zählzeiten auf die eingekreisten und nutze die anderen als Schritte dazwischen.
 
 ## fingerings: Griffe für Blech
-Für **Trompete**, **Posaune** und **Sousaphon** schreibt das die Ventilkombination oder Zugposition unter jede Note. Für andere Instrumente ist es ausgegraut, wähle also zuerst unter **Instrument** ein Blechblasinstrument.
+Für **Trompete**, **Posaune** und **Sousafon** schreibt das die Ventilkombination oder Zugposition unter jede Note. Für andere Instrumente ist es ausgegraut, wähle also zuerst unter **Instrument** ein Blechblasinstrument.
 
 ## remember: Deine Auswahl bleibt
-Die Ebenen, die du einschaltest, werden auf diesem Gerät gemerkt, beim nächsten Besuch sieht alles gleich aus. Mit **Reset all** schaltest du alle Ebenen auf einmal aus. Das Panel selbst startet immer geschlossen.
+Die Ebenen, die du einschaltest, werden auf diesem Gerät gemerkt, beim nächsten Besuch sieht alles gleich aus. Mit **Alle zurücksetzen** schaltest du alle Ebenen auf einmal aus. Das Panel selbst startet immer geschlossen.
 
 ## done: Das war die Tour
-Das war die Tour. Der `fa-circle-question`-Knopf holt sie zurück, und das Menü oben auf der Karte wechselt die Sprache.
+Das war die Tour. Der `fa-circle-question`-Knopf holt sie zurück.
 

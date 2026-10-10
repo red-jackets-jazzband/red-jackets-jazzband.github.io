@@ -42,7 +42,6 @@ test("PREF_KEYS pins the persisted key names", () => {
     metronomeEnabled: "rj.metronomeEnabled",
     highQualityAudio: "rj.highQualityAudio",
     repeatCount: "rj.repeatCount",
-    tourLang: "rj.tourLang",
   });
 });
 

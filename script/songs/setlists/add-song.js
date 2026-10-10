@@ -7,6 +7,7 @@ import {
   addDividerToPersonalSetlist,
   insertItemInPersonalSetlist,
 } from "../../lib/setlists/setlists-store.js";
+import { tl } from "../../lib/core/i18n.js";
 
 /*
   The "Add to setlist" tray at the foot of an open personal setlist: a
@@ -24,7 +25,7 @@ function showAddSongError() {
   resultsEl.classList.add("is-open");
   resultsEl.append(el("div", {
     class: "rj-library-add-song-empty",
-    text: "Couldn’t load the song list — try again in a moment.",
+    text: tl("add_song_error", "Couldn’t load the song list — try again in a moment."),
   }));
 }
 
@@ -109,7 +110,7 @@ export function createAddSongTray(ctx, { refresh, onInsert }) {
     if (matches.length === 0) {
       resultsEl.append(el("div", {
         class: "rj-library-add-song-empty",
-        text: `No songs match “${query}”`,
+        text: tl("add_song_no_match", "No songs match “{query}”", { query }),
       }));
       return;
     }
@@ -199,8 +200,6 @@ export function createAddSongTray(ctx, { refresh, onInsert }) {
     return el("button", {
       type: "button",
       class: "rj-library-add-break",
-      html: '<span class="fa-solid fa-plus" aria-hidden="true"></span>'
-        + '<span class="rj-library-add-break-label">New set</span>',
       on: {
         click: () => {
           if (!ctx.state.currentPersonalId) return;
@@ -209,7 +208,10 @@ export function createAddSongTray(ctx, { refresh, onInsert }) {
           refresh();
         },
       },
-    });
+    }, [
+      el("span", { class: "fa-solid fa-plus", attrs: { "aria-hidden": "true" } }),
+      el("span", { class: "rj-library-add-break-label", text: tl("setlist_new_set", "New set") }),
+    ]);
   }
 
   // After a re-render: put focus (and the query in progress) back in the

@@ -1,5 +1,6 @@
 import { byId, el } from "../../lib/core/dom.js";
 import { firstLinkPerType, OTHER_LINK_TYPE } from "../../lib/media/inspiration-links.js";
+import { tl } from "../../lib/core/i18n.js";
 
 const BUTTON_ID_PREFIX = "inspirationExtLink-";
 
@@ -8,10 +9,10 @@ const LINK_META = {
   // the iReal Pro button in irealpro-link.js — a real brand mark rather than
   // a lookalike Font Awesome glyph.
   secondhandsongs: {
-    label: "View on SecondHandSongs",
+    label: tl("inspiration_secondhandsongs", "View on SecondHandSongs"),
     html: '<img src="/images/secondhandsongs_mark_white.png" alt="" aria-hidden="true" class="secondhandsongs-logo">',
   },
-  [OTHER_LINK_TYPE]: { label: "More inspiration", html: '<span class="fa-solid fa-link" aria-hidden="true"></span>' },
+  [OTHER_LINK_TYPE]: { label: tl("inspiration_more", "More inspiration"), html: '<span class="fa-solid fa-link" aria-hidden="true"></span>' },
 };
 
 /*

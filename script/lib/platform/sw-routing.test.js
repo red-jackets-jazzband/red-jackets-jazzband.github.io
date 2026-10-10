@@ -26,7 +26,7 @@ test("same-origin app shell/data paths are classified 'shell'", () => {
     "/script/songs-page.js", "/script/songs/app.js", "/script/lib/setlist-format.js",
     "/setlists/setlist_2026.txt", "/tour/tour.en.md",
     "/css/split.min.abc12345.css", "/fonts/Montserrat-latin.woff2", "/fonts/Saniretro.woff",
-    "/images/icons/icon-512.png", "/manifest.webmanifest",
+    "/images/icons/icon-512.png", "/manifest.webmanifest", "/manifest.nl.webmanifest",
   ]) {
     assert.equal(classify(path, OWN_ORIGIN, "cors"), "shell", path);
   }

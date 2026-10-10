@@ -6,6 +6,7 @@ import { byId } from "../../lib/core/dom.js";
 import { extractYouTubeId } from "../../lib/media/youtube.js";
 import { extractSpotifyItem, spotifyEmbedUrl, spotifyEmbedHeight } from "../../lib/media/spotify.js";
 import { soundcloudEmbedUrl } from "../../lib/media/soundcloud.js";
+import { tl } from "../../lib/core/i18n.js";
 
 // Mirrors the Mixer button's own .active toggle: the Inspiration button
 // stays gold for as long as its panel is open, not just while hovered.
@@ -119,8 +120,9 @@ export function setExpandLink(url, label) {
   const expandLink = byId("inspirationExpandBtn");
   if (!expandLink) return;
   expandLink.href = url || "#";
-  expandLink.title = `Open on ${label}`;
-  expandLink.setAttribute("aria-label", `Open on ${label}`);
+  const text = tl("inspiration_open_on", "Open on {service}", { service: label });
+  expandLink.title = text;
+  expandLink.setAttribute("aria-label", text);
 }
 
 // Loads a track/link into a plain-embed tab (Spotify or SoundCloud). A no-op
