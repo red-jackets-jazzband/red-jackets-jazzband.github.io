@@ -64,6 +64,8 @@ export const TOUR_ACTION_NAMES = [
   "openDrawer",
   "openMixer",
   "openInspiration",
+  "openLayers",
+  "layerProgressionsOn",
   "compingOn",
   "compingSplit",
   "compingUnsplit",
@@ -311,6 +313,17 @@ export function createTourActions(ctx) {
     });
   }
 
+  function openLayers() {
+    ctx.layers.setOpen(true);
+  }
+
+  // Switch the named-progressions layer on so the demo song's Salty Dog shows
+  // up; the visitor's own layer choices are restored when the tour ends.
+  function layerProgressionsOn() {
+    const { activeLayers } = ctx.store.get("layers");
+    if (!activeLayers.progressions) ctx.store.set("layers", { activeLayers: { ...activeLayers, progressions: true } });
+  }
+
   // Make sure a comping pattern is on so the sheet shows the comping staff —
   // but never replace one the visitor picked themselves on the step before.
   // (Comping only renders while the More-controls drawer is open, so a step
@@ -330,6 +343,8 @@ export function createTourActions(ctx) {
     openDrawer,
     openMixer,
     openInspiration,
+    openLayers,
+    layerProgressionsOn,
     compingOn,
     compingSplit,
     compingUnsplit,
@@ -348,6 +363,7 @@ export function createTourActions(ctx) {
   function closeUnrequested(names) {
     if (!names.includes("openMixer")) ctx.mixer.setOpen(false);
     if (!names.includes("openInspiration")) ctx.inspiration.setOpen(false);
+    if (!names.includes("openLayers")) ctx.layers.setOpen(false);
     if (!names.includes("openDrawer")) setDrawer(false);
     if (!names.includes("revealDemoSplit")) {
       document.querySelectorAll(`.${TOUR_REVEAL_SPLIT_CLASS}`)
@@ -389,6 +405,8 @@ export function createTourActions(ctx) {
       fullscreen: document.body.classList.contains(FULLSCREEN_CLASS),
       mixerOpen: Boolean(ctx.mixer.isOpen()),
       inspirationOpen: Boolean(ctx.inspiration.isOpen()),
+      layersOpen: Boolean(ctx.store.get("layers").layersOpen),
+      activeLayers: ctx.store.get("layers").activeLayers,
     };
     demoShown = state.currentSongFile === DEMO_SONG_FILE;
     loopBarGaveUp = false;
@@ -457,6 +475,7 @@ export function createTourActions(ctx) {
     }
     if (snap.mixerOpen) ctx.mixer.setOpen(true);
     if (snap.inspirationOpen) ctx.inspiration.setOpen(true);
+    if (snap.layersOpen) ctx.layers.setOpen(true);
   }
 
   async function end() {
@@ -465,6 +484,8 @@ export function createTourActions(ctx) {
     snapshot = null;
     ctx.mixer.setOpen(false);
     ctx.inspiration.setOpen(false);
+    ctx.layers.setOpen(false);
+    ctx.store.set("layers", { activeLayers: snap.activeLayers });
     setSettings(snap.settings);
     await restoreLocation(snap);
     restorePanels(snap);

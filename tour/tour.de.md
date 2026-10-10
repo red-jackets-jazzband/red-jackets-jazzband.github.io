@@ -17,13 +17,15 @@ topicInspiration: Aufnahmen neben dem Leadsheet anhören und eine Phrase wiederh
 topicMixer: Die Lautstärke von Bass, Akkorden und jeder Stimme einstellen.
 topicSetlists: Setlists für einen Gig erstellen, ordnen und drucken.
 topicComping: Eine ausgeschriebene Begleitstimme hinzufügen.
-topicsIntro: Sechs kurze Stationen. Tipp auf eine, um hinzuspringen:
+topicLayers: Zusatzhilfen im Leadsheet anzeigen, etwa benannte Verläufe und Griffe.
+topicsIntro: Sieben kurze Stationen. Tipp auf eine, um hinzuspringen:
 railComping: Comping
 railSetlists: Sets
 railMixer: Mix
 railInspiration: Mitspielen
 railAdjust: Dein Weg
 railBasics: Finden
+railLayers: Ebenen
 nextChapter: Weiter zum nächsten
 start: Zeig mir alles
 
@@ -180,6 +182,23 @@ Mit den Knöpfen **R**, **3** und **5** wählst du, welche der geteilten Zeilen 
 
 ## mixer: Das Comping in den Mix nehmen
 Ist das Comping an, erscheint es im Mixer als eigene **Comping**-Stimme. Du kannst es stummschalten, die Lautstärke ändern oder ihm ein anderes Instrument geben. Wenn du es teilst, bekommt jeder Akkordton einen eigenen Kanal (**Comping R**, **Comping 3**, **Comping 5**), sodass du die Terz stummschalten oder der Quinte ein anderes Instrument geben kannst.
+
+# layers: Ebenen
+
+## open: Zusatzhilfen im Leadsheet
+Der Reiter **Layers** am rechten Rand öffnet ein Panel mit Extras, die du ins Leadsheet einzeichnen kannst. Jedes ist ein Schalter. Ist alles aus, ist das Leadsheet genau das Blatt, das du kennst, und was du einschaltest, wird mitgedruckt.
+
+## progressions: Benannte Verläufe erkennen
+Traditioneller Jazz besteht aus ein paar festen Akkordmustern mit Namen, etwa dem **Salty Dog**, dem **Four-Leaf** oder dem **Sunshine**. Diese Ebene sucht sie in den Akkorden und beschriftet sie. Schalte sie an und aus, um zu vergleichen.
+
+## sheet: Sie im Notenbild sehen
+Jeder Verlauf bekommt einen farbigen Balken hinter seinen Akkorden mit seinem Namen, und derselbe Verlauf hat immer dieselbe Farbe. Schau dir die letzte Zeile von Bill Bailey an, dort steht ein Salty Dog.
+
+## fingerings: Griffe für Blech
+Für **Trompete**, **Posaune** und **Sousaphon** schreibt das die Ventilkombination oder Zugposition unter jede Note. Für andere Instrumente ist es ausgegraut, wähle also zuerst unter **Instrument** ein Blechblasinstrument.
+
+## remember: Deine Auswahl bleibt
+Die Ebenen, die du einschaltest, werden auf diesem Gerät gemerkt, beim nächsten Besuch sieht alles gleich aus. Mit **Reset all** schaltest du alle Ebenen auf einmal aus. Das Panel selbst startet immer geschlossen.
 
 ## done: Das war die Tour
 Das war die Tour. Der `fa-circle-question`-Knopf holt sie zurück, und das Menü oben auf der Karte wechselt die Sprache.

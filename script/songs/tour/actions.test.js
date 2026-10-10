@@ -20,7 +20,7 @@ const OWN_SONG_FILE = "all_of_me.abc";
 function setup({ state = {}, sheetLoadMs = 10, storage = memoryStorage() } = {}) {
   const page = mountPage();
   const calls = [];
-  const panelOpen = { mixer: false, inspiration: false }; // panel visibility the stubs report back
+  const panelOpen = { mixer: false, inspiration: false, layers: false }; // panel visibility the stubs report back
   const ctx = makeCtx({
     state,
     mixer: { setOpen: (open) => { panelOpen.mixer = open; calls.push(`mixer:${open}`); }, isOpen: () => panelOpen.mixer },
@@ -28,6 +28,7 @@ function setup({ state = {}, sheetLoadMs = 10, storage = memoryStorage() } = {})
       setOpen: (open) => { panelOpen.inspiration = open; calls.push(`inspiration:${open}`); },
       isOpen: () => panelOpen.inspiration,
     },
+    layers: { setOpen: (open) => { panelOpen.layers = open; calls.push(`layers:${open}`); } },
     audio: { stop: () => calls.push("audio.stop") },
     nav: {
       switchTab: (tab) => {
@@ -142,12 +143,12 @@ test("apply() shuts every panel the step doesn't ask for, and keeps the ones it 
   const { actions, calls, ctx, cleanup } = setup({ state: { advancedOpen: true } });
   try {
     await actions.apply([]);
-    assert.deepEqual(calls, ["mixer:false", "inspiration:false"]);
+    assert.deepEqual(calls, ["mixer:false", "inspiration:false", "layers:false"]);
     assert.equal(ctx.state.advancedOpen, false);
 
     calls.length = 0;
     await actions.apply(["openDrawer", "openMixer"]);
-    assert.deepEqual(calls, ["inspiration:false", "mixer:true"]);
+    assert.deepEqual(calls, ["inspiration:false", "layers:false", "mixer:true"]);
     assert.equal(ctx.state.advancedOpen, true);
   } finally {
     cleanup();

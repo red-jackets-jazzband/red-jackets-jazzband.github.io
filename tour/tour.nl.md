@@ -17,13 +17,15 @@ topicInspiration: Luister naar opnames naast het leadsheet en herhaal een frase.
 topicMixer: Stel het volume van bas, akkoorden en elke partij in.
 topicSetlists: Maak, orden en print setlists voor een optreden.
 topicComping: Voeg een uitgeschreven begeleidingsbalk toe.
-topicsIntro: Zes korte stops. Tik er een aan om erheen te gaan:
+topicLayers: Toon extra hulp op het leadsheet, zoals benoemde akkoordenreeksen en vingerzettingen.
+topicsIntro: Zeven korte stops. Tik er een aan om erheen te gaan:
 railComping: Comping
 railSetlists: Sets
 railMixer: Mixen
 railInspiration: Meespelen
 railAdjust: Jouw manier
 railBasics: Vinden
+railLayers: Lagen
 nextChapter: Door naar het volgende
 start: Laat maar zien
 
@@ -180,6 +182,23 @@ Met de knoppen **R**, **3** en **5** kies je welke van de gesplitste balken gete
 
 ## mixer: Voeg comping toe aan de mix
 Staat comping aan, dan komt het in de mixer als eigen **Comping**-stem. Je kunt het dempen, het volume veranderen of er een ander instrument voor kiezen. Splits je het, dan krijgt elke akkoordtoon een eigen kanaal (**Comping R**, **Comping 3**, **Comping 5**), zodat je de terts kunt dempen of de kwint een ander instrument kunt geven.
+
+# layers: Lagen
+
+## open: Extra hulp op het leadsheet
+Het tabblad **Layers** aan de rechterrand opent een paneel met extra's die je op het leadsheet kunt tekenen. Elk is een schakelaar. Staat alles uit, dan is het leadsheet precies het schema dat je kent, en wat je aanzet wordt mee geprint.
+
+## progressions: Herken de benoemde akkoordenreeksen
+Traditionele jazz is opgebouwd uit een paar vaste akkoordpatronen met een naam, zoals de **Salty Dog**, de **Four-Leaf** of de **Sunshine**. Deze laag zoekt ze in de akkoorden en benoemt ze. Zet hem aan en uit om te vergelijken.
+
+## sheet: Zie ze in het schema
+Elke reeks krijgt een gekleurde balk achter de akkoorden met de naam erin, en dezelfde reeks krijgt altijd dezelfde kleur. Kijk naar de laatste regel van Bill Bailey voor een Salty Dog.
+
+## fingerings: Vingerzettingen voor koper
+Voor **Trompet**, **Trombone** en **Sousafoon** schrijft dit de ventielcombinatie of schuifpositie onder elke noot. Voor andere instrumenten is het uitgegrijsd, kies dus eerst een koperinstrument onder **Instrument**.
+
+## remember: Je keuzes blijven staan
+De lagen die je aanzet worden op dit apparaat onthouden, dus de volgende keer ziet alles er hetzelfde uit. Met **Reset all** zet je alle lagen in één keer uit. Het paneel zelf begint altijd dicht.
 
 ## done: Dat was de rondleiding
 Dat was de rondleiding. De `fa-circle-question`-knop haalt hem terug, en het menu bovenaan de kaart wisselt van taal.

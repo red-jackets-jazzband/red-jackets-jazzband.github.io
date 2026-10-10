@@ -17,13 +17,15 @@ topicInspiration: Listen to recordings alongside the sheet and loop a phrase.
 topicMixer: Set the level of bass, chords and each part.
 topicSetlists: Build, order and print setlists for a gig.
 topicComping: Add a written-out accompaniment staff.
-topicsIntro: Six short stops. Tap one to jump there:
+topicLayers: Show extra help on the sheet, like named progressions and fingerings.
+topicsIntro: Seven short stops. Tap one to jump there:
 railComping: Comp
 railSetlists: Sets
 railMixer: Mix
 railInspiration: Play along
 railAdjust: Your way
 railBasics: Find it
+railLayers: Layers
 nextChapter: On to the next
 start: Show me around
 
@@ -294,6 +296,36 @@ setup: openDrawer, compingOn, compingSplit, openMixer
 target: #mixerVoicesSection
 interactive: true
 With comping on, it appears in the mixer as its own **Comping** voice. You can mute it, change its level or give it another instrument. If you split it, each chord tone gets its own strip (**Comping R**, **Comping 3**, **Comping 5**), so you can mute the third or give the fifth a different instrument.
+
+# layers: Layers
+setup: openDemoSong
+
+## open: Extra help on the sheet
+setup: openDemoSong, openLayers
+target: #layersPanel
+The **Layers** tab on the right edge opens a panel of extras you can draw onto the lead sheet. Each one is a switch. With everything off the sheet is exactly the chart you know, and anything you switch on prints with it.
+
+## progressions: Spot the named progressions
+setup: openDemoSong, openLayers, layerProgressionsOn
+target: .rj-layer-row[data-layer="progressions"]
+interactive: true
+Traditional jazz is built from a few stock chord patterns with names, like the **Salty Dog**, the **Four-Leaf** or the **Sunshine**. This layer finds them in the chords and labels them. Switch it on and off to compare.
+
+## sheet: See them on the chart
+setup: openDemoSong, layerProgressionsOn
+target: .rj-layer-prog-band, #notation
+Each progression gets a coloured bar behind its chords with its name in it, and the same progression always gets the same colour. Look at the last line of Bill Bailey for a Salty Dog.
+
+## fingerings: Fingerings for brass
+setup: openDemoSong, openLayers
+target: .rj-layer-row[data-layer="fingerings"]
+interactive: true
+For **Trumpet**, **Trombone** and **Sousaphone** this writes the valve combination or slide position under every note. It's greyed out for other instruments, so pick a brass instrument under **Instrument** first.
+
+## remember: Your choices stick
+setup: openDemoSong, openLayers
+target: #layersResetBtn
+The layers you switch on are remembered on this device, so your next visit looks the same. **Reset all** switches every layer off at once. The panel itself always starts closed.
 
 ## done: That's the tour
 setup: showLibrary

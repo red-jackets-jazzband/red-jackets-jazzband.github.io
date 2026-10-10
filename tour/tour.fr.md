@@ -17,13 +17,15 @@ topicInspiration: Écouter des enregistrements à côté de la grille et boucler
 topicMixer: Régler le volume de la basse, des accords et de chaque partie.
 topicSetlists: Créer, ordonner et imprimer des setlists pour un concert.
 topicComping: Ajouter une portée d'accompagnement écrite.
-topicsIntro: Six petites étapes. Touchez-en une pour y aller :
+topicLayers: Afficher une aide en plus sur la grille, comme les progressions nommées et les doigtés.
+topicsIntro: Sept petites étapes. Touchez-en une pour y aller :
 railComping: Comping
 railSetlists: Sets
 railMixer: Mix
 railInspiration: Jouer avec
 railAdjust: À votre façon
 railBasics: Trouver
+railLayers: Calques
 nextChapter: Passons au suivant
 start: Faites-moi visiter
 
@@ -180,6 +182,23 @@ Les boutons **R**, **3** et **5** choisissent quelles portées séparées sont d
 
 ## mixer: Intégrer le comping au mix
 Quand le comping est activé, il apparaît dans le mixeur comme une voix **Comping** à part. Vous pouvez la couper, changer son volume ou lui donner un autre instrument. Si vous la séparez, chaque note d'accord a sa propre piste (**Comping R**, **Comping 3**, **Comping 5**), ce qui permet de couper la tierce ou de confier la quinte à un autre instrument.
+
+# layers: Calques
+
+## open: Une aide en plus sur la grille
+L'onglet **Layers** sur le bord droit ouvre un panneau d'extras que vous pouvez dessiner sur la grille. Chacun est un interrupteur. Tout éteint, la grille est exactement celle que vous connaissez, et ce que vous allumez s'imprime avec.
+
+## progressions: Repérer les progressions nommées
+Le jazz traditionnel repose sur quelques enchaînements d'accords classiques qui ont un nom, comme le **Salty Dog**, le **Four-Leaf** ou le **Sunshine**. Ce calque les repère dans les accords et les nomme. Allumez-le et éteignez-le pour comparer.
+
+## sheet: Les voir sur la grille
+Chaque progression reçoit une bande colorée derrière ses accords avec son nom, et la même progression a toujours la même couleur. Regardez la dernière ligne de Bill Bailey pour un Salty Dog.
+
+## fingerings: Doigtés pour les cuivres
+Pour la **trompette**, le **trombone** et le **sousaphone**, cela écrit la combinaison de pistons ou la position de coulisse sous chaque note. Il est grisé pour les autres instruments, choisissez donc d'abord un cuivre sous **Instrument**.
+
+## remember: Vos choix restent
+Les calques que vous allumez sont retenus sur cet appareil, la prochaine visite aura le même aspect. **Reset all** éteint tous les calques d'un coup. Le panneau lui-même démarre toujours fermé.
 
 ## done: Fin de la visite
 Voilà la visite. Le bouton `fa-circle-question` la ramène, et le menu en haut de la carte change la langue.
