@@ -4,7 +4,7 @@ import ABCJS from "abcjs";
 import {
   chordTones, degreeName, degreeText, melodyDegrees, parseDegreeText,
 } from "./scale-degrees.js";
-import { topNote, walkMelody } from "./fingerings.js";
+import { topNote, walkMelody } from "./melody-walk.js";
 import { resolveTranspose } from "./render-plan.js";
 
 const parse = (body, key = "C") => ABCJS.parseOnly(`X:1\nM:4/4\nL:1/4\nK:${key}\n${body}\n`)[0];

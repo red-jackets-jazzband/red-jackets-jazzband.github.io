@@ -104,6 +104,8 @@ export function concertMaterial(abcText, parse) {
     layersApplied   ids of the layers drawn on this render (a switched-on
                     layer that doesn't apply, e.g. fingerings for a sax,
                     isn't)
+    instrument      the instrument the render is for (the overlays draw a
+                    trombone's positions differently from valves)
     wordsTables     the form strip's rows: the W: pipe tables, else the P:
                     part order as one table
 */
@@ -155,6 +157,7 @@ export function buildRenderPlan(text, settings, { parse, extraTransposeSteps = 0
     wordsTables,
     progressions: layered.progressions,
     layersApplied: layered.applied,
+    instrument: settings.instrument,
   };
 }
 

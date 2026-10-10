@@ -64,6 +64,7 @@ test("buildRenderPlan: layer annotations reach the engraved text, never abcText"
   const plain = buildRenderPlan(tune, effectiveSheetSettings(SETTINGS), { parse });
   assert.equal(plain.comping.renderText, plain.abcText);
   assert.deepEqual(plain.layersApplied, []);
+  assert.equal(plan.instrument, "trumpet", "the overlays draw a trombone's positions differently from valves");
 });
 
 test("effectiveSheetSettings: split parts only apply while Split is on", () => {

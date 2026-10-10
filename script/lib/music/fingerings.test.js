@@ -2,8 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import ABCJS from "abcjs";
 import {
-  fingeringFor, fingeringGlyphs, instrumentHasFingerings, melodyFingerings, noteMidi,
+  fingeringFor, fingeringGlyphs, instrumentHasFingerings, melodyFingerings,
 } from "./fingerings.js";
+import { noteMidi } from "./melody-walk.js";
 import { resolveTranspose } from "./render-plan.js";
 
 // The tune as the sheet engraves it for `instrument`: clef stamped, transposed.

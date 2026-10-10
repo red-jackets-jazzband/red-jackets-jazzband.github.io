@@ -24,8 +24,8 @@
   tones. The seventh of a plain triad is the one its key gives it: a
   major chord's major seventh, a minor chord's flat seventh.
 */
-import { chordName, keyRoot, parseChordSymbol, splitChordSymbol } from "./progressions.js";
-import { topNote, walkMelody } from "./fingerings.js";
+import { chordName, keyRoot, parseChordSymbol, splitChordSymbol } from "./chord-symbol.js";
+import { topNote, walkMelody } from "./melody-walk.js";
 
 const DEGREES = ["1", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"];
 

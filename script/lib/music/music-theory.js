@@ -1,48 +1,19 @@
-// Tolerates Tonal.Note.get throwing on unparseable input by reporting no
-// chroma — the caller falls back to the manual table below either way.
-function tonalChroma(normalized) {
-  try {
-    return Tonal.Note.get(normalized).chroma;
-  } catch {
-    return undefined;
-  }
-}
+import { noteChroma } from "./note-name.js";
+import { parseChordSymbol, splitChordSymbol } from "./chord-symbol.js";
 
-// Pitch class (0-11) of a note name. Prefers Tonal.js (loaded as a global
-// classic script alongside this module in the browser) for full enharmonic
-// handling, falling back to a small manual table so this still works in
-// Node (unit tests) or if Tonal fails to load.
-export function noteChroma(noteName) {
-  const normalized = noteName.replace(/♭/g, "b").replace(/♯/g, "#");
-  if (typeof Tonal !== "undefined" && Tonal.Note) {
-    const chroma = tonalChroma(normalized);
-    // Tonal represents an unparseable note (e.g. "Am" — a chord, not a
-    // plain note name — passed in when a setlist key override carries a
-    // mode suffix) as chroma: NaN, not undefined. typeof NaN is still
-    // "number", so this must be excluded explicitly or it gets returned
-    // as-is instead of falling through to the manual table below.
-    if (typeof chroma === "number" && !Number.isNaN(chroma)) return chroma;
-  }
-  const CHROMAS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-  const letter = (normalized[0] || "C").toUpperCase();
-  const rest = normalized.slice(1);
-  let c = CHROMAS[letter] !== undefined ? CHROMAS[letter] : 0;
-  for (const accidental of rest) {
-    if (accidental === "b") c--;
-    else if (accidental === "#") c++;
-  }
-  return ((c % 12) + 12) % 12;
-}
+export { noteChroma };
 
 export function chordToRomanNumeral(chordStr, keyRoot, keyMode) {
   if (!chordStr || chordStr === " % ") return chordStr;
 
-  const match = chordStr.match(/^([A-G][♭♯b#]?)(.*)/);
-  if (!match) return chordStr;
-  const chordRoot = match[1];
-  const suffix = match[2] || "";
+  // The same parse the Layers modules read chords with (chord-symbol.js):
+  // the root's pitch class, the symbol after it, and its function.
+  const split = splitChordSymbol(chordStr);
+  if (!split) return chordStr;
+  const { quality } = parseChordSymbol(chordStr);
+  const suffix = split.rest;
 
-  const interval = (noteChroma(chordRoot) - noteChroma(keyRoot) + 12) % 12;
+  const interval = (split.root - noteChroma(keyRoot) + 12) % 12;
   const isMinorKey = keyMode && keyMode !== "" && keyMode !== "major" && keyMode !== "maj";
 
   const MAJOR_MAP = {
@@ -59,17 +30,14 @@ export function chordToRomanNumeral(chordStr, keyRoot, keyMode) {
   const romanBase = ROMANS[entry[0]];
   const accidental = entry[1];
 
-  const isMinorChord = /^(m|min|-)(?!aj)/i.test(suffix);
-  const isHalfDim = /^(Ø|m7[b♭]5)/i.test(suffix);
-  const isDim = /^(°|dim)/i.test(suffix);
   const isAug = /^(\+|aug)/i.test(suffix);
   const isMaj7 = /maj7|Δ/.test(suffix);
-  const numExt = (suffix.match(/\d+/) || [])[0] || "";
+  const numExt = (/\d+/.exec(suffix) || [])[0] || "";
 
   let roman;
-  if (isHalfDim) roman = romanBase.toLowerCase() + "ø7";
-  else if (isDim) roman = romanBase.toLowerCase() + "°";
-  else if (isMinorChord) roman = romanBase.toLowerCase() + numExt;
+  if (quality === "hdim") roman = romanBase.toLowerCase() + "ø7";
+  else if (quality === "dim") roman = romanBase.toLowerCase() + "°";
+  else if (quality === "min") roman = romanBase.toLowerCase() + numExt;
   else if (isAug) roman = romanBase + "+";
   else if (isMaj7) roman = romanBase + "maj7";
   else roman = romanBase + numExt;

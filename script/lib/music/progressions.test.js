@@ -1,26 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import ABCJS from "abcjs";
-import { findNamedProgressions, parseChordSymbol } from "./progressions.js";
+import { findNamedProgressions } from "./progressions.js";
 
 const parse = (body, header = "M:4/4\nL:1/4\nK:Bb") => ABCJS.parseOnly(`X:1\n${header}\n${body}\n`)[0];
 const names = (song) => findNamedProgressions(song).map((m) => m.name);
-
-test("parseChordSymbol: root and function", () => {
-  assert.deepEqual(parseChordSymbol("Bb7"), { root: 10, quality: "dom" });
-  assert.deepEqual(parseChordSymbol("B♭"), { root: 10, quality: "maj" });
-  assert.deepEqual(parseChordSymbol("C#7"), { root: 1, quality: "dom" });
-  assert.deepEqual(parseChordSymbol("Bb/D"), { root: 10, quality: "maj" });
-  assert.equal(parseChordSymbol("Ebm").quality, "min");
-  assert.equal(parseChordSymbol("Ebm6").quality, "min");
-  assert.equal(parseChordSymbol("Bbmaj7").quality, "maj");
-  assert.equal(parseChordSymbol("Bb6").quality, "maj");
-  assert.equal(parseChordSymbol("F+7").quality, "dom");
-  assert.equal(parseChordSymbol("Gm7b5").quality, "hdim");
-  assert.equal(parseChordSymbol("Edim").quality, "dim");
-  assert.equal(parseChordSymbol("N.C."), null);
-  assert.equal(parseChordSymbol(""), null);
-});
 
 test("Salty Dog: VI7 II7 V7 I, a bar each", () => {
   assert.deepEqual(names(parse('"G7" D4 | "C7" D4 | "F7" D4 | "Bb" B4 |')), ["Salty Dog"]);
@@ -46,12 +30,12 @@ test("Four-Leaf: a V7 that never returns to the I is no Four-Leaf", () => {
   assert.deepEqual(names(song), []);
 });
 
-test("Georgia hands its VI7 on to a Salty Dog, and the bands meet there", () => {
+test("Georgia hands its VI7 on to a Salty Dog, and both bands cover it", () => {
   // Basin Street's B section, approach chord (Ab7) and all.
   const song = parse('"Bb" D4 | "D7" D4 | "G7" D4 | "Ab7" E2 "G7" D2 | "C7" D4 | "F7" D4 | "Bb/D" c2 "C#7" A2 | "C7" B2 "F7" F2 |');
   const found = findNamedProgressions(song);
   assert.deepEqual(found.map((m) => m.name), ["Georgia", "Salty Dog"]);
-  assert.deepEqual([found[0].startNote, found[0].endNote], [0, 2], "Georgia: Bb and D7");
+  assert.deepEqual([found[0].startNote, found[0].endNote], [0, 3], "Georgia: Bb, D7 and the G7 it shares");
   assert.deepEqual([found[1].startNote, found[1].endNote], [2, 8], "Salty Dog: G7 to the Bb/D");
 });
 
@@ -59,7 +43,7 @@ test("Sunshine: the eight bars of Post 565, IV IVm I VI7 II7 V7 I I", () => {
   const song = parse('"Eb" G4 | "Ebm" G4 | "Bb" F4 | "G7" G4 | "C7" G4 | "F7" A4 | "Bb" B4 | B4 |');
   const found = findNamedProgressions(song);
   assert.deepEqual(found.map((m) => m.name), ["Sunshine"], "not a Salty Dog inside it");
-  assert.deepEqual([found[0].startNote, found[0].endNote], [0, 7]);
+  assert.deepEqual([found[0].startNote, found[0].endNote], [0, 8], "all eight bars, the closing I's second one too");
 });
 
 test("Sunshine's variations: #IV dim (any spelling) or IV dim in bar 2, IIm7 in bar 5", () => {
