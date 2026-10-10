@@ -185,14 +185,17 @@ Staat comping aan, dan komt het in de mixer als eigen **Comping**-stem. Je kunt 
 
 # layers: Lagen
 
+## button: Vind de Layers-knop
+De **Layers**-knop zit rechts: op een computer een smal tabblad aan de rechterrand van het scherm, op een telefoon een klein tabblad rechtsonder. Tik erop om het paneel te openen.
+
 ## open: Extra hulp op het leadsheet
-Het tabblad **Layers** aan de rechterrand opent een paneel met extra's die je op het leadsheet kunt tekenen. Elk is een schakelaar. Staat alles uit, dan is het leadsheet precies het schema dat je kent, en wat je aanzet wordt mee geprint.
+Dit paneel bevat extra's die je op het leadsheet kunt tekenen. Elk is een schakelaar. Staat alles uit, dan is het leadsheet precies het schema dat je kent, en wat je aanzet wordt mee geprint.
 
 ## progressions: Herken de benoemde akkoordenreeksen
 Traditionele jazz is opgebouwd uit een paar vaste akkoordpatronen met een naam, zoals de **Salty Dog**, de **Four-Leaf** of de **Sunshine**. Deze laag zoekt ze in de akkoorden en benoemt ze. Zet hem aan en uit om te vergelijken.
 
 ## sheet: Zie ze in het schema
-Elke reeks krijgt een gekleurde balk achter de akkoorden met de naam erin, en dezelfde reeks krijgt altijd dezelfde kleur. Kijk naar de laatste regel van Bill Bailey voor een Salty Dog.
+Elke reeks krijgt een gekleurde balk achter de akkoorden met de naam erin, en dezelfde reeks krijgt altijd dezelfde kleur. Kijk naar de tweede helft van deel B van Bill Bailey voor een Sunshine.
 
 ## fingerings: Vingerzettingen voor koper
 Voor **Trompet**, **Trombone** en **Sousafoon** schrijft dit de ventielcombinatie of schuifpositie onder elke noot. Voor andere instrumenten is het uitgegrijsd, kies dus eerst een koperinstrument onder **Instrument**.

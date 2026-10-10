@@ -185,14 +185,17 @@ Quand le comping est activé, il apparaît dans le mixeur comme une voix **Compi
 
 # layers: Calques
 
+## button: Trouver le bouton Layers
+Le bouton **Layers** est à droite : un onglet fin sur le bord droit de l'écran sur ordinateur, un petit onglet en bas à droite sur téléphone. Touchez-le pour ouvrir le panneau.
+
 ## open: Une aide en plus sur la grille
-L'onglet **Layers** sur le bord droit ouvre un panneau d'extras que vous pouvez dessiner sur la grille. Chacun est un interrupteur. Tout éteint, la grille est exactement celle que vous connaissez, et ce que vous allumez s'imprime avec.
+Ce panneau contient des extras que vous pouvez dessiner sur la grille. Chacun est un interrupteur. Tout éteint, la grille est exactement celle que vous connaissez, et ce que vous allumez s'imprime avec.
 
 ## progressions: Repérer les progressions nommées
 Le jazz traditionnel repose sur quelques enchaînements d'accords classiques qui ont un nom, comme le **Salty Dog**, le **Four-Leaf** ou le **Sunshine**. Ce calque les repère dans les accords et les nomme. Allumez-le et éteignez-le pour comparer.
 
 ## sheet: Les voir sur la grille
-Chaque progression reçoit une bande colorée derrière ses accords avec son nom, et la même progression a toujours la même couleur. Regardez la dernière ligne de Bill Bailey pour un Salty Dog.
+Chaque progression reçoit une bande colorée derrière ses accords avec son nom, et la même progression a toujours la même couleur. Regardez la seconde moitié de la partie B de Bill Bailey pour un Sunshine.
 
 ## fingerings: Doigtés pour les cuivres
 Pour la **trompette**, le **trombone** et le **sousaphone**, cela écrit la combinaison de pistons ou la position de coulisse sous chaque note. Il est grisé pour les autres instruments, choisissez donc d'abord un cuivre sous **Instrument**.

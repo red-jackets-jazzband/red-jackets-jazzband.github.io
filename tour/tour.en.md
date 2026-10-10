@@ -300,10 +300,15 @@ With comping on, it appears in the mixer as its own **Comping** voice. You can m
 # layers: Layers
 setup: openDemoSong
 
+## button: Find the Layers button
+setup: openDemoSong
+target: #layersTab
+The **Layers** button sits at the right: a thin tab on the right edge of the screen on a computer, a small tab at the bottom right on a phone. Tap it to open the panel.
+
 ## open: Extra help on the sheet
 setup: openDemoSong, openLayers
 target: #layersPanel
-The **Layers** tab on the right edge opens a panel of extras you can draw onto the lead sheet. Each one is a switch. With everything off the sheet is exactly the chart you know, and anything you switch on prints with it.
+This panel holds extras you can draw onto the lead sheet. Each one is a switch. With everything off the sheet is exactly the chart you know, and anything you switch on prints with it.
 
 ## progressions: Spot the named progressions
 setup: openDemoSong, openLayers, layerProgressionsOn
@@ -314,7 +319,7 @@ Traditional jazz is built from a few stock chord patterns with names, like the *
 ## sheet: See them on the chart
 setup: openDemoSong, layerProgressionsOn
 target: .rj-layer-prog-band, #notation
-Each progression gets a coloured bar behind its chords with its name in it, and the same progression always gets the same colour. Look at the last line of Bill Bailey for a Salty Dog.
+Each progression gets a coloured bar behind its chords with its name in it, and the same progression always gets the same colour. Look at the second half of the B part in Bill Bailey for a Sunshine.
 
 ## fingerings: Fingerings for brass
 setup: openDemoSong, openLayers

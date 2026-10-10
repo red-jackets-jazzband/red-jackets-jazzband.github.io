@@ -185,14 +185,17 @@ Ist das Comping an, erscheint es im Mixer als eigene **Comping**-Stimme. Du kann
 
 # layers: Ebenen
 
+## button: Den Layers-Knopf finden
+Der **Layers**-Knopf sitzt rechts: am Computer ein schmaler Reiter am rechten Bildschirmrand, am Handy ein kleiner Reiter unten rechts. Tippe darauf, um das Panel zu öffnen.
+
 ## open: Zusatzhilfen im Leadsheet
-Der Reiter **Layers** am rechten Rand öffnet ein Panel mit Extras, die du ins Leadsheet einzeichnen kannst. Jedes ist ein Schalter. Ist alles aus, ist das Leadsheet genau das Blatt, das du kennst, und was du einschaltest, wird mitgedruckt.
+Dieses Panel enthält Extras, die du ins Leadsheet einzeichnen kannst. Jedes ist ein Schalter. Ist alles aus, ist das Leadsheet genau das Blatt, das du kennst, und was du einschaltest, wird mitgedruckt.
 
 ## progressions: Benannte Verläufe erkennen
 Traditioneller Jazz besteht aus ein paar festen Akkordmustern mit Namen, etwa dem **Salty Dog**, dem **Four-Leaf** oder dem **Sunshine**. Diese Ebene sucht sie in den Akkorden und beschriftet sie. Schalte sie an und aus, um zu vergleichen.
 
 ## sheet: Sie im Notenbild sehen
-Jeder Verlauf bekommt einen farbigen Balken hinter seinen Akkorden mit seinem Namen, und derselbe Verlauf hat immer dieselbe Farbe. Schau dir die letzte Zeile von Bill Bailey an, dort steht ein Salty Dog.
+Jeder Verlauf bekommt einen farbigen Balken hinter seinen Akkorden mit seinem Namen, und derselbe Verlauf hat immer dieselbe Farbe. Schau dir die zweite Hälfte von Teil B in Bill Bailey an, dort steht ein Sunshine.
 
 ## fingerings: Griffe für Blech
 Für **Trompete**, **Posaune** und **Sousaphon** schreibt das die Ventilkombination oder Zugposition unter jede Note. Für andere Instrumente ist es ausgegraut, wähle also zuerst unter **Instrument** ein Blechblasinstrument.
