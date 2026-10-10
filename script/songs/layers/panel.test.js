@@ -20,10 +20,23 @@ test("one row per layer, grouped, each with its preview", () => {
   const { cleanup } = setup();
   try {
     const groups = [...document.querySelectorAll(".rj-layer-group")].map((g) => g.textContent);
-    assert.deepEqual(groups, ["Harmony", "Performance"]);
+    assert.deepEqual(groups, ["Harmony", "Melody", "Performance"]);
     assert.ok(row("progressions").querySelector(".rj-layer-preview svg"));
     assert.ok(row("fingerings").querySelector(".rj-layer-preview svg"));
+    assert.ok(row("scale-degrees").querySelector(".rj-layer-preview svg"));
     assert.equal(row("progressions").querySelector(".rj-layer-label").textContent, "Named progressions");
+  } finally {
+    cleanup();
+  }
+});
+
+test("the scale-degrees row credits Improvise for Real with a link", () => {
+  const { cleanup } = setup();
+  try {
+    const link = row("scale-degrees").querySelector(".rj-layer-credit a");
+    assert.equal(link.textContent, "Improvise for Real");
+    assert.equal(link.getAttribute("href"), "https://www.improviseforreal.com/");
+    assert.equal(link.getAttribute("target"), "_blank");
   } finally {
     cleanup();
   }
@@ -97,7 +110,7 @@ test("Reset all switches everything off", () => {
     click(row("fingerings"));
     click(row("progressions"));
     click(document.getElementById("layersResetBtn"));
-    assert.deepEqual(ctx.store.get("layers").activeLayers, { progressions: false, fingerings: false });
+    assert.deepEqual(ctx.store.get("layers").activeLayers, { progressions: false, "scale-degrees": false, fingerings: false });
   } finally {
     cleanup();
   }

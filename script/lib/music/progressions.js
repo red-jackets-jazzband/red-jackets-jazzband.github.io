@@ -13,6 +13,7 @@
                                           #IV dim, II7 may be IIm7)
     Apple Tree   I | IV | I              Post 41 — an opening pattern, so
                                           only matched where a part starts
+                                          (the IV may be a half bar)
 
   findNamedProgressions(song) walks the parsed tune's chord symbols (first
   voice) and returns where each one sits: [{ id, name, startNote, endNote,
@@ -67,7 +68,7 @@ const PROGRESSIONS = [
   // Town) — before the closing I.
   { id: "four-leaf", name: "Four-Leaf", url: BLOG + "2016/07/a-very-common-pattern.html", steps: [[I], [II7], [V_TRIAD_OR_7], [I]], turnaround: { step: 2, over: [VIm, VI7, II7, IIm], maxChords: 2 } },
   { id: "georgia", name: "Georgia", url: BLOG + "2013/01/the-georgia-chord-progression.html", steps: [[I], [III7], [VI7]] },
-  { id: "apple-tree", name: "Apple Tree", url: BLOG + "2013/06/the-apple-tree-chord-progression.html", steps: [[I], [IV], [I]], opening: true },
+  { id: "apple-tree", name: "Apple Tree", url: BLOG + "2013/06/the-apple-tree-chord-progression.html", steps: [[I], [IV], [I]], minBars: 0.5, opening: true },
 ];
 
 export const PROGRESSION_NAMES = PROGRESSIONS.map((p) => p.name);
@@ -88,6 +89,16 @@ const KEY_ACC = { sharp: 1, flat: -1, "#": 1, b: -1 };
   bass note after a slash doesn't change the function (B♭/D is still I).
 */
 export function parseChordSymbol(name) {
+  const split = splitChordSymbol(name);
+  return split === null ? null : { root: split.root, quality: chordQuality(split.rest) };
+}
+
+/*
+  A chord symbol cut into its root (0-11) and what follows it up to a slash
+  bass ("m7b5" in "Bm7b5/F"), or null when it isn't a chord. A "b" followed
+  by a 5 is the chord's flat five, not a flat root.
+*/
+export function splitChordSymbol(name) {
   if (typeof name !== "string" || name.length === 0) return null;
   const natural = NATURALS[name[0]];
   if (natural === undefined) return null;
@@ -98,8 +109,7 @@ export function parseChordSymbol(name) {
     i += 1;
   }
   const slash = name.indexOf("/", i);
-  const rest = slash === -1 ? name.slice(i) : name.slice(i, slash);
-  return { root: (root + 12) % 12, quality: chordQuality(rest) };
+  return { root: (root + 12) % 12, rest: slash === -1 ? name.slice(i) : name.slice(i, slash) };
 }
 
 function hasSeventhOrMore(rest) {
@@ -134,16 +144,22 @@ function qualityFits(wanted, quality) {
 
 // The chord symbol an abcjs element carries, if any (annotations have a
 // position of their own; a chord symbol's is "default").
-function chordName(el) {
+export function chordName(el) {
   if (!el.chord) return null;
   const symbol = el.chord.find((c) => c.position === "default" || c.position === undefined);
   return symbol ? symbol.name : null;
 }
 
-function keyTonic(key) {
+// The key's tonic as a pitch class 0-11 (minor and modal keys included),
+// or null for a tune with no key.
+export function keyRoot(key) {
   if (!key || NATURALS[key.root] === undefined) return null;
-  if (key.mode && key.mode.toLowerCase().startsWith("m")) return null; // minor / modal: not these patterns // NOSONAR
   return (NATURALS[key.root] + (KEY_ACC[key.acc] || 0) + 12) % 12;
+}
+
+function keyTonic(key) {
+  if (key && key.mode && key.mode.toLowerCase().startsWith("m")) return null; // minor / modal: not these patterns // NOSONAR
+  return keyRoot(key);
 }
 
 function meterLength(staff) {
@@ -257,8 +273,12 @@ function matchAt(segments, i, progression, bar) {
 // progression with a `turnaround`, past that too.
 function lastSegmentOfStep(segments, from, progression, s, bar) {
   const step = progression.steps[s];
+  const next = progression.steps[s + 1];
   let at = from;
-  while (at + 2 < segments.length && isPassing(segments[at + 1], bar) && fitsStep(segments[at + 2], step)) at += 2;
+  // A short chord that is the next step itself (F | B♭ | F with a half-bar
+  // B♭) is that step, not an approach chord to this one.
+  const isApproach = (seg) => isPassing(seg, bar) && !(next && fitsStep(seg, next));
+  while (at + 2 < segments.length && isApproach(segments[at + 1]) && fitsStep(segments[at + 2], step)) at += 2;
   const turnaround = progression.turnaround;
   return turnaround && turnaround.step === s ? extendOverTurnaround(segments, at, step, turnaround) : at;
 }

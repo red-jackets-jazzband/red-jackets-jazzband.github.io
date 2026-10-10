@@ -129,34 +129,61 @@ function keyAccidentalMap(key) {
 }
 
 /*
-  One fingering per note onset of the tune's first voice: a tied
-  continuation keeps the fingering already printed, a chord takes its top
-  note (the melody), and a rest or a note outside the chart gets nothing.
+  The top printed note of a note element — a chord takes its top note (the
+  melody) — as { midi, pitch }, or null for a rest, a non-note or a note
+  outside the clefs we know. `state` is walkMelody's. Always reads every
+  pitch of the element, so the bar's accidentals stay current.
 */
-function staffFingerings(staff, instrument, out) {
-  let keyAccidentals = keyAccidentalMap(staff.key);
-  let barAccidentals = new Map();
-  const clef = staff.clef ? staff.clef.type : "treble";
-  (staff.voices[0] || []).forEach((el) => {
-    if (el.el_type === "bar") barAccidentals = new Map();
-    if (el.el_type === "keySignature") keyAccidentals = keyAccidentalMap(el);
-    if (el.el_type !== "note" || el.rest || !el.pitches || el.pitches.length === 0) return;
-    let top = null;
-    for (const pitch of el.pitches) {
-      const midi = noteMidi(pitch, clef, keyAccidentals, barAccidentals);
-      if (midi !== null && (top === null || midi > top.midi)) top = { midi, pitch };
-    }
-    if (top === null || top.pitch.endTie) return;
-    const text = fingeringFor(instrument, top.midi);
-    if (text !== null) out.push({ startChar: el.startChar, text });
+export function topNote(el, state) {
+  if (el.el_type !== "note" || el.rest || !el.pitches || el.pitches.length === 0) return null;
+  let top = null;
+  for (const pitch of el.pitches) {
+    const midi = noteMidi(pitch, state.clef, state.keyAccidentals, state.barAccidentals);
+    if (midi !== null && (top === null || midi > top.midi)) top = { midi, pitch };
+  }
+  return top;
+}
+
+/*
+  Call visit(el, state) for every element of the tune's first voice, in
+  order, across every printed line. `state` is { key, clef, keyAccidentals,
+  barAccidentals } as it stands at that element: the staff's key (changed
+  by a mid-tune key signature) and the accidentals earlier in the bar.
+*/
+export function walkMelody(song, visit) {
+  song.lines.forEach((line) => {
+    const staff = line.staff && line.staff[0]; // NOSONAR
+    if (!staff || !staff.voices) return; // NOSONAR
+    const state = {
+      key: staff.key,
+      clef: staff.clef ? staff.clef.type : "treble",
+      keyAccidentals: keyAccidentalMap(staff.key),
+      barAccidentals: new Map(),
+    };
+    (staff.voices[0] || []).forEach((el) => {
+      if (el.el_type === "bar") state.barAccidentals = new Map();
+      if (el.el_type === "keySignature") {
+        state.key = el;
+        state.keyAccidentals = keyAccidentalMap(el);
+      }
+      visit(el, state);
+    });
   });
 }
 
+/*
+  One fingering per note onset of the tune's first voice: a tied
+  continuation keeps the fingering already printed, and a rest or a note
+  outside the chart gets nothing.
+*/
 export function melodyFingerings(song, instrument) {
   const out = [];
   if (!instrumentHasFingerings(instrument)) return out;
-  song.lines.forEach((line) => {
-    if (line.staff && line.staff[0] && line.staff[0].voices) staffFingerings(line.staff[0], instrument, out); // NOSONAR
+  walkMelody(song, (el, state) => {
+    const top = topNote(el, state);
+    if (top === null || top.pitch.endTie) return;
+    const text = fingeringFor(instrument, top.midi);
+    if (text !== null) out.push({ startChar: el.startChar, text });
   });
   return out;
 }

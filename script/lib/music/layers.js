@@ -22,6 +22,7 @@
 */
 import { fingeringGlyphs, instrumentHasFingerings, melodyFingerings } from "./fingerings.js";
 import { findNamedProgressions, progressionLabel } from "./progressions.js";
+import { degreeText, melodyDegrees } from "./scale-degrees.js";
 
 export const LAYERS = [
   {
@@ -38,6 +39,15 @@ export const LAYERS = [
         .filter((match) => match.lineStarts.length > 0)
         .map((match) => ({ startChar: match.lineStarts[0], text: `_${progressionLabel(match.name)}` }));
     },
+  },
+  {
+    id: "scale-degrees",
+    group: "Melody",
+    label: "Scale degrees",
+    hint: "Each note's number in the key (1-7), with the notes of the chord under it circled.",
+    credit: { prefix: "Method from David Reed's ", text: "Improvise for Real", href: "https://www.improviseforreal.com/" },
+    availableFor: () => true,
+    annotate: (song) => melodyDegrees(song).map((d) => ({ startChar: d.startChar, text: `_${degreeText(d.degree, d.tone)}` })),
   },
   {
     id: "fingerings",
@@ -90,8 +100,9 @@ export function annotateLayers(text, song, { active, instrument, ownVoices = fal
   const context = { instrument, progressions };
   const annotations = [];
   // Below-the-staff annotations stack in the order they're written: the
-  // fingerings first (closest to the notes), then the progression band.
-  const writeOrder = ["fingerings", "progressions"];
+  // fingerings first (closest to the notes), then the scale degrees, then the
+  // progression band.
+  const writeOrder = ["fingerings", "scale-degrees", "progressions"];
   layers
     .slice()
     .sort((a, b) => writeOrder.indexOf(a.id) - writeOrder.indexOf(b.id))

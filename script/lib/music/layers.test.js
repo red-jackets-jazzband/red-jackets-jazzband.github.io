@@ -9,7 +9,7 @@ const TEXT = 'X:1\nM:4/4\nL:1/4\nK:C\n"A7" E4 | "D7" E4 | "G7" E4 | "C" E4 |\n';
 const parse = (text) => ABCJS.parseOnly(text)[0];
 
 test("every layer has what the panel and the plan need", () => {
-  assert.deepEqual(LAYER_IDS, ["progressions", "fingerings"]);
+  assert.deepEqual(LAYER_IDS, ["progressions", "scale-degrees", "fingerings"]);
   LAYERS.forEach((layer) => {
     assert.equal(typeof layer.label, "string");
     assert.equal(typeof layer.hint, "string");

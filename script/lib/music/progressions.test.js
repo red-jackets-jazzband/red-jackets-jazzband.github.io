@@ -79,6 +79,14 @@ test("Apple Tree only counts as an opening", () => {
   assert.deepEqual(names(parse('"F7" A4 | "Bb" B4 | "Eb" G4 | "Bb" F4 |')), []);
 });
 
+test("Apple Tree is just I IV I, not the V that follows (Just a Little While)", () => {
+  const song = parse('P:A\n"F" A4 | A2 "Bb" B2 | "F" A4 | A4 | A4 | A2 "C7" G2 | "F" F4 |', "M:4/4\nL:1/4\nK:F");
+  const found = findNamedProgressions(song);
+  assert.deepEqual(found.map((m) => m.name), ["Apple Tree"]);
+  assert.deepEqual([found[0].startNote, found[0].endNote], [0, 4]);
+  assert.deepEqual(found[0].chordNotes, [0, 2, 3]);
+});
+
 test("a chord change faster than a bar isn't a named progression", () => {
   assert.deepEqual(names(parse('"G7" D2 "C7" D2 | "F7" D2 "Bb" D2 |')), []);
 });

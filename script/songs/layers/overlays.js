@@ -8,6 +8,9 @@
     printed line, and its name is written in the same bar just before the
     first chord, over two lines ("Salty Dog" / "progression") — each name
     in its own warm shade;
+  - scale degrees ("\u25CF3", "\u25CB\u266D7": lib/music/scale-degrees.js) lose their
+    marker and sit centred under the note, a chord tone inside a green
+    circle (as in Improvise for Real) and any other note bare;
   - fingering numbers get their own class, so split.css sets them upright
     and bold instead of the italic annotation face, and are centred under
     their notehead (ABCjs starts an annotation at the note's left edge).
@@ -17,6 +20,7 @@
 */
 
 import { PROGRESSION_WORD, progressionLabel } from "../../lib/music/progressions.js";
+import { parseDegreeText } from "../../lib/music/scale-degrees.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const FINGERING_TEXT = /^(?:[0-7]{1,3}|\u00B7)$/;
@@ -379,8 +383,40 @@ function styleFingerings(notationEl) {
   });
 }
 
+const DEGREE_PAD = 1.6;
+
+// The circle round a chord tone's number.
+function drawDegreeShape(text) {
+  const box = bboxOf(text);
+  const centre = noteheadCentre(text);
+  if (!box || centre === null || !text.parentNode) return;
+  const radius = Math.max(box.width, box.height) / 2 + DEGREE_PAD;
+  const shape = svgEl("circle", {
+    class: "rj-layer-degree-circle",
+    cx: centre,
+    cy: box.y + box.height / 2,
+    r: radius,
+  });
+  text.parentNode.insertBefore(shape, text);
+}
+
+function styleDegrees(notationEl) {
+  notationEl.querySelectorAll(".abcjs-annotation").forEach((text) => {
+    const parsed = parseDegreeText(text.textContent.trim());
+    if (parsed === null) return;
+    text.textContent = parsed.degree;
+    text.classList.add("rj-layer-degree", `rj-layer-degree--${parsed.tone}`);
+    const centre = typeof text.getBBox === "function" ? noteheadCentre(text) : null;
+    if (centre === null) return;
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("x", String(centre));
+    if (parsed.tone === "chord") drawDegreeShape(text);
+  });
+}
+
 export function decorateLayers(notationEl, visualObj, plan) {
   if (!notationEl || !visualObj) return;
   if (plan.progressions && plan.progressions.length > 0) drawProgressions(visualObj, plan.progressions);
   if (plan.layersApplied && plan.layersApplied.includes("fingerings")) styleFingerings(notationEl); // NOSONAR
+  if (plan.layersApplied && plan.layersApplied.includes("scale-degrees")) styleDegrees(notationEl); // NOSONAR
 }
