@@ -17,7 +17,7 @@ topicInspiration: Luister naar opnames naast het leadsheet en herhaal een frase.
 topicMixer: Stel het volume van bas, akkoorden en elke partij in.
 topicSetlists: Maak, orden en print setlists voor een optreden.
 topicComping: Voeg een uitgeschreven begeleidingsbalk toe.
-topicLayers: Toon extra hulp op het leadsheet, zoals benoemde akkoordenreeksen en vingerzettingen.
+topicLayers: Toon extra hulp op het leadsheet, zoals benoemde akkoordenreeksen, trappen en vingerzettingen.
 topicsIntro: Zeven korte stops. Tik er een aan om erheen te gaan:
 railComping: Comping
 railSetlists: Sets
@@ -196,6 +196,12 @@ Traditionele jazz is opgebouwd uit een paar vaste akkoordpatronen met een naam, 
 
 ## sheet: Zie ze in het schema
 Elke reeks krijgt een gekleurde balk achter de akkoorden met de naam erin, en dezelfde reeks krijgt altijd dezelfde kleur. Kijk naar de tweede helft van deel B van Bill Bailey voor een Sunshine.
+
+## degrees: Nummer de melodie
+De laag **Scale degrees** schrijft onder elke melodienoot het nummer in de toonsoort: 1 is de grondtoon, 5 de kwint, en `♭3` of `♯4` voor een noot buiten de majeurtoonladder. Zo leert David Reed improviseren in *Improvise for Real*. Zet hem aan en kijk naar het leadsheet.
+
+## degrees-chart: Akkoordtonen zijn omcirkeld
+Een noot die bij het akkoord eronder hoort, dus de grondtoon, terts, kwint of septiem, heeft zijn nummer in een **magenta cirkel**. Nummers zonder cirkel zijn doorgangsnoten en kleur. Mik op de omcirkelde op de sterke tellen en gebruik de andere als stapjes ertussen.
 
 ## fingerings: Vingerzettingen voor koper
 Voor **Trompet**, **Trombone** en **Sousafoon** schrijft dit de ventielcombinatie of schuifpositie onder elke noot. Voor andere instrumenten is het uitgegrijsd, kies dus eerst een koperinstrument onder **Instrument**.

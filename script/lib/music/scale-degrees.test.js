@@ -4,6 +4,7 @@ import ABCJS from "abcjs";
 import {
   chordTones, degreeName, degreeText, melodyDegrees, parseDegreeText,
 } from "./scale-degrees.js";
+import { topNote, walkMelody } from "./fingerings.js";
 import { resolveTranspose } from "./render-plan.js";
 
 const parse = (body, key = "C") => ABCJS.parseOnly(`X:1\nM:4/4\nL:1/4\nK:${key}\n${body}\n`)[0];
@@ -69,4 +70,29 @@ test("annotation text round-trips through degreeText / parseDegreeText", () => {
   assert.deepEqual(parseDegreeText(degreeText("1", "none")), { tone: "none", degree: "1" });
   assert.equal(parseDegreeText("3"), null);
   assert.equal(parseDegreeText("Salty Dog progression"), null);
+});
+
+test("chordTones: a maj6 chord's sixth is a chord tone", () => {
+  assert.ok(chordTones("Cmaj6").has(9));
+  assert.ok(chordTones("Cm6").has(9));
+});
+
+test("N.C. clears the chord, so no note under it is a chord tone", () => {
+  const song = parse('"C" C "N.C." E "G" G');
+  assert.deepEqual(summary(song), ["1:chord", "3:none", "5:chord"]);
+});
+
+test("an inline key change moves the tonic from there on", () => {
+  const song = parse("C D | [K:G] G A", "C");
+  assert.deepEqual(summary(song), ["1:none", "2:none", "1:none", "2:none"]);
+});
+
+test("an inline clef change is followed, so the same note keeps its pitch", () => {
+  const midis = [];
+  walkMelody(parse("C | [K:C clef=bass] C"), (el, state) => {
+    const top = topNote(el, state);
+    if (top !== null) midis.push(top.midi);
+  });
+  assert.equal(midis.length, 2);
+  assert.equal(midis[0], midis[1], "C is middle C in either clef");
 });

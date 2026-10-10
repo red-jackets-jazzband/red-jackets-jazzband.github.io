@@ -17,7 +17,7 @@ topicInspiration: Aufnahmen neben dem Leadsheet anhören und eine Phrase wiederh
 topicMixer: Die Lautstärke von Bass, Akkorden und jeder Stimme einstellen.
 topicSetlists: Setlists für einen Gig erstellen, ordnen und drucken.
 topicComping: Eine ausgeschriebene Begleitstimme hinzufügen.
-topicLayers: Zusatzhilfen im Leadsheet anzeigen, etwa benannte Verläufe und Griffe.
+topicLayers: Zusatzhilfen im Leadsheet anzeigen, etwa benannte Verläufe, Stufen und Griffe.
 topicsIntro: Sieben kurze Stationen. Tipp auf eine, um hinzuspringen:
 railComping: Comping
 railSetlists: Sets
@@ -196,6 +196,12 @@ Traditioneller Jazz besteht aus ein paar festen Akkordmustern mit Namen, etwa de
 
 ## sheet: Sie im Notenbild sehen
 Jeder Verlauf bekommt einen farbigen Balken hinter seinen Akkorden mit seinem Namen, und derselbe Verlauf hat immer dieselbe Farbe. Schau dir die zweite Hälfte von Teil B in Bill Bailey an, dort steht ein Sunshine.
+
+## degrees: Die Melodie nummerieren
+Die Ebene **Scale degrees** schreibt unter jede Melodienote ihre Nummer in der Tonart: 1 ist der Grundton, 5 die Quinte, und `♭3` oder `♯4` für eine Note außerhalb der Dur-Tonleiter. So lehrt David Reed das Improvisieren in *Improvise for Real*. Schalte sie ein und schau aufs Leadsheet.
+
+## degrees-chart: Akkordtöne sind eingekreist
+Eine Note, die zum darunter klingenden Akkord gehört, also Grundton, Terz, Quinte oder Septime, hat ihre Nummer in einem **magentafarbenen Kreis**. Nummern ohne Kreis sind Durchgangsnoten und Farbe. Ziele auf den betonten Zählzeiten auf die eingekreisten und nutze die anderen als Schritte dazwischen.
 
 ## fingerings: Griffe für Blech
 Für **Trompete**, **Posaune** und **Sousaphon** schreibt das die Ventilkombination oder Zugposition unter jede Note. Für andere Instrumente ist es ausgegraut, wähle also zuerst unter **Instrument** ein Blechblasinstrument.

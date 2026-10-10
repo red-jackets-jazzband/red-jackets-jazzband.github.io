@@ -17,7 +17,7 @@ topicInspiration: Écouter des enregistrements à côté de la grille et boucler
 topicMixer: Régler le volume de la basse, des accords et de chaque partie.
 topicSetlists: Créer, ordonner et imprimer des setlists pour un concert.
 topicComping: Ajouter une portée d'accompagnement écrite.
-topicLayers: Afficher une aide en plus sur la grille, comme les progressions nommées et les doigtés.
+topicLayers: Afficher une aide en plus sur la grille, comme les progressions nommées, les degrés et les doigtés.
 topicsIntro: Sept petites étapes. Touchez-en une pour y aller :
 railComping: Comping
 railSetlists: Sets
@@ -196,6 +196,12 @@ Le jazz traditionnel repose sur quelques enchaînements d'accords classiques qui
 
 ## sheet: Les voir sur la grille
 Chaque progression reçoit une bande colorée derrière ses accords avec son nom, et la même progression a toujours la même couleur. Regardez la seconde moitié de la partie B de Bill Bailey pour un Sunshine.
+
+## degrees: Numéroter la mélodie
+La couche **Scale degrees** écrit sous chaque note de la mélodie son numéro dans la tonalité : 1 est la tonique, 5 la quinte, et `♭3` ou `♯4` pour une note hors de la gamme majeure. C'est ainsi que David Reed enseigne l'improvisation dans *Improvise for Real*. Activez-la et regardez la grille.
+
+## degrees-chart: Les notes de l'accord sont entourées
+Une note qui appartient à l'accord qui sonne dessous, donc sa fondamentale, sa tierce, sa quinte ou sa septième, a son numéro dans un **cercle magenta**. Les numéros sans cercle sont des notes de passage et de couleur. Visez les notes entourées sur les temps forts et prenez les autres comme pas entre elles.
 
 ## fingerings: Doigtés pour les cuivres
 Pour la **trompette**, le **trombone** et le **sousaphone**, cela écrit la combinaison de pistons ou la position de coulisse sous chaque note. Il est grisé pour les autres instruments, choisissez donc d'abord un cuivre sous **Instrument**.

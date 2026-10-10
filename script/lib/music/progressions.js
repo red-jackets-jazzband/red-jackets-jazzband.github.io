@@ -208,7 +208,7 @@ function startSegment(el, symbol, lineIndex, state) {
 
 function readElement(el, lineIndex, state) {
   if (el.el_type === "part") state.partStart = true;
-  if (el.el_type === "keySignature") state.tonic = keyTonic(el);
+  if (el.el_type === "key") state.tonic = keyTonic(el);
   const name = chordName(el);
   const symbol = name === null ? null : parseChordSymbol(name);
   if (symbol) startSegment(el, symbol, lineIndex, state);

@@ -17,7 +17,7 @@ topicInspiration: Listen to recordings alongside the sheet and loop a phrase.
 topicMixer: Set the level of bass, chords and each part.
 topicSetlists: Build, order and print setlists for a gig.
 topicComping: Add a written-out accompaniment staff.
-topicLayers: Show extra help on the sheet, like named progressions and fingerings.
+topicLayers: Show extra help on the sheet, like named progressions, scale degrees and fingerings.
 topicsIntro: Seven short stops. Tap one to jump there:
 railComping: Comp
 railSetlists: Sets
@@ -320,6 +320,17 @@ Traditional jazz is built from a few stock chord patterns with names, like the *
 setup: openDemoSong, layerProgressionsOn
 target: .rj-layer-prog-band, #notation
 Each progression gets a coloured bar behind its chords with its name in it, and the same progression always gets the same colour. Look at the second half of the B part in Bill Bailey for a Sunshine.
+
+## degrees: Number the melody
+setup: openDemoSong, openLayers, layerScaleDegreesOn
+target: .rj-layer-row[data-layer="scale-degrees"]
+interactive: true
+The **Scale degrees** layer writes under every melody note its number in the key: 1 is the tonic, 5 the fifth, and `♭3` or `♯4` for a note outside the major scale. It's the way David Reed teaches improvising in *Improvise for Real*. Switch it on and watch the sheet.
+
+## degrees-chart: Chord tones are circled
+setup: openDemoSong, layerScaleDegreesOn
+target: .rj-layer-degree-circle, #notation
+A note that belongs to the chord sounding under it, so its root, third, fifth or seventh, has its number in a **magenta circle**. Numbers without a circle are passing notes and colour. Aim for the circled ones on strong beats and the others as steps between them.
 
 ## fingerings: Fingerings for brass
 setup: openDemoSong, openLayers

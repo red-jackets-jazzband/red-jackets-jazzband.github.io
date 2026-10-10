@@ -66,6 +66,7 @@ export const TOUR_ACTION_NAMES = [
   "openInspiration",
   "openLayers",
   "layerProgressionsOn",
+  "layerScaleDegreesOn",
   "compingOn",
   "compingSplit",
   "compingUnsplit",
@@ -324,6 +325,13 @@ export function createTourActions(ctx) {
     if (!activeLayers.progressions) ctx.store.set("layers", { activeLayers: { ...activeLayers, progressions: true } });
   }
 
+  // Same for the scale-degrees layer (numbers under the melody, chord tones
+  // circled).
+  function layerScaleDegreesOn() {
+    const { activeLayers } = ctx.store.get("layers");
+    if (!activeLayers["scale-degrees"]) ctx.store.set("layers", { activeLayers: { ...activeLayers, "scale-degrees": true } });
+  }
+
   // Make sure a comping pattern is on so the sheet shows the comping staff —
   // but never replace one the visitor picked themselves on the step before.
   // (Comping only renders while the More-controls drawer is open, so a step
@@ -345,6 +353,7 @@ export function createTourActions(ctx) {
     openInspiration,
     openLayers,
     layerProgressionsOn,
+    layerScaleDegreesOn,
     compingOn,
     compingSplit,
     compingUnsplit,

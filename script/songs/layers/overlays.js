@@ -9,7 +9,7 @@
     first chord, over two lines ("Salty Dog" / "progression") — each name
     in its own warm shade;
   - scale degrees ("\u25CF3", "\u25CB\u266D7": lib/music/scale-degrees.js) lose their
-    marker and sit centred under the note, a chord tone inside a green
+    marker and sit centred under the note, a chord tone inside a magenta
     circle (as in Improvise for Real) and any other note bare;
   - fingering numbers get their own class, so split.css sets them upright
     and bold instead of the italic annotation face, and are centred under

@@ -72,6 +72,13 @@ function triadOf(quality, rest) {
   return [0, third, fifth];
 }
 
+const SIXTH_PREFIXES = ["6", "m6", "min6", "-6", "maj6", "Maj6", "M6", "Δ6"];
+
+// A 6 chord (C6, Cm6, Cmaj6, C6/9): its sixth is a chord tone.
+function hasSixth(rest) {
+  return SIXTH_PREFIXES.some((p) => rest.startsWith(p)) || rest.includes("6/9");
+}
+
 export function chordTones(name) {
   const split = splitChordSymbol(name);
   const parsed = parseChordSymbol(name);
@@ -79,7 +86,7 @@ export function chordTones(name) {
   const { root, rest } = split;
   const intervals = triadOf(parsed.quality, rest);
   intervals.push(seventhOf(parsed.quality, rest));
-  if (rest.startsWith("6") || rest.startsWith("m6") || rest.includes("6/9")) intervals.push(9);
+  if (hasSixth(rest)) intervals.push(9);
   const tones = new Set(intervals.map((i) => (root + i) % 12));
   const bass = name.includes("/") ? parseChordSymbol(name.slice(name.indexOf("/") + 1)) : null;
   if (bass !== null) tones.add(bass.root);
@@ -91,12 +98,16 @@ function toneOf(pitchClass, chord) {
   return chord.has(pitchClass) ? "chord" : "other";
 }
 
+// "N.C." (no chord): nothing sounds under it, so no note is a chord tone.
+const NO_CHORD = /^n\.?c\.?$/i;
+
 export function melodyDegrees(song) {
   const out = [];
   let chord = null;
   walkMelody(song, (el, state) => {
     const name = chordName(el);
-    if (name !== null && parseChordSymbol(name) !== null) chord = chordTones(name);
+    if (name !== null && NO_CHORD.test(name)) chord = null;
+    else if (name !== null && parseChordSymbol(name) !== null) chord = chordTones(name);
     const tonic = keyRoot(state.key);
     const top = tonic === null ? null : topNote(el, state);
     if (top === null || top.pitch.endTie) return;
