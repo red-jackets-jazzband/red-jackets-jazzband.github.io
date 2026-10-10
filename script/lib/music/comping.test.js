@@ -200,17 +200,17 @@ test("buildVoiceBody keeps a genuine mid-tune M: field, not just header leakage"
   assert.equal(out.trim(), "B1 |\nM:3/4\n| B2 |");
 });
 
-test("buildVoiceBody carries a whole-line K: change as an inline field, not a bar", () => {
+test("buildVoiceBody carries a whole-line K: change as its own K: line, not a bar", () => {
   // do_you_know_what_it_means.abc modulates mid-tune with whole-line K: fields.
   const melody = '"C" c8 |\nK:Ebmaj\n"Eb" e8 |';
   const out = buildVoiceBody(melody, ["B1", "B2"], 0, "x8");
-  assert.equal(out.trim(), "B1 |\n[K:Ebmaj] B2 |");
+  assert.equal(out.trim(), "B1 |\nK:Ebmaj\nB2 |");
 });
 
 test("buildVoiceBody respells bars after a K: change for the new key", () => {
   const melody = '"C" c8 |\nK:Ebmaj\n"Eb" e8 |';
   const out = buildVoiceBody(melody, ["B1", "B2"], 0, "x8", undefined, undefined, (bar, key) => bar + "@" + key);
-  assert.equal(out.trim(), "B1 |\n[K:Ebmaj] B2@Ebmaj |");
+  assert.equal(out.trim(), "B1 |\nK:Ebmaj\nB2@Ebmaj |");
 });
 
 test("explicitBar then respellBar moves a bar between key signatures", () => {

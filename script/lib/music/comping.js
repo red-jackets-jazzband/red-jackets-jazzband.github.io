@@ -971,6 +971,24 @@ function segmentContent(segment, cfg, state) {
   return { content: subBarRest(segment, lnum, lden) || rest, isRest: true };
 }
 
+// A key change that began a line in the source goes back out as a whole
+// `K:` line, not an inline `[K:...]` field: abcjs transposes an inline key
+// field in the second voice onward a second time under a visual transpose
+// (Trumpet's +2 turned the comping staff's Eb section into G where the
+// melody read F), whereas a whole-line `K:` comes out right.
+function fieldsPrefix(leadWs, fieldList) {
+  const atLineStart = leadWs.includes("\n");
+  const keyLines = [];
+  const inline = [];
+  for (const f of fieldList) {
+    if (atLineStart && f.startsWith("[K:")) keyLines.push(f.slice(1, -1) + "\n");
+    else inline.push(f);
+  }
+  const fields = inline.length ? inline.join(" ") + " " : "";
+  if (!keyLines.length) return leadWs + fields;
+  return leadWs.trimEnd() + "\n" + keyLines.join("") + fields;
+}
+
 // The comping text for one note segment: its leading whitespace and inline
 // fields kept verbatim, then `content`.
 function renderSegment(segment, fieldList, { content, isRest }, lnum, lden) {
@@ -981,8 +999,7 @@ function renderSegment(segment, fieldList, { content, isRest }, lnum, lden) {
   // the melody does and the two staves stay in step — otherwise the first
   // pattern bar rides up onto the previous system.
   const innerBreak = !leadWs.includes("\n") && segment.includes("\n");
-  const inlineFields = fieldList.join(" ");
-  const prefix = leadWs + (inlineFields ? inlineFields + " " : "");
+  const prefix = fieldsPrefix(leadWs, fieldList);
   if (innerBreak && isRest && lnum && lden) {
     // The melody splits this measure across the line break; split the comping
     // rest at the same point (its slots before / after the newline) so the
