@@ -69,6 +69,7 @@ export const TUNE_SLICE = {
     hasChords: false,
     compingActive: false,
     soloActive: false,
+    practiceActive: false,
     // The tune's fully resolved Mixer voice list — lib/audio/audio-mix.js's
     // resolveMixerVoices.
     instrumentVoices: [],

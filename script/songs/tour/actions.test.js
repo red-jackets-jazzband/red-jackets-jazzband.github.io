@@ -274,6 +274,22 @@ test("compingSplit turns Split on (idempotently), and end() puts it back", async
   }
 });
 
+test("a step that doesn't ask for comping or practice has them off (they'd keep playing with the drawer closed)", async () => {
+  const { actions, ctx, cleanup } = setup({ state: { activeTab: "library" } });
+  try {
+    actions.begin();
+    await actions.apply(["openDemoSong", "openDrawer", "compingOn", "practiceOn"]);
+    assert.notEqual(ctx.state.comping, "off");
+    assert.notEqual(ctx.state.practice, "off");
+    await actions.apply(["openDemoSong"]);
+    assert.equal(ctx.state.comping, "off");
+    assert.equal(ctx.state.practice, "off");
+    actions.end();
+  } finally {
+    cleanup();
+  }
+});
+
 test("begin() silences playback; end() puts back the drawer, comping and the visitor's own song", async () => {
   const { actions, calls, ctx, cleanup } = setup({
     state: { currentSongFile: OWN_SONG_FILE, activeTab: "library" },

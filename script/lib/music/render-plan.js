@@ -29,25 +29,26 @@ const ROMAN_INSTRUMENT = "concert_+_roman";
 
 /*
   The settings slice (songs/sheet/state.js) as they apply to one render.
-  Comping, Solo and Practice live in the More-controls drawer: they only take effect
-  while it's open, on the live sheet (a booklet always prints the plain
-  chart), and Solo only once its picker exists (`soloEnabled`). Both also
-  need chords — buildRenderPlan checks that itself. The Key stepper is a
+  Comping, Solo and Practice are picked in the More-controls drawer but stay
+  on with it closed (its toggle then shows how many are on); they're live
+  sheet only (a booklet always prints the plain chart), and Solo only once
+  its picker exists (`soloEnabled`). All need chords — buildRenderPlan
+  checks that itself. The Key stepper is a
   live-sheet control too: a booklet's transposition comes only from its
   setlist row's own override. The Layers panel's switches (`layers`, the
   layers slice's activeLayers) are live-sheet only as well: a booklet prints
   the plain chart.
 */
 export function effectiveSheetSettings(settings, { booklet = false, layers = {} } = {}) {
-  const drawer = !booklet && settings.advancedOpen;
+  const live = !booklet;
   return {
     layers: booklet ? {} : layers,
     instrument: settings.instrument,
     transpose: booklet ? 0 : settings.transpose,
-    comping: drawer ? settings.comping : "off",
+    comping: live ? settings.comping : "off",
     compingParts: settings.compingSplit ? settings.compingParts : null,
-    solo: drawer && settings.soloEnabled ? settings.solo : "off",
-    practice: drawer && settings.practice ? settings.practice : "off",
+    solo: live && settings.soloEnabled ? settings.solo : "off",
+    practice: live && settings.practice ? settings.practice : "off",
     practiceOptions: { rhythm: settings.practiceRhythm },
   };
 }

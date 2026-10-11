@@ -23,34 +23,31 @@ const SETTINGS = {
   instrument: "concert_pitch",
   transpose: 0,
   advancedOpen: false,
-  comping: "charleston",
+  comping: "off",
   compingSplit: false,
   compingParts: [0, 1, 2],
   solo: "trumpet",
   soloEnabled: false,
 };
 
-test("effectiveSheetSettings: comping and solo only count while the drawer is open", () => {
-  assert.equal(effectiveSheetSettings(SETTINGS).comping, "off");
-  const open = effectiveSheetSettings({ ...SETTINGS, advancedOpen: true });
-  assert.equal(open.comping, "charleston");
-  assert.equal(open.solo, "off", "solo also needs its picker switched on");
-  assert.equal(effectiveSheetSettings({ ...SETTINGS, advancedOpen: true, soloEnabled: true }).solo, "trumpet");
-});
-
-test("effectiveSheetSettings: a practice exercise only counts while the drawer is open", () => {
-  const settings = { ...SETTINGS, practice: "scales" };
-  assert.equal(effectiveSheetSettings(settings).practice, "off");
-  assert.equal(effectiveSheetSettings({ ...settings, advancedOpen: true }).practice, "scales");
-  assert.equal(effectiveSheetSettings({ ...settings, advancedOpen: true }, { booklet: true }).practice, "off");
+test("effectiveSheetSettings: comping, solo and practice stay on with the drawer closed", () => {
+  const picked = { ...SETTINGS, comping: "charleston", practice: "scales" };
+  for (const advancedOpen of [false, true]) {
+    const live = effectiveSheetSettings({ ...picked, advancedOpen });
+    assert.equal(live.comping, "charleston");
+    assert.equal(live.practice, "scales");
+    assert.equal(live.solo, "off", "solo also needs its picker switched on");
+    assert.equal(effectiveSheetSettings({ ...picked, advancedOpen, soloEnabled: true }).solo, "trumpet");
+  }
+  assert.equal(effectiveSheetSettings(picked, { booklet: true }).practice, "off");
   assert.deepEqual(
-    effectiveSheetSettings({ ...settings, practiceRhythm: "pairs" }).practiceOptions,
+    effectiveSheetSettings({ ...SETTINGS, practiceRhythm: "pairs" }).practiceOptions,
     { rhythm: "pairs" },
   );
 });
 
 test("effectiveSheetSettings: a booklet ignores the Key stepper and the drawer", () => {
-  const booklet = effectiveSheetSettings({ ...SETTINGS, advancedOpen: true, transpose: 5 }, { booklet: true });
+  const booklet = effectiveSheetSettings({ ...SETTINGS, comping: "charleston", transpose: 5 }, { booklet: true });
   assert.equal(booklet.transpose, 0);
   assert.equal(booklet.comping, "off");
 });
@@ -114,9 +111,9 @@ test("buildRenderPlan: chords, chord table and no comping by default", () => {
   assert.equal(plan.song.metaText.title, "Test");
 });
 
-test("buildRenderPlan: an open drawer with a pattern adds the comping staff", () => {
+test("buildRenderPlan: a comping pattern adds the comping staff", () => {
   const plan = withTonal(() => buildRenderPlan(
-    CHORD_TUNE, effectiveSheetSettings({ ...SETTINGS, advancedOpen: true }), { parse },
+    CHORD_TUNE, effectiveSheetSettings({ ...SETTINGS, comping: "charleston" }), { parse },
   ));
   assert.equal(plan.comping.active, true);
   assert.notEqual(plan.comping.renderText, plan.abcText);
@@ -125,7 +122,7 @@ test("buildRenderPlan: an open drawer with a pattern adds the comping staff", ()
 });
 
 test("buildRenderPlan: a chordless tune never gets comping", () => {
-  const plan = buildRenderPlan(NO_CHORDS, effectiveSheetSettings({ ...SETTINGS, advancedOpen: true }), { parse });
+  const plan = buildRenderPlan(NO_CHORDS, effectiveSheetSettings({ ...SETTINGS, comping: "charleston" }), { parse });
   assert.equal(plan.hasChords, false);
   assert.equal(plan.comping.active, false);
 });

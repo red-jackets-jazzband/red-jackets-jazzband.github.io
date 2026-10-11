@@ -293,7 +293,7 @@ Play the runs **up**, **down**, **up and down**, or voice-led from chord to chor
 setup: openDrawer, openPractice, practiceOn
 target: .practice-choices--mixes
 interactive: true
-**Varied** changes the rhythm every two bars, **Syncopated** keeps to pushes and notes on the off-beat, and **One pattern** keeps a single rhythm throughout. Every fourth bar ends with a rest, so there's always room to breathe.
+**One pattern** keeps a single rhythm throughout, **Syncopated** keeps to pushes and notes on the off-beat, and **Varied** changes the rhythm every two bars. Every fourth bar ends with a rest, so there's always room to breathe.
 
 ## staff: Play along
 setup: openDrawer, practiceOn

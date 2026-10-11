@@ -395,6 +395,7 @@ export function createSheet(ctx) {
       hasChords: plan.hasChords,
       compingActive: plan.comping.active,
       soloActive: solo.program !== null,
+      practiceActive: practice.program !== null,
       instrumentVoices: voices,
       audioTranspose: plan.audioTranspose,
       chordOffset: plan.chordOffset,

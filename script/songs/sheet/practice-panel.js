@@ -1,6 +1,6 @@
-import { byId, el } from "../../lib/core/dom.js";
+import { byId, clear, el } from "../../lib/core/dom.js";
 import {
-  joinExercise, practiceSummary, PRACTICE_KINDS, PRACTICE_RHYTHM_MIXES, PRACTICE_RHYTHMS, PRACTICE_SHAPES,
+  joinExercise, practiceSummary, practiceSummaryParts, PRACTICE_KINDS, PRACTICE_RHYTHM_MIXES, PRACTICE_RHYTHMS, PRACTICE_SHAPES,
   splitExercise,
 } from "../../lib/music/practice.js";
 import { tl } from "../../lib/core/i18n.js";
@@ -12,7 +12,7 @@ import { tl } from "../../lib/core/i18n.js";
   button ("PRACTICE  Scale runs, Up & down · Syncopated rhythm"); the summary
   opens #practicePanel inline below it, three numbered steps read top to
   bottom: 1 what to play (PRACTICE_KINDS), 2 the run's shape (only for a
-  run kind), 3 rhythm (Varied / Syncopated / One pattern, the last opening a
+  run kind), 3 rhythm (One pattern / Syncopated / Varied, the first opening a
   grid of PRACTICE_RHYTHMS drawn as eight eighth-note cells), then a one-bar
   preview and Done. Any pick also switches practice on; the switch
   remembers the exercise it last turned off. sheet.js appends the exercise
@@ -91,8 +91,9 @@ function buildPanel() {
     contour(shape.points),
     el("span", { class: "practice-choice-label", text: shape.label }),
   ]));
-  const mixes = [...PRACTICE_RHYTHM_MIXES.map((mix) => ({ value: mix.value, label: mix.choice })),
-    { value: FIXED, label: tl("practice_mix_fixed", "One pattern") }]
+  // One pattern first, then the mixes the other way round: One pattern / Syncopated / Varied.
+  const mixes = [{ value: FIXED, label: tl("practice_mix_fixed", "One pattern") },
+    ...PRACTICE_RHYTHM_MIXES.map((mix) => ({ value: mix.value, label: mix.choice })).reverse()]
     .map((mix) => choice("practice-mix", mix.value, [el("span", { class: "practice-choice-label", text: mix.label })]));
   const patterns = PRACTICE_RHYTHMS.map((rhythm) => choice("practice-pattern", rhythm.value, [
     cellStrip(rhythm.cell),
@@ -124,10 +125,7 @@ function buildPanel() {
       patternGrid,
     ]),
     el("div", { class: "practice-foot" }, [
-      el("div", { class: "practice-foot-text" }, [
-        preview,
-        el("p", { class: "practice-breath", text: tl("practice_breath_note", "Breathes on the last beat of every 4th bar") }),
-      ]),
+      el("div", { class: "practice-foot-text" }, [preview]),
       done,
     ]),
   ]);
@@ -176,7 +174,21 @@ export function createPracticePanel(ctx) {
     const fixed = isPattern(rhythm);
     toggle.setAttribute("aria-pressed", on ? "true" : "false");
     toggle.classList.toggle("is-on", on);
-    summaryText.textContent = practiceSummary(ctx.state.practice, rhythm);
+    // Exercise and rhythm as two spans, so a phone can stack them (split.css);
+    // the full line is the button's tooltip.
+    const parts = practiceSummaryParts(ctx.state.practice, rhythm);
+    const line = practiceSummary(ctx.state.practice, rhythm);
+    summary.title = line;
+    clear(summaryText);
+    if (parts === null) {
+      summaryText.append(line);
+    } else {
+      summaryText.append(
+        el("span", { class: "practice-summary-what", text: parts.exercise }),
+        el("span", { class: "practice-summary-sep", text: " · " }),
+        el("span", { class: "practice-summary-rhythm", text: parts.rhythm }),
+      );
+    }
     markPressed(ui.kinds, on ? kind : null);
     markPressed(ui.shapes, on ? runs : null);
     markPressed(ui.mixes, fixed ? FIXED : rhythm);
@@ -199,6 +211,10 @@ export function createPracticePanel(ctx) {
     }
   });
   summary.addEventListener("click", () => setOpen(ui.panel.hidden));
+  // A click anywhere outside the control and its panel closes the panel.
+  document.addEventListener("click", (event) => {
+    if (!ui.panel.hidden && !slot.contains(event.target)) setOpen(false);
+  });
   ui.done.addEventListener("click", () => {
     setOpen(false);
     summary.focus();

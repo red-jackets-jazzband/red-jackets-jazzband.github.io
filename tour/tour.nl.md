@@ -182,7 +182,7 @@ Speel de loopjes **omhoog**, **omlaag**, **op en neer**, of stemvoerend van akko
 > Speel één vorm door de hele song, dan de volgende.
 
 ## rhythm: Voeg ritme en syncopen toe
-**Afwisselend** wisselt het ritme elke twee maten, **Gesyncopeerd** houdt het bij voorslagen en noten op de tel ertussen, en **Eén patroon** houdt één ritme vast. Elke vierde maat eindigt met een rust, zodat je altijd kunt ademen.
+**Eén patroon** houdt één ritme vast, **Gesyncopeerd** houdt het bij voorslagen en noten op de tel ertussen, en **Afwisselend** wisselt het ritme elke twee maten. Elke vierde maat eindigt met een rust, zodat je altijd kunt ademen.
 
 ## staff: Speel mee
 Druk op afspelen en de oefening klinkt mee met de song. In de mixer is het een eigen stem, **Oefening**, zodat je hem zachter kunt zetten zodra je hem kent, en hem zelf kunt spelen.

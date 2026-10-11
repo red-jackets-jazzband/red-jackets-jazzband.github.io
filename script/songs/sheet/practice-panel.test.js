@@ -6,6 +6,8 @@ import { PRACTICE_RHYTHMS } from "../../lib/music/practice.js";
 import { createPracticePanel } from "./practice-panel.js";
 
 const TOGGLE = "#practiceToggle";
+const PANEL = "#practicePanel";
+const SUMMARY = "#practiceSummary";
 const $ = (selector) => document.querySelector(selector);
 const click = (selector) => $(selector).dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
 // The values ticked in one group of choices ("kind", "shape", "mix", "pattern").
@@ -23,13 +25,27 @@ test("closed, practice is one control: a switch and a summary that opens the pan
   const { page } = setup();
   try {
     assert.equal($("#practiceSummaryText").textContent, "Off");
-    assert.equal($("#practicePanel").hidden, true);
+    assert.equal($(PANEL).hidden, true);
     assert.equal($("#practiceSlot").querySelectorAll("select").length, 0, "no dropdowns left");
-    click("#practiceSummary");
-    assert.equal($("#practicePanel").hidden, false);
-    assert.equal($("#practiceSummary").getAttribute("aria-expanded"), "true");
+    click(SUMMARY);
+    assert.equal($(PANEL).hidden, false);
+    assert.equal($(SUMMARY).getAttribute("aria-expanded"), "true");
     click("#practiceDone");
-    assert.equal($("#practicePanel").hidden, true);
+    assert.equal($(PANEL).hidden, true);
+  } finally {
+    page.cleanup();
+  }
+});
+
+test("a click outside the control and its panel closes the panel; one inside doesn't", () => {
+  const { page } = setup();
+  try {
+    click(SUMMARY);
+    click('.practice-kind[data-value="scales"]');
+    assert.equal($(PANEL).hidden, false, "a pick inside keeps it open");
+    document.body.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    assert.equal($(PANEL).hidden, true);
+    assert.equal($(SUMMARY).getAttribute("aria-expanded"), "false");
   } finally {
     page.cleanup();
   }
@@ -38,7 +54,7 @@ test("closed, practice is one control: a switch and a summary that opens the pan
 test("each step writes its own setting, and any pick switches practice on", () => {
   const { page, ctx, rerenders } = setup();
   try {
-    click("#practiceSummary");
+    click(SUMMARY);
     click('.practice-kind[data-value="arpeggios"]');
     assert.equal(ctx.state.practice, "scales-updown".replace("scales", "arpeggios"), "keeps the default shape");
     assert.equal(window.localStorage.getItem("rj.practice"), "arpeggios-updown");
@@ -104,9 +120,9 @@ test("the switch turns practice off and back on to the same exercise", () => {
 test("Escape inside the panel closes it", () => {
   const { page } = setup();
   try {
-    click("#practiceSummary");
+    click(SUMMARY);
     $(".practice-kind").dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-    assert.equal($("#practicePanel").hidden, true);
+    assert.equal($(PANEL).hidden, true);
   } finally {
     page.cleanup();
   }

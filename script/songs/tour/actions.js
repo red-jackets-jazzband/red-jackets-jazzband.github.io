@@ -411,6 +411,10 @@ export function createTourActions(ctx) {
     if (!names.includes("openInspiration")) ctx.inspiration.setOpen(false);
     if (!names.includes("openLayers")) ctx.layers.setOpen(false);
     if (!names.includes("openDrawer")) setDrawer(false);
+    // Comping and Practice keep playing with the drawer closed; the tour only
+    // has them on in the steps that ask (the visitor's own picks come back at the end).
+    if (!names.includes("compingOn") && ctx.state.comping !== "off") setSettings({ comping: "off" });
+    if (!names.includes("practiceOn") && ctx.state.practice !== "off") setSettings({ practice: "off" });
     if (!names.includes("openPractice")) closePractice();
     if (!names.includes("revealDemoSplit")) {
       document.querySelectorAll(`.${TOUR_REVEAL_SPLIT_CLASS}`)

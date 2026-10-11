@@ -182,7 +182,7 @@ Spiele die Läufe **aufwärts**, **abwärts**, **auf und ab** oder stimmführend
 > Spiel eine Form durch den ganzen Song, dann die nächste.
 
 ## rhythm: Rhythmus und Synkopen dazu
-**Wechselnd** wechselt den Rhythmus alle zwei Takte, **Synkopiert** bleibt bei Vorziehern und Noten auf der Zählzeit dazwischen, und **Ein Muster** hält einen Rhythmus durch. Jeder vierte Takt endet mit einer Pause, damit immer Zeit zum Atmen bleibt.
+**Ein Muster** hält einen Rhythmus durch, **Synkopiert** bleibt bei Vorziehern und Noten auf der Zählzeit dazwischen, und **Wechselnd** wechselt den Rhythmus alle zwei Takte. Jeder vierte Takt endet mit einer Pause, damit immer Zeit zum Atmen bleibt.
 
 ## staff: Mitspielen
 Drück auf Abspielen und die Übung klingt mit dem Song. Im Mixer ist sie eine eigene Stimme, **Übung**, sodass du sie leiser stellen kannst, sobald du sie kennst, und sie selbst spielst.

@@ -2,7 +2,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import ABCJS from "abcjs";
 import {
-  buildPracticeTune, joinExercise, practiceNotes, practiceSummary, PRACTICE_EXERCISES, PRACTICE_KINDS,
+  buildPracticeTune, joinExercise, practiceNotes, practiceSummary, practiceSummaryParts, PRACTICE_EXERCISES, PRACTICE_KINDS,
   PRACTICE_RHYTHM_MIXES, PRACTICE_RHYTHMS, PRACTICE_SHAPES, splitExercise,
   rhythmSlots,
 } from "./practice.js";
@@ -72,14 +72,95 @@ test("guide tones step to the nearest 3rd or 7th of the next chord", () => {
   for (const i of [2, 4]) assert.ok(Math.abs(notes[i].midi - notes[i - 1].midi) <= 2, `${notes[i].start}`);
 });
 
-test("an enclosure lands on the new chord from a step above and a half step below", () => {
-  const notes = practiceNotes([["F"], ["C7"]], "enclosures");
-  const target = notes.findIndex((n) => n.start === 4);
-  assert.ok(target >= 2);
-  assert.ok(C7_CHORD_TONES.has(mod12(notes[target].midi)));
-  assert.equal(notes[target - 1].midi, notes[target].midi - 1);
-  assert.ok(notes[target - 1].leadsUp);
-  assert.ok(notes[target - 2].midi > notes[target].midi);
+test("an enclosure opens each chord and lands on its target: a step above, a half step below", () => {
+  const notes = practiceNotes([["F"], ["C7"]], "enclosures", { rhythm: "eighths" });
+  [F_CHORD_TONES, C7_CHORD_TONES].forEach((tones, bar) => {
+    const [above, below, target] = notes.filter((n) => Math.floor(n.start / 4) === bar);
+    assert.equal(target.start, bar * 4 + 1, "the target is the chord's third note, on a beat");
+    assert.ok(tones.has(mod12(target.midi)), `${target.midi} is a chord tone`);
+    assert.equal(below.midi, target.midi - 1);
+    assert.ok(below.leadsUp);
+    assert.ok(above.midi > target.midi && above.midi - target.midi <= 2);
+  });
+});
+
+test("an enclosure's target takes the long note: on a long downbeat it's enclosed from the bar before", () => {
+  // Three against four: the dotted quarter on 1 is the target, the bar
+  // before's last two notes enclose it.
+  const notes = practiceNotes([["F"], ["C7"]], "enclosures", { rhythm: "threefour", breathEvery: 0 });
+  const at = notes.findIndex((n) => n.start === 4);
+  assert.ok(C7_CHORD_TONES.has(mod12(notes[at].midi)));
+  assert.equal(notes[at].duration, 1.5);
+  assert.equal(notes[at - 1].midi, notes[at].midi - 1);
+  assert.ok(notes[at - 2].midi > notes[at].midi);
+  // A Charleston leaves no room before its long note: the target alone.
+  const charleston = practiceNotes([["F"], ["C7"]], "enclosures", { rhythm: "charleston", breathEvery: 0 });
+  const held = charleston.find((n) => n.start === 4);
+  assert.ok(C7_CHORD_TONES.has(mod12(held.midi)));
+  assert.equal(held.duration, 1.5);
+});
+
+test("scale runs keep chord tones on the beats, whatever the rhythm", () => {
+  for (const exercise of PRACTICE_EXERCISES.filter((e) => splitExercise(e).kind === "scales")) {
+    for (const rhythm of PRACTICE_RHYTHMS.filter((r) => r.run)) {
+      const notes = practiceNotes([["F"], ["F"], ["F"], ["F"]], exercise, { rhythm: rhythm.value, breathEvery: 0 });
+      for (const n of notes.filter((note) => Number.isInteger(note.start))) {
+        assert.ok(F_CHORD_TONES.has(mod12(n.midi)), `${exercise} ${rhythm.value}: ${n.midi} on beat ${n.start}`);
+      }
+    }
+  }
+});
+
+test("enclosures: no note before the enclosure plays the target", () => {
+  for (const rhythm of PRACTICE_RHYTHMS.filter((r) => r.run)) {
+    const notes = practiceNotes([["F"], ["C7"]], "enclosures", { rhythm: rhythm.value, breathEvery: 0 });
+    const bar = notes.filter((n) => n.start >= 4 && n.start < 8);
+    const target = bar.findIndex((n, i) => i >= 2 && bar[i - 1].midi === n.midi - 1);
+    for (const n of bar.slice(0, Math.max(0, target - 2))) assert.notEqual(n.midi, bar[target].midi, rhythm.value);
+  }
+});
+
+test("guide tones: the 7th falls a half step onto the next 3rd, on the downbeat", () => {
+  const notes = practiceNotes([["Dm7"], ["G7"], ["C"], ["C"]], "guide", { rhythm: "halves", breathEvery: 0 });
+  const at = (beat) => notes.find((n) => n.start === beat).midi;
+  assert.equal(at(4) - at(2), -1, "C (Dm7's 7th) to B (G7's 3rd)");
+  assert.equal(at(8) - at(6), -1, "F (G7's 7th) to E (C's 3rd)");
+});
+
+test("the tune's key reaches the scales: E7 in A minor runs with F and C", () => {
+  const minor = `X:1
+T:Minor
+M:4/4
+L:1/8
+K:Am
+A8|E8|]
+`;
+  withRealTonal(() => {
+    const song = ABCJS.parseOnly(minor)[0];
+    const { notes } = buildPracticeTune(minor, chordsOf(["Am"], ["E7"]), song, "scales", { rhythm: "eighths", breathEvery: 0 });
+    const overE7 = new Set(notes.filter((n) => n.start >= 4).map((n) => mod12(n.midi)));
+    assert.ok(overE7.has(5) && overE7.has(0), "F and C");
+    assert.ok(!overE7.has(6) && !overE7.has(1), "never F# or C#");
+  });
+});
+
+test("every exercise ends on the key's tonic when the last chord holds it", () => {
+  const names = [["F"], ["C7"], ["Gm7"], ["F"]];
+  for (const exercise of PRACTICE_EXERCISES) {
+    const notes = practiceNotes(names, exercise, { breathEvery: 0, tonic: 5 });
+    assert.equal(mod12(notes[notes.length - 1].midi), 5, exercise);
+  }
+  // A tune ending on its dominant doesn't: C7 has no F.
+  const open = practiceNotes([["F"], ["C7"]], "guide", { breathEvery: 0, tonic: 5 });
+  assert.notEqual(mod12(open[open.length - 1].midi), 5);
+});
+
+test("an enclosure's last target is the tonic, enclosed like any other", () => {
+  const notes = practiceNotes([["F"], ["C7"]], "enclosures", { rhythm: "eighths", breathEvery: 0, tonic: 0 });
+  const bar = notes.filter((n) => n.start >= 4);
+  assert.equal(mod12(bar[2].midi), 0, "C, the tonic, is C7's root");
+  assert.equal(bar[1].midi, bar[2].midi - 1);
+  assert.ok(bar[0].midi > bar[2].midi);
 });
 
 test("a chromatic note leading up is spelled sharp", () => {
@@ -211,6 +292,23 @@ test("runs: up-then-down climbs to the octave and back over eight notes", () => 
   assert.deepEqual(scale, [65, 67, 69, 70, 72, 70, 69, 67]);
 });
 
+test("runs: up-then-down with too few notes per chord goes up one bar, down the next", () => {
+  const names = [["F"], ["F"], ["F"], ["F"]];
+  for (const exercise of ["arpeggios-updown", SCALES_UPDOWN]) {
+    const notes = practiceNotes(names, exercise, { rhythm: "charleston", breathEvery: 0 });
+    [0, 1, 2, 3].forEach((bar) => {
+      const [first, second] = notes.filter((n) => Math.floor(n.start / 4) === bar).map((n) => n.midi);
+      if (bar % 2 === 0) {
+        assert.equal(first, 65, `${exercise} bar ${bar} starts on the root`);
+        assert.ok(second > first, `${exercise} bar ${bar} goes up`);
+      } else {
+        assert.equal(first, 77, `${exercise} bar ${bar} starts on the octave`);
+        assert.ok(second < first, `${exercise} bar ${bar} comes down`);
+      }
+    });
+  }
+});
+
 test("runs: a fixed shape stays within one octave of a root on the staff", () => {
   const names = [["F"], ["C7"], ["Bb"], ["G7"], ["Eb"], ["Ab"], ["D7"], ["A"]];
   for (const exercise of ["arpeggios", "scales"]) {
@@ -279,9 +377,10 @@ test("up-then-down turns its last note back towards the next chord, by a scale s
   // Into the same chord again the run already steps onto its root: C stays.
   const again = practiceNotes([["Bb"], ["Bb"]], SCALES_UPDOWN, { rhythm: "eighths", breathEvery: 0 });
   assert.equal(again[7].midi, 60);
-  // Always up / down keep going their way and jump.
+  // Always up / down keep going their way and jump; G (Bb's 6th) is put off
+  // by an F# so it lands on beat 4, not on the "and".
   const up = practiceNotes([["Bb"], ["F7"]], "scales-up", { rhythm: "eighths", breathEvery: 0 });
-  assert.deepEqual(up.slice(0, 8).map((n) => n.midi), [58, 60, 62, 63, 65, 67, 69, 70]);
+  assert.deepEqual(up.slice(0, 8).map((n) => n.midi), [58, 60, 62, 63, 65, 66, 67, 69]);
 });
 
 // Whether a bar's rhythm is syncopated: a note on an "and" whose next beat
@@ -328,6 +427,13 @@ test("the panel's kinds and shapes join into exercise values and back", () => {
     const { kind, runs } = splitExercise(value);
     assert.equal(joinExercise(kind, runs), value);
   }
+});
+
+test("practiceSummaryParts: the exercise and its rhythm apart, for a phone to stack", () => {
+  assert.equal(practiceSummaryParts("off", "varied"), null);
+  assert.deepEqual(practiceSummaryParts(SCALES_UPDOWN, "halfanticipate"), {
+    exercise: "Scale runs, Up & down", rhythm: "Half note, anticipate",
+  });
 });
 
 test("practiceSummary: one line for the closed control", () => {

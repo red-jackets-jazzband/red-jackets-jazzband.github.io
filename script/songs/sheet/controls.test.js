@@ -134,6 +134,26 @@ test("the advanced toggle flips #sheetmenu, persists and re-renders", () => {
   }
 });
 
+test("a closed drawer's toggle counts the extra staves still on; an open one shows none", () => {
+  const { ctx, cleanup } = setup();
+  try {
+    const btn = document.getElementById("advancedToggleBtn");
+    const badge = btn.querySelector(".sheet-advanced-badge");
+    assert.equal(badge.hidden, true, "nothing on, no badge");
+    ctx.store.set("tune", { practiceActive: true });
+    assert.equal(badge.hidden, false);
+    assert.equal(badge.textContent, "1");
+    assert.equal(btn.title, "More controls (1 on)");
+    ctx.store.set("tune", { compingActive: true });
+    assert.equal(badge.textContent, "2");
+    btn.dispatchEvent(new window.Event("click"));
+    assert.equal(badge.hidden, true, "the drawer is open: the pickers are in view");
+  } finally {
+    window.localStorage.clear();
+    cleanup();
+  }
+});
+
 test("the back button leaves the sheet view", () => {
   const { cleanup } = setup();
   try {

@@ -1,4 +1,4 @@
-import { byId, on } from "../../lib/core/dom.js";
+import { byId, el, on } from "../../lib/core/dom.js";
 import { TEMPO_STEP } from "../../lib/music/tempo.js";
 import { tl } from "../../lib/core/i18n.js";
 
@@ -59,22 +59,35 @@ function stepNumericField(id, delta, fallback) {
 }
 
 // The double-chevron button that reveals the "advanced" controls (the
-// comping dropdown, the Repeat stepper). A view of ctx.state.advancedOpen
-// (sticky), drawn as `.show-advanced` on #sheetmenu; toggling re-renders so
-// the comping staff appears with it.
+// comping, solo and practice pickers, the Repeat stepper). A view of
+// ctx.state.advancedOpen (sticky), drawn as `.show-advanced` on #sheetmenu.
+// What's picked there keeps playing with the drawer closed, so a closed
+// drawer's button carries a small gold badge counting the extra staves on
+// the sheet (Comping, Solo, Practice) — a reminder of where they're switched.
 function initAdvancedToggle(ctx) {
   const btn = byId("advancedToggleBtn");
   const menu = byId("sheetmenu");
   if (!btn || !menu) return;
+  const badge = el("span", { class: "sheet-advanced-badge", attrs: { "aria-hidden": "true" } });
+  badge.hidden = true;
+  btn.append(badge);
 
   const draw = () => {
     const open = ctx.state.advancedOpen;
+    const { compingActive, soloActive, practiceActive } = ctx.state;
+    const active = [compingActive, soloActive, practiceActive].filter(Boolean).length;
     menu.classList.toggle("show-advanced", open);
     btn.setAttribute("aria-expanded", open ? "true" : "false");
-    btn.title = open ? tl("controls_fewer", "Fewer controls") : tl("controls_more", "More controls");
+    badge.hidden = open || active === 0;
+    badge.textContent = String(active);
+    let title = tl("controls_more", "More controls");
+    if (open) title = tl("controls_fewer", "Fewer controls");
+    else if (active > 0) title = tl("controls_more_active", "More controls ({count} on)", { count: active });
+    btn.title = title;
   };
   draw();
   ctx.store.subscribe("settings", draw);
+  ctx.store.subscribe("tune", draw);
 
   btn.addEventListener("click", () => {
     ctx.state.advancedOpen = !ctx.state.advancedOpen;
