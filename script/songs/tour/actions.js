@@ -71,6 +71,8 @@ export const TOUR_ACTION_NAMES = [
   "compingOn",
   "compingSplit",
   "compingUnsplit",
+  "openPractice",
+  "practiceOn",
   "createDemoSetlist",
   "addDemoSong1",
   "addDemoSong2",
@@ -80,7 +82,24 @@ export const TOUR_ACTION_NAMES = [
   "revealDemoSplit",
 ];
 
+// The exercise the "Learning a tune" chapter switches on when none is set:
+// scale runs, up to the octave and back over every chord.
+const PRACTICE_DEMO_EXERCISE = "scales-updown";
+
 const SHEET_ACTIVE_CLASS = "rj-sheet-active";
+
+// The practice routine panel (songs/sheet/practice-panel.js), opened and
+// closed the way a visitor does it: its summary button, its Done button.
+async function openPractice() {
+  const panel = byId("practicePanel");
+  const summary = byId("practiceSummary");
+  if (panel && panel.hidden && summary) summary.click();
+}
+function closePractice() {
+  const panel = byId("practicePanel");
+  const done = byId("practiceDone");
+  if (panel && !panel.hidden && done) done.click();
+}
 const FULLSCREEN_CLASS = "rj-sheet-fullscreen";
 const SONG_WAIT_MS = 6000;
 const SETLIST_WAIT_MS = 5000;
@@ -351,6 +370,13 @@ export function createTourActions(ctx) {
     }
   }
 
+  // An exercise on, so the Practice staff shows — but never one the visitor
+  // picked themselves on the step before. (It only renders while the
+  // More-controls drawer is open, so a step using this also says `openDrawer`.)
+  async function practiceOn() {
+    if (ctx.state.practice === "off") setSettings({ practice: PRACTICE_DEMO_EXERCISE });
+  }
+
   const actions = {
     showLibrary,
     showSetlists,
@@ -366,6 +392,8 @@ export function createTourActions(ctx) {
     compingOn,
     compingSplit,
     compingUnsplit,
+    openPractice,
+    practiceOn,
     createDemoSetlist,
     addDemoSong1,
     addDemoSong2,
@@ -383,6 +411,7 @@ export function createTourActions(ctx) {
     if (!names.includes("openInspiration")) ctx.inspiration.setOpen(false);
     if (!names.includes("openLayers")) ctx.layers.setOpen(false);
     if (!names.includes("openDrawer")) setDrawer(false);
+    if (!names.includes("openPractice")) closePractice();
     if (!names.includes("revealDemoSplit")) {
       document.querySelectorAll(`.${TOUR_REVEAL_SPLIT_CLASS}`)
         .forEach((btn) => btn.classList.remove(TOUR_REVEAL_SPLIT_CLASS));
@@ -419,6 +448,8 @@ export function createTourActions(ctx) {
         comping: state.comping,
         compingSplit: state.compingSplit,
         compingParts: state.compingParts,
+        practice: state.practice,
+        practiceRhythm: state.practiceRhythm,
       },
       fullscreen: document.body.classList.contains(FULLSCREEN_CLASS),
       mixerOpen: Boolean(ctx.mixer.isOpen()),
@@ -503,6 +534,7 @@ export function createTourActions(ctx) {
     ctx.mixer.setOpen(false);
     ctx.inspiration.setOpen(false);
     ctx.layers.setOpen(false);
+    closePractice();
     ctx.store.set("layers", { activeLayers: snap.activeLayers });
     setSettings(snap.settings);
     await restoreLocation(snap);

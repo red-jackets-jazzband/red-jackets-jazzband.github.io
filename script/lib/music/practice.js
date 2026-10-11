@@ -30,40 +30,55 @@ import { tl } from "../core/i18n.js";
 */
 
 /*
-  The shape of a run over each chord. "alternate" voice-leads from the last
-  note and turns round every chord; the others give every chord the same
-  shape, starting on its root.
+  What the practice panel offers. PRACTICE_KINDS: what to play, each with a
+  one-line hint; `runs` kinds also take a PRACTICE_SHAPES shape — "alternate"
+  voice-leads from the last note and turns round every chord, the others give
+  every chord the same shape starting on its root (`points`: the little
+  contour the panel draws, in a 64×26 box).
 */
-const RUN_SHAPES = [
-  { value: "alternate", label: tl("practice_runs_alternate", "Alternate up and down") },
-  { value: "up", label: tl("practice_runs_up", "Always up") },
-  { value: "down", label: tl("practice_runs_down", "Always down") },
-  { value: "updown", label: tl("practice_runs_updown", "Up, then down") },
+export const PRACTICE_KINDS = [
+  {
+    value: "arpeggios", runs: true, name: tl("practice_arpeggios", "Chord-tone runs"),
+    label: tl("practice_kind_arpeggios", "Chord tones"), hint: tl("practice_kind_arpeggios_hint", "root, 3rd, 5th, 7th"),
+  },
+  {
+    value: "scales", runs: true, name: tl("practice_scales", "Scale runs"),
+    label: tl("practice_kind_scales", "Scales"), hint: tl("practice_kind_scales_hint", "step through the scale"),
+  },
+  {
+    value: "guide", name: tl("practice_guide", "Guide tones"),
+    label: tl("practice_guide", "Guide tones"), hint: tl("practice_kind_guide_hint", "3rds and 7ths"),
+  },
+  {
+    value: "enclosures", name: tl("practice_enclosures", "Enclosures"),
+    label: tl("practice_enclosures", "Enclosures"), hint: tl("practice_kind_enclosures_hint", "surround the target"),
+  },
+  {
+    value: "rhythm", name: tl("practice_rhythm", "Rhythm on one note"),
+    label: tl("practice_kind_rhythm", "One note"), hint: tl("practice_kind_rhythm_hint", "rhythm only"),
+  },
 ];
-const RUN_KINDS = [
-  { value: "arpeggios", label: tl("practice_arpeggios", "Chord-tone runs") },
-  { value: "scales", label: tl("practice_scales", "Scale runs") },
+export const PRACTICE_SHAPES = [
+  { value: "alternate", label: tl("practice_shape_alternate", "Voice-led"), points: "4,20 18,8 32,18 46,6 60,16" },
+  { value: "up", label: tl("practice_shape_up", "Up"), points: "4,22 18,16 32,10 46,4 50,22 60,16" },
+  { value: "down", label: tl("practice_shape_down", "Down"), points: "4,4 18,10 32,16 46,22 50,4 60,10" },
+  { value: "updown", label: tl("practice_shape_updown", "Up & down"), points: "4,22 18,13 32,4 46,13 60,20" },
 ];
 
-/*
-  The Practice dropdown's entries: each run kind in each shape ("scales" is
-  the voice-led one, "scales-up" always up, ...), then the other exercises.
-  splitExercise reads a value back into its EXERCISES key and run shape.
-*/
-export const PRACTICE_EXERCISES = [
-  ...RUN_KINDS.flatMap((kind) => RUN_SHAPES.map((shape) => ({
-    value: shape.value === "alternate" ? kind.value : `${kind.value}-${shape.value}`,
-    label: tl("practice_run_option", "{kind}: {shape}", { kind: kind.label, shape: shape.label }),
-  }))),
-  { value: "guide", label: tl("practice_guide", "Guide tones") },
-  { value: "enclosures", label: tl("practice_enclosures", "Enclosures") },
-  { value: "rhythm", label: tl("practice_rhythm", "Rhythm on one note") },
-];
-
-function splitExercise(exercise) {
+// An exercise value ("scales", "scales-up", "guide", ...) <-> its kind and shape.
+export function splitExercise(exercise) {
   const [kind, runs] = String(exercise).split("-");
   return { kind, runs: runs === undefined ? "alternate" : runs };
 }
+export function joinExercise(kind, shape) {
+  const found = PRACTICE_KINDS.find((k) => k.value === kind);
+  return found && found.runs && shape !== "alternate" ? `${kind}-${shape}` : kind;
+}
+
+// Every exercise value the settings accept: each run kind in each shape, then the rest.
+export const PRACTICE_EXERCISES = PRACTICE_KINDS.flatMap((kind) => (kind.runs
+  ? PRACTICE_SHAPES.map((shape) => joinExercise(kind.value, shape.value))
+  : [kind.value]));
 
 // General MIDI trumpet: the Mixer's Practice voice default.
 export const PRACTICE_PROGRAM = 56;
@@ -106,15 +121,36 @@ const SYNC_CELLS = new Set(PRACTICE_RHYTHMS.filter((r) => r.sync).map((r) => r.c
 export const PRACTICE_RHYTHM_MIXES = [
   {
     value: "varied",
-    label: tl("practice_rhythm_varied", "Varied, changes every 2 bars"),
+    choice: tl("practice_mix_varied", "Varied"),
     short: tl("practice_rhythm_varied_short", "Varied rhythm"),
   },
   {
     value: "syncopated",
-    label: tl("practice_rhythm_syncopated", "Syncopated, changes every 2 bars"),
+    choice: tl("practice_mix_syncopated", "Syncopated"),
     short: tl("practice_rhythm_syncopated_short", "Syncopated rhythm"),
   },
 ];
+
+/*
+  One line for what's set — the practice control's face when the panel is
+  closed: "Scale runs, Up & down · Syncopated rhythm", or "Off".
+*/
+export function practiceSummary(practice, rhythm) {
+  if (practice === "off") return tl("practice_summary_off", "Off");
+  const { kind, runs } = splitExercise(practice);
+  const found = PRACTICE_KINDS.find((k) => k.value === kind);
+  if (!found) return tl("practice_summary_off", "Off");
+  const shape = PRACTICE_SHAPES.find((s) => s.value === runs);
+  const what = found.runs && shape
+    ? tl("practice_summary_run", "{kind}, {shape}", { kind: found.name, shape: shape.label })
+    : found.name;
+  const mix = PRACTICE_RHYTHM_MIXES.find((m) => m.value === rhythm);
+  const pattern = PRACTICE_RHYTHMS.find((r) => r.value === rhythm);
+  let rhythmName = PRACTICE_RHYTHM_MIXES[0].short;
+  if (mix) rhythmName = mix.short;
+  else if (pattern) rhythmName = pattern.label;
+  return tl("practice_summary", "{exercise} · {rhythm}", { exercise: what, rhythm: rhythmName });
+}
 
 // Range of the line (concert MIDI, C4 to G5) and where it starts.
 const LOW = 60;

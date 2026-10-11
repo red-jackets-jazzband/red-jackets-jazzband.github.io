@@ -16,11 +16,13 @@ topicAdjust: Tonart und Tempo ändern, eine Stelle wiederholen, ein MP3 exportie
 topicInspiration: Aufnahmen neben dem Leadsheet anhören und eine Phrase wiederholen.
 topicMixer: Die Lautstärke von Bass, Akkorden und jeder Stimme einstellen.
 topicSetlists: Setlists für einen Gig erstellen, ordnen und drucken.
+topicLearn: Läufe und Rhythmen über die Akkorde eines Songs üben, um ihn von innen zu lernen.
 topicComping: Eine ausgeschriebene Begleitstimme hinzufügen.
 topicLayers: Zusatzhilfen im Leadsheet anzeigen, etwa benannte Verläufe, Stufen und Griffe.
-topicsIntro: Sieben kurze Stationen. Tipp auf eine, um hinzuspringen:
+topicsIntro: Acht kurze Stationen. Tipp auf eine, um hinzuspringen:
 railComping: Comping
 railSetlists: Sets
+railLearn: Lernen
 railMixer: Mix
 railInspiration: Mitspielen
 railAdjust: Dein Weg
@@ -165,6 +167,26 @@ Der Button `fa-youtube` unter **Anhören** öffnet alle Songs der Setlist mit Yo
 
 ## exports: Eine Setlist woanders nutzen
 Eine eigene Setlist kannst du mit dem Button `fa-file-arrow-down` als **.txt**-Datei exportieren und auf einem anderen Gerät wieder importieren. Das ist die Setlist-Version der Print-, MP3- und iReal-Pro-Exporte, die du von einem einzelnen Song schon kennst.
+
+# learn: Einen Song lernen
+
+## routine: Über die Akkorde üben
+Die **Üben**-Routine in der Schublade schreibt eine Übung auf eine eigene Notenzeile unter der Melodie, gebaut aus den Akkorden des Songs, sodass du Takt für Takt die Harmonien spielst und nicht nur die Melodie.
+
+## what: Was gespielt wird
+Wähle, was die Übung spielt: **Akkordtöne** (Grundton, Terz, Quinte und Septime), **Tonleiterläufe**, **Leittöne**, **Umspielungen** oder einen einzigen Ton, um nur am Rhythmus zu arbeiten.
+
+## shape: Läufe auf jeder Akkordform
+Spiele die Läufe **aufwärts**, **abwärts**, **auf und ab** oder stimmführend von Akkord zu Akkord. Wer verschiedene Läufe über jede Akkordform übt, bekommt die Harmonie des Songs in die Finger, und das ist die Grundlage, um eigene Linien zu improvisieren: ein Solo, ein Ad-lib oder ein Obligato um die Melodie.
+
+> Spiel eine Form durch den ganzen Song, dann die nächste.
+
+## rhythm: Rhythmus und Synkopen dazu
+**Wechselnd** wechselt den Rhythmus alle zwei Takte, **Synkopiert** bleibt bei Vorziehern und Noten auf der Zählzeit dazwischen, und **Ein Muster** hält einen Rhythmus durch. Jeder vierte Takt endet mit einer Pause, damit immer Zeit zum Atmen bleibt.
+
+## staff: Mitspielen
+Drück auf Abspielen und die Übung klingt mit dem Song. Im Mixer ist sie eine eigene Stimme, **Übung**, sodass du sie leiser stellen kannst, sobald du sie kennst, und sie selbst spielst.
+> Um nur die Übung zu hören, schalte im Mixer **Melodie** stumm.
 
 # comping: Comping
 

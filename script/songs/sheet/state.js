@@ -55,7 +55,7 @@ export const SETTINGS_SLICE = {
     compingSplit: boolPref(PREF_KEYS.compingSplit, false),
     compingParts: compingPartsPref,
     solo: enumPref(PREF_KEYS.solo, ["off", ...SOLO_STYLES.map((s) => s.value)], "off"),
-    practice: enumPref(PREF_KEYS.practice, ["off", ...PRACTICE_EXERCISES.map((e) => e.value)], "off"),
+    practice: enumPref(PREF_KEYS.practice, ["off", ...PRACTICE_EXERCISES], "off"),
     practiceRhythm: enumPref(
       PREF_KEYS.practiceRhythm, [...PRACTICE_RHYTHM_MIXES, ...PRACTICE_RHYTHMS].map((r) => r.value), "varied",
     ),

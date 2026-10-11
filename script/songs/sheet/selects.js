@@ -2,7 +2,6 @@ import { byId, el } from "../../lib/core/dom.js";
 import { INSTRUMENTS } from "../../lib/music/instruments.js";
 import { COMPING_PATTERNS } from "../../lib/music/comping.js";
 import { SOLO_STYLES } from "../../lib/music/solo.js";
-import { PRACTICE_EXERCISES, PRACTICE_RHYTHM_MIXES, PRACTICE_RHYTHMS } from "../../lib/music/practice.js";
 import { COMPING_PARTS } from "./state.js";
 import { tl } from "../../lib/core/i18n.js";
 
@@ -175,85 +174,4 @@ export function createSoloDropdown(ctx) {
     class: "sheet-solo-status", id: "soloStatus", attrs: { role: "status", "aria-live": "polite" },
   });
   slot.append(dropdown(select), status);
-}
-
-/*
-  The practice picker (#practice in #practiceSlot): one <select> for both of
-  the settings slice's practice choices. Closed, it shows a summary of the
-  two ("SCALE RUNS: UP, THEN DOWN · CHARLESTON"), a disabled first option
-  that's always the selected one; open, an Exercise group ("OFF" plus
-  lib/music/practice.js's PRACTICE_EXERCISES — each run kind in each shape)
-  and a Rhythm group (a PRACTICE_RHYTHM_MIXES cycle — varied or syncopated —
-  or one PRACTICE_RHYTHMS pattern the whole way,
-  disabled while practice is off), the current pick in each ticked. Picking
-  from a group writes just that setting. sheet.js appends the exercise as
-  one more staff (Comping / Solo stay as they are, and the lead keeps
-  playing, so it can be played along with).
-*/
-const PICK_MARK = "\u2713 ";
-
-// A rhythm as the summary names it: a mix by its short name ("SYNCOPATED RHYTHM").
-function shortRhythm(value, rhythms) {
-  const mix = PRACTICE_RHYTHM_MIXES.find((m) => m.value === value);
-  return mix ? mix.short.toUpperCase() : rhythms.get(value);
-}
-
-function practiceSummary(ctx, exercises, rhythms) {
-  if (ctx.state.practice === "off") return exercises.get("off");
-  return tl("practice_summary", "{exercise} · {rhythm}", {
-    exercise: exercises.get(ctx.state.practice),
-    rhythm: shortRhythm(ctx.state.practiceRhythm, rhythms),
-  });
-}
-
-// Tick the group's current pick ("ex:" / "rh:" option values).
-function tick(group, prefix, labels, current) {
-  for (const option of group.children) {
-    const value = option.value.slice(prefix.length + 1);
-    option.textContent = (value === current ? PICK_MARK : "") + labels.get(value);
-  }
-}
-
-function practiceGroup(label, prefix, labels) {
-  const group = el("optgroup", { label: label.toUpperCase() });
-  for (const [value, text] of labels) {
-    group.append(el("option", { value: `${prefix}:${value}`, text }));
-  }
-  return group;
-}
-
-export function createPracticeDropdown(ctx) {
-  const slot = byId("practiceSlot");
-  if (!slot) return;
-
-  const exercises = new Map([["off", tl("practice_off", "PRACTICE: OFF")]]);
-  for (const entry of PRACTICE_EXERCISES) exercises.set(entry.value, entry.label.toUpperCase());
-  const rhythms = new Map();
-  for (const entry of [...PRACTICE_RHYTHM_MIXES, ...PRACTICE_RHYTHMS]) rhythms.set(entry.value, entry.label.toUpperCase());
-
-  const summary = el("option", { value: "summary", disabled: true });
-  const exerciseGroup = practiceGroup(tl("practice_group_exercise", "Exercise"), "ex", exercises);
-  const rhythmGroup = practiceGroup(tl("practice_group_rhythm", "Rhythm"), "rh", rhythms);
-  const select = el("select", {
-    class: "dropbtn", id: "practice", attrs: { "aria-label": tl("practice_aria", "Practice exercise and rhythm") },
-  }, [summary, exerciseGroup, rhythmGroup]);
-
-  const draw = () => {
-    summary.textContent = practiceSummary(ctx, exercises, rhythms);
-    tick(exerciseGroup, "ex", exercises, ctx.state.practice);
-    tick(rhythmGroup, "rh", rhythms, ctx.state.practiceRhythm);
-    rhythmGroup.disabled = ctx.state.practice === "off";
-    select.value = "summary";
-  };
-  draw();
-  ctx.store.subscribe("settings", draw);
-
-  select.addEventListener("change", () => {
-    const [prefix, value] = select.value.split(":");
-    if (prefix === "ex") ctx.state.practice = value;
-    else if (prefix === "rh") ctx.state.practiceRhythm = value;
-    // Back to the summary even when the pick changed nothing.
-    draw();
-  });
-  slot.append(dropdown(select));
 }

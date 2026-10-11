@@ -2,7 +2,8 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import ABCJS from "abcjs";
 import {
-  buildPracticeTune, practiceNotes, PRACTICE_EXERCISES, PRACTICE_RHYTHM_MIXES, PRACTICE_RHYTHMS,
+  buildPracticeTune, joinExercise, practiceNotes, practiceSummary, PRACTICE_EXERCISES, PRACTICE_KINDS,
+  PRACTICE_RHYTHM_MIXES, PRACTICE_RHYTHMS, PRACTICE_SHAPES, splitExercise,
   rhythmSlots,
 } from "./practice.js";
 import { buildCompingTune, COMPING_PATTERNS } from "./comping.js";
@@ -19,6 +20,7 @@ after(() => {
   delete globalThis.Tonal;
 });
 
+const SCALES_UPDOWN = "scales-updown";
 const NAMES = [["F"], ["C7"], ["F", "F7"], [null]];
 
 const mod12 = (x) => ((x % 12) + 12) % 12;
@@ -26,7 +28,7 @@ const F_CHORD_TONES = new Set([5, 9, 0, 2]); // F A C D (the GA's major chord to
 const C7_CHORD_TONES = new Set([0, 4, 7, 10]);
 
 test("every exercise builds a named Practice staff, one full bar per chart bar", () => {
-  for (const { value } of PRACTICE_EXERCISES) {
+  for (const value of PRACTICE_EXERCISES) {
     const { abc } = buildPracticeTune(ABC, CHORDS, SONG, value);
     assert.match(abc, /^V:2 name="Practice"$/m, value);
     const bars = practiceBars(abc);
@@ -40,7 +42,7 @@ test("an exercise is the same every time", () => {
 });
 
 test("a break bar stays silent", () => {
-  for (const { value } of PRACTICE_EXERCISES) {
+  for (const value of PRACTICE_EXERCISES) {
     const notes = practiceNotes(NAMES, value);
     assert.ok(notes.every((n) => n.start < 12), value);
   }
@@ -130,7 +132,7 @@ test("a key change before a repeat is followed: the new section sounds as genera
     "\"F\"F8|\"C7\"G8||", "K:Bb", "P:B", "|\"Bb\"B8|\"C7\"c8|\"F7\"c8|\"Bb\"B8|]", "",
   ].join("\n");
   withRealTonal(() => {
-    for (const { value } of PRACTICE_EXERCISES) {
+    for (const value of PRACTICE_EXERCISES) {
       const built = practiceOf(text, value);
       assert.deepEqual(practicePlayback(built.abc), built.notes.map((n) => n.midi), value);
     }
@@ -205,7 +207,7 @@ test("runs: up-then-down climbs to the octave and back over eight notes", () => 
   // F major's chord tones here are 1 3 5 6: F A C D F' D C A.
   const arpeggio = practiceNotes([["F"]], "arpeggios-updown", { rhythm: "eighths", breathEvery: 0 }).map((n) => n.midi);
   assert.deepEqual(arpeggio, [65, 69, 72, 74, 77, 74, 72, 69]);
-  const scale = practiceNotes([["F"]], "scales-updown", { rhythm: "eighths", breathEvery: 0 }).map((n) => n.midi);
+  const scale = practiceNotes([["F"]], SCALES_UPDOWN, { rhythm: "eighths", breathEvery: 0 }).map((n) => n.midi);
   assert.deepEqual(scale, [65, 67, 69, 70, 72, 70, 69, 67]);
 });
 
@@ -225,13 +227,12 @@ test("runs: a fixed shape stays within one octave of a root on the staff", () =>
 });
 
 test("the Practice list offers each run in each shape, read back from one value", () => {
-  const values = PRACTICE_EXERCISES.map((e) => e.value);
+  const values = PRACTICE_EXERCISES;
   assert.deepEqual(values, [
     "arpeggios", "arpeggios-up", "arpeggios-down", "arpeggios-updown",
-    "scales", "scales-up", "scales-down", "scales-updown",
+    "scales", "scales-up", "scales-down", SCALES_UPDOWN,
     "guide", "enclosures", "rhythm",
   ]);
-  assert.equal(PRACTICE_EXERCISES[5].label, "Scale runs: Always up");
   for (const value of values) assert.ok(practiceNotes(EIGHT_BARS, value).length > 0, value);
   assert.deepEqual(practiceNotes(EIGHT_BARS, "kazoo-up"), []);
 });
@@ -260,7 +261,7 @@ test("every 4th bar breathes: at least its last beat is a rest, nothing ties out
   assert.equal(rhythmSlots(5, new Set(), ["xxxxxx.x>"], 4), "xxxxxx.x-xxxxx.x-xxxxx.x-xxxxx..xxxxxx.x");
   // A note held into the last beat is cut short there.
   assert.equal(rhythmSlots(4, new Set(), ["x--x--x-"], 4).slice(24), "x--x--..");
-  for (const { value } of PRACTICE_EXERCISES) {
+  for (const value of PRACTICE_EXERCISES) {
     const notes = practiceNotes(EIGHT_BARS, value, { rhythm: "eighths" });
     for (const bar of [3, 7]) {
       const end = bar * 4 + 4;
@@ -273,10 +274,10 @@ test("every 4th bar breathes: at least its last beat is a rest, nothing ties out
 
 test("up-then-down turns its last note back towards the next chord, by a scale step", () => {
   // Bb into F7: ... F Eb D then Eb (not C), stepping up towards F.
-  const intoF7 = practiceNotes([["Bb"], ["F7"]], "scales-updown", { rhythm: "eighths", breathEvery: 0 });
+  const intoF7 = practiceNotes([["Bb"], ["F7"]], SCALES_UPDOWN, { rhythm: "eighths", breathEvery: 0 });
   assert.deepEqual(intoF7.slice(0, 9).map((n) => n.midi), [58, 60, 62, 63, 65, 63, 62, 63, 65]);
   // Into the same chord again the run already steps onto its root: C stays.
-  const again = practiceNotes([["Bb"], ["Bb"]], "scales-updown", { rhythm: "eighths", breathEvery: 0 });
+  const again = practiceNotes([["Bb"], ["Bb"]], SCALES_UPDOWN, { rhythm: "eighths", breathEvery: 0 });
   assert.equal(again[7].midi, 60);
   // Always up / down keep going their way and jump.
   const up = practiceNotes([["Bb"], ["F7"]], "scales-up", { rhythm: "eighths", breathEvery: 0 });
@@ -292,7 +293,7 @@ function syncopated(cell) {
 
 test("Syncopated is a rhythm choice: it cycles only through syncopated patterns", () => {
   assert.deepEqual(PRACTICE_RHYTHM_MIXES.map((m) => m.value), ["varied", "syncopated"]);
-  for (const { value } of PRACTICE_EXERCISES) {
+  for (const value of PRACTICE_EXERCISES) {
     const notes = practiceNotes(EIGHT_BARS, value, { rhythm: "syncopated", breathEvery: 0 });
     assert.ok(notes.length > 0, value);
     // Never a bar of plain on-the-beat eighths.
@@ -313,4 +314,25 @@ test("Pushes on the \"and\": the and of 2 held over beat 3, the and of 4 tied ov
   assert.equal(pushes.cell, "xx.x--.x>");
   const notes = practiceNotes([["F"], ["F"]], "scales", { rhythm: "pushes", breathEvery: 0 });
   assert.deepEqual(notes.slice(0, 4).map((n) => [n.start, n.duration]), [[0, 0.5], [0.5, 0.5], [1.5, 1.5], [3.5, 1]]);
+});
+
+test("the panel's kinds and shapes join into exercise values and back", () => {
+  assert.deepEqual(PRACTICE_KINDS.map((k) => k.value), ["arpeggios", "scales", "guide", "enclosures", "rhythm"]);
+  assert.deepEqual(PRACTICE_SHAPES.map((s) => s.value), ["alternate", "up", "down", "updown"]);
+  assert.equal(joinExercise("scales", "updown"), SCALES_UPDOWN);
+  assert.equal(joinExercise("scales", "alternate"), "scales");
+  assert.equal(joinExercise("guide", "up"), "guide", "only runs take a shape");
+  assert.deepEqual(splitExercise("arpeggios-down"), { kind: "arpeggios", runs: "down" });
+  assert.deepEqual(splitExercise("enclosures"), { kind: "enclosures", runs: "alternate" });
+  for (const value of PRACTICE_EXERCISES) {
+    const { kind, runs } = splitExercise(value);
+    assert.equal(joinExercise(kind, runs), value);
+  }
+});
+
+test("practiceSummary: one line for the closed control", () => {
+  assert.equal(practiceSummary("off", "varied"), "Off");
+  assert.equal(practiceSummary(SCALES_UPDOWN, "syncopated"), "Scale runs, Up & down · Syncopated rhythm");
+  assert.equal(practiceSummary("arpeggios", "charleston"), "Chord-tone runs, Voice-led · Charleston");
+  assert.equal(practiceSummary("guide", "varied"), "Guide tones · Varied rhythm");
 });

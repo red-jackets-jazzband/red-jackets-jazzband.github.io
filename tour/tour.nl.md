@@ -16,11 +16,13 @@ topicAdjust: Verander toonsoort en tempo, herhaal een passage, exporteer een MP3
 topicInspiration: Luister naar opnames naast het leadsheet en herhaal een frase.
 topicMixer: Stel het volume van bas, akkoorden en elke partij in.
 topicSetlists: Maak, orden en print setlists voor een optreden.
+topicLearn: Oefen loopjes en ritmes over de akkoorden van een song, om hem van binnenuit te leren.
 topicComping: Voeg een uitgeschreven begeleidingsbalk toe.
 topicLayers: Toon extra hulp op het leadsheet, zoals benoemde akkoordenreeksen, trappen en vingerzettingen.
-topicsIntro: Zeven korte stops. Tik er een aan om erheen te gaan:
+topicsIntro: Acht korte stops. Tik er een aan om erheen te gaan:
 railComping: Comping
 railSetlists: Sets
+railLearn: Leren
 railMixer: Mixen
 railInspiration: Meespelen
 railAdjust: Jouw manier
@@ -165,6 +167,26 @@ De `fa-youtube`-knop onder **Luisteren** opent alle songs van de setlist met een
 
 ## exports: Neem een setlist ergens anders mee naartoe
 Een eigen setlist kun je met de `fa-file-arrow-down`-knop als **.txt**-bestand exporteren en op een ander apparaat weer importeren. Het is de setlistversie van de Print-, mp3- en iReal Pro-exports die je al kent van een losse song.
+
+# learn: Een song leren
+
+## routine: Oefen over de akkoorden
+De **Oefenen**-routine in de lade schrijft een oefening op een eigen notenbalk onder de melodie, gebouwd op de akkoorden van de song zelf, zodat je maat voor maat de akkoorden speelt in plaats van alleen de melodie.
+
+## what: Wat je speelt
+Kies wat de oefening speelt: **akkoordtonen** (grondtoon, terts, kwint en septiem), **toonladderloopjes**, **gidstonen**, **omspelingen** of één noot om alleen aan ritme te werken.
+
+## shape: Loopjes op elke akkoordvorm
+Speel de loopjes **omhoog**, **omlaag**, **op en neer**, of stemvoerend van akkoord naar akkoord. Door verschillende loopjes over elke akkoordvorm te oefenen krijg je de harmonie van de song in je vingers, en dat is de basis om je eigen lijnen te improviseren: een solo, een ad lib of een obligaat rond de melodie.
+
+> Speel één vorm door de hele song, dan de volgende.
+
+## rhythm: Voeg ritme en syncopen toe
+**Afwisselend** wisselt het ritme elke twee maten, **Gesyncopeerd** houdt het bij voorslagen en noten op de tel ertussen, en **Eén patroon** houdt één ritme vast. Elke vierde maat eindigt met een rust, zodat je altijd kunt ademen.
+
+## staff: Speel mee
+Druk op afspelen en de oefening klinkt mee met de song. In de mixer is het een eigen stem, **Oefening**, zodat je hem zachter kunt zetten zodra je hem kent, en hem zelf kunt spelen.
+> Wil je alleen de oefening horen? Demp dan **Melodie** in de mixer.
 
 # comping: Comping
 

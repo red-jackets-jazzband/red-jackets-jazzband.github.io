@@ -16,11 +16,13 @@ topicAdjust: Changer la tonalité et le tempo, boucler un passage, exporter un M
 topicInspiration: Écouter des enregistrements à côté de la grille et boucler une phrase.
 topicMixer: Régler le volume de la basse, des accords et de chaque partie.
 topicSetlists: Créer, ordonner et imprimer des setlists pour un concert.
+topicLearn: Travailler des traits et des rythmes sur les accords d'un morceau, pour l'apprendre de l'intérieur.
 topicComping: Ajouter une portée d'accompagnement écrite.
 topicLayers: Afficher une aide en plus sur la grille, comme les progressions nommées, les degrés et les doigtés.
-topicsIntro: Sept petites étapes. Touchez-en une pour y aller :
+topicsIntro: Huit petites étapes. Touchez-en une pour y aller :
 railComping: Comping
 railSetlists: Sets
+railLearn: Apprendre
 railMixer: Mix
 railInspiration: Jouer avec
 railAdjust: À votre façon
@@ -165,6 +167,26 @@ Le bouton `fa-youtube` sous **Écouter** ouvre à la suite tous les morceaux de 
 
 ## exports: Utiliser une setlist ailleurs
 Une setlist personnelle peut être exportée avec le bouton `fa-file-arrow-down` en fichier **.txt** et réimportée sur un autre appareil. C'est la version setlist des exports Print, MP3 et iReal Pro que vous avez vus pour un seul morceau.
+
+# learn: Apprendre un morceau
+
+## routine: Travailler sur les accords
+La routine **Exercice** du tiroir écrit un exercice sur sa propre portée sous la mélodie, construit sur les accords du morceau, pour jouer les changements mesure par mesure et pas seulement la mélodie.
+
+## what: Quoi jouer
+Choisissez ce que joue l'exercice : les **notes de l'accord** (fondamentale, tierce, quinte et septième), des **gammes**, des **notes guides**, des **broderies** ou une seule note pour travailler le rythme seul.
+
+## shape: Des traits sur chaque forme d'accord
+Jouez les traits **en montant**, **en descendant**, **en montant puis en descendant**, ou enchaînés d'un accord à l'autre. Travailler différents traits sur chaque forme d'accord met l'harmonie du morceau dans vos doigts, et c'est la base pour improviser vos propres lignes : un solo, un ad lib ou un obligato autour de la mélodie.
+
+> Jouez une forme sur tout le morceau, puis la suivante.
+
+## rhythm: Ajouter rythme et syncopes
+**Varié** change de rythme toutes les deux mesures, **Syncopé** s'en tient aux anticipations et aux notes à contretemps, et **Un motif** garde un même rythme du début à la fin. Chaque quatrième mesure finit par un silence, pour avoir toujours le temps de respirer.
+
+## staff: Jouer avec
+Lancez la lecture et l'exercice sonne avec le morceau. Dans la console de mixage, c'est une voix à part, **Exercice**, que vous pouvez baisser une fois l'exercice connu, pour le jouer vous-même.
+> Pour n'entendre que l'exercice, coupez **Mélodie** dans la console de mixage.
 
 # comping: Comping
 

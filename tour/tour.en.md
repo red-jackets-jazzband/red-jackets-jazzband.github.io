@@ -16,11 +16,13 @@ topicAdjust: Change the key and tempo, loop a passage, export an MP3.
 topicInspiration: Listen to recordings alongside the sheet and loop a phrase.
 topicMixer: Set the level of bass, chords and each part.
 topicSetlists: Build, order and print setlists for a gig.
+topicLearn: Practise runs and rhythms over a tune's chords, to learn it from the inside.
 topicComping: Add a written-out accompaniment staff.
 topicLayers: Show extra help on the sheet, like named progressions, scale degrees and fingerings.
-topicsIntro: Seven short stops. Tap one to jump there:
+topicsIntro: Eight short stops. Tap one to jump there:
 railComping: Comp
 railSetlists: Sets
+railLearn: Learn
 railMixer: Mix
 railInspiration: Play along
 railAdjust: Your way
@@ -264,6 +266,40 @@ The `fa-youtube` button under **Listen** opens every song in the setlist that ha
 setup: createDemoSetlist, addDemoSong1, addDemoSong2
 target: #setlistExportBtn
 A personal setlist can be exported with the `fa-file-arrow-down` button as a **.txt** file and imported again on another device. It's the setlist version of the Print, MP3 and iReal Pro exports you've seen for a single song.
+
+# learn: Learning a tune
+setup: openDemoSong
+
+## routine: Practise over the chords
+setup: openDrawer, openPractice
+target: #practicePanel, #practiceSlot
+The **Practice** routine in the drawer writes an exercise on its own staff under the melody, built from the tune's own chords, so you play the changes bar by bar instead of only the tune.
+
+## what: What to play
+setup: openDrawer, openPractice, practiceOn
+target: .practice-choices--kinds
+interactive: true
+Pick what the exercise plays: **chord tones** (root, 3rd, 5th and 7th), **scale runs**, **guide tones**, **enclosures** or one note to work on rhythm alone.
+
+## shape: Runs on every chord shape
+setup: openDrawer, openPractice, practiceOn
+target: #practiceShapeStep
+interactive: true
+Play the runs **up**, **down**, **up and down**, or voice-led from chord to chord. Practising different runs over each chord shape fixes the tune's harmony under your fingers, and that's the basis for improvising your own lines: a solo, an ad lib, or an obbligato around the melody.
+
+> Try one shape through the whole tune, then the next.
+
+## rhythm: Add rhythm and syncopation
+setup: openDrawer, openPractice, practiceOn
+target: .practice-choices--mixes
+interactive: true
+**Varied** changes the rhythm every two bars, **Syncopated** keeps to pushes and notes on the off-beat, and **One pattern** keeps a single rhythm throughout. Every fourth bar ends with a rest, so there's always room to breathe.
+
+## staff: Play along
+setup: openDrawer, practiceOn
+target: #notation
+Press play and the exercise sounds with the tune. In the mixer it's a voice of its own, **Practice**, so you can turn it down once you know it, and play it yourself.
+> To hear only the exercise, mute **Melody** in the mixer.
 
 # comping: Comping
 setup: openDemoSong

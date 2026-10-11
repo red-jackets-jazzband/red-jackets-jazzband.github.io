@@ -7,7 +7,8 @@ import { createMixer } from "../audio/mixer.js";
 import { initMp3Export } from "../audio/mp3-export.js";
 import { createSheet } from "../sheet/sheet.js";
 import { initSheetControls } from "../sheet/controls.js";
-import { createInstrumentDropdown, createCompingDropdown, createPracticeDropdown } from "../sheet/selects.js";
+import { createInstrumentDropdown, createCompingDropdown } from "../sheet/selects.js";
+import { createPracticePanel } from "../sheet/practice-panel.js";
 import { createFullscreen } from "../sheet/fullscreen.js";
 import { createSongHistory } from "../sheet/history.js";
 import { createSwipeNav } from "../sheet/swipe-nav.js";
@@ -87,7 +88,7 @@ export const FEATURES = [
       createCompingDropdown(ctx);
       // Solo is hidden for now (results not good enough yet); re-enable by
       // calling createSoloDropdown(ctx) here.
-      createPracticeDropdown(ctx);
+      createPracticePanel(ctx);
       initSheetControls(ctx);
       initMp3Export(ctx);
     },
