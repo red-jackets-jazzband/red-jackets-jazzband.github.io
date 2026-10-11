@@ -203,6 +203,9 @@ Die Ebene **Stufen** schreibt unter jede Melodienote ihre Nummer in der Tonart: 
 ## degrees-chart: Akkordtöne sind eingekreist
 Eine Note, die zum darunter klingenden Akkord gehört, also Grundton, Terz, Quinte oder Septime, hat ihre Nummer in einem **magentafarbenen Kreis**. Nummern ohne Kreis sind Durchgangsnoten und Farbe. Ziele auf den betonten Zählzeiten auf die eingekreisten und nutze die anderen als Schritte dazwischen.
 
+## solfege: In Solmisation singen
+Die Ebene **Solmisation** schreibt unter jede Melodienote ihre Silbe in relativer Solmisation: *do* ist der Grundton der Tonart, dann *re mi fa sol la ti*. Weil das do mit der Tonart wandert, liest sich dieselbe Melodie in jeder Tonart gleich, und eine erhöhte oder erniedrigte Note bekommt eine eigene Silbe, etwa *fi* oder *te*. Sing eine Phrase auf ihren Silben, bevor du sie spielst.
+
 ## fingerings: Griffe für Blech
 Für **Trompete**, **Posaune** und **Sousafon** schreibt das die Ventilkombination oder Zugposition unter jede Note. Für andere Instrumente ist es ausgegraut, wähle also zuerst unter **Instrument** ein Blechblasinstrument.
 

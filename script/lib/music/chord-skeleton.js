@@ -24,14 +24,11 @@
 */
 import { chordName, parseChordSymbol, splitChordSymbol } from "./chord-symbol.js";
 import { keyScale } from "./diatonic.js";
-import { noteMidi, walkMelody } from "./melody-walk.js";
+import { CLEF_STEPS, noteMidi, walkMelody } from "./melody-walk.js";
 import { chordIntervals } from "./scale-degrees.js";
 
 const LETTERS = "CDEFGAB";
 const LETTER_SEMITONES = [0, 2, 4, 5, 7, 9, 11];
-// Mirrors fingerings.js's CLEF_STEPS: the clef's shift from a treble staff's
-// verticalPos to the letter-and-octave count.
-const CLEF_STEPS = { treble: 0, bass: 12 };
 const ACCIDENTAL_GLYPH = { "-2": "♭♭", "-1": "♭", 0: "♮", 1: "♯", 2: "x" };
 const LOWEST_OCTAVE = -3;
 const HIGHEST_OCTAVE = 2;

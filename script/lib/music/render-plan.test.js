@@ -180,3 +180,25 @@ test("mixRenderText stamps each voice's program into its declaration", () => {
   assert.match(text, /name="Sousaphone"\n%%MIDI program 0\n/);
   assert.match(text, /%%MIDI chordprog 25/);
 });
+
+// The second printed line's staff, parsed at a visual transposition.
+const secondStaff = (text, visual) => ABCJS.parseOnly(text, { visualTranspose: visual })[0].lines[1].staff[0];
+
+test("a transposed tune that changes key gets %%keywarn 0, working round an ABCjs bug", () => {
+  const modulating = "X:1\nL:1/4\nK:G\nB A G2||\nK:C\nE _E E2|\n";
+  const { abcText, visual } = resolveTranspose(modulating, "trumpet", 0);
+  assert.match(abcText, /^X:1\nL:1\/4\n%%keywarn 0 % rj: transposed part\nK:G\n/);
+  const staff = secondStaff(abcText, visual);
+  // D major, with no stray natural, and C's E-flat written a tone up as F natural.
+  assert.deepEqual(staff.key.accidentals.map((a) => a.acc + a.note), ["sharpf", "sharpc"]);
+  assert.deepEqual(staff.voices[0].filter((e) => e.el_type === "note").map((e) => e.pitches[0].name), ["F", "=F", "F"]);
+  // Without it, ABCjs gets both wrong (the bug this works round).
+  const broken = secondStaff(modulating, visual);
+  assert.ok(broken.key.accidentals.some((a) => a.acc === "natural"));
+  // Concert pitch keeps its cancelling naturals; a tune in one key is left alone.
+  assert.equal(resolveTranspose(modulating, "concert_pitch", 0).abcText, modulating);
+  assert.equal(resolveTranspose(CHORD_TUNE, "trumpet", 0).abcText, CHORD_TUNE);
+  // rerender() feeds the text back in: once is enough, and concert pitch drops it.
+  assert.equal(resolveTranspose(abcText, "trumpet", 0).abcText, abcText);
+  assert.equal(resolveTranspose(abcText, "concert_pitch", 0).abcText, modulating);
+});

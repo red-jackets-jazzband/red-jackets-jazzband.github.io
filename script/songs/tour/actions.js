@@ -67,6 +67,7 @@ export const TOUR_ACTION_NAMES = [
   "openLayers",
   "layerProgressionsOn",
   "layerScaleDegreesOn",
+  "layerSolfegeOn",
   "compingOn",
   "compingSplit",
   "compingUnsplit",
@@ -318,18 +319,25 @@ export function createTourActions(ctx) {
     ctx.layers.setOpen(true);
   }
 
-  // Switch the named-progressions layer on so the demo song's Salty Dog shows
-  // up; the visitor's own layer choices are restored when the tour ends.
-  function layerProgressionsOn() {
+  // Switch one layer on so its marks show on the demo song; the visitor's
+  // own layer choices are restored when the tour ends.
+  function layerOn(id) {
     const { activeLayers } = ctx.store.get("layers");
-    if (!activeLayers.progressions) ctx.store.set("layers", { activeLayers: { ...activeLayers, progressions: true } });
+    if (!activeLayers[id]) ctx.store.set("layers", { activeLayers: { ...activeLayers, [id]: true } });
   }
 
-  // Same for the scale-degrees layer (numbers under the melody, chord tones
-  // circled).
+  // Named progressions (Bill Bailey's Sunshine), scale degrees (numbers
+  // under the melody, chord tones circled) and solfège (syllables under it).
+  function layerProgressionsOn() {
+    layerOn("progressions");
+  }
+
   function layerScaleDegreesOn() {
-    const { activeLayers } = ctx.store.get("layers");
-    if (!activeLayers["scale-degrees"]) ctx.store.set("layers", { activeLayers: { ...activeLayers, "scale-degrees": true } });
+    layerOn("scale-degrees");
+  }
+
+  function layerSolfegeOn() {
+    layerOn("solfege");
   }
 
   // Make sure a comping pattern is on so the sheet shows the comping staff —
@@ -354,6 +362,7 @@ export function createTourActions(ctx) {
     openLayers,
     layerProgressionsOn,
     layerScaleDegreesOn,
+    layerSolfegeOn,
     compingOn,
     compingSplit,
     compingUnsplit,

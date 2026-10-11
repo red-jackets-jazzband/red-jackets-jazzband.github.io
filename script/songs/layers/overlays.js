@@ -14,19 +14,22 @@
   - scale degrees ("\u25CF3", "\u25CB\u266D7": lib/music/scale-degrees.js) lose their
     marker and sit centred under the note, a chord tone inside a magenta
     circle (as in Improvise for Real) and any other note bare;
+  - solfège syllables (lib/music/solfege.js) lose their invisible marker
+    and are centred under their note, in the same face as the degrees;
   - fingering numbers get their own class, so split.css sets them upright
     and bold instead of the italic annotation face, and are centred under
     their notehead (ABCjs starts an annotation at the note's left edge).
 
   Called by sheet.js's paint() right after ABCjs draws, for the live sheet
   and a booklet alike (a booklet's plan simply has no layers on). One module
-  per layer in overlays/ (progression-bands, chord-skeleton, outside-chords, degrees, fingerings), a
+  per layer in overlays/ (progression-bands, chord-skeleton, outside-chords, degrees, solfege, fingerings), a
   shared svg.js, and viewbox.js for the chord-letter clipping; the
   arithmetic is in lib/music/layer-geometry.js.
 */
 
 import { drawProgressions } from "./overlays/progression-bands.js";
 import { styleDegrees } from "./overlays/degrees.js";
+import { styleSolfege } from "./overlays/solfege.js";
 import { styleFingerings } from "./overlays/fingerings.js";
 import { markOutsideChords } from "./overlays/outside-chords.js";
 import { drawChordSkeleton } from "./overlays/chord-skeleton.js";
@@ -42,4 +45,5 @@ export function decorateLayers(notationEl, visualObj, plan) {
   if (progressions.length > 0) drawProgressions(visualObj, progressions);
   if (applied.includes("fingerings")) styleFingerings(notationEl, plan.instrument);
   if (applied.includes("scale-degrees")) styleDegrees(notationEl);
+  if (applied.includes("solfege")) styleSolfege(notationEl);
 }

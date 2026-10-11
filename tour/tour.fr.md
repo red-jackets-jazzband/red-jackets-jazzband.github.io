@@ -203,6 +203,9 @@ La couche **Degrés de la gamme** écrit sous chaque note de la mélodie son num
 ## degrees-chart: Les notes de l'accord sont entourées
 Une note qui appartient à l'accord qui sonne dessous, donc sa fondamentale, sa tierce, sa quinte ou sa septième, a son numéro dans un **cercle magenta**. Les numéros sans cercle sont des notes de passage et de couleur. Visez les notes entourées sur les temps forts et prenez les autres comme pas entre elles.
 
+## solfege: Chanter en solfège relatif
+La couche **Solfège relatif** écrit sous chaque note de la mélodie sa syllabe en do mobile : *do* est la tonique de la tonalité, puis *ré mi fa sol la si*. Comme le do suit la tonalité, une même mélodie se lit pareil dans tous les tons, et une note altérée porte son dièse ou son bémol, comme *fa♯* ou *si♭*. Chantez une phrase sur ses syllabes avant de la jouer.
+
 ## fingerings: Doigtés pour les cuivres
 Pour la **trompette**, le **trombone** et le **sousaphone**, cela écrit la combinaison de pistons ou la position de coulisse sous chaque note. Il est grisé pour les autres instruments, choisissez donc d'abord un cuivre sous **Instrument**.
 

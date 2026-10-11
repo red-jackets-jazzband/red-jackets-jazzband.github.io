@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import ABCJS from "abcjs";
-import { noteMidi, topNote, walkMelody } from "./melody-walk.js";
+import { clefName, noteMidi, topNote, walkMelody } from "./melody-walk.js";
 
 const C_HEADER = "M:4/4\nL:1/4\nK:C";
 const parse = (body, header = C_HEADER) => ABCJS.parseOnly(`X:1\n${header}\n${body}\n`)[0];
@@ -48,8 +48,30 @@ test("a chord's printed note is its top one", () => {
   assert.deepEqual(midis("[CEG]"), [67]);
 });
 
-test("noteMidi: an unknown clef has no chart", () => {
-  assert.equal(noteMidi({ verticalPos: 0 }, "alto", new Map(), new Map()), null);
+test("noteMidi: a clef without pitches has no chart", () => {
+  assert.equal(noteMidi({ verticalPos: 0 }, "perc", new Map(), new Map()), null);
+  assert.equal(noteMidi({ verticalPos: 0 }, "none", new Map(), new Map()), null);
+});
+
+test("C clefs and octave clefs are read where they're drawn", () => {
+  // Middle C written in each clef (abcjs draws it at a different height).
+  assert.deepEqual(midis("C c", "M:4/4\nL:1/4\nK:C clef=alto"), [60, 72]);
+  assert.deepEqual(midis("C c", "M:4/4\nL:1/4\nK:C clef=tenor"), [60, 72]);
+  assert.deepEqual(midis("C c", "M:4/4\nL:1/4\nK:C clef=bass3"), [60, 72]);
+  assert.deepEqual(midis("C c", "M:4/4\nL:1/4\nK:C clef=alto1"), [60, 72]);
+  // An octave clef is printed like its plain one.
+  assert.deepEqual(midis("C c", "M:4/4\nL:1/4\nK:C clef=treble-8"), [60, 72]);
+  assert.deepEqual(midis("C c", "M:4/4\nL:1/4\nK:C clef=bass-8"), [60, 72]);
+});
+
+test("clefName names the clef by family and line", () => {
+  assert.equal(clefName({ type: "treble", clefPos: 4 }), "treble");
+  assert.equal(clefName({ type: "treble+8", clefPos: 4 }), "treble");
+  assert.equal(clefName({ type: "alto", clefPos: 6 }), "alto");
+  assert.equal(clefName({ type: "alto", clefPos: 8 }), "tenor");
+  assert.equal(clefName({ type: "bass", clefPos: 6 }), "bass3");
+  assert.equal(clefName({ type: "perc" }), "perc");
+  assert.equal(clefName(undefined), "treble");
 });
 
 test("walkMelody hands over the key in force, which a mid-tune K: changes", () => {
@@ -62,12 +84,12 @@ test("walkMelody hands over the key in force, which a mid-tune K: changes", () =
 });
 
 test("walkMelody hands over the clef in force, which a mid-tune clef change alters", () => {
-  const song = parse("C |\n[K:C clef=bass]\nC", C_HEADER);
+  const song = parse("C |\n[K:C clef=bass]\nC [K:clef=tenor] C", C_HEADER);
   const clefs = [];
   walkMelody(song, (el, state) => {
     if (el.el_type === "note") clefs.push(state.clef);
   });
-  assert.deepEqual(clefs, ["treble", "bass"]);
+  assert.deepEqual(clefs, ["treble", "bass", "tenor"]);
 });
 
 test("walkMelody forgets a bar's accidentals at the bar line", () => {
@@ -89,4 +111,26 @@ test("a bar that runs over a line break keeps its accidentals", () => {
 
 test("a bar line at a line break does reset them", () => {
   assert.deepEqual(midis("^F A B |\nF C D |", C_HEADER).slice(0, 4), [66, 69, 71, 65]);
+});
+
+test("a key change's cancelling naturals don't override the new key's own accidentals", () => {
+  // G after Eb carries ♮B ♮E ♮A; transposed down a semitone it's F# major,
+  // and abcjs leaves those naturals unmoved, so ♮A must not erase its A#.
+  const text = "X:1\nM:4/4\nL:1/4\nK:Eb\nE F G A|\nK:G\nB A G F|\n";
+  const song = ABCJS.parseOnly(text, { visualTranspose: -1 })[0];
+  const out = [];
+  walkMelody(song, (el, state) => {
+    const top = topNote(el, state);
+    if (top !== null) out.push(top.midi);
+  });
+  assert.deepEqual(out.slice(4), [70, 68, 66, 65], "A# G# F# E# in F# major");
+});
+
+test("topNote reports the printed letter", () => {
+  const letters = [];
+  walkMelody(parse("C ^F _B c", "M:4/4\nL:1/4\nK:C clef=bass middle=D"), (el, state) => {
+    const top = topNote(el, state);
+    if (top !== null) letters.push(top.letter);
+  });
+  assert.deepEqual(letters, ["C", "F", "B", "C"]);
 });

@@ -30,6 +30,7 @@
 import { fingeringGlyphs, instrumentHasFingerings, melodyFingerings } from "./fingerings.js";
 import { PROGRESSION_NAMES, findNamedProgressions, progressionLabel } from "./progressions.js";
 import { degreeText, melodyDegrees } from "./scale-degrees.js";
+import { melodySolfege, solfegeLabel, solfegeText } from "./solfege.js";
 import { listOf, tl } from "../core/i18n.js";
 
 function nameList(names) {
@@ -43,7 +44,7 @@ export const LAYERS = [
     label: tl("layer_progressions_label", "Named progressions"),
     hint: tl("layer_progressions_hint", "Labels the stock trad-jazz chord patterns ({names}) and highlights the chords that make them up in one bar.", { names: nameList(PROGRESSION_NAMES) }),
     credit: { prefix: tl("layer_progressions_credit", "Names from Pops Coffee's blog "), text: "Playing Traditional Jazz", href: "https://playing-traditional-jazz.blogspot.com/" },
-    order: 3,
+    order: 4,
     availableFor: () => true,
     appliesTo: () => true,
     annotate(song, context) {
@@ -59,7 +60,7 @@ export const LAYERS = [
     group: tl("layers_group_harmony", "Harmony"),
     label: tl("layer_chord_skeleton_label", "Chord skeleton"),
     hint: tl("layer_chord_skeleton_hint", "Each chord's notes as faint ghost notes on the staff, in the inversion that sits under most of the bar's melody. Only a visual reminder: they are not played."),
-    order: 4, // unused: it writes no annotation
+    order: 5, // unused: it writes no annotation
     availableFor: () => true,
     appliesTo: () => true,
     // Drawn as SVG after ABCjs engraves (songs/layers/chord-skeleton.js), so
@@ -71,7 +72,7 @@ export const LAYERS = [
     group: tl("layers_group_harmony", "Harmony"),
     label: tl("layer_outside_chords_label", "Outside chords"),
     hint: tl("layer_outside_chords_hint", "Shades in magenta each chord that has a note outside the key. With Chord skeleton on, the ghost notes that aren't in the key are tinted too."),
-    order: 5, // unused: it writes no annotation
+    order: 6, // unused: it writes no annotation
     availableFor: () => true,
     appliesTo: () => true,
     // Drawn as SVG after ABCjs engraves (songs/layers/overlays/outside-chords.js).
@@ -87,6 +88,16 @@ export const LAYERS = [
     availableFor: () => true,
     appliesTo: () => true,
     annotate: (song) => melodyDegrees(song).map((d) => ({ startChar: d.startChar, text: `_${degreeText(d.degree, d.tone)}` })),
+  },
+  {
+    id: "solfege",
+    group: tl("layers_group_melody", "Melody"),
+    label: tl("layer_solfege_label", "Solfège"),
+    hint: tl("layer_solfege_hint", "Each note's movable-do syllable (do re mi fa sol la ti), with do on the key's tonic."),
+    order: 3,
+    availableFor: () => true,
+    appliesTo: () => true,
+    annotate: (song) => melodySolfege(song).map((s) => ({ startChar: s.startChar, text: `_${solfegeText(solfegeLabel(s.syllable))}` })),
   },
   {
     id: "fingerings",

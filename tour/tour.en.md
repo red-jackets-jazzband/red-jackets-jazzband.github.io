@@ -332,6 +332,12 @@ setup: openDemoSong, layerScaleDegreesOn
 target: .rj-layer-degree-circle, #notation
 A note that belongs to the chord sounding under it, so its root, third, fifth or seventh, has its number in a **magenta circle**. Numbers without a circle are passing notes and colour. Aim for the circled ones on strong beats and the others as steps between them.
 
+## solfege: Sing it in solfège
+setup: openDemoSong, openLayers, layerSolfegeOn
+target: .rj-layer-row[data-layer="solfege"]
+interactive: true
+The **Solfège** layer writes the movable-do syllable under every melody note: *do* is the key's tonic, then *re mi fa sol la ti*. Because do moves with the key, the same tune reads the same in every key, and a sharpened or flattened note gets its own syllable, such as *fi* or *te*. Sing a phrase on its syllables before you play it.
+
 ## fingerings: Fingerings for brass
 setup: openDemoSong, openLayers
 target: .rj-layer-row[data-layer="fingerings"]

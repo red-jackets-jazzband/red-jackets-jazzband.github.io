@@ -203,6 +203,9 @@ De laag **Trappen van de toonladder** schrijft onder elke melodienoot het nummer
 ## degrees-chart: Akkoordtonen zijn omcirkeld
 Een noot die bij het akkoord eronder hoort, dus de grondtoon, terts, kwint of septiem, heeft zijn nummer in een **magenta cirkel**. Nummers zonder cirkel zijn doorgangsnoten en kleur. Mik op de omcirkelde op de sterke tellen en gebruik de andere als stapjes ertussen.
 
+## solfege: Zing het in solmisatie
+De laag **Solmisatie** zet onder elke melodienoot de lettergreep in relatieve solmisatie: *do* is de grondtoon van de toonsoort, dan *re mi fa sol la si*. Omdat do met de toonsoort meeschuift, leest dezelfde melodie in elke toonsoort hetzelfde, en een verhoogde of verlaagde noot krijgt een kruis of mol, zoals *fa♯* of *si♭*. Zing een frase op de lettergrepen voordat je hem speelt.
+
 ## fingerings: Vingerzettingen voor koper
 Voor **Trompet**, **Trombone** en **Sousafoon** schrijft dit de ventielcombinatie of schuifpositie onder elke noot. Voor andere instrumenten is het uitgegrijsd, kies dus eerst een koperinstrument onder **Instrument**.
 

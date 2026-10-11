@@ -70,12 +70,41 @@ export function hasInstrumentVoices(text) {
   clef/transpose/name is left as written.
 */
 export function resolveTranspose(text, instrument, steps) {
-  if (hasInstrumentVoices(text)) return { abcText: text, visual: steps, audio: steps };
+  if (hasInstrumentVoices(text)) return { abcText: keywarnOffWhenTransposed(text, steps), visual: steps, audio: steps };
+  const visual = steps + offsetForInstrument(instrument);
   return {
-    abcText: changeClefForInstrument(instrument, text),
-    visual: steps + offsetForInstrument(instrument),
+    abcText: keywarnOffWhenTransposed(changeClefForInstrument(instrument, text), visual),
+    visual,
     audio: steps,
   };
+}
+
+// Does the tune change key after its header (a K: line or an inline [K:])?
+function changesKey(text) {
+  const lines = text.split("\n");
+  return lines.filter((line) => line.startsWith("K:")).length > 1 || text.includes("[K:");
+}
+
+/*
+  ABCjs (6.7) mis-transposes a tune that changes key: the new key signature
+  keeps naturals cancelling the *untransposed* old key (a G section followed
+  by C, shown a tone up, gets D major plus a ♮F), so a cancelling natural is
+  printed beside a sharp, and every accidental written after it is moved
+  against that broken signature (C's E♭ comes out F♭, not F♮). `%%keywarn 0`
+  turns the cancelling naturals off, which takes the bug with it. Only for a
+  transposed part: at concert pitch the naturals are right, and they stay.
+  The line is tagged so it can be taken out again: rerender() feeds this
+  text back in, and a switch back to concert pitch must drop it.
+*/
+const KEYWARN_OFF = "%%keywarn 0 % rj: transposed part";
+
+function keywarnOffWhenTransposed(text, visual) {
+  const clean = text.split(`${KEYWARN_OFF}\n`).join("");
+  if (visual % 12 === 0 || !changesKey(clean)) return clean;
+  const lineBreak = clean.indexOf("\nK:");
+  if (lineBreak < 0) return clean;
+  const at = lineBreak + 1;
+  return `${clean.slice(0, at)}${KEYWARN_OFF}\n${clean.slice(at)}`;
 }
 
 /*

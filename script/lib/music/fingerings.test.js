@@ -55,7 +55,8 @@ test("noteMidi reads where the note is drawn, with key, bar and own accidentals"
   assert.equal(noteMidi({ verticalPos: 3, accidental: "sharp" }, "treble", new Map(), bar), 66);
   assert.equal(noteMidi({ verticalPos: 3 }, "treble", new Map(), bar), 66, "the sharp holds for the rest of the bar");
   assert.equal(noteMidi({ verticalPos: 7 }, "bass", new Map(), new Map()), 52, "bass clef: E3 on the 4th space");
-  assert.equal(noteMidi({ verticalPos: 0 }, "alto", new Map(), new Map()), null);
+  assert.equal(noteMidi({ verticalPos: 6 }, "alto", new Map(), new Map()), 60, "alto clef: middle C on the middle line");
+  assert.equal(noteMidi({ verticalPos: 0 }, "perc", new Map(), new Map()), null);
 });
 
 test("trumpet: Basin Street's concert D reads as a written E, valves 1+2", () => {
