@@ -14,17 +14,17 @@ W:| 6 | Vocals | End on a long note: "all over now" |
 M: 4/4
 L: 1/4
 Q:1/4=200
-V:1 clef=treble transpose=0 name="Trumpet" " " +12 "
-V:2 clef=bass transpose=-24 name="Sousaphone" middle=d " " "
-K:Bbmaj
-[V:1] [BD]/[BD]/ z/[BD]/[BD] || "Bb7"[A_D][B=D] z2 | z [BD]/[BD]/ z/[BD]/[BD] | [A_D][B=D] z2 | z [BD]/[BD]/ z/[BD]/[BD] | [A_D][B=D] z2 | z [BD]/[BD]/ z/[BD]/[BD] | [A_D][B=D] z2 | z [BD]/[BD]/ z/[BD]/[BD] |
-[V:2] z3 || B,2 D2 | F3/2G/ z/F/G | B,2 D2 | F/FG/ z/F/G | B,2 D2 | F3/2G/ z/F/G | B,/B,3/2 D2 | FF/G/ z/F/D |
-[V:1] "Eb7"[G_D][B_D] z2 | z [B_D]/[B_D]/ z/[B_D]/[B_D] | [e_D][B_D] z2 | z [B_D]/[B_D]/ z/[B_D]/[B_D] | "Bb7"[A_D][B=D] z2 | z [BD]/[BD]/ z/[BD]/[BD] | [A_D][B=D] z2 | z [DB,] [EC][=EC] |
-[V:2] E2 G2 | B3/2c/ z/B/c | E2 G2 | B/Bc/ z/B/c | B,2 D2 | F3/2G/ z/F/G | B,/B,3/2 D2 | F3/2G/ z/F/G |
-[V:1] "F7"[AF]4- | [AF]2 [AF][^G=E] | "Eb7"[G_D]4- | [G_D]4 | "Bb7"z [_dG]/[BD]/ [cE]/[BD][c^F]/ | [_dG]/[BD]/ [cE]/[BD]/- [BD][GE] | z [_dG]/[BD]/ [cE]/[BD]3/2 | z [DB,] [EC][=EC] |
-[V:2] F2 A2 | c3/2d/ z/c/d | E2 G2 | B3/2c/ z/B/A | B,2 D2 | F3/2G/ z/F/G | B,2 D2 | F3/2G/ z/F/D |
-[V:1] "F7"[AF]4- | [AF]2 [AF][^G=E] | "Eb7"[G_D]4- | [G_D]4 | "Bb7"z [_dG]/[BD]/ [cE]/[BD][c^F]/ | [_dG]/[BD]/ [cE]/[BD]/- [BD][GE] | z [_dG]/[BD]/ [cE]/[BD][c^F]/ | [_dG]/[BD]/ [cE]/[BD]/- [BD][GE] |]
-[V:2] F2 A2 | c3/2d/ z/c/A | E2 G2 | B3/2c/ z/B/A | B,2 D2 | F3/2G/ z/F/G | B,2 D2 | F3/2G/ z/F/G |]
+V:1 clef=treble transpose=-2 name="Trumpet" " " +12 "
+V:2 clef=bass transpose=-26 name="Sousaphone" middle=D " " "
+K:Cmaj
+[V:1] [cE]/[cE]/ z/[cE]/[cE] || "C7"[B_E][c=E] z2 | z [cE]/[cE]/ z/[cE]/[cE] | [B_E][c=E] z2 | z [cE]/[cE]/ z/[cE]/[cE] | [B_E][c=E] z2 | z [cE]/[cE]/ z/[cE]/[cE] | [B_E][c=E] z2 | z [cE]/[cE]/ z/[cE]/[cE] |
+[V:2] z3 || C2 E2 | G3/2A/ z/G/A | C2 E2 | G/GA/ z/G/A | C2 E2 | G3/2A/ z/G/A | C/C3/2 E2 | GG/A/ z/G/E |
+[V:1] "F7"[A_E][c_E] z2 | z [c_E]/[c_E]/ z/[c_E]/[c_E] | [f_E][c_E] z2 | z [c_E]/[c_E]/ z/[c_E]/[c_E] | "C7"[B_E][c=E] z2 | z [cE]/[cE]/ z/[cE]/[cE] | [B_E][c=E] z2 | z [EC] [FD][^FD] |
+[V:2] F2 A2 | c3/2d/ z/c/d | F2 A2 | c/cd/ z/c/d | C2 E2 | G3/2A/ z/G/A | C/C3/2 E2 | G3/2A/ z/G/A |
+[V:1] "G7"[BG]4- | [BG]2 [BG][^A^F] | "F7"[A_E]4- | [A_E]4 | "C7"z [_eA]/[cE]/ [dF]/[cE][d^G]/ | [_eA]/[cE]/ [dF]/[cE]/- [cE][AF] | z [_eA]/[cE]/ [dF]/[cE]3/2 | z [EC] [FD][^FD] |
+[V:2] G2 B2 | d3/2e/ z/d/e | F2 A2 | c3/2d/ z/c/B | C2 E2 | G3/2A/ z/G/A | C2 E2 | G3/2A/ z/G/E |
+[V:1] "G7"[BG]4- | [BG]2 [BG][^A^F] | "F7"[A_E]4- | [A_E]4 | "C7"z [_eA]/[cE]/ [dF]/[cE][d^G]/ | [_eA]/[cE]/ [dF]/[cE]/- [cE][AF] | z [_eA]/[cE]/ [dF]/[cE][d^G]/ | [_eA]/[cE]/ [dF]/[cE]/- [cE][AF] |]
+[V:2] G2 B2 | d3/2e/ z/d/B | F2 A2 | c3/2d/ z/c/B | C2 E2 | G3/2A/ z/G/A | C2 E2 | G3/2A/ z/G/A |]
 W:Well, baby used to stay out all night long
 W:She made me cry, she done me wrong
 W:She hurt my eyes open, that's no lie
