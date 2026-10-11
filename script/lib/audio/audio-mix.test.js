@@ -417,6 +417,14 @@ test("resolveMixerVoices appends Solo after Comping, with the style's instrument
   ]);
 });
 
+test("resolveMixerVoices appends Practice last", () => {
+  assert.deepEqual(resolveMixerVoices([], true, null, null, 56), [
+    { id: "1", index: 0, label: "Melody" },
+    { id: "2", index: 1, label: "Comping" },
+    { id: "3", index: 2, label: "Practice", fallbackProgram: 56 },
+  ]);
+});
+
 test("computeVoicesOff silences a voice that Solo auto-muted as well as one the listener muted", () => {
   const voices = [
     { index: 0, muted: false, autoMuted: true },

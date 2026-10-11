@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import ABCJS from "abcjs";
 import {
   COMPING_PATTERNS,
   PATTERNS,
@@ -13,9 +14,10 @@ import {
   measureBarSlots,
   plainChordName,
 } from "./comping.js";
-import { BREAK_CHORD } from "./chords.js";
+import { BREAK_CHORD, parseChordScheme } from "./chords.js";
 import { tonalStub as TonalStub, withTonal, nameToMidi } from "../../../../tests/helpers/stubs.js";
 import { injectMixerAudio } from "../audio/audio-mix.js";
+import { withRealTonal } from "../../../../tests/helpers/bar-voice.js";
 
 // The midpoint (in semitones) between a chord triple's bottom and top voice.
 function centre(triple) {
@@ -1133,4 +1135,20 @@ test("plainChordName spells half-diminished as m7b5, keeping dim7", () => {
   assert.equal(plainChordName("BØ"), "Bm7b5");
   assert.equal(plainChordName("AØ7"), "Adim7");
   assert.equal(plainChordName("C♯m"), "C#m");
+});
+
+test("buildCompingTune: a key change on its own line before a \"|:\" respells the bars after it", () => {
+  // Royal Garden Blues' shape: K:Bb, P:D, then the part opens with "|:". The
+  // C7 chord's E-natural has to be written =E under the new Bb signature.
+  const text = [
+    "X:1", "T:Keys", "M:4/4", "L:1/8", "K:F",
+    "\"F\"F8|\"C7\"G8||", "K:Bb", "P:B", "|:\"Bb\"B8|\"C7\"c8|\"F7\"c8|\"Bb\"B8:|", "",
+  ].join("\n");
+  withRealTonal(() => {
+    const song = ABCJS.parseOnly(text)[0];
+    const comping = buildCompingTune(text, parseChordScheme(song), song, COMPING_PATTERNS[0].value).abc.split("\nV:2\n")[1];
+    const [before, after] = comping.split("[K:Bb]");
+    assert.match(before, /\[EGc\]/, "E is natural in F already");
+    assert.match(after, /\[=EGc\]/);
+  });
 });

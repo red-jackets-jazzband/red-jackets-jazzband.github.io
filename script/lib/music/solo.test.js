@@ -5,8 +5,10 @@ import {
 } from "./solo.js";
 import { generateSolo, startSolo } from "./solo-ga.js";
 import { buildCompingTune, COMPING_PATTERNS } from "./comping.js";
-import { BREAK_CHORD } from "./chords.js";
 import { tonalStub } from "../../../../tests/helpers/stubs.js";
+import {
+  ABC, SONG, CHORDS, barSlots, voiceBars as soloBars,
+} from "../../../../tests/helpers/bar-voice.js";
 
 before(() => {
   globalThis.Tonal = tonalStub;
@@ -16,36 +18,6 @@ after(() => {
 });
 
 const FAST = { popSize: 30, generations: 40 };
-const ABC = [
-  "X:1", "T:Test", "M:4/4", "L:1/8", "K:F",
-  "\"F\"FGAB c2 c2|\"C7\"cBAG F4|\"F\"A2 c2 f4|\"F\"c8|]", "",
-].join("\n");
-const SONG = {
-  lines: [{
-    staff: [{
-      key: { root: "F", acc: "", mode: "", accidentals: [{ acc: "flat", note: "B" }] },
-      voices: [[{ el_type: "note", duration: [0.25], pitches: [{ pitch: 3 }] }, { el_type: "note", duration: [0.5], pitches: [{ pitch: 7 }] }]],
-    }],
-  }],
-};
-const chordsOf = (...bars) => bars.map((text) => ({ text }));
-const CHORDS = chordsOf(["F"], ["C7"], ["F", "F7"], [BREAK_CHORD]);
-
-// The solo staff's bars: everything after the "V:2" body line.
-function soloBars(abc) {
-  return abc.split("\nV:2\n")[1].trim().replace(/\|\]$/, "").split("|");
-}
-
-// Length of a bar in eighth slots, read back from the ABC (L:1/8).
-function barSlots(bar) {
-  let total = 0;
-  for (const token of bar.match(/[_^=]?[A-Ga-gz][,']?\d?/g)) {
-    const digits = token.replace(/\D/g, "");
-    total += digits ? Number(digits) : 1;
-  }
-  return total;
-}
-
 test("every style the dropdown offers has an instrument", () => {
   for (const { value } of SOLO_STYLES) assert.ok(Number.isInteger(SOLO_PROGRAMS[value]), value);
 });

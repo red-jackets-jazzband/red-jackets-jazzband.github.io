@@ -11,6 +11,8 @@ export const PREF_KEYS = {
   compingSplit: "rj.compingSplit",
   compingParts: "rj.compingParts",
   solo: "rj.solo",
+  practice: "rj.practice",
+  practiceRhythm: "rj.practiceRhythm",
   sheetAdvanced: "rj.sheetAdvanced",
   inspirationWidth: "rj.inspirationWidth",
   mixerBassVolume: "rj.mixerBassVolume",

@@ -29,7 +29,7 @@ const ROMAN_INSTRUMENT = "concert_+_roman";
 
 /*
   The settings slice (songs/sheet/state.js) as they apply to one render.
-  Comping and Solo live in the More-controls drawer: they only take effect
+  Comping, Solo and Practice live in the More-controls drawer: they only take effect
   while it's open, on the live sheet (a booklet always prints the plain
   chart), and Solo only once its picker exists (`soloEnabled`). Both also
   need chords — buildRenderPlan checks that itself. The Key stepper is a
@@ -47,6 +47,8 @@ export function effectiveSheetSettings(settings, { booklet = false, layers = {} 
     comping: drawer ? settings.comping : "off",
     compingParts: settings.compingSplit ? settings.compingParts : null,
     solo: drawer && settings.soloEnabled ? settings.solo : "off",
+    practice: drawer && settings.practice ? settings.practice : "off",
+    practiceOptions: { rhythm: settings.practiceRhythm },
   };
 }
 
@@ -117,7 +119,8 @@ export function buildRenderPlan(text, settings, { parse, extraTransposeSteps = 0
   const chords = parseChordScheme(song);
   const displayChords = settings.instrument === ROMAN_INSTRUMENT ? convertChordsToRoman(chords) : chords;
   const hasChords = chords.length > 0;
-  const needsConcert = hasChords && (settings.comping !== "off" || settings.solo !== "off");
+  const needsConcert = hasChords
+    && (settings.comping !== "off" || settings.solo !== "off" || (settings.practice || "off") !== "off");
   const concert = needsConcert ? concertMaterial(abcText, parse) : null;
 
   // The active layers' annotations go into the text that gets engraved —

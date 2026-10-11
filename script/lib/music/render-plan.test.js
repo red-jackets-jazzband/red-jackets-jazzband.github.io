@@ -38,6 +38,17 @@ test("effectiveSheetSettings: comping and solo only count while the drawer is op
   assert.equal(effectiveSheetSettings({ ...SETTINGS, advancedOpen: true, soloEnabled: true }).solo, "trumpet");
 });
 
+test("effectiveSheetSettings: a practice exercise only counts while the drawer is open", () => {
+  const settings = { ...SETTINGS, practice: "scales" };
+  assert.equal(effectiveSheetSettings(settings).practice, "off");
+  assert.equal(effectiveSheetSettings({ ...settings, advancedOpen: true }).practice, "scales");
+  assert.equal(effectiveSheetSettings({ ...settings, advancedOpen: true }, { booklet: true }).practice, "off");
+  assert.deepEqual(
+    effectiveSheetSettings({ ...settings, practiceRhythm: "pairs" }).practiceOptions,
+    { rhythm: "pairs" },
+  );
+});
+
 test("effectiveSheetSettings: a booklet ignores the Key stepper and the drawer", () => {
   const booklet = effectiveSheetSettings({ ...SETTINGS, advancedOpen: true, transpose: 5 }, { booklet: true });
   assert.equal(booklet.transpose, 0);

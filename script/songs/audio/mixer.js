@@ -192,16 +192,18 @@ function voiceListSignature(voices) {
 const GENERATED_VOICE_SUBLABEL = {
   Comping: () => tl("mixer_sublabel_comping", "fills"),
   Solo: () => tl("mixer_sublabel_solo", "improvised"),
+  Practice: () => tl("mixer_sublabel_practice", "exercise"),
 };
 
 // What a voice is called on screen. Its English label stays the identity (the
 // Mixer's sticky settings are keyed by it, and so are the comparisons below);
-// only the three names the app generates itself are translated — a chart's
+// only the names the app generates itself are translated — a chart's
 // own named staves ("Sousaphone") are shown as written.
 function voiceDisplayName(label) {
   if (label === "Melody") return tl("mixer_voice_melody", "Melody");
   if (label === "Comping") return tl("mixer_voice_comping", "Comping");
   if (label === "Solo") return tl("mixer_voice_solo", "Solo");
+  if (label === "Practice") return tl("mixer_voice_practice", "Practice");
   const numbered = /^(Melody|Comping) (.+)$/.exec(label);
   if (numbered) return `${voiceDisplayName(numbered[1])} ${numbered[2]}`;
   return label;
@@ -475,7 +477,7 @@ export function createMixer(ctx) {
     const withSlugs = dedupeVoiceSlugs(voices);
     // While Solo plays, the first voice (typically the lead) steps aside.
     const soloOn = voices.some((v) => v.label === "Solo");
-    const ownSig = voiceListSignature(voices.filter((v) => v.label !== "Solo" && !isCompingLabel(v.label)));
+    const ownSig = voiceListSignature(voices.filter((v) => v.label !== "Solo" && v.label !== "Practice" && !isCompingLabel(v.label)));
     if (!soloOn || ownSig !== ownVoicesSig) leadUnmuted = false;
     ownVoicesSig = ownSig;
     ctx.store.set("mixer", {

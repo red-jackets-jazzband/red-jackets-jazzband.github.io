@@ -313,7 +313,7 @@ export function isCompingLabel(label) {
   tones — "R", "3", "5" — that Comping is split into: each becomes its own
   "Comping <tone>" voice, in that order, instead of the single "Comping" one.
 */
-export function resolveMixerVoices(rawVoices, compingActive, soloProgram = null, compingParts = null) {
+export function resolveMixerVoices(rawVoices, compingActive, soloProgram = null, compingParts = null, practiceProgram = null) {
   const base = rawVoices.length > 0 ? rawVoices : [{ id: "1", index: 0, name: null }];
   const unnamedTotal = base.filter((v) => !v.name).length;
   let unnamedSeen = 0;
@@ -334,6 +334,12 @@ export function resolveMixerVoices(rawVoices, compingActive, soloProgram = null,
     // generated staves in; `fallbackProgram` is the style's own instrument.
     voices.push({
       id: nextVoiceId(voices.map((v) => v.id)), index: voices.length, label: "Solo", fallbackProgram: soloProgram,
+    });
+  }
+  if (practiceProgram !== null) {
+    // The practice exercise staff (lib/music/practice.js) comes last.
+    voices.push({
+      id: nextVoiceId(voices.map((v) => v.id)), index: voices.length, label: "Practice", fallbackProgram: practiceProgram,
     });
   }
   return voices;

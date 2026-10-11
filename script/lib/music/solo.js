@@ -1,5 +1,5 @@
 import {
-  appendBarVoice, distribute, pcChromaVal, rebeamBar, resolveChordNames, respellBar,
+  appendBarVoice, distribute, endsTied, pcChromaVal, rebeamBar, resolveChordNames, respellBar,
 } from "./comping.js";
 import { computeChordOffset } from "./chords.js";
 import { generateSolo, startSolo } from "./solo-ga.js";
@@ -134,7 +134,7 @@ function toProgression(names) {
 
 // MIDI note -> ABC note, spelled from the key's own scale where it can be and
 // with flats elsewhere (sharps only in a sharp key).
-function createSpeller(keyScale) {
+export function createSpeller(keyScale) {
   const byChroma = new Map(keyScale.map((pc) => [pcChromaVal(pc), pc]));
   const sharpKey = keyScale.some((pc) => pc.includes("#"));
   const chromatic = sharpKey
@@ -167,12 +167,12 @@ function restTokens(slots) {
 
 // GA notes (beats, straight grid) -> one bar fragment per bar, in eighth
 // slots. A note running over a barline is cut and tied.
-function barFragments(notes, bars, spell) {
+export function barFragments(notes, bars, spell) {
   const cells = Array.from({ length: bars }, () => []);
   for (const note of notes) {
     const start = Math.round(note.start * SLOTS_PER_BEAT);
     const end = Math.round((note.start + note.duration) * SLOTS_PER_BEAT);
-    const abcNote = spell(note.midi);
+    const abcNote = spell(note.midi, note);
     for (let bar = Math.floor(start / SLOTS_PER_BAR); bar * SLOTS_PER_BAR < end && bar < bars; bar++) {
       const from = Math.max(start, bar * SLOTS_PER_BAR) - bar * SLOTS_PER_BAR;
       const to = Math.min(end, (bar + 1) * SLOTS_PER_BAR) - bar * SLOTS_PER_BAR;
@@ -292,7 +292,7 @@ export function buildSoloTune(text, chords, song, style, gaOptions = {}) {
   const notes = takes.get(request.key);
   const abc = appendBarVoice(text, song, ({ keyScale, keySig, lnum, lden }) => (
     barFragments(notes, chords.length, createSpeller(keyScale))
-      .map((fragment) => rebeamBar(respellBar(fragment, keySig), lnum, lden))
+      .map((fragment, i, all) => rebeamBar(respellBar(fragment, keySig, i > 0 && endsTied(all[i - 1])), lnum, lden))
   ), { name: "Solo", titleSuffix: "" });
   return abc === null ? null : { abc, notes };
 }

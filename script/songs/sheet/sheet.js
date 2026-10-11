@@ -8,6 +8,7 @@ import {
 import {
   buildSoloTune, cancelSolo, composeSolo, hasSoloTake, SOLO_PROGRAMS,
 } from "../../lib/music/solo.js";
+import { buildPracticeTune, PRACTICE_PROGRAM } from "../../lib/music/practice.js";
 import { parseVoiceList, resolveMixerVoices, isCompingLabel } from "../../lib/audio/audio-mix.js";
 import { parseInspirationLinks } from "../../lib/media/inspiration-links.js";
 import { renderChordTable, scanRepeatBoundaries, fitChordTable, fitSongForms } from "./chord-table.js";
@@ -120,6 +121,19 @@ function applySolo(renderText, plan, style, compose) {
   compose(null);
   const solo = buildSoloTune(renderText, chords, song, style);
   return solo ? { renderText: solo.abc, program: SOLO_PROGRAMS[style] } : { renderText, program: null };
+}
+
+/*
+  Live sheet only: when a practice exercise is picked, append its staff after
+  Comping / Solo (lib/music/practice.js — rule-based, so instant, no
+  background job); `options` is the Rhythm pick. Returns the render text and the voice's program, or null
+  when it didn't apply.
+*/
+function applyPractice(renderText, plan, exercise, options) {
+  if (exercise === "off") return { renderText, program: null };
+  const { song, chords } = plan.concert;
+  const built = buildPracticeTune(renderText, chords, song, exercise, options);
+  return built ? { renderText: built.abc, program: PRACTICE_PROGRAM } : { renderText, program: null };
 }
 
 // The "Composing solo… 42%" readout next to the Solo dropdown (#soloStatus).
@@ -345,13 +359,18 @@ export function createSheet(ctx) {
     // Like comping, a solo needs chords to play over.
     const soloStyle = plan.hasChords ? settings.solo : "off";
     const solo = applySolo(plan.comping.renderText, plan, soloStyle, composeSoloTake);
+    const practice = applyPractice(
+      solo.renderText, plan, plan.hasChords ? settings.practice : "off", settings.practiceOptions,
+    );
     // The Mixer's voice list is an input to this very render: the tune's
     // own voices (read from the raw text, never the transposed/augmented
-    // one) plus Comping/Solo, materialised by the Mixer with each voice's
+    // one) plus Comping/Solo/Practice, materialised by the Mixer with each voice's
     // persisted Mute/Voice/Volume before the levels are stamped in.
-    const voices = resolveMixerVoices(parseVoiceList(text), plan.comping.active, solo.program, plan.comping.parts);
+    const voices = resolveMixerVoices(
+      parseVoiceList(text), plan.comping.active, solo.program, plan.comping.parts, practice.program,
+    );
     ctx.mixer.syncVoices(voices);
-    const renderText = mixRenderText(solo.renderText, ctx.store.get("mixer"), plan.hasChords);
+    const renderText = mixRenderText(practice.renderText, ctx.store.get("mixer"), plan.hasChords);
 
     if (fresh) songSerial += 1;
     updateIrealProLink(plan.song, plan.chords);

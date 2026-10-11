@@ -677,13 +677,28 @@ function respellNotes(run, keySig, barAcc) {
 }
 
 // Handles chord tokens "[CEG]" and, for the solo voice, single notes.
-export function respellBar(fragment, keySig) {
+// `tiedIn`: the bar's first note continues a tie from the bar before. Its
+// accidental carries over the tie, so it's written bare, and it sets
+// nothing for the rest of the bar — the next note on that line spells its
+// own (abcjs's playback ignores an accidental on a tied-over note anyway:
+// "=E- | =E E" sounded E-natural, then E-flat in an E-flat key).
+export function respellBar(fragment, keySig, tiedIn = false) {
   const barAcc = new Map();
-  return String(fragment).replace(/\[[_^=A-Ga-g,']+\]|[_^=]{0,2}[A-Ga-g][,']{0,4}/g, (token) => (
-    token.startsWith("[")
+  let skipFirst = tiedIn;
+  return String(fragment).replace(/\[[_^=A-Ga-g,']+\]|[_^=]{0,2}[A-Ga-g][,']{0,4}/g, (token) => {
+    if (skipFirst) {
+      skipFirst = false;
+      return token.replace(/[_^=]/g, "");
+    }
+    return token.startsWith("[")
       ? "[" + respellNotes(token.slice(1, -1), keySig, barAcc) + "]"
-      : respellNotes(token, keySig, barAcc)
-  ));
+      : respellNotes(token, keySig, barAcc);
+  });
+}
+
+// Whether a bar fragment ends on a tie into the next bar.
+export function endsTied(fragment) {
+  return String(fragment).trimEnd().endsWith("-");
 }
 
 // The inverse of respellBar: every note spelled with its full, effective
@@ -964,8 +979,9 @@ function segmentContent(segment, cfg, state) {
     return { content: stub, isRest: true };
   }
   if (pastLead && state.patternIdx < barStrings.length) {
+    const tiedIn = state.patternIdx > 0 && endsTied(barStrings[state.patternIdx - 1]);
     const content = barStrings[state.patternIdx++];
-    const respelled = state.currentKey && respellForKey ? respellForKey(content, state.currentKey) : content;
+    const respelled = state.currentKey && respellForKey ? respellForKey(content, state.currentKey, tiedIn) : content;
     return { content: respelled, isRest: false };
   }
   return { content: subBarRest(segment, lnum, lden) || rest, isRest: true };
@@ -1019,13 +1035,16 @@ export function buildVoiceBody(rawBody, barStrings, leadingRestBars, restToken, 
   const state = { patternIdx: 0, seen: 0, currentKey: null };
   let out = "";
   for (const p of splitAtBarlines(stripNonMusicLines(rawBody))) {
+    const fieldList = p.bar ? [] : p.s.match(/\[[A-Za-z]:[^\]]*\]/g) || [];
+    // Track the key even where no notes follow in the same segment: a key
+    // change on its own line before a "|:" (K:Bb, P:D, then "|: ...") sits
+    // in a segment of its own, and its bars must still be spelled for it.
+    for (const f of fieldList) {
+      if (f.startsWith("[K:")) state.currentKey = f.slice(3, -1).trim();
+    }
     if (p.bar || !carriesNotes(p.s)) {
       out += p.s;
       continue;
-    }
-    const fieldList = p.s.match(/\[[A-Za-z]:[^\]]*\]/g) || [];
-    for (const f of fieldList) {
-      if (f.startsWith("[K:")) state.currentKey = f.slice(3, -1).trim();
     }
     const segment = segmentContent(p.s, cfg, state);
     state.seen++;
@@ -1528,7 +1547,7 @@ function compingBars(chords, pat, { keyScale, keySig, lnum, lden }, part = null)
     compPalettes.push(built.barPalette);
   });
   if (part !== null) fragments = dropCrossPitchTies(fragments);
-  const compBars = fragments.map((f) => rebeamBar(respellBar(f, keySig), lnum, lden));
+  const compBars = fragments.map((f, i) => rebeamBar(respellBar(f, keySig, i > 0 && endsTied(fragments[i - 1])), lnum, lden));
   return { compBars, compPalettes };
 }
 
@@ -1587,11 +1606,11 @@ function collectVoiceIds(text) {
 
 // A mid-tune K: change re-spells each comping bar for the key in effect.
 function makeRespellForKey(keySig) {
-  return (bar, keyField) => {
+  return (bar, keyField, tiedIn) => {
     const m = /^([A-G])([#b]?)\s*([A-Za-z]*)/.exec(keyField);
     if (!m) return bar;
     const sig = keySignature(keyScaleNotes({ root: m[1], acc: m[2], mode: m[3] }));
-    return respellBar(explicitBar(bar, keySig), sig);
+    return respellBar(explicitBar(bar, keySig), sig, tiedIn);
   };
 }
 
