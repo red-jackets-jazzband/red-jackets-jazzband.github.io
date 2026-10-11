@@ -36,3 +36,4 @@
 - [The way I ride](/songs/all_the_girls.abc)
 - [Over in the Gloryland](/songs/gloryland.abc)
 - [Ice Cream](/songs/ice_cream.abc)
+- [It's All Over Now](/songs/all_over_now.abc)

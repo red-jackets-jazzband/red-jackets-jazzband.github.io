@@ -5,21 +5,26 @@ F:https://www.youtube.com/watch?v=acDWlBkuoFg
 F:https://open.spotify.com/track/5gIq1Qkrdw5bMbLGeaYw0q
 F:https://secondhandsongs.com/work/4487
 R: Rebirth
+W:| 1 | Intro | Sousaphone alone; bass drum joins on the 2nd line |
+W:| 2 | Riff | Collective |
+W:| 3 | Vocals | |
+W:| 4 | Solos | |
+W:| 5 | Riff | Collective |
+W:| 6 | Vocals | End on a long note: "all over now" |
 M: 4/4
-L: 1/8
-Q:1/4=120
+L: 1/4
+Q:1/4=200
 V:1 clef=treble transpose=0 name="Trumpet" " " +12 "
 V:2 clef=bass transpose=-24 name="Sousaphone" middle=d " " "
 K:Bbmaj
-P:Riff
-[V:1] "Bb7"[A_D][B=D] z2 z [BD]/[BD]/ z/[BD]/[BD] | [A_D][B=D] z2 z [BD]/[BD]/ z/[BD]/[BD] | [A_D][B=D] z2 z [BD]/[BD]/ z/[BD]/[BD] | [A_D][B=D] z2 z [BD]/[BD]/ z/[BD]/[BD] |
-[V:2] B,2 D2 F3/2G/ z/F/G | B,2 D2 F/FG/ z/F/G | B,2 D2 F3/2G/ z/F/G | B,/B,3/2 D2 FF/G/ z/F/D |
-[V:1] "Eb7"[G_D][B_D] z2 z [B_D]/[B_D]/ z/[B_D]/[B_D] | [e_D][B_D] z2 z [B_D]/[B_D]/ z/[B_D]/[B_D] | "Bb7"[A_D][B=D] z2 z [BD]/[BD]/ z/[BD]/[BD] | [A_D][B=D] z2 z [DB,] [EC][=EC] |
-[V:2] E2 G2 B3/2c/ z/B/c | E2 G2 B/Bc/ z/B/c | B,2 D2 F3/2G/ z/F/G | B,/B,3/2 D2 F3/2G/ z/F/G |
-[V:1] "F7"[AF]4- [AF]2 [AF][^G=E] | "Eb7"[G_D]8 | "Bb7"z [_dG]/[BD]/ [cE]/[BD][c^F]/ [_dG]/[BD]/ [cE]/[BD]/- [BD][GE] | z [_dG]/[BD]/ [cE]/[BD]3/2 z [DB,] [EC][=EC] |
-[V:2] F2 A2 c3/2d/ z/c/d | E2 G2 B3/2c/ z/B/A | B,2 D2 F3/2G/ z/F/G | B,2 D2 F3/2G/ z/F/D |
-[V:1] "F7"[AF]4- [AF]2 [AF][^G=E] | "Eb7"[G_D]8 | "Bb7"z [_dG]/[BD]/ [cE]/[BD][c^F]/ [_dG]/[BD]/ [cE]/[BD]/- [BD][GE] | z [_dG]/[BD]/ [cE]/[BD][c^F]/ [_dG]/[BD]/ [cE]/[BD]/- [BD][GE] |]
-[V:2] F2 A2 c3/2d/ z/c/A | E2 G2 B3/2c/ z/B/A | B,2 D2 F3/2G/ z/F/G | B,2 D2 F3/2G/ z/F/G |]
+[V:1] [BD]/[BD]/ z/[BD]/[BD] || "Bb7"[A_D][B=D] z2 | z [BD]/[BD]/ z/[BD]/[BD] | [A_D][B=D] z2 | z [BD]/[BD]/ z/[BD]/[BD] | [A_D][B=D] z2 | z [BD]/[BD]/ z/[BD]/[BD] | [A_D][B=D] z2 | z [BD]/[BD]/ z/[BD]/[BD] |
+[V:2] z3 || B,2 D2 | F3/2G/ z/F/G | B,2 D2 | F/FG/ z/F/G | B,2 D2 | F3/2G/ z/F/G | B,/B,3/2 D2 | FF/G/ z/F/D |
+[V:1] "Eb7"[G_D][B_D] z2 | z [B_D]/[B_D]/ z/[B_D]/[B_D] | [e_D][B_D] z2 | z [B_D]/[B_D]/ z/[B_D]/[B_D] | "Bb7"[A_D][B=D] z2 | z [BD]/[BD]/ z/[BD]/[BD] | [A_D][B=D] z2 | z [DB,] [EC][=EC] |
+[V:2] E2 G2 | B3/2c/ z/B/c | E2 G2 | B/Bc/ z/B/c | B,2 D2 | F3/2G/ z/F/G | B,/B,3/2 D2 | F3/2G/ z/F/G |
+[V:1] "F7"[AF]4- | [AF]2 [AF][^G=E] | "Eb7"[G_D]4- | [G_D]4 | "Bb7"z [_dG]/[BD]/ [cE]/[BD][c^F]/ | [_dG]/[BD]/ [cE]/[BD]/- [BD][GE] | z [_dG]/[BD]/ [cE]/[BD]3/2 | z [DB,] [EC][=EC] |
+[V:2] F2 A2 | c3/2d/ z/c/d | E2 G2 | B3/2c/ z/B/A | B,2 D2 | F3/2G/ z/F/G | B,2 D2 | F3/2G/ z/F/D |
+[V:1] "F7"[AF]4- | [AF]2 [AF][^G=E] | "Eb7"[G_D]4- | [G_D]4 | "Bb7"z [_dG]/[BD]/ [cE]/[BD][c^F]/ | [_dG]/[BD]/ [cE]/[BD]/- [BD][GE] | z [_dG]/[BD]/ [cE]/[BD][c^F]/ | [_dG]/[BD]/ [cE]/[BD]/- [BD][GE] |]
+[V:2] F2 A2 | c3/2d/ z/c/A | E2 G2 | B3/2c/ z/B/A | B,2 D2 | F3/2G/ z/F/G | B,2 D2 | F3/2G/ z/F/G |]
 W:Well, baby used to stay out all night long
 W:She made me cry, she done me wrong
 W:She hurt my eyes open, that's no lie
