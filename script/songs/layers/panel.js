@@ -22,6 +22,7 @@ import { byId, clear, el } from "../../lib/core/dom.js";
 import { LAYERS, activeLayers } from "../../lib/music/layers.js";
 import { findInstrument, INSTRUMENTS } from "../../lib/music/instruments.js";
 import { trackRightEdge } from "./edge.js";
+import { initSheetDrag } from "./sheet-drag.js";
 import { listOf, tl } from "../../lib/core/i18n.js";
 
 function brassLabels() {
@@ -192,6 +193,12 @@ export function createLayersPanel(ctx) {
     const backdrop = byId("layersBackdrop");
     if (backdrop) backdrop.addEventListener("click", () => setOpen(false));
     document.addEventListener("keydown", onKeydown);
+    const panel = byId("layersPanel");
+    if (panel) {
+      const grip = panel.querySelector(".rj-layers-grip");
+      const handles = [grip, panel.querySelector(".rj-layers-head")].filter(Boolean);
+      initSheetDrag(panel, handles, grip, () => setOpen(false));
+    }
 
     ctx.store.subscribe("layers", (state, changed) => {
       if (changed.includes("activeLayers")) redraw();

@@ -51,7 +51,7 @@ Op een telefoon vult het leadsheet het hele scherm, dus de lijst is uit beeld. M
 De pijlen onder de akkoordentabel tonen de **vorm**: de volgorde van de delen. Zelfde kleur, zelfde deel. *2x* betekent herhaald. Een `...` aan het eind (zoals `A` `B` `...` bij de solo's) herhaalt zo vaak als er solisten zijn.
 
 ## instrument: Lees je eigen partij
-Kies je instrument en het leadsheet wordt ervoor getransponeerd: concertstemming, Concert + Romeinse cijfers, altsax, Bb-klarinet of -trompet, tenorsax, trombone of sousafoon (bassleutel). Het geluid klinkt altijd in concertstemming.
+Kies je instrument en het leadsheet wordt ervoor getransponeerd: Klinkend, Klinkend + Romeinse cijfers, altsax, Bb-klarinet of -trompet, tenorsax, trombone of sousafoon (bassleutel). Het geluid blijft altijd op klinkende toonhoogte.
 
 ## play: Luister mee
 Het helpt om een song te horen voordat je hem speelt. **Afspelen** (`fa-play`) start hem en de noten lichten op in het leadsheet terwijl ze klinken. **Stop** (`fa-stop`) beëindigt hem.

@@ -56,6 +56,44 @@ function coverPage(name, desc) {
   ]);
 }
 
+// Engraving is the slow part of a booklet, so it never runs in a read's
+// callback: one song per idle slice (requestIdleCallback where there is one —
+// Safari has none — else a short timeout), or back to back with a progress
+// line while a "Print songbook" is waiting on it.
+const IDLE_GAP_MS = 40;
+
+function defer(fn, urgent) {
+  if (!urgent && typeof window.requestIdleCallback === "function") window.requestIdleCallback(fn, { timeout: 2000 });
+  else setTimeout(fn, urgent ? 0 : IDLE_GAP_MS);
+}
+
+function engraveRecord(record) {
+  if (record.engraved) return;
+  record.engraved = true;
+  try {
+    record.engrave();
+  } catch (error) {
+    console.warn("Could not engrave a song for the booklet", error);
+  }
+}
+
+function songParts() {
+  const title = el("div", { class: "songtitle" });
+  const chord = el("div", { class: "chordtable" });
+  const notation = el("div", { class: "notation" });
+  return { block: el("div", { class: "setlist-booklet-song" }, [title, chord, notation]), title, chord, notation };
+}
+
+// The ids a song's cells carry are by position, so a re-attached block
+// takes the ones of the slot it now sits in.
+function stampIds(parts, entry) {
+  const n = entry.songCount;
+  parts.title.id = `setlistPrintTitle-${n}`;
+  parts.chord.id = `setlistPrintChord-${n}`;
+  parts.notation.id = `setlistPrintNotation-${n}`;
+  parts.block.classList.toggle("pageBreakBefore", !entry.followsHeading);
+}
+
 /*
   Printing an open setlist. One hidden container (#setlistPrintBooklet) holds
   everything; a <body> class picks which of the three printed forms shows:
@@ -77,6 +115,23 @@ export function createSetlistPrint(ctx) {
   let totalReads = 0;
   let onBookletReady = null;
   let waitingMode = null;
+
+  // What a rebuild reuses. A setlist is rebuilt on every list edit, and
+  // engraving is the slow part (ABCjs, ~50 ms a song), so:
+  //   songTexts   file -> .abc text, so a rebuild needn't re-read it
+  //   songCache   one record per song block, keyed by file + key override +
+  //               instrument + occurrence: the block's DOM (already filled
+  //               and engraved), its title, key/bpm meta and listen sources.
+  //               A rebuild re-attaches these blocks, renumbered, instead of
+  //               engraving them again; only changed songs cost anything.
+  // The staves themselves are engraved off the click path (engraveQueue, one
+  // song per idle slice), and only "Print songbook" shows them.
+  const songTexts = new Map();
+  const songCache = new Map();
+  let engraveQueue = [];
+  let draining = false;
+  let drainToken = 0; // a restarted drain retires the slice still scheduled
+  let songTotal = 0;
 
   // ---- "Listen": the whole setlist on YouTube or Spotify -------------
 
@@ -109,9 +164,12 @@ export function createSetlistPrint(ctx) {
       node.textContent = "";
       return;
     }
-    const done = totalReads - pendingReads;
     const label = printModeLabel(mode).toLowerCase();
-    node.textContent = tl("print_preparing", "Preparing the {what} — {done} of {total} songs ready…", { what: label, done, total: totalReads });
+    // Reads are in; what's left is drawing the staves of a songbook.
+    const engraving = pendingReads === 0 && engraveQueue.length > 0;
+    const done = engraving ? songTotal - engraveQueue.length : totalReads - pendingReads;
+    const total = engraving ? songTotal : totalReads;
+    node.textContent = tl("print_preparing", "Preparing the {what} — {done} of {total} songs ready…", { what: label, done, total });
     node.hidden = false;
   }
 
@@ -257,36 +315,113 @@ export function createSetlistPrint(ctx) {
 
   // ---- one engraved song block ------------------------------------
 
-  function songBlock(entry, seq) {
-    const n = entry.songCount;
-    const block = el("div", { class: "setlist-booklet-song" }, [
-      el("div", { id: `setlistPrintTitle-${n}`, class: "songtitle" }),
-      el("div", { id: `setlistPrintChord-${n}`, class: "chordtable" }),
-      el("div", { id: `setlistPrintNotation-${n}`, class: "notation" }),
-    ]);
-    if (!entry.followsHeading) block.classList.add("pageBreakBefore");
+  function releaseWaitingSongbook() {
+    if (!onBookletReady || waitingMode !== "songbook" || pendingReads > 0) return;
+    const ready = onBookletReady;
+    onBookletReady = null;
+    ready();
+  }
 
-    pendingReads += 1;
-    ctx.readFile(`/songs/${entry.item.file}`, (text) => {
+  function drainSlice(seq, token) {
+    if (seq !== bookletSeq || token !== drainToken) return;
+    const record = engraveQueue.shift();
+    if (record) engraveRecord(record);
+    if (engraveQueue.length > 0) {
+      setPrintProgress(waitingMode);
+      defer(() => drainSlice(seq, token), waitingMode === "songbook");
+      return;
+    }
+    draining = false;
+    releaseWaitingSongbook();
+  }
+
+  function startDrain(restart) {
+    if ((draining && !restart) || engraveQueue.length === 0) return;
+    draining = true;
+    drainToken += 1;
+    const seq = bookletSeq;
+    const token = drainToken;
+    defer(() => drainSlice(seq, token), waitingMode === "songbook");
+  }
+
+  function enqueueEngrave(record) {
+    if (record.engraved) return;
+    engraveQueue.push(record);
+    startDrain();
+  }
+
+  function songCacheKey(entry, occurrence) {
+    const key = entry.item.key === undefined || entry.item.key === null ? "" : entry.item.key;
+    return `${entry.item.file}|${key}|${instrument()}|${occurrence}`;
+  }
+
+  // Draw one song into its (attached) block from its .abc text and remember it.
+  function fillSong(entry, parts, cacheKey, text) {
+    const n = entry.songCount;
+    const rendered = ctx.sheet.renderIntoBooklet(text, {
+      notationId: `setlistPrintNotation-${n}`,
+      chordId: `setlistPrintChord-${n}`,
+      titleId: `setlistPrintTitle-${n}`,
+      titlePrefix: `${entry.displayNumber}. `,
+      extraTransposeSteps: setlistTransposeSteps(entry.item.key, extractKeyFromAbc(text)),
+    }, { deferEngrave: true });
+    const record = {
+      parts,
+      baseTitle: rendered && typeof rendered.title === "string" ? rendered.title : "",
+      meta: resolvedExportSongMeta(text, entry.item, instrument()),
+      sources: listenSourcesFromAbc(text),
+      engraved: !(rendered && typeof rendered.engrave === "function"),
+      engrave: rendered && rendered.engrave, // NOSONAR: `?.` is a SyntaxError on Safari 12 (see Browser support)
+    };
+    songCache.set(cacheKey, record);
+    fillSongMeta(n, record.meta);
+    listenSongs[n - 1] = { title: ctx.songName(entry.item.file), sources: record.sources };
+    enqueueEngrave(record);
+  }
+
+  // A song already engraved for this key + instrument: re-attach it.
+  function reuseSong(entry, record) {
+    const n = entry.songCount;
+    stampIds(record.parts, entry);
+    if (record.baseTitle) record.parts.title.textContent = `${entry.displayNumber}. ${record.baseTitle}`;
+    fillSongMeta(n, record.meta);
+    listenSongs[n - 1] = { title: ctx.songName(entry.item.file), sources: record.sources };
+    enqueueEngrave(record);
+    return record.parts.block;
+  }
+
+  function songBlock(entry, seq, cacheKey) {
+    const cached = songCache.get(cacheKey);
+    if (cached) return reuseSong(entry, cached);
+
+    const parts = songParts();
+    stampIds(parts, entry);
+    const onText = (text) => {
       if (seq === bookletSeq) {
-        const extra = setlistTransposeSteps(entry.item.key, extractKeyFromAbc(text));
-        ctx.sheet.renderIntoBooklet(text, {
-          notationId: `setlistPrintNotation-${n}`,
-          chordId: `setlistPrintChord-${n}`,
-          titleId: `setlistPrintTitle-${n}`,
-          titlePrefix: `${entry.displayNumber}. `,
-          extraTransposeSteps: extra,
-        });
-        fillSongMeta(n, resolvedExportSongMeta(text, entry.item, instrument()));
-        listenSongs[n - 1] = { title: ctx.songName(entry.item.file), sources: listenSourcesFromAbc(text) };
+        songTexts.set(entry.item.file, text);
+        try {
+          fillSong(entry, parts, cacheKey, text);
+        } catch (error) {
+          // A song that won't draw mustn't hold every print forever.
+          console.warn(`Could not prepare ${entry.item.file} for the booklet`, error);
+        }
       }
       readSettled(seq);
-    }, (status) => {
+    };
+
+    pendingReads += 1;
+    if (songTexts.has(entry.item.file)) {
+      // Asynchronous like a real read: the stage list's cells don't exist
+      // until the whole booklet has been laid out.
+      const text = songTexts.get(entry.item.file);
+      setTimeout(() => onText(text), 0);
+      return parts.block;
+    }
+    ctx.readFile(`/songs/${entry.item.file}`, onText, (status) => {
       console.warn(`Setlist references a missing song file: ${entry.item.file} (status ${status})`);
       readSettled(seq);
     });
-
-    return block;
+    return parts.block;
   }
 
   function buildBooklet(name, songs, desc) {
@@ -295,6 +430,9 @@ export function createSetlistPrint(ctx) {
     bookletSeq += 1;
     const seq = bookletSeq;
     pendingReads = 0;
+    engraveQueue = [];
+    draining = false;
+    drainToken += 1;
     listenSongs = [];
     listenTitle = name;
     listenUrl = null;
@@ -318,9 +456,25 @@ export function createSetlistPrint(ctx) {
     if (desc) container.append(coverPage(name, desc));
     container.append(frontMatter(name, songs));
 
+    const occurrences = new Map();
+    const usedKeys = new Set();
+    songTotal = 0;
     walkSetlist(songs).entries.forEach((entry) => {
-      if (entry.kind === "set-heading") container.append(bookletSetHeading(entry.label));
-      else container.append(songBlock(entry, seq));
+      if (entry.kind === "set-heading") {
+        container.append(bookletSetHeading(entry.label));
+        return;
+      }
+      const base = songCacheKey(entry, 0);
+      const occurrence = occurrences.get(base) || 0;
+      occurrences.set(base, occurrence + 1);
+      const cacheKey = songCacheKey(entry, occurrence);
+      usedKeys.add(cacheKey);
+      songTotal += 1;
+      container.append(songBlock(entry, seq, cacheKey));
+    });
+    // Blocks of songs no longer in the list (or at another key) are dropped.
+    Array.from(songCache.keys()).forEach((key) => {
+      if (!usedKeys.has(key)) songCache.delete(key);
     });
     totalReads = pendingReads;
 
@@ -350,6 +504,15 @@ export function createSetlistPrint(ctx) {
       setPrintProgress(mode);
       return;
     }
+    // Only the songbook shows the staves; chordbook and setlist never wait
+    // for them.
+    if (mode === "songbook" && engraveQueue.length > 0) {
+      waitingMode = mode;
+      onBookletReady = () => print(mode);
+      setPrintProgress(mode);
+      startDrain(true); // at full speed from here
+      return;
+    }
     setPrintProgress(null);
     waitingMode = null;
     clearBookletPrintState();
@@ -368,8 +531,15 @@ export function createSetlistPrint(ctx) {
     printWithTitle([name, printModeLabel(mode)].filter(Boolean).join(" — "));
   }
 
+  // Opening a setlist starts from what the server has now; only edits made
+  // while it stays open reuse the cache (see songTexts / songCache above).
+  function clearCache() {
+    songTexts.clear();
+    songCache.clear();
+  }
+
   return {
-    buildBooklet, print, PRINT_MODES, setListenChangeHandler, getListenUrl: () => listenUrl, getListenSongs: () => listenSongs,
+    buildBooklet, clearCache, print, PRINT_MODES, setListenChangeHandler, getListenUrl: () => listenUrl, getListenSongs: () => listenSongs,
     getListenTitle: () => listenTitle,
   };
 }

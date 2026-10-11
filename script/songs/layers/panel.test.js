@@ -119,3 +119,109 @@ test("Reset all switches everything off", () => {
     cleanup();
   }
 });
+
+function fakeEvent(type, props) {
+  const event = new window.Event(type, { bubbles: true, cancelable: true });
+  Object.entries(props).forEach(([key, value]) => {
+    Object.defineProperty(event, key, { value });
+  });
+  return event;
+}
+
+const pointer = (type, props) => fakeEvent(type, { pointerId: 1, pointerType: "touch", button: 0, ...props });
+const touch = (type, y, timeStamp) => fakeEvent(type, {
+  changedTouches: [{ identifier: 7, clientY: y }], timeStamp,
+});
+
+// A docked (phone-width) page with a grip and header on the sheet; the panel
+// is wired after they exist, as in the real markup.
+function dockedSheet({ pointerEvents }) {
+  const { ctx, cleanup } = setup();
+  const realMatchMedia = window.matchMedia;
+  const realPointerEvent = window.PointerEvent;
+  window.matchMedia = () => ({ matches: true });
+  window.PointerEvent = pointerEvents ? function PointerEvent() {} : undefined;
+  const panel = document.getElementById("layersPanel");
+  const grip = document.createElement("div");
+  grip.className = "rj-layers-grip";
+  const head = document.createElement("div");
+  head.className = "rj-layers-head";
+  panel.prepend(head);
+  panel.prepend(grip);
+  grip.setPointerCapture = () => {};
+  head.setPointerCapture = () => {};
+  Object.defineProperty(panel, "offsetHeight", { value: 500 });
+  createLayersPanel(ctx).init();
+  ctx.store.set("layers", { layersOpen: true });
+  return {
+    ctx, grip, head,
+    cleanup() {
+      window.matchMedia = realMatchMedia;
+      window.PointerEvent = realPointerEvent;
+      cleanup();
+    },
+  };
+}
+
+const dragVar = () => document.body.style.getPropertyValue("--rj-layers-drag");
+
+test("pulling the bottom sheet's grip down dismisses it; a short pull springs back", () => {
+  const { ctx, grip, cleanup } = dockedSheet({ pointerEvents: true });
+  try {
+    grip.dispatchEvent(pointer("pointerdown", { clientY: 100, timeStamp: 0 }));
+    grip.dispatchEvent(pointer("pointermove", { clientY: 130, timeStamp: 400 }));
+    assert.equal(dragVar(), "30px");
+    grip.dispatchEvent(pointer("pointerup", { clientY: 130, timeStamp: 900 }));
+    assert.equal(ctx.store.get("layers").layersOpen, true);
+    assert.equal(dragVar(), "");
+
+    grip.dispatchEvent(pointer("pointerdown", { clientY: 100, timeStamp: 0 }));
+    grip.dispatchEvent(pointer("pointermove", { clientY: 300, timeStamp: 300 }));
+    grip.dispatchEvent(pointer("pointerup", { clientY: 300, timeStamp: 300 }));
+    assert.equal(ctx.store.get("layers").layersOpen, false);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a tap closes the sheet from the grip, but not from the header's empty space", () => {
+  const { ctx, grip, head, cleanup } = dockedSheet({ pointerEvents: true });
+  try {
+    head.dispatchEvent(pointer("pointerdown", { clientY: 50, timeStamp: 0 }));
+    head.dispatchEvent(pointer("pointerup", { clientY: 50, timeStamp: 60 }));
+    assert.equal(ctx.store.get("layers").layersOpen, true);
+
+    // ...while a real pull from the header still dismisses it.
+    head.dispatchEvent(pointer("pointerdown", { clientY: 50, timeStamp: 0 }));
+    head.dispatchEvent(pointer("pointermove", { clientY: 260, timeStamp: 200 }));
+    head.dispatchEvent(pointer("pointerup", { clientY: 260, timeStamp: 200 }));
+    assert.equal(ctx.store.get("layers").layersOpen, false);
+
+    ctx.store.set("layers", { layersOpen: true });
+    grip.dispatchEvent(pointer("pointerdown", { clientY: 10, timeStamp: 0 }));
+    grip.dispatchEvent(pointer("pointerup", { clientY: 10, timeStamp: 50 }));
+    assert.equal(ctx.store.get("layers").layersOpen, false);
+  } finally {
+    cleanup();
+  }
+});
+
+test("without Pointer Events (Safari 12) the same pull works from touch events", () => {
+  const { ctx, grip, cleanup } = dockedSheet({ pointerEvents: false });
+  try {
+    grip.dispatchEvent(touch("touchstart", 100, 0));
+    const move = touch("touchmove", 140, 100);
+    grip.dispatchEvent(move);
+    assert.equal(dragVar(), "40px");
+    assert.equal(move.defaultPrevented, true, "the page doesn't scroll under the pull");
+    grip.dispatchEvent(touch("touchend", 140, 1000));
+    assert.equal(ctx.store.get("layers").layersOpen, true, "a short, slow pull springs back");
+
+    grip.dispatchEvent(touch("touchstart", 100, 0));
+    grip.dispatchEvent(touch("touchmove", 320, 200));
+    grip.dispatchEvent(touch("touchend", 320, 200));
+    assert.equal(ctx.store.get("layers").layersOpen, false);
+  } finally {
+    cleanup();
+  }
+});

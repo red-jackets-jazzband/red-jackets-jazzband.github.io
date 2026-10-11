@@ -101,6 +101,32 @@ test("a booklet render's ABC text is untouched by the mixer (isBooklet skips inj
   }
 });
 
+test("a deferred booklet render draws the title and chords at once and the staves only on engrave()", () => {
+  const { abcjs, sheet, cleanup } = setup();
+  try {
+    document.getElementById("notation").insertAdjacentHTML(
+      "afterend",
+      "<div id='bk-n4'></div><div id='bk-c4'></div><div id='bk-t4'></div>",
+    );
+    let rendered;
+    withAbcjs(abcjs, () => {
+      rendered = sheet.renderIntoBooklet(TUNE, {
+        notationId: "bk-n4", chordId: "bk-c4", titleId: "bk-t4", titlePrefix: "3. ",
+      }, { deferEngrave: true });
+      assert.equal(abcjs.calls.renderAbc.length, 0, "no staves yet");
+      assert.match(document.getElementById("bk-t4").textContent, /^3\. /);
+      assert.equal(rendered.title, document.getElementById("bk-t4").textContent.slice(3));
+      rendered.engrave();
+    });
+    assert.equal(abcjs.calls.renderAbc.length, 1);
+    // Drawn into the element itself, so a block that has been renumbered
+    // (its ids moved) in the meantime still gets its own staves.
+    assert.equal(abcjs.calls.renderAbc[0].target, document.getElementById("bk-n4"));
+  } finally {
+    cleanup();
+  }
+});
+
 test("a booklet render leaves the live sheet's state alone, so rerender() keeps the open song", () => {
   const { ctx, abcjs, sheet, cleanup } = setup();
   try {

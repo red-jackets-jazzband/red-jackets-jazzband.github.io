@@ -344,3 +344,119 @@ test("buildBooklet keeps the original N.O.A.D.S. branding for that band setlist"
     cleanup();
   }
 });
+
+// ---- deferred engraving + block reuse -------------------------------
+
+function deferredSetup() {
+  const page = mountPage();
+  const reads = [];
+  const renders = [];
+  const engraved = [];
+  const ctx = makeCtx({
+    songName: (f) => f.replace(".abc", "").toUpperCase(),
+    readFile: (path, onLoad) => {
+      reads.push(path);
+      const file = path.split("/").pop();
+      Promise.resolve().then(() => onLoad(ABC[file]));
+    },
+    sheet: {
+      renderIntoBooklet: (text, targets, opts) => {
+        renders.push({ targets, opts });
+        const title = text.split("\n")[1].slice(2);
+        document.getElementById(targets.titleId).textContent = targets.titlePrefix + title;
+        return { title, engrave: () => engraved.push(targets.notationId) };
+      },
+    },
+  });
+  return { page, ctx, print: createSetlistPrint(ctx), reads, renders, engraved };
+}
+
+test("staves are engraved after the build, not inside the read callbacks", async () => {
+  const { print, renders, engraved, page } = deferredSetup();
+  try {
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
+    await flush();
+    assert.equal(renders.length, 3);
+    assert.ok(renders.every((r) => r.opts && r.opts.deferEngrave === true));
+    // Idle slices (a timeout where there's no requestIdleCallback) drain them.
+    await new Promise((resolve) => { setTimeout(resolve, 400); });
+    assert.equal(engraved.length, 3);
+  } finally {
+    page.cleanup();
+  }
+});
+
+test("Print songbook waits for the staves; Print chordbook does not", async () => {
+  const { print, engraved, page } = deferredSetup();
+  try {
+    let printed = 0;
+    window.print = () => { printed += 1; };
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
+    await flush();
+    print.print("chordbook");
+    assert.equal(printed, 1, "chords need no staves");
+    print.print("songbook");
+    assert.equal(printed, 1, "held until every song is engraved");
+    await new Promise((resolve) => { setTimeout(resolve, 100); });
+    assert.equal(engraved.length, 3);
+    assert.equal(printed, 2);
+  } finally {
+    page.cleanup();
+  }
+});
+
+test("a rebuild re-attaches the finished blocks, renumbered, without reading or drawing again", async () => {
+  const { print, reads, renders, engraved, page } = deferredSetup();
+  try {
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
+    await flush();
+    await new Promise((resolve) => { setTimeout(resolve, 400); });
+    const readsBefore = reads.length;
+    assert.equal(engraved.length, 3);
+
+    // Same songs, set break dropped: the third song is now number 3 in one set.
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", [SONGS[0], SONGS[1], SONGS[3]], ""));
+    await flush();
+    assert.equal(reads.length, readsBefore, "no new reads");
+    assert.equal(renders.length, 3, "no new chord/title passes");
+    assert.equal(engraved.length, 3, "no new staves");
+    const titles = [...document.querySelectorAll("#setlistPrintBooklet .songtitle")].map((t) => t.textContent);
+    assert.deepEqual(titles, ["1. Song A", "2. Song B", "3. Song A"]);
+    assert.ok(document.getElementById("setlistPrintNotation-3"));
+  } finally {
+    page.cleanup();
+  }
+});
+
+test("changing a song's key redoes only that song", async () => {
+  const { print, renders, page } = deferredSetup();
+  try {
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
+    await flush();
+    const changed = [SONGS[0], { file: "b.abc", key: "5" }, SONGS[2], SONGS[3]];
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", changed, ""));
+    await flush();
+    assert.equal(renders.length, 4, "one more pass, for the song with the new key");
+    await new Promise((resolve) => { setTimeout(resolve, 400); }); // let the idle drain finish
+  } finally {
+    page.cleanup();
+  }
+});
+
+test("clearCache makes the next build re-read and redraw every song", async () => {
+  const { print, reads, renders, page } = deferredSetup();
+  try {
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
+    await flush();
+    await new Promise((resolve) => { setTimeout(resolve, 400); });
+    const readsBefore = reads.length;
+    print.clearCache();
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
+    await flush();
+    assert.equal(reads.length, readsBefore + 3);
+    assert.equal(renders.length, 6);
+    await new Promise((resolve) => { setTimeout(resolve, 400); });
+  } finally {
+    page.cleanup();
+  }
+});

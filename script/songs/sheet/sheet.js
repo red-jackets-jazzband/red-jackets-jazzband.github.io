@@ -212,17 +212,18 @@ function colorComping(notationEl, comping, voices) {
   else applyCompingColors(notationEl, comping.palette, voiceIndex);
 }
 
-// Engrave `renderText` (the plan's tune, maybe augmented) plus the chord
-// table, form strip and title into `targets`. Shared by live and booklet.
-function paint(plan, renderText, targets, { titlePrefix = "", voices = [] } = {}) {
-  const notationEl = byId(targets.notationId);
+// Engrave `renderText` (the plan's tune, maybe augmented) into the notation
+// container — an element id (the live sheet) or the element itself (a booklet
+// song, engraved later in idle time, by which point its id may have moved).
+function engraveNotation(plan, renderText, notation, voices) {
+  const notationEl = typeof notation === "string" ? byId(notation) : notation;
   notationEl.classList.toggle("comping-active", plan.comping.active);
 
   // H: text is shown behind the drawer's History button (history.js), not
   // printed at the foot of the sheet.
   const { abcText: renderTextNoTables } = extractWordsTables(stripHistory(renderText));
   const visualObjs = ABCJS.renderAbc(
-    targets.notationId, TIGHT_HEADER_SPACING + renderTextNoTables, abcParams(plan.visualTranspose),
+    notation, TIGHT_HEADER_SPACING + renderTextNoTables, abcParams(plan.visualTranspose),
   );
 
   colorComping(notationEl, plan.comping, voices);
@@ -232,14 +233,26 @@ function paint(plan, renderText, targets, { titlePrefix = "", voices = [] } = {}
     node.setAttribute("display", "none");
   });
   stylePartMarkersWhenReady(notationEl);
+  return { visualObj: visualObjs && visualObjs.length > 0 ? visualObjs[0] : null, notationEl };
+}
 
+// The chord table, form strip and title: everything on a song's block that
+// doesn't need ABCjs to draw staves.
+function paintChordsAndTitle(plan, targets, titlePrefix) {
   const chordEl = byId(targets.chordId);
   renderChordTable(plan.displayChords, chordEl);
   // The form strip stands in for the header's printed part order.
   renderWordsTables(chordEl, plan.wordsTables);
 
   byId(targets.titleId).textContent = titlePrefix + plan.song.metaText.title;
-  return { visualObj: visualObjs && visualObjs.length > 0 ? visualObjs[0] : null, chordEl, notationEl };
+  return chordEl;
+}
+
+// Both halves, shared by the live sheet and a booklet song engraved at once.
+function paint(plan, renderText, targets, { titlePrefix = "", voices = [] } = {}) {
+  const { visualObj, notationEl } = engraveNotation(plan, renderText, targets.notationId, voices);
+  const chordEl = paintChordsAndTitle(plan, targets, titlePrefix);
+  return { visualObj, chordEl, notationEl };
 }
 
 /*
@@ -255,9 +268,13 @@ function paint(plan, renderText, targets, { titlePrefix = "", voices = [] } = {}
                                          resets — the Mixer is sticky)
   rerender()                             re-engrave the current song in place
   renderFromFile(path)                   fetch an .abc then render() it
-  renderIntoBooklet(text, targets)       engrave one song into booklet cells
+  renderIntoBooklet(text, targets, opts) engrave one song into booklet cells
                                          (fixed width, no audio, no links,
-                                         never touches the store)
+                                         never touches the store). With
+                                         { deferEngrave: true } only the chord
+                                         table and title are drawn; the
+                                         returned { title, engrave } does the
+                                         (slow) staves when the caller wants.
 
   rerender() also runs by itself whenever a setting that changes the drawing
   or the synth's input changes in the store (the `settings` slice, or the
@@ -398,11 +415,17 @@ export function createSheet(ctx) {
     renderFromFile(path) {
       ctx.readFile(`/songs/${path}`, (text) => render(text));
     },
-    renderIntoBooklet(text, targets) {
+    renderIntoBooklet(text, targets, { deferEngrave = false } = {}) {
       const { titlePrefix = "", extraTransposeSteps = 0, ...ids } = targets;
       const settings = effectiveSheetSettings(ctx.store.get("settings"), { booklet: true });
       const plan = buildRenderPlan(text, settings, { parse: parseTune, extraTransposeSteps });
-      paint(plan, plan.abcText, ids, { titlePrefix });
+      if (!deferEngrave) {
+        paint(plan, plan.abcText, ids, { titlePrefix });
+        return { title: plan.song.metaText.title, engrave: () => {} };
+      }
+      const notationEl = byId(ids.notationId);
+      paintChordsAndTitle(plan, ids, titlePrefix);
+      return { title: plan.song.metaText.title, engrave: () => engraveNotation(plan, plan.abcText, notationEl, []) };
     },
   };
 }
