@@ -6,7 +6,9 @@
   subscribeRerender), and the rows redraw from the store.
 
     #layersTab        the thin tab (desktop) / floating pill (mobile) that
-                      opens the panel; its badge counts the layers that are on
+                      opens the panel; its badge counts the layers that are on.
+                      On mobile it is also a drag handle (sheet-drag.js): pull
+                      it up to open the sheet, down to close it
     #layersPanel      the panel; rows are built into #layersList from LAYERS,
                       each with its preview cloned from
                       <template id="layerPreview-<id>">
@@ -187,7 +189,14 @@ export function createLayersPanel(ctx) {
     if (!listEl) return;
     rows = buildList(listEl, toggle);
     const tab = byId("layersTab");
-    if (tab) tab.addEventListener("click", () => setOpen(!ctx.store.get("layers").layersOpen));
+    const isOpen = () => ctx.store.get("layers").layersOpen;
+    let drag = null;
+    if (tab) {
+      tab.addEventListener("click", () => {
+        if (drag && drag.consumeClick()) return; // the end of a pull on the tab
+        setOpen(!isOpen());
+      });
+    }
     const reset = byId("layersResetBtn");
     if (reset) reset.addEventListener("click", resetAll);
     const backdrop = byId("layersBackdrop");
@@ -197,7 +206,9 @@ export function createLayersPanel(ctx) {
     if (panel) {
       const grip = panel.querySelector(".rj-layers-grip");
       const handles = [grip, panel.querySelector(".rj-layers-head")].filter(Boolean);
-      initSheetDrag(panel, handles, grip, () => setOpen(false));
+      drag = initSheetDrag(panel, handles, grip, () => setOpen(false), {
+        tab, isOpen, onOpen: () => setOpen(true), reveal: showOpen,
+      });
     }
 
     ctx.store.subscribe("layers", (state, changed) => {

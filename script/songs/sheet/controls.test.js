@@ -118,7 +118,7 @@ test("the Mixer button toggles the mixer panel", () => {
   }
 });
 
-test("the advanced toggle flips #sheetmenu, persists and re-renders", () => {
+test("the advanced toggle flips #sheetmenu and persists, without a re-render (playback keeps going)", () => {
   const { calls, cleanup } = setup();
   try {
     const btn = document.getElementById("advancedToggleBtn");
@@ -127,7 +127,9 @@ test("the advanced toggle flips #sheetmenu, persists and re-renders", () => {
     assert.ok(menu.classList.contains("show-advanced"));
     assert.equal(btn.getAttribute("aria-expanded"), "true");
     assert.equal(window.localStorage.getItem("rj.sheetAdvanced"), "1");
-    assert.ok(calls.rerender >= 1);
+    btn.dispatchEvent(new window.Event("click"));
+    assert.ok(!menu.classList.contains("show-advanced"));
+    assert.equal(calls.rerender, 0);
   } finally {
     window.localStorage.clear();
     cleanup();

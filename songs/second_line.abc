@@ -2,9 +2,11 @@ X:1
 T:Second Line (Joe Avery Blues)
 M:4/4
 L:1/8
-W:Collective 2xA 2xB,
-W:Solo's 1xA 1xB
-W:After solo: 1xA (no rhytm), 1xA with rhytm, 1xB, 1xB stop in break
+W:| 1 | A A B B | Collective |
+W:| 2 | A B ... | Solos |
+W:| 3 | A | No rhythm |
+W:| 4 | A | With rhythm |
+W:| 5 | B B | Stop in the break of the 2nd B |
 R:Traditional
 C:Willie Norman "Bill" Sinegal
 F:https://www.youtube.com/watch?v=ToBqlHYswks

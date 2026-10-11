@@ -2,9 +2,12 @@ X:1
 T:Lilly of the Valley
 M:4/4
 L:1/8
-W:Intro vamp on first chord, 1x singing, 1x collective
-W:Rhytm break during solo's.
-W:After solo's, 1x singing, 1x collective
+W:| 1 | Intro | Vamp on the first chord |
+W:| 2 | A B | Vocals |
+W:| 3 | A B | Collective |
+W:| 4 | A B ... | Solos; rhythm break |
+W:| 5 | A B | Vocals |
+W:| 6 | A B | Collective |
 R:Traditional
 F:https://www.youtube.com/watch?v=3AgB9-riSSg
 F:https://open.spotify.com/track/2tTevtuIztOXAJQavVV1MM

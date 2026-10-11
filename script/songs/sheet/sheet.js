@@ -298,18 +298,22 @@ function paint(plan, renderText, targets, { titlePrefix = "", voices = [] } = {}
 // (soundfont, swing, voicesOff), i.e. need a re-engrave. mixerVoices is
 // written by the render itself (syncVoices) as well as by the Mixer.
 const MIXER_RENDER_KEYS = new Set(["mixer", "gchordPattern", "swing", "highQualityAudio", "mixerVoices"]);
+// Settings keys that never change the render: opening or closing the
+// More-controls drawer only shows/hides controls (Comping, Solo and Practice
+// stay on with it closed), so it mustn't re-engrave — that would stop playback.
+const SETTINGS_VIEW_KEYS = new Set(["advancedOpen"]);
 
 /*
   Call `rerender` whenever a store change needs the live sheet re-engraved:
-  any `settings` change, a render-affecting Mixer key, or a Layers panel
+  any `settings` change but the drawer's open state, a render-affecting Mixer key, or a Layers panel
   switch (the `layers` slice's activeLayers) — except writes a
   render makes itself (tagged RENDER: the Key stepper seeded by render(), the
   Mixer's voice list), which must not loop back. Exported so a test double of
   the sheet re-renders on exactly the same changes (tests/helpers/ctx.js).
 */
 export function subscribeRerender(store, rerender) {
-  const offSettings = store.subscribe("settings", (_settings, _changed, _name, meta) => {
-    if (!isRenderWrite(meta)) rerender();
+  const offSettings = store.subscribe("settings", (_settings, changed, _name, meta) => {
+    if (!isRenderWrite(meta) && changed.some((key) => !SETTINGS_VIEW_KEYS.has(key))) rerender();
   });
   const offMixer = store.subscribe("mixer", (_mixer, changed, _name, meta) => {
     if (!isRenderWrite(meta) && changed.some((key) => MIXER_RENDER_KEYS.has(key))) rerender();

@@ -94,6 +94,7 @@ export const LAYERS = [
     group: tl("layers_group_melody", "Melody"),
     label: tl("layer_solfege_label", "Solfège"),
     hint: tl("layer_solfege_hint", "Each note's movable-do syllable (do re mi fa sol la ti), with do on the key's tonic."),
+    credit: { prefix: tl("layer_solfege_credit", "Explained in "), text: tl("layer_solfege_credit_link", "this video"), href: "https://www.youtube.com/watch?v=aHaE5ThYAhg" },
     order: 3,
     availableFor: () => true,
     appliesTo: () => true,
