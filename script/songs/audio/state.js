@@ -6,8 +6,9 @@
     soundfont Quality toggle, and the tune's resolved per-voice channels.
     Owned by songs/audio/mixer.js.
   - `playback`: transport settings that don't change the engraved tune —
-    the Tempo stepper's override, the Repeat stepper and the Metronome.
-    Owned by songs/audio/player.js and songs/audio/metronome.js.
+    the Tempo stepper's override, the Repeat stepper, the Metronome and
+    Follow playback. Owned by songs/audio/player.js, songs/audio/metronome.js
+    and songs/audio/follow.js.
 
   `prefs` is each slice's persisted contract (lib/core/persisted.js): the
   localStorage keys are part of returning visitors' saved state, so don't
@@ -95,5 +96,7 @@ export const PLAYBACK_SLICE = {
       fallback: REPEAT_COUNT_DEFAULT, min: REPEAT_COUNT_MIN, max: REPEAT_COUNT_MAX, invalid: "fallback",
     }),
     metronomeEnabled: boolPref(PREF_KEYS.metronomeEnabled, false),
+    // Scroll the sheet along with the line being played (audio/follow.js).
+    followPlayback: boolPref(PREF_KEYS.followPlayback, true),
   },
 };

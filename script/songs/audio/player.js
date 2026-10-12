@@ -290,6 +290,7 @@ export function createAudioPlayer(ctx) {
       next.push(node);
     }));
     highlighted = next;
+    if (next.length > 0 && ctx.follow) ctx.follow.reveal(next[0]);
     if (next.length > 0 && next[0]._abcMeasureIdx !== undefined) {
       const cell = resolveChordCell(next[0]._abcMeasureIdx);
       if (cell) {

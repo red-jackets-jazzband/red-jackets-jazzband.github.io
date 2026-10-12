@@ -26,6 +26,7 @@ export const PREF_KEYS = {
   metronomeEnabled: "rj.metronomeEnabled",
   highQualityAudio: "rj.highQualityAudio",
   repeatCount: "rj.repeatCount",
+  followPlayback: "rj.followPlayback",
 };
 
 // A Layers-panel switch's own key (rj.layer.<id>, lib/music/layers.js's

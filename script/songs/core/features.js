@@ -3,6 +3,7 @@ import { parseSongIndex } from "../../lib/core/song-index.js";
 import { createNavigation } from "./navigation.js";
 import { createAudioPlayer } from "../audio/player.js";
 import { createMetronome } from "../audio/metronome.js";
+import { createFollowPlayback } from "../audio/follow.js";
 import { createMixer } from "../audio/mixer.js";
 import { initMp3Export } from "../audio/mp3-export.js";
 import { createSheet } from "../sheet/sheet.js";
@@ -97,6 +98,7 @@ export const FEATURES = [
   },
   { name: "mixer", create: createMixer, init: (ctx) => ctx.mixer.init() },
   { name: "metronome", create: createMetronome, init: (ctx) => ctx.metronome.init() },
+  { name: "follow", create: createFollowPlayback, init: (ctx) => ctx.follow.init() },
   { name: "inspiration", create: createInspiration, init: (ctx) => ctx.inspiration.init() },
   { name: "swipeNav", create: createSwipeNav, init: (ctx) => ctx.swipeNav.init() },
   { name: "fullscreen", create: createFullscreen, init: (ctx) => ctx.fullscreen.init() },
