@@ -5,6 +5,8 @@ const SVGNS = "http://www.w3.org/2000/svg";
 
 const STROKE_WIDTH = 1;
 
+const KEEP_WITH_NEXT = "rj-keep-with-next";
+
 // oneSvgPerLine gives every system its own <svg>, windowed onto the tune's
 // shared coordinate space by a viewBox cropped tight to that line's content —
 // tight enough that a part marker sitting at the very top of its line (no
@@ -21,6 +23,27 @@ function clampTopToViewBox(txt, y) {
   if (!viewBox) return y;
   const minY = viewBox.y + STROKE_WIDTH / 2;
   return Math.max(y, minY);
+}
+
+/*
+  Mark every engraved line (oneSvgPerLine's per-line wrapper) that should stay
+  on the same printed page as the line after it: the header block, and any
+  line whose successor doesn't open a new part (no `P:` marker). The print
+  stylesheet turns the mark into `break-after: avoid`, so a page break falls
+  between parts rather than through one — a part longer than a page still
+  breaks, since `avoid` is only a preference. A tune without part markers is
+  left unmarked: there's no part to keep together.
+*/
+export function keepPartsTogether(container) {
+  if (!container) return;
+  const lines = Array.from(container.children);
+  const startsPart = lines.map((line) => line.querySelector("text.abcjs-part") !== null);
+  const hasParts = startsPart.some(Boolean);
+  lines.forEach((line, i) => {
+    const next = i + 1 < lines.length && !startsPart[i + 1];
+    const header = line.querySelector(".abcjs-staff") === null;
+    line.classList.toggle(KEEP_WITH_NEXT, hasParts && i + 1 < lines.length && (next || header));
+  });
 }
 
 /*

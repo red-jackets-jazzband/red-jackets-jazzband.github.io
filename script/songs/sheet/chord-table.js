@@ -1,5 +1,6 @@
 import { el, clear } from "../../lib/core/dom.js";
 import { simplifyBlues, simplifySong } from "../../lib/music/chords.js";
+import { tl } from "../../lib/core/i18n.js";
 
 // At 24 bars or more, a 4-column grid runs too tall for the sheet, so long
 // schemes (e.g. The Bare Necessities' 42 bars) always switch to 8 columns.
@@ -22,6 +23,21 @@ function partBadgeText(title) {
 // A marker in the grid's leftmost column has no cell to its own left to
 // overlap, so it hangs outside the table instead of inset over the chord
 // text — chordPartMarker--outsideLeft, styled in split.css.
+// A bar with no chord of its own prints "%" (the chord carries on). A screen
+// reader would say "percent", so the sign is hidden from it and a spoken
+// "same chord" stands in.
+function isContinuationBar(measure) {
+  return Array.isArray(measure.text) && measure.text.length === 1 && measure.text[0] === " % ";
+}
+
+function chordDivFor(measure) {
+  if (!isContinuationBar(measure)) return el("div", { class: "chordDiv", html: String(measure.text) });
+  return el("div", { class: "chordDiv" }, [
+    el("span", { attrs: { "aria-hidden": "true" }, text: " % " }),
+    el("span", { class: "rj-sr-only", text: tl("chords_same", "same chord") }),
+  ]);
+}
+
 function partMarker(part, outsideLeft) {
   return el("span", {
     class: outsideLeft ? "chordPartMarker chordPartMarker--outsideLeft" : "chordPartMarker",
@@ -103,7 +119,11 @@ export function renderChordTable(chords, container) {
   const cols = measures.length >= LONG_SCHEME_BAR_THRESHOLD ? 8 : 4;
   const hasMultipleParts = measures.filter((measure) => measure.part !== undefined).length > 1;
 
-  const grid = el("div", { class: "chordGrid", style: { "--chord-cols": String(cols) } });
+  const grid = el("div", {
+    class: "chordGrid",
+    style: { "--chord-cols": String(cols) },
+    attrs: { role: "group", "aria-label": tl("chords_table", "Chords") },
+  });
 
   const rowStarts = introRowBreaks(measures);
   const endingStarts = endingRowStarts(measures);
@@ -118,7 +138,7 @@ export function renderChordTable(chords, container) {
     const startsGap = rowStarts.has(index) || endingStarts.has(index);
     const forceRowStart = startsGap && column !== 0;
     if (forceRowStart) column = 0;
-    const chordDiv = el("div", { class: "chordDiv", html: String(measure.text) });
+    const chordDiv = chordDivFor(measure);
     const cell = el("div", { class: "chordCell" }, chordDiv);
     if (forceRowStart) cell.style.gridColumnStart = "1";
     // The first row after an intro, and the first row of an outro, sit a
@@ -194,7 +214,10 @@ export function fitChordTable(container) {
   Fit the song-form arrow strip(s) under the chord grid the same way: each
   step keeps at least its own min-content width, so on a phone the strip
   overflows. Zoom it down by the overflow ratio so the whole flow stays on
-  screen, and re-fit on rotate.
+  screen, and re-fit on rotate. The strip's natural width is its min-content
+  width, not max-content: a step's text wraps, so a long aside (a riff note)
+  laid out on one line would otherwise shrink the whole strip — print included —
+  to a fraction of the width it actually needs.
 */
 export function fitSongForms(chordEl) {
   const parent = chordEl && chordEl.parentNode; // NOSONAR: `?.` is a SyntaxError on Safari 12 (see Browser support)
@@ -205,7 +228,7 @@ export function fitSongForms(chordEl) {
     forceReflow(form);
     const available = form.clientWidth;
     if (!available) return;
-    form.style.width = "max-content";
+    form.style.width = "min-content";
     const natural = form.scrollWidth;
     form.style.width = "";
     if (natural <= available + 1) return;

@@ -12,6 +12,9 @@
                                  lighter tint when the same one repeats
     growViewBox(view, tops, pad) the viewBox that also takes in chord letters
                                  sticking out above it, or null
+    accidentalColumns(positions) which column (0 nearest the notes) each of a
+                                 chord's accidentals goes in, so close ones
+                                 don't print on top of each other
 */
 
 const BAR_RADIUS = 4;
@@ -114,4 +117,28 @@ export function growViewBox(view, chordTops, headroom) {
   const top = Math.min(...chordTops) - headroom;
   if (top >= view.y) return null;
   return { x: view.x, y: top, width: view.width, height: view.height + view.y - top };
+}
+
+// Two accidentals closer than this many staff steps (a sixth) would touch.
+const ACCIDENTAL_CLEARANCE = 5;
+
+/*
+  The column for each accidental of one chord, given the staff positions
+  (verticalPos) of the notes that carry one: as on a printed chord, the
+  highest goes nearest the notes and each one below it takes the nearest
+  column where nothing within a sixth is already standing. Returned in the
+  order given.
+*/
+export function accidentalColumns(positions) {
+  const columns = [];
+  const placed = positions.map((vp, index) => ({ vp, index })).sort((a, b) => b.vp - a.vp);
+  const result = new Array(positions.length);
+  placed.forEach(({ vp, index }) => {
+    let column = 0;
+    while (columns[column] && columns[column].some((other) => Math.abs(other - vp) <= ACCIDENTAL_CLEARANCE)) column += 1;
+    if (!columns[column]) columns[column] = [];
+    columns[column].push(vp);
+    result[index] = column;
+  });
+  return result;
 }

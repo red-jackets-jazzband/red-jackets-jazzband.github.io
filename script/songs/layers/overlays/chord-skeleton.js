@@ -14,6 +14,7 @@
   is anchored on its own first note (or, with no pitched note, its top staff line).
 */
 import { chordSkeletons } from "../../../lib/music/chord-skeleton.js";
+import { accidentalColumns } from "../../../lib/music/layer-geometry.js";
 import { bboxOf, noteGroup, svgEl } from "./svg.js";
 
 // verticalPos of the bottom and top staff lines (treble and bass alike).
@@ -24,6 +25,8 @@ const GAP_RX = 0.6;
 const SECOND_SHIFT_RX = 1.9;
 // How far the stack's right edge may reach into the note's left edge, in head radii.
 const OVERLAP_RX = 0.1;
+// How far each further column of accidentals stands out, in head radii.
+const ACCIDENTAL_COLUMN_RX = 1.8;
 
 // The element's noteheads' boxes, top first.
 function headBoxes(group) {
@@ -137,12 +140,16 @@ function ledgerPositions(vp) {
 /*
   One chord's notes at column `x`, as a <g>. `yOf(vp)` maps a position to its
   y. A note a second above its neighbour moves to the right of it, as on a
-  printed chord.
+  printed chord, and accidentals too close to share a column step out to the
+  left (lib/music/layer-geometry.js's accidentalColumns).
 */
 function buildStack(notes, x, yOf, step, markOutside) {
   const { rx, ry } = headSize(step);
   const group = svgEl("g", { class: "rj-layer-skeleton", "pointer-events": "none" });
   const ordered = notes.slice().sort((a, b) => a.vp - b.vp);
+  const signed = ordered.filter((note) => note.accidental);
+  const columnOf = new Map();
+  accidentalColumns(signed.map((note) => note.vp)).forEach((column, i) => columnOf.set(signed[i], column));
   let previous = null;
   ordered.forEach((note) => {
     const cx = previous !== null && note.vp - previous.vp === 1 && !previous.shifted ? x + rx * SECOND_SHIFT_RX : x;
@@ -163,13 +170,34 @@ function buildStack(notes, x, yOf, step, markOutside) {
     if (note.accidental) {
       const sign = svgEl("text", {
         class: `rj-layer-skeleton-accidental${tint}`,
-        x: x - rx * 1.5, y: cy, "text-anchor": "end", "dominant-baseline": "central", "font-size": step * 5,
+        x: x - rx * (1.5 + ACCIDENTAL_COLUMN_RX * columnOf.get(note)), y: cy, "data-column": columnOf.get(note), "text-anchor": "end", "dominant-baseline": "central", "font-size": step * 5,
       });
       sign.textContent = note.accidental;
       group.append(sign);
     }
   });
   return group;
+}
+
+/*
+  Once drawn (so they can be measured), each further column of accidentals
+  moves to stand just left of the widest sign in the column before it: a
+  double flat is wider than the fixed step buildStack starts them at.
+*/
+function spreadAccidentalColumns(stack, rx) {
+  const columns = [];
+  stack.querySelectorAll(".rj-layer-skeleton-accidental").forEach((sign) => {
+    const column = Number(sign.getAttribute("data-column"));
+    if (!columns[column]) columns[column] = [];
+    columns[column].push(sign);
+  });
+  for (let column = 1; column < columns.length; column += 1) {
+    const before = columns[column - 1] || [];
+    const lefts = before.map((sign) => bboxOf(sign)).filter((box) => box && box.width > 0).map((box) => box.x);
+    if (lefts.length === 0 || !columns[column]) continue;
+    const right = Math.min(...lefts) - rx * 0.3;
+    columns[column].forEach((sign) => sign.setAttribute("x", String(right)));
+  }
 }
 
 // `markOutside`: tint the notes that aren't in the key (the Outside chords layer).
@@ -202,10 +230,12 @@ export function drawChordSkeleton(visualObj, { markOutside = false } = {}) {
     // the stack's right edge (its shifted head too, when the chord has a
     // second) at most touches the melody note's left edge, so it still reads
     // as sitting before it, not on it.
-    const signRoom = hasSign ? 2.2 : 0;
+    const signColumns = hasSign ? Math.max(...accidentalColumns(notes.filter((n) => n.accidental).map((n) => n.vp))) + 1 : 0;
+    const signRoom = hasSign ? 2.2 + ACCIDENTAL_COLUMN_RX * (signColumns - 1) : 0;
     const clear = before === null ? ideal : before + (1.8 + signRoom) * rx;
     const x = Math.min(Math.max(ideal, clear), left - (reach - OVERLAP_RX) * rx);
     const stack = buildStack(notes, x, (vp) => anchor.y + (anchor.vp - vp) * step, step, markOutside);
     group.before(stack);
+    spreadAccidentalColumns(stack, rx);
   });
 }

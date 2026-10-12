@@ -14,14 +14,17 @@ W:| 4 | A1 A2 B Outro | Final chorus |
 K:Fmaj
 L:1/4
 P:A
-C/F/A/|| "F" c c/d/ c B/A/ | c c z/ C/F/A/ | c c/d/ c B/A/ | "C7" B2 z/ C/E/A/ | B B/c/ B A/G/ | BB/ z/ z c/B/ |
-"F" A G/F/ "C7" G F/E/ | "F7" F2 z/ C/F/A/ || [P:A2] "F" c c/d/ c B/A/ | cc z/ C/F/A/ | c c/d/c B/A/ | "C7" B2 z/ C/E/A/ |
+C/F/A/|| "F" c c/d/ c B/A/ | c c z/ C/F/A/ | c c/d/ c B/A/ | "C7" B2 z/ C/E/A/ |
+"C7" B B/c/ B A/G/ | BB/ z/ z c/B/ | "F" A G/F/ "C7" G F/E/ | "F7" F2 z/ C/F/A/ ||
+P:A2
+"F" c c/d/ c B/A/ | cc z/ C/F/A/ | c c/d/c B/A/ | "C7" B2 z/ C/E/A/ |
 "C7" B B/c/ B A/G/ | B B/ z/ z c/B/ | "F" A G/F/ "C7" G F/E/ | "F" F3 "F7" z ||
 P:B
 "_In swing" "Bb" D/F/F/G/ F3/ D/ | "F" C A-A2 | "C7" C/G/G/A/ G3/ F/ | "F" A4 "F7" yy |
 "Bb" D/F/F/G/ F3/ D/ | "F" C A2 z |"Dm" F/F/F/G/ "G7" A/G/ F | "C7" G2 z/ C/E/A/ ||
 P:A3
-"F" c c/d/ c B/A/ | c c z/ C/F/A/ | c c/d/ c B/A/ | "C7" B2 z/ C/E/A/ | B B/c/ B A/G/ | B B/ z/ z c/B/ |
-"F" AG/F/ "C7" G F/E/ | "F" F3 z |]
+"F" c c/d/ c B/A/ | c c z/ C/F/A/ | c c/d/ c B/A/ | "C7" B2 z/ C/E/A/ |
+"C7" B B/c/ B A/G/ | B B/ z/ z c/B/ | "F" AG/F/ "C7" G F/E/ | "F" F3 z |]
 P:Outro
-"F" z f c A | f c/c/ "^trombone gliss. D-G" z2 | z f c A | "C7" e c/B/ "^gliss. D-G" z2 | z e c B | e c/B/ "^gliss. D-F" z2 | "F" f/c/d/e/ "C7" f/c/d/e/ | "F" f/f/f/f/ z2 |]
+"F" z f c A | f c/c/ "^trombone gliss. D-G" z2 | z f c A | "C7" e c/B/ "^gliss. D-G" z2 |
+"C7" z e c B | e c/B/ "^gliss. D-F" z2 | "F" f/c/d/e/ "C7" f/c/d/e/ | "F" f/f/f/f/ z2 |]

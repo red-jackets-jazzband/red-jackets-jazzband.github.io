@@ -263,3 +263,20 @@ test("'/' focuses the search box unless already typing", () => {
     cleanup();
   }
 });
+
+test("the open song's row is marked aria-current, and the mark follows the sheet", () => {
+  const { tab, cleanup } = setup();
+  try {
+    tab.render("");
+    const rows = () => [...document.querySelectorAll(SONG_ROW_SELECTOR)];
+    assert.equal(rows().filter((r) => r.hasAttribute("aria-current")).length, 0);
+    rows()[2].click();
+    assert.deepEqual(rows().map((r) => r.getAttribute("aria-current")), [null, null, "true", null]);
+    rows()[3].click();
+    assert.deepEqual(rows().map((r) => r.getAttribute("aria-current")), [null, null, null, "true"]);
+    tab.render("");
+    assert.equal(rows()[3].getAttribute("aria-current"), "true", "kept across a re-render");
+  } finally {
+    cleanup();
+  }
+});

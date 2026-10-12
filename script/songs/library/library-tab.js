@@ -75,6 +75,21 @@ function currentSongRowIndex(rows, ctx) {
   return rows.findIndex(matchesFile);
 }
 
+const CURRENT_KEYS = ["currentSongFile", "currentLibraryIndex", "currentLibrarySongName"];
+
+// Mark the open song's row aria-current, so a screen reader says which entry
+// of the list is on the sheet (setlist rows do the same, setlists/view.js).
+function markCurrentRow(ctx) {
+  const list = byId("songList");
+  if (!list) return;
+  const rows = Array.from(list.querySelectorAll("a.song-list-item"));
+  const current = currentSongRowIndex(rows, ctx);
+  rows.forEach((row, i) => {
+    if (i === current) row.setAttribute("aria-current", "true");
+    else row.removeAttribute("aria-current");
+  });
+}
+
 function moveHighlight(rows, delta, fromEnd, ctx) {
   let current = rows.findIndex((r) => r.classList.contains("kbd-active"));
   // No highlight yet (e.g. the last action was a mouse click, not an arrow
@@ -131,6 +146,10 @@ export function createLibraryTab(ctx) {
     if (ctx.swipeNav) ctx.swipeNav.updateButtons();
   }
 
+  ctx.store.subscribe("nav", (_slice, changed) => {
+    if (CURRENT_KEYS.some((key) => changed.includes(key))) markCurrentRow(ctx);
+  });
+
   function render(query) {
     const listEl = byId("songList");
     const railEl = byId("songRail");
@@ -144,6 +163,7 @@ export function createLibraryTab(ctx) {
         filtered.forEach((song) => listEl.append(buildSongRow(song)));
       }
       if (railEl) clear(railEl);
+      markCurrentRow(ctx);
       refreshPager();
       return;
     }
@@ -158,6 +178,7 @@ export function createLibraryTab(ctx) {
       group.items.forEach((song) => listEl.append(buildSongRow(song)));
     });
     if (railEl) renderRail(railEl, groups);
+    markCurrentRow(ctx);
     refreshPager();
   }
 

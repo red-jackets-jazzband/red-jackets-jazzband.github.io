@@ -280,3 +280,15 @@ test("renderChordTable sets the row after an intro and an outro's row apart with
     ]);
   });
 });
+
+test("renderChordTable labels the grid and reads a \"%\" bar as \"same chord\"", () => {
+  inDom((container) => {
+    renderChordTable([bar(["C"]), bar([" % "]), bar(["F"]), bar(["G"])], container);
+    const grid = container.querySelector(CHORD_GRID_SELECTOR);
+    assert.equal(grid.getAttribute("role"), "group");
+    assert.equal(grid.getAttribute("aria-label"), "Chords");
+    const repeat = grid.querySelectorAll(".chordDiv")[1];
+    assert.equal(repeat.querySelector("[aria-hidden='true']").textContent, " % ");
+    assert.equal(repeat.querySelector(".rj-sr-only").textContent, "same chord");
+  });
+});

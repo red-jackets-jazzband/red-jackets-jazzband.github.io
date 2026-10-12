@@ -74,3 +74,19 @@ test("a note with no measurable notehead keeps its number in place", () => {
     page.cleanup();
   }
 });
+
+// A chord tone at notehead x, its number 8 wide and 12 tall.
+const circledAt = (x) => `<g><path class="abcjs-notehead" data-box="${x},20,8,6"/><text class="abcjs-annotation abcjs-l0 abcjs-v0" y="50" font-size="16" data-box="${x},40,8,12">●3</text></g>`;
+
+test("neighbouring chord tones are fitted by their circles, not just their numbers", () => {
+  // 16 apart: the numbers (8 wide) fit, but each circle is 12 + 2 × 1.6 = 15.2
+  // across, more than the 14 a label gets, so both shrink until the circles do.
+  const { page, notation } = mountSvg(circledAt(10) + circledAt(26));
+  try {
+    styleDegrees(notation);
+    const sizes = [...notation.querySelectorAll("text")].map((t) => t.getAttribute("font-size"));
+    assert.deepEqual(sizes, ["14.4", "14.4"], "(14 - 3.2) / 12 of 16");
+  } finally {
+    page.cleanup();
+  }
+});

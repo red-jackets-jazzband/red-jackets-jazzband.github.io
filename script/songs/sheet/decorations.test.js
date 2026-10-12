@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mountPage } from "../../../../tests/helpers/dom.js";
 import {
   stylePartMarkers,
+  keepPartsTogether,
   applyCompingColors,
   COMPING_FN_FILL,
 } from "./decorations.js";
@@ -194,5 +195,27 @@ test("applyCompingColors is a no-op without a palette", () => {
     assert.doesNotThrow(() => applyCompingColors(container, null));
     assert.doesNotThrow(() => applyCompingColors(container, []));
     assert.doesNotThrow(() => applyCompingColors(null, [["R"]]));
+  });
+});
+
+const STAFF_LINE = "<div><svg><g class='abcjs-staff'></g></svg></div>";
+const PART_LINE = "<div><svg><text class='abcjs-part'>A</text><g class='abcjs-staff'></g></svg></div>";
+const keptLines = (container) =>
+  Array.from(container.children, (line) => line.classList.contains("rj-keep-with-next"));
+
+test("keepPartsTogether keeps each line with the next unless the next opens a part", () => {
+  inDom((container) => {
+    // header, A (2 lines), B (2 lines)
+    container.innerHTML = `<div><svg></svg></div>${PART_LINE}${STAFF_LINE}${PART_LINE}${STAFF_LINE}`;
+    keepPartsTogether(container);
+    assert.deepEqual(keptLines(container), [true, true, false, true, false]);
+  });
+});
+
+test("keepPartsTogether leaves a tune without part markers unmarked", () => {
+  inDom((container) => {
+    container.innerHTML = STAFF_LINE + STAFF_LINE + STAFF_LINE;
+    keepPartsTogether(container);
+    assert.deepEqual(keptLines(container), [false, false, false]);
   });
 });

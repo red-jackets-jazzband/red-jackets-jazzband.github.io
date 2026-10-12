@@ -2,12 +2,14 @@
   Solfège on the engraved sheet: the syllables lib/music/solfege.js wrote
   lose their invisible marker, get their own class and are centred under
   their note (ABCjs starts an annotation at the note's left edge), so they
-  line up with the scale degrees and fingerings above them.
+  line up with the scale degrees and fingerings above them — all on one
+  row per staff line (svg.js's alignRows).
 */
 import { parseSolfegeText } from "../../../lib/music/solfege.js";
-import { noteheadCentre } from "./svg.js";
+import { alignRows, noteheadCentre } from "./svg.js";
 
 export function styleSolfege(notationEl) {
+  const centred = [];
   notationEl.querySelectorAll(".abcjs-annotation").forEach((text) => {
     const syllable = parseSolfegeText(text.textContent.trim());
     if (syllable === null) return;
@@ -17,5 +19,7 @@ export function styleSolfege(notationEl) {
     if (centre === null) return;
     text.setAttribute("text-anchor", "middle");
     text.setAttribute("x", String(centre));
+    centred.push(text);
   });
+  alignRows(centred);
 }

@@ -25,12 +25,12 @@ import {
 //   files/paths it caches (v2: every module moved into feature folders;
 //   v4: the Layers panel's new modules; v5: its edge.js; v6: the page is
 //   served in four languages, so the worker is registered once per language
-//   page and precaches/falls back to its own scope's page, not /songs/; v7: one manifest per language).
+//   page and precaches/falls back to its own scope's page, not /songs/; v7: one manifest per language; v8: songs/core/skip-links.js).
 // - ASSET_VERSION: the third-party soundfont samples and Font Awesome, which
 //   never change once published. Bump only when caching *those* changes —
 //   it deletes the soundfonts visitors downloaded with "Download for
 //   offline", so their offline playback is gone until they download again.
-const SHELL_VERSION = "v7";
+const SHELL_VERSION = "v8";
 const ASSET_VERSION = "v1";
 // Every cache this worker owns is named under this prefix, and activate()'s
 // cleanup only ever deletes caches under it — CacheStorage is shared across

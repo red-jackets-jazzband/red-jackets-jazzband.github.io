@@ -22,6 +22,7 @@ import { createSetlistView } from "../setlists/view.js";
 import { createTour } from "../tour/tour.js";
 import { createOffline } from "../offline/offline.js";
 import { createLayersPanel } from "../layers/panel.js";
+import { initSkipLinks } from "./skip-links.js";
 import { tl } from "../../lib/core/i18n.js";
 
 /*
@@ -79,6 +80,7 @@ function initSidebar(ctx) {
 
 export const FEATURES = [
   { name: "nav", create: createNavigation },
+  { name: "skipLinks", init: initSkipLinks },
   { name: "audio", create: createAudioPlayer },
   { name: "sheet", create: createSheet },
   {

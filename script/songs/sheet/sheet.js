@@ -12,7 +12,7 @@ import { buildPracticeTune, PRACTICE_PROGRAM } from "../../lib/music/practice.js
 import { parseVoiceList, resolveMixerVoices, isCompingLabel } from "../../lib/audio/audio-mix.js";
 import { parseInspirationLinks } from "../../lib/media/inspiration-links.js";
 import { renderChordTable, scanRepeatBoundaries, fitChordTable, fitSongForms } from "./chord-table.js";
-import { stylePartMarkers, applyCompingColors, applySplitCompingColors } from "./decorations.js";
+import { stylePartMarkers, keepPartsTogether, applyCompingColors, applySplitCompingColors } from "./decorations.js";
 import { updateIrealProLink } from "./irealpro-link.js";
 import { decorateLayers } from "../layers/overlays.js";
 import { RENDER, isRenderWrite } from "../core/state.js";
@@ -247,6 +247,7 @@ function engraveNotation(plan, renderText, notation, voices) {
     node.setAttribute("display", "none");
   });
   stylePartMarkersWhenReady(notationEl);
+  keepPartsTogether(notationEl);
   return { visualObj: visualObjs && visualObjs.length > 0 ? visualObjs[0] : null, notationEl };
 }
 
@@ -258,7 +259,12 @@ function paintChordsAndTitle(plan, targets, titlePrefix) {
   // The form strip stands in for the header's printed part order.
   renderWordsTables(chordEl, plan.wordsTables);
 
-  byId(targets.titleId).textContent = titlePrefix + plan.song.metaText.title;
+  // A heading once it has a title (never an empty one before the first song),
+  // so a screen reader can jump straight to the song on the sheet.
+  const titleEl = byId(targets.titleId);
+  titleEl.textContent = titlePrefix + plan.song.metaText.title;
+  titleEl.setAttribute("role", "heading");
+  titleEl.setAttribute("aria-level", "2");
   return chordEl;
 }
 

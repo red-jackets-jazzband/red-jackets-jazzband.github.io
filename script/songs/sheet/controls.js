@@ -1,4 +1,4 @@
-import { byId, el, on } from "../../lib/core/dom.js";
+import { byId, el, on, qsa } from "../../lib/core/dom.js";
 import { TEMPO_STEP } from "../../lib/music/tempo.js";
 import { tl } from "../../lib/core/i18n.js";
 
@@ -94,6 +94,43 @@ function initAdvancedToggle(ctx) {
   });
 }
 
+// A -/+ press on any stepper (Key, Tempo, Repeat) reads the new value out
+// ("3 semitones", "132 bpm"): the value sits in an <input> or a plain span,
+// neither of which a screen reader announces by itself when it changes. Only
+// presses speak, so opening a song doesn't. Listens on the stepper, so it
+// runs after the button's own handler has updated the value.
+function stepperReadout(stepper) {
+  const input = stepper.querySelector("input");
+  const value = input ? input.value : stepper.querySelector(".sheet-stepper-value span").textContent;
+  const unit = stepper.querySelector(".sheet-stepper-label");
+  return unit ? `${value} ${unit.textContent.trim()}` : value;
+}
+
+// How long the live region stays empty before the readout goes back in.
+const ANNOUNCE_DELAY_MS = 50;
+
+// The region is emptied, then refilled in a later task: a press at a limit
+// (Key at +12) leaves the readout unchanged, and writing the same text again
+// isn't a change a screen reader announces. A newer press cancels a pending
+// refill, so only the latest value is spoken.
+function initStepperAnnouncements() {
+  qsa(".sheet-stepper").forEach((stepper) => {
+    const live = stepper.querySelector(".sheet-stepper-announce");
+    if (!live) return;
+    let pending = null;
+    stepper.addEventListener("click", (e) => {
+      if (!e.target.closest(".sheet-stepper-btn")) return;
+      clearTimeout(pending);
+      live.textContent = "";
+      const readout = stepperReadout(stepper);
+      pending = setTimeout(() => {
+        pending = null;
+        live.textContent = readout;
+      }, ANNOUNCE_DELAY_MS);
+    });
+  });
+}
+
 // The Key stepper (#transpose): a view of ctx.state.transpose, in semitones.
 // Typing into it or the -/+ buttons (which nudge it and dispatch "input",
 // see stepNumericField) write the store; a newly opened song seeds the
@@ -164,6 +201,7 @@ function initSpacebarPlayPause(ctx) {
 */
 export function initSheetControls(ctx) {
   initKeyStepper(ctx);
+  initStepperAnnouncements();
   on("tempoUpBtn", "click", () => ctx.audio.stepTempo(TEMPO_STEP));
   on("tempoDownBtn", "click", () => ctx.audio.stepTempo(-TEMPO_STEP));
   const repeatCountInput = byId("repeatCount");

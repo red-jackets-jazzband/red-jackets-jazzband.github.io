@@ -101,6 +101,11 @@ test("switchTab shows the tab's own tools and list", () => {
     ctx.nav.switchTab("setlists");
     assert.equal(ctx.state.activeTab, "setlists");
     assert.equal(document.getElementById("librarySearchRow").hidden, true);
+    assert.deepEqual(
+      [...document.querySelectorAll(".rj-library-tab")].map((b) => b.getAttribute("aria-pressed")),
+      ["false", "true"],
+      "the selected tab is announced as pressed",
+    );
     ctx.nav.switchTab("library");
     assert.equal(ctx.state.currentSetlistId, null);
     assert.equal(document.getElementById("librarySearchRow").hidden, false);

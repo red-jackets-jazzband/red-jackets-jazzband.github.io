@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  barPath, growViewBox, keepBelow, progressionShades, unionOf,
+  accidentalColumns, barPath, growViewBox, keepBelow, progressionShades, unionOf,
 } from "./layer-geometry.js";
 
 const match = (name) => ({ name });
@@ -75,4 +75,19 @@ test("growViewBox takes in letters sticking out above, keeping the width", () =>
   assert.equal(growViewBox(view, [], 1), null, "no chords");
   assert.equal(growViewBox(null, [1], 1), null);
   assert.equal(growViewBox({ x: 0, y: 0, width: 0, height: 0 }, [-5], 1), null, "an empty view is left to ABCjs");
+});
+
+test("accidentalColumns: far-apart accidentals share the first column", () => {
+  assert.deepEqual(accidentalColumns([0, 6]), [0, 0]);
+});
+
+test("accidentalColumns: close ones step out, highest nearest the notes, reusing a column a seventh away", () => {
+  // A diminished chord in close position, a flat on each of three notes a
+  // third apart: each steps one column further out from the top.
+  assert.deepEqual(accidentalColumns([3, 5, 7]), [2, 1, 0]);
+  assert.deepEqual(accidentalColumns([5, 7]), [1, 0]);
+  // A seventh apart: room for both in the first column.
+  assert.deepEqual(accidentalColumns([1, 7]), [0, 0]);
+  // The bottom one is a seventh below the top one, so it goes back in beside it.
+  assert.deepEqual(accidentalColumns([1, 5, 7]), [0, 1, 0]);
 });

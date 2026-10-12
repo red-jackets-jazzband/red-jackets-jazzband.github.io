@@ -6,7 +6,7 @@
   number, an open horn a ring, a valve left up a small dot.
 */
 import { VALVE_UP, usesValveDiagram } from "../../../lib/music/fingerings.js";
-import { bboxOf, noteheadCentre, svgEl } from "./svg.js";
+import { alignRows, bboxOf, noteheadCentre, svgEl } from "./svg.js";
 
 const FINGERING_TEXT = /^(?:[0-7]{1,3}|\u00B7)$/;
 const VALVE_DIGITS = { 0: "0", 1: "1", 2: "2", 3: "3" };
@@ -45,14 +45,20 @@ function drawValveSlot(text, glyph, centre) {
   text.classList.add("rj-layer-fingering--drawn");
 }
 
-function centreUnderNote(text, drawValves) {
-  if (typeof text.getBBox !== "function") return;
+// The note's centre, once the text is centred on it; null when it can't be measured.
+function centreUnderNote(text) {
+  if (typeof text.getBBox !== "function") return null;
   const centre = noteheadCentre(text);
-  if (centre === null) return;
+  if (centre === null) return null;
   text.setAttribute("text-anchor", "middle");
   text.setAttribute("x", String(centre));
-  const glyph = text.textContent.trim();
-  if (drawValves && (glyph === VALVE_UP || VALVE_DIGITS[glyph] !== undefined)) drawValveSlot(text, glyph, centre);
+  return centre;
+}
+
+// Which line of its note's fingering a text is (a valve diagram's top valve is 0).
+function fingeringSlot(text) {
+  const group = text.parentNode;
+  return group ? [...group.querySelectorAll(".rj-layer-fingering")].indexOf(text) : 0;
 }
 
 // `instrument` decides the look: valves are drawn as a diagram of discs, a
@@ -60,9 +66,18 @@ function centreUnderNote(text, drawValves) {
 // otherwise be mistaken for valves).
 export function styleFingerings(notationEl, instrument) {
   const drawValves = usesValveDiagram(instrument);
+  const centred = [];
   notationEl.querySelectorAll(".abcjs-annotation").forEach((text) => {
     if (!FINGERING_TEXT.test(text.textContent.trim()) || text.classList.contains("rj-layer-degree")) return;
     text.classList.add("rj-layer-fingering");
-    centreUnderNote(text, drawValves);
+    const centre = centreUnderNote(text);
+    if (centre !== null) centred.push({ text, centre });
+  });
+  // Each valve row back on one line before its discs are drawn there.
+  alignRows(centred.map((c) => c.text), { slot: fingeringSlot, fit: false });
+  if (!drawValves) return;
+  centred.forEach(({ text, centre }) => {
+    const glyph = text.textContent.trim();
+    if (glyph === VALVE_UP || VALVE_DIGITS[glyph] !== undefined) drawValveSlot(text, glyph, centre);
   });
 }

@@ -212,3 +212,64 @@ function inDom(fn) {
     page.cleanup();
   }
 }
+
+const afterAnnounce = () => new Promise((resolve) => {
+  setTimeout(resolve, 80);
+});
+
+test("a stepper press reads the new value out through its live region", async () => {
+  const { cleanup } = setup();
+  try {
+    const live = (id) => document.querySelector(`#${id} .sheet-stepper-announce`);
+    assert.equal(live("keyStepper").textContent, "", "silent until a press");
+    document.getElementById("keyUpBtn").click();
+    await afterAnnounce();
+    assert.match(live("keyStepper").textContent, /^1 \S/);
+    document.getElementById("tempoValueLabel").textContent = "132";
+    document.getElementById("tempoUpBtn").click();
+    await afterAnnounce();
+    assert.match(live("tempoStepper").textContent, /^132 \S/);
+    document.getElementById("repeatUpBtn").click();
+    await afterAnnounce();
+    assert.match(live("repeatStepper").textContent, /^2 \S/);
+  } finally {
+    cleanup();
+  }
+});
+
+// Runs `body` on the Tempo stepper's live region with every write to it
+// recorded; `press(bpm)` presses + with the readout showing that tempo.
+async function withTempoAnnouncer(body) {
+  const { cleanup } = setup();
+  try {
+    const live = document.querySelector("#tempoStepper .sheet-stepper-announce");
+    const writes = [];
+    new window.MutationObserver(() => writes.push(live.textContent)).observe(live, { childList: true, characterData: true, subtree: true });
+    const press = (bpm) => {
+      document.getElementById("tempoValueLabel").textContent = bpm;
+      document.getElementById("tempoUpBtn").click();
+    };
+    await body({ live, writes, press });
+  } finally {
+    cleanup();
+  }
+}
+
+test("a press that leaves the value unchanged is announced again: cleared, then refilled", () => withTempoAnnouncer(async ({ live, writes, press }) => {
+  press("200");
+  await afterAnnounce();
+  press("200"); // stuck at the limit
+  assert.equal(live.textContent, "", "emptied straight away");
+  await afterAnnounce();
+  assert.match(live.textContent, /^200 \S/);
+  assert.equal(writes.filter((w) => w.startsWith("200")).length, 2, "the same readout written twice, with a clear between");
+  assert.ok(writes.includes(""));
+}));
+
+test("a newer press cancels the pending readout, so only the latest value is spoken", () => withTempoAnnouncer(async ({ live, writes, press }) => {
+  press("140");
+  press("150");
+  await afterAnnounce();
+  assert.match(live.textContent, /^150 \S/);
+  assert.equal(writes.some((w) => w.startsWith("140")), false, "the first readout never went in");
+}));

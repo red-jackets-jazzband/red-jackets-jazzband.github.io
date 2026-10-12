@@ -1,10 +1,11 @@
 /*
   Scale degrees on the engraved sheet: the annotation lib/music/scale-degrees.js
   wrote ("●3", "○♭7") loses its marker and is centred under its note, a chord
-  tone inside a circle (as in Improvise for Real) and any other note bare.
+  tone inside a circle (as in Improvise for Real) and any other note bare,
+  all on one row per staff line (svg.js's alignRows).
 */
 import { parseDegreeText } from "../../../lib/music/scale-degrees.js";
-import { bboxOf, noteheadCentre, svgEl } from "./svg.js";
+import { alignRows, bboxOf, noteheadCentre, svgEl } from "./svg.js";
 
 const DEGREE_PAD = 1.6;
 
@@ -23,7 +24,15 @@ function drawDegreeShape(text) {
   text.parentNode.insertBefore(shape, text);
 }
 
+// How wide a degree label is drawn: a chord tone's circle (drawDegreeShape)
+// is its number's larger side plus padding all round; any other is its text.
+function degreeExtent(box, text) {
+  if (!text.classList.contains("rj-layer-degree--chord")) return { size: box.width, fixed: 0 };
+  return { size: Math.max(box.width, box.height), fixed: 2 * DEGREE_PAD };
+}
+
 export function styleDegrees(notationEl) {
+  const styled = [];
   notationEl.querySelectorAll(".abcjs-annotation").forEach((text) => {
     const parsed = parseDegreeText(text.textContent.trim());
     if (parsed === null) return;
@@ -33,6 +42,12 @@ export function styleDegrees(notationEl) {
     if (centre === null) return;
     text.setAttribute("text-anchor", "middle");
     text.setAttribute("x", String(centre));
-    if (parsed.tone === "chord") drawDegreeShape(text);
+    styled.push({ text, tone: parsed.tone });
+  });
+  // Back on one row before the circles are drawn round where they end up,
+  // a chord tone fitted by its circle, not just its number.
+  alignRows(styled.map((s) => s.text), { extent: degreeExtent });
+  styled.forEach(({ text, tone }) => {
+    if (tone === "chord") drawDegreeShape(text);
   });
 }

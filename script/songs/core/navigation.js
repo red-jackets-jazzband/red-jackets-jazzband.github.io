@@ -123,7 +123,9 @@ export function createNavigation(ctx) {
   function switchTab(tab) {
     setNav({ activeTab: tab });
     qsa(".rj-library-tab", byId("libraryTabs")).forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.tab === tab);
+      const on = btn.dataset.tab === tab;
+      btn.classList.toggle("active", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
     });
     const isLibrary = tab === "library";
     const searchRow = byId("librarySearchRow");

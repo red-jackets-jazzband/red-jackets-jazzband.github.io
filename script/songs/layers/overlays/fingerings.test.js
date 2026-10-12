@@ -80,3 +80,22 @@ test("annotations that aren't fingerings are left alone", () => {
     page.cleanup();
   }
 });
+
+// One note's valve diagram, its three slots at the given ys.
+function valveSlot(y, i, x) {
+  const glyph = i === 0 ? "1" : "·";
+  return `<text class="abcjs-annotation abcjs-l0 abcjs-v0" y="${y}" data-box="${x},${y - 10},6,10">${glyph}</text>`;
+}
+const diagram = (ys, x) => `<g><path class="abcjs-notehead" data-box="${x},20,8,6"/>${ys.map((y, i) => valveSlot(y, i, x)).join("")}</g>`;
+
+test("each valve row is put back on one line before its discs are drawn", () => {
+  // ABCjs pushed the middle note's bottom valve a row down.
+  const { page, notation } = mountSvg(diagram([40, 60, 80], 10) + diagram([40, 60, 100], 30) + diagram([40, 60, 80], 50));
+  try {
+    styleFingerings(notation, "trumpet");
+    const rows = [...notation.querySelectorAll("svg > g")].map((g) => [...g.querySelectorAll("text.rj-layer-fingering")].map((t) => t.getAttribute("y")));
+    assert.deepEqual(rows, [["40", "60", "80"], ["40", "60", "80"], ["40", "60", "80"]]);
+  } finally {
+    page.cleanup();
+  }
+});
