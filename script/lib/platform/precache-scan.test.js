@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  findStylesheetHrefs, findScriptSrcs, findCssUrls, findModuleImports,
+  findStylesheetHrefs, findScriptSrcs, findCssUrls, findPreferredCssUrls, findModuleImports,
 } from "./precache-scan.js";
 
 test("finds a same-origin fingerprinted stylesheet href", () => {
@@ -117,4 +117,18 @@ test("ignores a commented-out import", () => {
 
 test("returns nothing for a module with no imports", () => {
   assert.deepEqual(findModuleImports("export function foo() { return 1; }"), []);
+});
+
+test("findPreferredCssUrls skips an @font-face's fallback formats", () => {
+  const css = `@font-face { font-family: "M"; src: url("/fonts/M.woff2") format("woff2"),
+    url("/fonts/M.woff") format("woff"), url("/fonts/M.ttf") format("truetype"); }
+    .x { background: url(/images/bg.png); }`;
+  assert.deepEqual(findPreferredCssUrls(css), ["/fonts/M.woff2", "/images/bg.png"]);
+});
+
+test("findPreferredCssUrls lists a file once, and keeps one that's another face's first choice", () => {
+  const css = `@font-face { src: url(/fonts/A.woff2), url(/fonts/B.woff2); }
+    @font-face { src: url(/fonts/B.woff2); }
+    @font-face { src: url(/fonts/A.woff2); }`;
+  assert.deepEqual(findPreferredCssUrls(css), ["/fonts/A.woff2", "/fonts/B.woff2"]);
 });

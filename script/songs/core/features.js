@@ -1,5 +1,6 @@
 import { byId, qsa } from "../../lib/core/dom.js";
 import { parseSongIndex } from "../../lib/core/song-index.js";
+import { songFileFromHash } from "../../lib/core/song-hash.js";
 import { createNavigation } from "./navigation.js";
 import { createAudioPlayer } from "../audio/player.js";
 import { createMetronome } from "../audio/metronome.js";
@@ -25,6 +26,11 @@ import { createOffline } from "../offline/offline.js";
 import { createLayersPanel } from "../layers/panel.js";
 import { initSkipLinks } from "./skip-links.js";
 import { tl } from "../../lib/core/i18n.js";
+import { whenFontReady } from "../../lib/platform/font-ready.js";
+
+// How long the first engraving waits for the sheet's text face (preloaded in
+// layouts/partials/head.html) before drawing with the fallback face anyway.
+const SHEET_FONT_WAIT_MS = 2500;
 
 /*
   The songs page's feature registry — the whole dependency graph in one
@@ -82,7 +88,17 @@ function initSidebar(ctx) {
 export const FEATURES = [
   { name: "nav", create: createNavigation },
   { name: "skipLinks", init: initSkipLinks },
-  { name: "audio", create: createAudioPlayer },
+  {
+    name: "audio",
+    create: createAudioPlayer,
+    // Only when the page opens straight into a song: that first render is
+    // what the warm-up speeds up. On a plain visit the AudioContext is left
+    // until a song is picked, after a click, so the browser lets it start
+    // instead of creating it suspended (and warning about autoplay).
+    init: (ctx) => {
+      if (songFileFromHash(window.location.hash)) ctx.audio.warmUp();
+    },
+  },
   { name: "sheet", create: createSheet },
   {
     name: "sheetToolbar",
@@ -113,7 +129,18 @@ export const FEATURES = [
   { name: "sidebar", init: initSidebar },
   { name: "offline", create: createOffline, init: (ctx) => ctx.offline.init() },
   // Act on the URL the page was loaded with (captured by createNavigation,
-  // before settling the default tab rewrote the hash).
-  { name: "deepLink", init: (ctx) => ctx.nav.start() },
+  // before settling the default tab rewrote the hash) — once the sheet's text
+  // face is in, since the app starts at DOMContentLoaded, not `load`.
+  {
+    name: "deepLink",
+    init: (ctx) => {
+      // Only a song needs the font; a setlist-only link starts at once.
+      if (!songFileFromHash(window.location.hash)) {
+        ctx.nav.start();
+        return;
+      }
+      whenFontReady(document.fonts, "16px MuseJazzText", SHEET_FONT_WAIT_MS, () => ctx.nav.start());
+    },
+  },
   { name: "tour", create: createTour, init: (ctx) => ctx.tour.init() },
 ];

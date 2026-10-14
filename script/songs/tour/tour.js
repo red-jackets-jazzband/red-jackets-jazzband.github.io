@@ -19,6 +19,7 @@ import {
 } from "../../lib/tour/tour-layout.js";
 import { launchConfetti } from "./confetti.js";
 import { createTourActions, isShown, waitUntil } from "./actions.js";
+import { afterPageLoad } from "../core/after-load.js";
 
 /*
   Guided first-time tour of the songs page: dims the page, spotlights the real
@@ -58,6 +59,13 @@ const stepKey = (step) => `${step.chapterId}/${step.id}`;
 const toBox = (rect) => ({
   left: rect.left, top: rect.top, width: rect.width, height: rect.height,
 });
+
+// Safari before 13.1 only knows the prefixed -webkit-clip-path (see
+// CLAUDE.md's Browser support); without it the veil had no hole at all.
+function setClipPath(node, value) {
+  node.style.webkitClipPath = value;
+  node.style.clipPath = value;
+}
 
 // The box to spotlight for a non-interactive `target`: its own box, tightened
 // to its visible children's — a target that's a flex-stretched container
@@ -418,10 +426,10 @@ export function createTour(ctx) {
       if (dy) window.scrollBy(0, dy);
       box = boxForTarget(target, step);
     }
-    refs.veil.style.clipPath = spotlightClipPath(box, SPOTLIGHT_PAD);
+    setClipPath(refs.veil, spotlightClipPath(box, SPOTLIGHT_PAD));
     // A hole in the shield lets clicks through to the real control — only
     // wanted on the "try it" steps; otherwise the shield blocks everything.
-    refs.shield.style.clipPath = step.interactive ? spotlightClipPath(box, SPOTLIGHT_PAD) : "none";
+    setClipPath(refs.shield, step.interactive ? spotlightClipPath(box, SPOTLIGHT_PAD) : "none");
     positionRing(box);
     refs.card.dataset.placement = spot.placement;
     const docked = isDocked(spot.placement);
@@ -630,6 +638,9 @@ export function createTour(ctx) {
   */
   async function init() {
     lang = pageLanguage();
+    // The copy (~20 KB, twice that on a translated page) isn't needed until
+    // someone presses "?", so it isn't fetched alongside the song.
+    await afterPageLoad();
     content = await loadContent(lang);
     if (!content) return;
     flat = flattenTourSteps(content);

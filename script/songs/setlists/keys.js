@@ -31,8 +31,8 @@ export function createSetlistKeys(ctx) {
       pendingKeyFetches.delete(file);
       updateKeyDisplays();
     };
-    ctx.readFile(
-      `/songs/${file}`,
+    ctx.songTexts.get(
+      file,
       (text) => settle(extractKeyFromAbc(text), tempoBpmFromAbc(text)),
       () => settle(null, null),
     );

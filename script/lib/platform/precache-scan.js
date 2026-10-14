@@ -62,6 +62,27 @@ export function findCssUrls(css) {
   return urls;
 }
 
+// The url()s a stylesheet will actually make a browser download, each once:
+// every one, except the fallback formats of an @font-face `src` list. A
+// browser takes the first source it supports (all of this site's, WOFF2 first)
+// and never fetches the rest, so precaching a WOFF/TTF fallback beside it only
+// spends a first visit's bandwidth on a file nothing reads — MuseJazzText's
+// alone was ~420 KB.
+export function findPreferredCssUrls(css) {
+  const primary = new Set();
+  const fallback = new Set();
+  let searchFrom = 0;
+  for (;;) {
+    const at = css.indexOf("@font-face", searchFrom);
+    if (at === -1) break;
+    const close = css.indexOf("}", at);
+    if (close === -1) break;
+    searchFrom = close + 1;
+    findCssUrls(css.slice(at, close)).forEach((url, i) => (i === 0 ? primary : fallback).add(url));
+  }
+  return [...new Set(findCssUrls(css))].filter((url) => primary.has(url) || !fallback.has(url));
+}
+
 function unquote(value) {
   const quoted = value.length >= 2
     && ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'")));

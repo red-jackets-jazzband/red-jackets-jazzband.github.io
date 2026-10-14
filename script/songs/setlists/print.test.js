@@ -136,19 +136,18 @@ function manualSetup() {
   return { print, bookletRenders, reads, cleanup: page.cleanup };
 }
 
-test("a stale read from a superseded booklet build is ignored", () => {
+test("a read landing after a newer booklet build only draws the newer build", () => {
   const { print, bookletRenders, reads, cleanup } = manualSetup();
   try {
     withAbcjs(createAbcjsStub(), () => {
       print.buildBooklet("Gig", SONGS, "");
-      const stale = reads.shift(); // first song of build 1
-      reads.length = 0;
       print.buildBooklet("Gig", SONGS, ""); // build 2 recreates the ids
-      const fresh = [...reads];
-      stale.onLoad(ABC[stale.file]); // late build-1 callback
-      fresh.forEach((r) => r.onLoad(ABC[r.file]));
+      // Build 2 waits on build 1's requests still in flight (ctx.songTexts)
+      // instead of sending its own: one read per file.
+      assert.deepEqual(reads.map((r) => r.file), ["a.abc", "b.abc"]);
+      reads.forEach((r) => r.onLoad(ABC[r.file]));
     });
-    // Only build 2's three reads rendered; the stale one was dropped.
+    // Only build 2's three songs rendered; build 1's callbacks were dropped.
     assert.equal(bookletRenders.length, 3);
   } finally {
     cleanup();
@@ -187,8 +186,9 @@ test("a held print() shows a song-by-song progress line, then clears it", async 
       assert.equal(status.hidden, false);
       assert.match(status.textContent, /Preparing the songbook — 0 of 4 songs/);
 
+      // a.abc is two of the songs (and its one read serves both).
       reads[0].onLoad(ABC[reads[0].file]);
-      assert.match(status.textContent, /1 of 4 songs/);
+      assert.match(status.textContent, /2 of 4 songs/);
 
       reads.slice(1).forEach((r) => r.onLoad(ABC[r.file]));
     });
@@ -443,17 +443,19 @@ test("changing a song's key redoes only that song", async () => {
   }
 });
 
-test("clearCache makes the next build re-read and redraw every song", async () => {
-  const { print, reads, renders, page } = deferredSetup();
+test("clearCache plus the song texts' clear makes the next build re-read and redraw every song", async () => {
+  const { ctx, print, reads, renders, page } = deferredSetup();
   try {
     withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
     await flush();
     await new Promise((resolve) => { setTimeout(resolve, 400); });
     const readsBefore = reads.length;
+    // What opening a setlist does (setlists/view.js's dropBookletCache).
+    ctx.songTexts.clear();
     print.clearCache();
     withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
     await flush();
-    assert.equal(reads.length, readsBefore + 3);
+    assert.equal(reads.length, readsBefore + 2, "a.abc and b.abc, once each");
     assert.equal(renders.length, 6);
     await new Promise((resolve) => { setTimeout(resolve, 400); });
   } finally {

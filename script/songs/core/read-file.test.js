@@ -28,12 +28,21 @@ function withEnv(protocol, fn) {
     }
   };
   globalThis.window = { location: { protocol } };
-  try {
-    return fn(() => last);
-  } finally {
+  const restore = () => {
     globalThis.XMLHttpRequest = savedXHR;
     globalThis.window = savedWin;
+  };
+  let result;
+  try {
+    result = fn(() => last);
+  } catch (error) {
+    restore();
+    throw error;
   }
+  // An async test keeps the stand-ins until it has finished.
+  if (result && typeof result.then === "function") return result.finally(restore);
+  restore();
+  return result;
 }
 
 test("readFile resolves a status-200 HTTP read", () => {
@@ -71,5 +80,45 @@ test("readFile reports a 404 through onError", () => {
     readFile("/songs/missing.abc", () => {}, (status) => { errStatus = status; });
     xhr().finish(404, "Not Found");
     assert.equal(errStatus, 404);
+  });
+});
+
+// A request the page's <head> started (lib/core/early-requests.js) is adopted.
+function earlyRequest(state) {
+  const listeners = [];
+  return {
+    ...state,
+    addEventListener(type, fn) {
+      if (type === "loadend") listeners.push(fn);
+    },
+    finish(status, text) {
+      Object.assign(this, { readyState: 4, status, responseText: text });
+      listeners.forEach((fn) => fn());
+    },
+  };
+}
+
+test("readFile adopts a request the page already started, instead of sending one", () => {
+  withEnv("https:", (xhr) => {
+    const early = earlyRequest({ readyState: 3 });
+    window.rjEarlyRequests = { "/songs/panama.abc": early };
+    let got = null;
+    readFile("/songs/panama.abc", (text) => { got = text; });
+    assert.equal(xhr(), null, "no second request");
+    early.finish(200, "X:1");
+    assert.equal(got, "X:1");
+  });
+});
+
+test("readFile answers a finished early request asynchronously, and only once", async () => {
+  await withEnv("https:", async (xhr) => {
+    window.rjEarlyRequests = { "/songs/index_of_songs.txt": { readyState: 4, status: 404, responseText: "" } };
+    let failed = null;
+    readFile("/songs/index_of_songs.txt", () => {}, (status) => { failed = status; });
+    assert.equal(failed, null, "not synchronously");
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    assert.equal(failed, 404);
+    readFile("/songs/index_of_songs.txt", () => {});
+    assert.notEqual(xhr(), null, "a second read fetches afresh");
   });
 });

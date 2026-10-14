@@ -3,6 +3,7 @@ import { humanizeSongFile } from "../../lib/core/filename.js";
 import { readFile } from "./read-file.js";
 import { createAppStore, bindAppPrefs } from "./state.js";
 import { FEATURES } from "./features.js";
+import { createSongTexts } from "../../lib/core/song-texts.js";
 
 /*
   Composition root for the songs page. Builds the store (core/state.js) and
@@ -24,6 +25,9 @@ function createApp() {
       return match ? match.name : humanizeSongFile(file);
     },
   };
+  // Song texts, fetched once and shared (setlist key badges, booklet, opening
+  // a song from a setlist): lib/core/song-texts.js.
+  ctx.songTexts = createSongTexts((path, onLoad, onError) => ctx.readFile(path, onLoad, onError));
   FEATURES.forEach((feature) => {
     if (feature.create) ctx[feature.name] = feature.create(ctx);
   });

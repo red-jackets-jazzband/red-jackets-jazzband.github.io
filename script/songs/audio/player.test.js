@@ -1152,3 +1152,59 @@ test("the player follows the tune slice: a newly opened song resets the tempo, a
     cleanup();
   }
 });
+
+// warmUp() asks ABCjs whether audio is supported (which creates its
+// AudioContext) a tick after the page starts, so the first song's render
+// doesn't pay for it.
+function swapAbcjs(stub) {
+  const real = globalThis.ABCJS;
+  globalThis.ABCJS = stub;
+  return () => {
+    globalThis.ABCJS = real;
+  };
+}
+
+async function warmUpWith(abcjs, before = () => {}) {
+  const { audio, cleanup } = setup();
+  const restore = swapAbcjs(abcjs);
+  try {
+    before(audio);
+    audio.warmUp();
+    await flush();
+  } finally {
+    restore();
+    cleanup();
+  }
+}
+
+test("warmUp asks ABCjs for audio support once the page has started", async () => {
+  let checks = 0;
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  abcjs.synth.supportsAudio = () => {
+    checks += 1;
+    return true;
+  };
+  await warmUpWith(abcjs);
+  assert.equal(checks, 1);
+});
+
+test("warmUp leaves it alone once a tune has loaded first", async () => {
+  let checks = 0;
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  await warmUpWith(abcjs, (audio) => {
+    audio.initForTune({ metaText: {} });
+    abcjs.synth.supportsAudio = () => {
+      checks += 1;
+      return true;
+    };
+  });
+  assert.equal(checks, 0);
+});
+
+test("warmUp survives a browser where asking throws", async () => {
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  abcjs.synth.supportsAudio = () => {
+    throw new Error("no AudioContext");
+  };
+  await assert.doesNotReject(warmUpWith(abcjs));
+});

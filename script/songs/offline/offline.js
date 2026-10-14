@@ -3,6 +3,7 @@ import { GM_VOICES } from "../../lib/audio/gm-voices.js";
 import { parseSongIndex } from "../../lib/core/song-index.js";
 import { STANDARD_SOUNDFONT_URL, HIGH_QUALITY_SOUNDFONT_URL } from "../audio/player.js";
 import { pageLanguage, tl } from "../../lib/core/i18n.js";
+import { afterPageLoad } from "../core/after-load.js";
 
 const SW_URL = "/sw.js";
 
@@ -321,8 +322,12 @@ export function createOffline(ctx) {
     }
     installBtn = btn;
     on("offlineBtn", "click", downloadForOffline);
+    // Registered once the page has loaded and gone idle, not at start-up:
+    // installing the worker downloads the whole app shell for offline use,
+    // which must not compete with the first song for a slow connection.
+    // ("Download for offline" registers it straight away itself.)
     // registerServiceWorker() resolves false on failure instead of rejecting.
-    registerServiceWorker().catch(() => false);
+    afterPageLoad().then(registerServiceWorker).catch(() => false);
 
     window.addEventListener("beforeinstallprompt", (event) => {
       event.preventDefault();

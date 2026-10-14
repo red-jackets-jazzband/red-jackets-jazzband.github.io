@@ -27,7 +27,7 @@ export function updateIrealProLink(song, chords) {
     class: "sheet-icon-btn",
     href: url,
     title: tl("irealpro_open", "Open in iReal Pro"),
-    html: '<img src="/images/irealpro_mark_white.webp" alt="" aria-hidden="true" class="irealpro-logo">',
+    html: '<img src="/images/irealpro_mark_white.png" alt="" aria-hidden="true" class="irealpro-logo">',
     attrs: { "aria-label": tl("irealpro_open", "Open in iReal Pro") },
   });
   const actions = byId("sheetActions");

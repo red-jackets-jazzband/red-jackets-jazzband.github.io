@@ -118,15 +118,15 @@ export function createSetlistPrint(ctx) {
 
   // What a rebuild reuses. A setlist is rebuilt on every list edit, and
   // engraving is the slow part (ABCjs, ~50 ms a song), so:
-  //   songTexts   file -> .abc text, so a rebuild needn't re-read it
   //   songCache   one record per song block, keyed by file + key override +
   //               instrument + occurrence: the block's DOM (already filled
   //               and engraved), its title, key/bpm meta and listen sources.
   //               A rebuild re-attaches these blocks, renumbered, instead of
   //               engraving them again; only changed songs cost anything.
   // The staves themselves are engraved off the click path (engraveQueue, one
-  // song per idle slice), and only "Print songbook" shows them.
-  const songTexts = new Map();
+  // song per idle slice), and only "Print songbook" shows them. The .abc
+  // texts come from the page's shared store (ctx.songTexts), so a rebuild
+  // doesn't re-read them and the rows' key badges don't fetch them again.
   const songCache = new Map();
   let engraveQueue = [];
   let draining = false;
@@ -398,7 +398,6 @@ export function createSetlistPrint(ctx) {
     stampIds(parts, entry);
     const onText = (text) => {
       if (seq === bookletSeq) {
-        songTexts.set(entry.item.file, text);
         try {
           fillSong(entry, parts, cacheKey, text);
         } catch (error) {
@@ -410,14 +409,9 @@ export function createSetlistPrint(ctx) {
     };
 
     pendingReads += 1;
-    if (songTexts.has(entry.item.file)) {
-      // Asynchronous like a real read: the stage list's cells don't exist
-      // until the whole booklet has been laid out.
-      const text = songTexts.get(entry.item.file);
-      setTimeout(() => onText(text), 0);
-      return parts.block;
-    }
-    ctx.readFile(`/songs/${entry.item.file}`, onText, (status) => {
+    // Always answered asynchronously, even from the store: the stage list's
+    // cells don't exist until the whole booklet has been laid out.
+    ctx.songTexts.get(entry.item.file, onText, (status) => {
       console.warn(`Setlist references a missing song file: ${entry.item.file} (status ${status})`);
       readSettled(seq);
     });
@@ -532,9 +526,9 @@ export function createSetlistPrint(ctx) {
   }
 
   // Opening a setlist starts from what the server has now; only edits made
-  // while it stays open reuse the cache (see songTexts / songCache above).
+  // while it stays open reuse the cache (see songCache above; view.js clears
+  // the shared song texts at the same moment).
   function clearCache() {
-    songTexts.clear();
     songCache.clear();
   }
 

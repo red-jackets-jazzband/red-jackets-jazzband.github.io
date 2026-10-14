@@ -115,11 +115,14 @@ test("init() hides the button and never registers when serviceWorker isn't suppo
   }
 });
 
-test("init() registers the service worker at /songs/ scope and wires the button", () => {
+test("init() registers the service worker at /songs/ scope, once the page has loaded", async () => {
   const { offline, registerCalls, cleanup } = setup();
   try {
     offline.init();
     assert.equal(document.getElementById("offlineBtn").hidden, false);
+    // Not during start-up: its install download mustn't compete with the song.
+    assert.equal(registerCalls.length, 0);
+    await new Promise((resolve) => { setTimeout(resolve, 10); });
     assert.equal(registerCalls.length, 1);
     assert.equal(registerCalls[0].url, "/sw.js");
     assert.deepEqual(registerCalls[0].options, { scope: "/songs/", type: "module" });

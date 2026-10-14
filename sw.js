@@ -13,9 +13,9 @@
 // Module service workers aren't universally supported yet (notably older
 // Safari) — on a browser that can't load this file at all, /songs/ simply
 // works the same as it always did, online-only, same as before this existed.
-import { classifyRequest } from "./script/lib/platform/sw-routing.js";
+import { classifyRequest, fingerprintStem } from "./script/lib/platform/sw-routing.js";
 import {
-  findStylesheetHrefs, findCssUrls, findScriptSrcs, findModuleImports,
+  findStylesheetHrefs, findPreferredCssUrls, findScriptSrcs, findModuleImports,
 } from "./script/lib/platform/precache-scan.js";
 
 // Two versions, so activate() can clear out what a previous worker left
@@ -25,12 +25,16 @@ import {
 //   files/paths it caches (v2: every module moved into feature folders;
 //   v4: the Layers panel's new modules; v5: its edge.js; v6: the page is
 //   served in four languages, so the worker is registered once per language
-//   page and precaches/falls back to its own scope's page, not /songs/; v7: one manifest per language; v8: songs/core/skip-links.js).
-// - ASSET_VERSION: the third-party soundfont samples and Font Awesome, which
-//   never change once published. Bump only when caching *those* changes —
+//   page and precaches/falls back to its own scope's page, not /songs/; v7: one manifest per language; v8: songs/core/skip-links.js;
+//   v9: the page loads one js.Build bundle instead of the module graph;
+//   v10: Font Awesome self-hosted, MuseJazzText as WOFF2, PNG iRealPro mark;
+//   v11: no fallback font formats precached;
+//   v12: a superseded fingerprinted bundle/stylesheet is dropped from the cache).
+// - ASSET_VERSION: the third-party soundfont samples, which never change
+//   once published. Bump only when caching *those* changes —
 //   it deletes the soundfonts visitors downloaded with "Download for
 //   offline", so their offline playback is gone until they download again.
-const SHELL_VERSION = "v8";
+const SHELL_VERSION = "v12";
 const ASSET_VERSION = "v1";
 // Every cache this worker owns is named under this prefix, and activate()'s
 // cleanup only ever deletes caches under it — CacheStorage is shared across
@@ -40,8 +44,9 @@ const ASSET_VERSION = "v1";
 const CACHE_PREFIX = "rj-songs-";
 const SHELL_CACHE = `${CACHE_PREFIX}shell-${SHELL_VERSION}`;
 const SOUNDFONT_CACHE = `${CACHE_PREFIX}soundfont-${ASSET_VERSION}`;
-const FONT_AWESOME_CACHE = `${CACHE_PREFIX}font-awesome-${ASSET_VERSION}`;
-const CURRENT_CACHES = new Set([SHELL_CACHE, SOUNDFONT_CACHE, FONT_AWESOME_CACHE]);
+// (A "font-awesome" cache of the cdnjs kit was dropped once the icons were
+// self-hosted; activate() deletes a visitor's old one like any stale cache.)
+const CURRENT_CACHES = new Set([SHELL_CACHE, SOUNDFONT_CACHE]);
 
 // A deliberately small precache — just enough that a fresh install has an
 // offline fallback immediately, before the user has ever visited /songs/.
@@ -78,9 +83,10 @@ const PRECACHE_URLS = [PAGE_URL, MANIFEST_URL, "/script/lamejs-1.2.1-min.js"];
 // its exact filename can't be hardcoded here, and the module entry point's
 // own dependency graph shifts as the app's modules change — both are
 // discovered by scanning the already-precached /songs/ page's own markup
-// instead (findStylesheetHrefs/findScriptSrcs), same for the cross-origin
-// Font Awesome stylesheet. Each stylesheet found is then scanned in turn
-// (findCssUrls) for the webfont files its own @font-face rules point at, and
+// instead (findStylesheetHrefs/findScriptSrcs). Each stylesheet found is then
+// scanned in turn (findPreferredCssUrls) for the webfont files its own
+// @font-face rules point at — the format a browser loads, not the fallbacks
+// after it — and
 // each module script is scanned (findModuleImports) for the modules it
 // imports, recursively — so this all stays in sync with the app's actual
 // source automatically rather than needing separate hardcoded file lists.
@@ -91,7 +97,7 @@ function targetCacheFor(url) {
     sameOrigin: url.origin === self.location.origin,
     mode: "cors",
   });
-  return kind === "font-awesome" ? FONT_AWESOME_CACHE : SHELL_CACHE;
+  return kind === "soundfont" ? SOUNDFONT_CACHE : SHELL_CACHE;
 }
 
 // `required`: a same-origin asset (our own stylesheet, our own fonts, our
@@ -100,10 +106,10 @@ function targetCacheFor(url) {
 // the whole precacheShell() chain and fails installation; the browser
 // retries installing this same worker version on a later registration
 // attempt instead of activating an incomplete one that looks done but
-// silently can't run. A cross-origin asset (Font Awesome's stylesheet and
-// its webfonts, from cdnjs) is optional — a missing icon font is a real but
-// survivable degradation, not worth failing the whole install over, so a
-// failure there is swallowed instead.
+// silently can't run. A cross-origin asset (none today; Font Awesome came
+// from cdnjs until it was self-hosted) is optional — a third-party host being
+// down is not worth failing the whole install over, so a failure there is
+// swallowed instead.
 function precacheUrl(absoluteUrl, required) {
   const attempt = fetch(absoluteUrl).then((response) => {
     if (!response.ok) throw new Error(`${absoluteUrl}: ${response.status}`);
@@ -121,7 +127,7 @@ async function precacheStylesheetAndFonts(href) {
   if (!response) return null;
   const css = await response.clone().text();
   return Promise.all(
-    findCssUrls(css)
+    findPreferredCssUrls(css)
       // A url() reference isn't always a real network resource — split.css's
       // hand-drawn dropdown chevron (see its own comment) is an inline
       // `url("data:image/svg+xml,...")`, already fully self-contained in the
@@ -135,7 +141,7 @@ async function precacheStylesheetAndFonts(href) {
 
 // A same-origin <script>'s own src, plus — for a type="module" entry point —
 // every module it statically imports, recursively (findModuleImports scans
-// the fetched source text the same way findCssUrls scans a stylesheet's).
+// the fetched source text the same way findPreferredCssUrls scans a stylesheet's).
 // `seen` de-dupes across the whole recursive walk (many modules share
 // imports like lib/dom.js) so each file is fetched once. A classic,
 // non-module script (ABCJS/Tonal/lamejs) has no import statements to find,
@@ -195,9 +201,44 @@ self.addEventListener("activate", (event) => {
 // dropping the update.
 function fetchAndCache(request, cache) {
   return fetch(request).then((response) => {
-    const stored = response.ok ? cache.put(request, response.clone()) : Promise.resolve();
+    const stored = response.ok ? storeResponse(cache, request, response) : Promise.resolve();
     return stored.then(() => response);
   });
+}
+
+async function storeResponse(cache, request, response) {
+  await cache.put(request, response.clone());
+  await pruneSuperseded(cache, request);
+}
+
+// The app bundle and stylesheet are fingerprinted (songs-app.<hash>.js,
+// split.min.<hash>.css), so every deploy caches them under a new name. Once
+// the new copy is in, drop the ones it replaced — otherwise each deploy a
+// visitor loads leaves another ~300 KB behind for good (until a
+// SHELL_VERSION bump). Only ever after the successor is stored, so an
+// offline reload never finds neither; and only for a file the cached page
+// itself links, so an old tab fetching its old copy can't evict the current
+// one.
+async function pruneSuperseded(cache, request) {
+  const { pathname } = new URL(request.url);
+  const stem = fingerprintStem(pathname);
+  if (!stem || !(await pageLinks(cache, pathname))) return;
+  const keys = await cache.keys();
+  await Promise.all(keys
+    .filter((key) => {
+      const other = new URL(key.url).pathname;
+      return other !== pathname && fingerprintStem(other) === stem;
+    })
+    .map((key) => cache.delete(key)));
+}
+
+async function pageLinks(cache, pathname) {
+  const page = await cache.match(PAGE_URL);
+  if (!page) return false;
+  const html = await page.text();
+  const base = new URL(PAGE_URL, self.location.origin);
+  return [...findStylesheetHrefs(html), ...findScriptSrcs(html)]
+    .some((url) => new URL(url, base).pathname === pathname);
 }
 
 // Cache-first, but always also refetches in the background and updates the
@@ -258,7 +299,6 @@ const STRATEGIES = {
   navigate,
   shell: (request, event) => cacheFirstRevalidate(request, SHELL_CACHE, event),
   soundfont: (request) => cacheFirstOnly(request, SOUNDFONT_CACHE),
-  "font-awesome": (request) => cacheFirstOnly(request, FONT_AWESOME_CACHE),
 };
 
 self.addEventListener("fetch", (event) => {

@@ -7,7 +7,6 @@
 // *which kind* a given request is.
 
 const SOUNDFONT_ORIGIN = "https://gleitz.github.io";
-const FONT_AWESOME_ORIGIN = "https://cdnjs.cloudflare.com";
 
 // Same-origin paths worth caching for offline use — the /songs/ app shell
 // (its JS, its one stylesheet at its build-time-fingerprinted URL, and the
@@ -42,8 +41,6 @@ function isCacheablePath(pathname) {
     "soundfont" - an audio sample from the FatBoy/MusyngKite CDN; cache-first
                   only, never revalidated — samples never change once
                   published, so there's nothing to catch up on.
-    "font-awesome" - the icon font CSS/webfont from cdnjs; same treatment as
-                  a soundfont sample, for the same reason.
     null        - don't touch it; let the browser handle the request as it
                   normally would (no caching, no offline fallback).
 */
@@ -53,6 +50,25 @@ export function classifyRequest({
   if (mode === "navigate") return sameOrigin ? "navigate" : null;
   if (sameOrigin) return isCacheablePath(pathname) ? "shell" : null;
   if (origin === SOUNDFONT_ORIGIN) return "soundfont";
-  if (origin === FONT_AWESOME_ORIGIN) return "font-awesome";
   return null;
+}
+
+const HEX_64 = /^[0-9a-f]{64}$/;
+
+/*
+  The path a build-time-fingerprinted file has with its content hash taken
+  out — "/script/songs-app.<64 hex>.js" -> "/script/songs-app.js",
+  "/css/split.min.<64 hex>.css" -> "/css/split.min.css" — or null for a path
+  that isn't one. Each deploy names these files anew, so the worker uses this
+  to drop the copy a newer one has replaced, instead of keeping every
+  version a visitor ever loaded.
+*/
+export function fingerprintStem(pathname) {
+  const extAt = pathname.lastIndexOf(".");
+  const hashAt = pathname.lastIndexOf(".", extAt - 1);
+  if (extAt === -1 || hashAt === -1) return null;
+  const ext = pathname.slice(extAt);
+  if (ext !== ".js" && ext !== ".css") return null;
+  if (!HEX_64.test(pathname.slice(hashAt + 1, extAt))) return null;
+  return pathname.slice(0, hashAt) + ext;
 }

@@ -198,8 +198,9 @@ export function createSetlistView(ctx) {
   // ---- opening -----------------------------------------------------
 
   // A freshly opened setlist re-reads its songs rather than trusting the
-  // booklet cache of whatever was open before (test doubles may lack it).
+  // texts and booklet of whatever was open before (test doubles may lack it).
   function dropBookletCache() {
+    ctx.songTexts.clear();
     if (typeof ctx.setlistPrint.clearCache === "function") ctx.setlistPrint.clearCache();
   }
 
@@ -665,7 +666,9 @@ export function createSetlistView(ctx) {
     highlightCurrent();
     songLoadSeq += 1;
     const seq = songLoadSeq;
-    ctx.readFile(`/songs/${song.file}`, (text) => {
+    // Usually already fetched for the row's key badge or the print booklet
+    // (ctx.songTexts), so it shows without a request.
+    ctx.songTexts.get(song.file, (text) => {
       // A slower earlier request must not overwrite the sheet the user has
       // since moved on to.
       if (seq !== songLoadSeq) return;

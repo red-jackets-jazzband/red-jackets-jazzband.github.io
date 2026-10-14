@@ -24,6 +24,8 @@ function altArrow(handleIndex, key) {
   );
 }
 
+const tick = () => new Promise((resolve) => { setTimeout(resolve, 0); });
+
 test("Alt+ArrowDown on a set's last song moves it into the next set, then past that set's first song", () => {
   const { view, entry, storage, cleanup } = setup({
     songs: [{ file: "a.abc" }, { file: "b.abc" }, { divider: "Two" }, { file: "c.abc" }],
@@ -518,7 +520,10 @@ function openThreeSongSetlist() {
   const result = setup({
     songs: [{ file: "a.abc" }, { file: "b.abc" }, { file: "c.abc" }],
   });
-  const { view, entry } = result;
+  const { view, entry, ctx } = result;
+  // Rendering reads every row's song for its key badge; answer those, as a
+  // real read always settles (a song opened later shares them: ctx.songTexts).
+  ctx.readFile = (path, onLoad) => onLoad(MINIMAL_ABC);
   view.initControls();
   view.renderOpen(entry.name, entry.songs, entry, "");
   return result;
@@ -687,11 +692,11 @@ test("Alt+ArrowDown doesn't leave focus on a drag handle after re-render", () =>
   }
 });
 
-test("a plain arrow key still steps the open sheet's song, not a reorder, off a focused title", () => {
+test("a plain arrow key still steps the open sheet's song, not a reorder, off a focused title", async () => {
   const { view, ctx, entry, rendered, cleanup } = openThreeSongSetlist();
   try {
-    ctx.readFile = (path, onLoad) => onLoad(MINIMAL_ABC);
     view.openSongInOpenSetlist("a");
+    await tick(); // the open lands before the visitor's next key
     document.querySelectorAll(SONG_TITLE_SELECTOR)[0].dispatchEvent(
       new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
     );
@@ -701,6 +706,7 @@ test("a plain arrow key still steps the open sheet's song, not a reorder, off a 
       ["a.abc", "b.abc", "c.abc"],
       "no reorder happened without Alt",
     );
+    await tick(); // song texts are answered asynchronously (ctx.songTexts)
     assert.equal(rendered.length, 2);
   } finally {
     cleanup();
@@ -732,7 +738,7 @@ test("stepping without Alt continues from the last moved item, not a stale index
   }
 });
 
-test("arrow keys step to the next song even while a drag handle has focus", () => {
+test("arrow keys step to the next song even while a drag handle has focus", async () => {
   const { view, entry, ctx, rendered, cleanup } = setup({
     songs: [{ file: "a.abc", key: "" }, { file: "b.abc", key: "" }],
   });
@@ -742,6 +748,7 @@ test("arrow keys step to the next song even while a drag handle has focus", () =
     view.renderOpen(entry.name, entry.songs, entry, "");
     document.querySelector(SONG_TITLE_SELECTOR).dispatchEvent(new window.Event("click"));
     assert.equal(ctx.state.currentSetlistSongIndex, 0);
+    await tick(); // the open lands before the visitor's next key
 
     document.querySelector(DRAG_HANDLE_SELECTOR)
       .dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
@@ -752,6 +759,7 @@ test("arrow keys step to the next song even while a drag handle has focus", () =
       ["a.abc", "b.abc"],
       "the drag handle did not reorder the setlist",
     );
+    await tick();
     assert.equal(rendered.length, 2);
   } finally {
     cleanup();
@@ -797,12 +805,20 @@ test("arrow-down on the last song of a read-only band setlist is a no-op (no add
   }
 });
 
-test("clicking a song title opens it in the sheet with the resolved transpose", () => {
+test("clicking a song title opens it in the sheet with the resolved transpose", async () => {
   const { view, entry, ctx, rendered, cleanup } = setup({ songs: [{ file: "a.abc", key: "" }] });
   try {
-    ctx.readFile = (path, onLoad) => onLoad("X:1\nK:Bb\nB2|");
+    const reads = [];
+    ctx.readFile = (path, onLoad) => {
+      reads.push(path);
+      onLoad("X:1\nK:Bb\nB2|");
+    };
     view.renderOpen(entry.name, entry.songs, entry, "");
     document.querySelector(SONG_TITLE_SELECTOR).dispatchEvent(new window.Event("click"));
+    // The row's key badge already read a.abc, so the open needs no request of
+    // its own and is answered on the next tick (ctx.songTexts).
+    await tick();
+    assert.deepEqual(reads, ["/songs/a.abc"], "one read, shared by the badge and the open");
     assert.equal(rendered.length, 1);
     assert.equal(ctx.state.currentSongFile, "a.abc");
     assert.equal(ctx.state.currentSetlistSongIndex, 0);
@@ -853,12 +869,14 @@ test("openSongInOpenSetlist opens the matching song at its list position", () =>
     view.renderOpen(entry.name, entry.songs, entry, "");
     ctx.state.currentOpenSongs = entry.songs;
 
+    const readsBefore = loads.length;
     assert.equal(view.openSongInOpenSetlist("b"), true);
     assert.equal(ctx.state.currentSongFile, "b.abc");
     assert.equal(ctx.state.currentSetlistSongIndex, 2);
-    // The most recent read is this open, not one of the rows' own native-key
-    // prefetches fired earlier by renderOpen.
-    assert.equal(loads[loads.length - 1].path, "/songs/b.abc");
+    // The open waits on the row's own key-badge read of b.abc, still in
+    // flight, instead of sending a second one (ctx.songTexts).
+    assert.equal(loads.length, readsBefore);
+    assert.ok(loads.some((load) => load.path === "/songs/b.abc"));
     assert.ok(
       document.querySelector('.setlist-song-row[data-setlist-index="2"]').classList.contains("is-current-song"),
     );

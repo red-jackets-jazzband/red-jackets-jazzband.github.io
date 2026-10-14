@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { classifyRequest } from "./sw-routing.js";
+import { classifyRequest, fingerprintStem } from "./sw-routing.js";
 
 const OWN_ORIGIN = "https://red-jackets-jazzband.github.io";
 const SOUNDFONT_ORIGIN = "https://gleitz.github.io";
@@ -45,13 +45,30 @@ test("a soundfont sample request is classified 'soundfont'", () => {
   );
 });
 
-test("a Font Awesome asset is classified 'font-awesome'", () => {
+// Font Awesome is self-hosted now (assets/css/icons.css); cdnjs is just
+// another cross-origin host.
+test("a cdnjs request is left alone", () => {
   assert.equal(
     classify("/ajax/libs/font-awesome/6.7.2/css/all.min.css", FONT_AWESOME_ORIGIN, "cors"),
-    "font-awesome",
+    null,
   );
 });
 
 test("an unrelated cross-origin request is left alone", () => {
   assert.equal(classify("/track", "https://example-analytics.com", "cors"), null);
+});
+
+const HASH = "a".repeat(64);
+
+test("fingerprintStem takes the content hash out of a fingerprinted file's path", () => {
+  assert.equal(fingerprintStem(`/script/songs-app.${HASH}.js`), "/script/songs-app.js");
+  assert.equal(fingerprintStem(`/css/split.min.${HASH}.css`), "/css/split.min.css");
+});
+
+test("fingerprintStem leaves every other path alone", () => {
+  assert.equal(fingerprintStem("/script/songs-page.js"), null);
+  assert.equal(fingerprintStem("/songs/bill_bailey.abc"), null);
+  assert.equal(fingerprintStem(`/fonts/x.${HASH}.woff2`), null);
+  assert.equal(fingerprintStem("/script/lib.short.js"), null);
+  assert.equal(fingerprintStem("/noext"), null);
 });

@@ -78,6 +78,17 @@ function pickupBeatsOf(visualObj) {
   return visualObj.getPickupLength() / beatLength;
 }
 
+// ABCjs's own "can this browser play?" check (which creates its AudioContext
+// the first time); false on any browser where asking throws.
+function checkAudioSupport() {
+  if (typeof ABCJS === "undefined" || !ABCJS.synth || typeof ABCJS.synth.supportsAudio !== "function") return false;
+  try {
+    return ABCJS.synth.supportsAudio();
+  } catch {
+    return false;
+  }
+}
+
 // Calls fn() and reports {ok: false} if it throws synchronously, instead of
 // letting that throw propagate — shared by tryRepeat()'s own seek() and
 // play() calls, since both need the same "warn and back out" recovery.
@@ -910,6 +921,21 @@ export function createAudioPlayer(ctx) {
     }
   });
 
+  /*
+    ABCjs creates its AudioContext on the first supportsAudio() call, which
+    initForTune makes on the first rendered tune — tens of milliseconds on an
+    old phone, right between the sheet being engraved and it being painted.
+    Make that call ahead of time instead, once the page has started and while
+    the first song's file is still downloading. Only the check: no sound, and
+    no SynthController until a tune is there to load into it.
+  */
+  function warmUp() {
+    setTimeout(() => {
+      if (state.currentVisualObj) return; // a tune got there first
+      checkAudioSupport();
+    }, 0);
+  }
+
   return {
     get isPlaying() {
       return state.isPlaying;
@@ -952,5 +978,6 @@ export function createAudioPlayer(ctx) {
     playPause,
     stop,
     TEMPO_BOUNDS: { min: TEMPO_MIN_BPM, max: TEMPO_MAX_BPM },
+    warmUp,
   };
 }

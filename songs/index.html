@@ -67,17 +67,24 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="RJ Songs" />
 
+<link rel="preload" href="/fonts/MuseJazzText.woff2" as="font" type="font/woff2" crossorigin />
+
+<script>(()=>{function c(t){let n={};for(let s of String(t).split("&")){if(!s)continue;let e=s.indexOf("="),i=e===-1?s:s.slice(0,e);n[i]=e===-1?"":s.slice(e+1)}return n}function o(t){try{return decodeURIComponent(t)}catch(n){return t}}function r(t){if(t==null||t==="")return null;let n=Number(t);return Number.isFinite(n)&&n>=0?n:null}function u(t){let n=c(String(t).replace(/^[#?]/,"")),s=r(n.a),e=r(n.b);return{song:n.s?o(n.s):null,setlist:n.sl?o(n.sl):null,a:s,b:e,inspiration:n.i==="1"||s!==null||e!==null}}var a="rjEarlyRequests";function f(t){let{song:n}=u(t),s=["/songs/index_of_songs.txt","/setlists/index_of_setlists.txt"];return n&&s.push(`/songs/${n}.abc`),s}function l(t,n){let s={};f(t.location.hash).forEach(e=>{s[e]=n(e)}),t[a]=s}l(window,t=>{let n=new XMLHttpRequest;return n.open("GET",t,!0),n.send(null),n});})();
+</script>
 
 
 
 
 
 
-  
-  <link rel="stylesheet" href="/css/split.min.7140428d7d1a162858c19538f95c40791b5b74f124e85c33aaa07ca1acdf2d15.css" type="text/css" media="screen,print" integrity="sha256-cUBCjX0aFihYwZU4&#43;VxAeRtbdPEk6FwzqqB8oazfLRU=" />
 
-<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+
+
+
+
+<link rel="stylesheet" href="/css/split.min.5153055233d7fd4b1b00c4f114a1f75ecf9cb76cd9b04eed177f8febef4c052c.css" type="text/css" media="screen,print" integrity="sha256-UVMFUjPX/UsbAMTxFKH3Xs&#43;ct2zZsE7tF3&#43;P6&#43;9MBSw=" />
+
+
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
 
@@ -143,7 +150,7 @@
 
 <script src="/script/abcjs_midi_6.7.1-min.js" type="text/javascript" defer></script>
 <script src="/script/tonal.4.6.9-min.js" type="text/javascript" defer></script>
-<script type="module" src="/script/songs-page.js"></script>
+<script type="module" src="/script/songs-app.63db361f54534da28eb51762c62564431e1171b51b6cd5d83c522239822ce8cb.js" integrity="sha256-Y9s2H1RTTaKOtRdixiVkQx4RcbUbbNXYPFIiOYIs6Ms="></script>
 
 <div class="rj-songs-layout" data-default-tab="library">
 
@@ -311,7 +318,7 @@
 <div class="rj-sheet-paper">
 <div id="sheetEmpty" class="rj-sheet-empty hideOnprint">
   <span class="rj-sheet-empty-note rj-sheet-empty-note--a" aria-hidden="true">&#9834;</span>
-  <img class="rj-sheet-empty-logo" src="/images/redjackets_logo_small.png" width="290" height="300" alt="The Red Jackets Jazzband, established 2009">
+  <img class="rj-sheet-empty-logo" src="/images/redjackets_logo_180.png" srcset="/images/redjackets_logo_180.png 180w, /images/redjackets_logo_small.png 290w" sizes="90px" width="290" height="300" loading="lazy" decoding="async" alt="The Red Jackets Jazzband, established 2009">
   <span class="rj-sheet-empty-note rj-sheet-empty-note--c" aria-hidden="true">&#9833;</span>
   <p class="rj-sheet-empty-title">Nothing on the stand yet!</p>
   <p class="rj-sheet-empty-text">
