@@ -3,7 +3,14 @@ import { INSTRUMENTS } from "../../lib/music/instruments.js";
 import { COMPING_PATTERNS } from "../../lib/music/comping.js";
 import { SOLO_STYLES } from "../../lib/music/solo.js";
 import { COMPING_PARTS } from "./state.js";
+import { BACKGROUND } from "../core/state.js";
 import { tl } from "../../lib/core/i18n.js";
+
+// A pick here re-engraves the sheet; in the background, so the page (an old
+// iPad's above all) answers at once and the picker shows its new value.
+function setInBackground(ctx, patch) {
+  ctx.store.set("settings", patch, BACKGROUND);
+}
 
 function dropdown(select) {
   return el("div", { class: "dropdown" }, select);
@@ -35,7 +42,7 @@ export function createInstrumentDropdown(ctx) {
   ctx.store.subscribe("settings", draw);
 
   select.addEventListener("change", () => {
-    ctx.state.instrument = select.value;
+    setInBackground(ctx, { instrument: select.value });
   });
 
   const mount = byId("sheetStatus") || byId("sheetmenu");
@@ -73,7 +80,7 @@ export function createCompingDropdown(ctx) {
     split.draw();
   };
   select.addEventListener("change", () => {
-    ctx.state.comping = select.value;
+    setInBackground(ctx, { comping: select.value });
   });
 
   slot.append(dropdown(select), ...split.nodes);
@@ -125,16 +132,17 @@ function createCompingSplit(ctx) {
   }
 
   splitBtn.addEventListener("click", () => {
-    ctx.state.compingSplit = !ctx.state.compingSplit;
+    setInBackground(ctx, { compingSplit: !ctx.state.compingSplit });
   });
   partBtns.forEach((btn, index) => {
     btn.addEventListener("click", () => {
       const parts = ctx.state.compingParts;
       const pressed = parts.includes(index);
       if (pressed && parts.length === 1) return;
-      ctx.state.compingParts = pressed
+      const compingParts = pressed
         ? parts.filter((p) => p !== index)
         : [...parts, index].sort((a, b) => a - b);
+      setInBackground(ctx, { compingParts });
     });
   });
 
@@ -166,7 +174,7 @@ export function createSoloDropdown(ctx) {
   ctx.store.subscribe("settings", draw);
 
   select.addEventListener("change", () => {
-    ctx.state.solo = select.value;
+    setInBackground(ctx, { solo: select.value });
   });
 
   // Progress of the background composing (written by sheet.js).

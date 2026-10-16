@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { BACKGROUND } from "../core/state.js";
 import { mountPage } from "../../../../tests/helpers/dom.js";
 import { makeCtx } from "../../../../tests/helpers/ctx.js";
 import { initSheetControls, clearBookletPrintState } from "./controls.js";
@@ -51,6 +52,20 @@ test("the Key stepper buttons clamp #transpose and write ctx.state.transpose", (
     assert.equal(ctx.state.transpose, 11);
     // A re-render per actual change; the clamped click changed nothing.
     assert.equal(calls.rerender, 2);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a Key press asks for a background re-render", () => {
+  const { ctx, cleanup } = setup();
+  try {
+    const metas = [];
+    ctx.store.subscribe("settings", (_s, changed, _name, meta) => {
+      if (changed.includes("transpose")) metas.push(meta);
+    });
+    document.getElementById("keyUpBtn").dispatchEvent(new window.Event("click"));
+    assert.deepEqual(metas, [BACKGROUND]);
   } finally {
     cleanup();
   }

@@ -15,7 +15,7 @@ import {
   setPersonalSetlistOrder,
   exportPersonalSetlistText,
 } from "../../lib/setlists/setlists-store.js";
-import { isRenderWrite } from "../core/state.js";
+import { isBackgroundWrite, isRenderWrite } from "../core/state.js";
 import { createSetlistKeys } from "./keys.js";
 import {
   createRowDrag, draggableRows, currentOrder, renumberOpen,
@@ -866,7 +866,32 @@ export function createSetlistView(ctx) {
       const stored = Number.isFinite(n) && n !== 0 ? String(n) : "";
       if (stored === String(song.key == null ? "" : song.key)) return;
       updateSongKeyInPersonalSetlist(ctx.storage(), currentPersonalId, currentSetlistSongIndex, stored);
-      refreshOpenPersonal();
+      afterSheet(isBackgroundWrite(meta), "list", refreshOpenPersonal);
+    });
+  }
+
+  // A Key stepper press (or an Instrument pick) re-engraves the sheet in the
+  // background; redrawing the list or rebuilding the booklet in the same
+  // click would hold the page up after all, once per press. So `fn` runs
+  // once the sheet is done, however many presses that took — once per `key`
+  // and open setlist — and only if the visitor is still in that setlist.
+  const pendingAfterSheet = new Set();
+  function afterSheet(background, key, fn) {
+    if (!background || !ctx.sheet.whenIdle) {
+      fn();
+      return;
+    }
+    const id = ctx.state.currentPersonalId;
+    const setlist = ctx.state.currentOpenSetlistName;
+    const pendingKey = JSON.stringify([key, id, setlist]);
+    if (pendingAfterSheet.has(pendingKey)) return;
+    pendingAfterSheet.add(pendingKey);
+    ctx.sheet.whenIdle().then(() => {
+      pendingAfterSheet.delete(pendingKey);
+      const { setlistsView, currentPersonalId, currentOpenSetlistName } = ctx.state;
+      if (setlistsView === "open" && currentPersonalId === id && currentOpenSetlistName === setlist) fn();
+    }, () => {
+      pendingAfterSheet.delete(pendingKey);
     });
   }
 
@@ -922,8 +947,9 @@ export function createSetlistView(ctx) {
 
     // The booklet is engraved for whichever instrument the sheet is on; rebuild
     // it off-screen when the instrument changes so a later "Print …" is current.
-    ctx.store.subscribe("settings", (_settings, changed) => {
-      if (!changed.includes("instrument")) return;
+    // After the sheet, when it's being redrawn in the background (a pick in
+    // the Instrument dropdown), so the two don't share the click.
+    const rebuildBooklet = () => {
       if (ctx.state.setlistsView === "open" && ctx.state.currentOpenSongs) {
         ctx.setlistPrint.buildBooklet(
           ctx.state.currentOpenSetlistName,
@@ -931,6 +957,10 @@ export function createSetlistView(ctx) {
           ctx.state.currentOpenSetlistDesc,
         );
       }
+    };
+    ctx.store.subscribe("settings", (_settings, changed, _name, meta) => {
+      if (!changed.includes("instrument")) return;
+      afterSheet(isBackgroundWrite(meta), "booklet", rebuildBooklet);
     });
 
     initTransposeWriteBack();

@@ -70,11 +70,22 @@ export function isRenderWrite(meta) {
 
 // The meta tag for a write whose re-render may be done in the background: the
 // sheet on screen stays until the new one is ready, then is swapped in at once
-// (a Layers switch: songs/layers/panel.js, sheet.js's rerenderInBackground).
+// (sheet.js's rerenderInBackground): every control a visitor uses that
+// changes the drawing — a Layers switch, the Key stepper, the Instrument,
+// Comping, Solo and Practice pickers, and the Mixer.
 export const BACKGROUND = Object.freeze({ source: "background" });
 
 export function isBackgroundWrite(meta) {
   return Boolean(meta) && meta.source === BACKGROUND.source;
+}
+
+// The meta tag for a Mixer write only the synth needs — a mute: the sheet
+// isn't re-engraved (the drawing doesn't change); the audio player re-primes
+// the loaded tune with the new levels instead (songs/audio/player.js).
+export const MIX_ONLY = Object.freeze({ source: "mix-only" });
+
+export function isMixOnlyWrite(meta) {
+  return Boolean(meta) && meta.source === MIX_ONLY.source;
 }
 
 export const APP_SLICES = [CATALOG_SLICE, NAV_SLICE, SETTINGS_SLICE, TUNE_SLICE, MIXER_SLICE, PLAYBACK_SLICE, LAYERS_SLICE];

@@ -4,6 +4,7 @@ import {
   splitExercise,
 } from "../../lib/music/practice.js";
 import { tl } from "../../lib/core/i18n.js";
+import { BACKGROUND } from "../core/state.js";
 
 /*
   The practice routine (#practiceSlot, in the More-controls drawer): a view
@@ -157,7 +158,7 @@ export function createPracticePanel(ctx) {
   const current = () => (ctx.state.practice === "off" ? lastExercise : ctx.state.practice);
   // Write one or both settings as one change, switching practice on with it.
   const write = (patch) => {
-    ctx.store.set("settings", { practice: current(), ...patch });
+    ctx.store.set("settings", { practice: current(), ...patch }, BACKGROUND);
   };
 
   const setOpen = (open) => {
@@ -204,10 +205,10 @@ export function createPracticePanel(ctx) {
 
   toggle.addEventListener("click", () => {
     if (ctx.state.practice === "off") {
-      ctx.state.practice = lastExercise;
+      ctx.store.set("settings", { practice: lastExercise }, BACKGROUND);
     } else {
       lastExercise = ctx.state.practice;
-      ctx.state.practice = "off";
+      ctx.store.set("settings", { practice: "off" }, BACKGROUND);
     }
   });
   summary.addEventListener("click", () => setOpen(ui.panel.hidden));

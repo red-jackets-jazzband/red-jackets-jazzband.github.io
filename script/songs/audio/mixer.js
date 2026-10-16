@@ -5,7 +5,7 @@ import { readPref, writePref } from "../../lib/core/preferences.js";
 import { GM_VOICES, defaultVoiceProgram } from "../../lib/audio/gm-voices.js";
 import { GCHORD_PATTERNS, DEFAULT_PROGRAM, isCompingLabel } from "../../lib/audio/audio-mix.js";
 import { CHANNELS } from "./state.js";
-import { RENDER } from "../core/state.js";
+import { BACKGROUND, MIX_ONLY, RENDER } from "../core/state.js";
 import { tl } from "../../lib/core/i18n.js";
 
 // A fader drag is committed to the store — and so re-engraved by the sheet,
@@ -349,14 +349,16 @@ export function createMixer(ctx) {
   const swingValue = () => (drafts.has("swing") ? drafts.get("swing") : ctx.state.swing);
   const voiceWithDraft = (v) => (drafts.has(`voice:${v.slug}`) ? { ...v, volume: drafts.get(`voice:${v.slug}`) } : v);
 
-  function setChannel(patch, meta) {
+  // Every write re-engraves the sheet; a user's own (no `meta`) does so in
+  // the background, so a mute or fader never holds the page up.
+  function setChannel(patch, meta = BACKGROUND) {
     ctx.store.set("mixer", { mixer: { ...mixerState(), ...patch } }, meta);
   }
 
   // Replace one voice's entry (by slug) in ctx.state.mixerVoices; voice
   // channels persist per voice name (dynamic keys, so outside the slice's
   // own pref schema) and are written here.
-  function setVoice(slug, patch, meta) {
+  function setVoice(slug, patch, meta = BACKGROUND) {
     const voices = ctx.state.mixerVoices.map((v) => (v.slug === slug ? { ...v, ...patch } : v));
     ctx.store.set("mixer", { mixerVoices: voices }, meta);
     const updated = voices.find((v) => v.slug === slug);
@@ -364,18 +366,25 @@ export function createMixer(ctx) {
   }
 
   // `meta` tags the writes — RENDER when flushed from inside a render
-  // (syncVoices), so they don't trigger a second one.
-  function commitDrafts(meta) {
+  // (syncVoices), so they don't trigger a second one. Otherwise the Bass/
+  // Chords faders and Swing only change what's heard (MIX_ONLY: the player
+  // re-primes, no re-engrave), while a voice's fader is a %%MIDI line inside
+  // the tune and re-engraves (BACKGROUND) — two batches, since one batch
+  // mixing both tags would notify as an ordinary write.
+  function commitDrafts(meta = BACKGROUND) {
     if (drafts.size === 0) return;
     const pending = new Map(drafts);
     drafts.clear();
+    const mixMeta = meta === BACKGROUND ? MIX_ONLY : meta;
     ctx.store.batch(() => {
       const channelPatch = {};
       CHANNELS.forEach((channel) => {
         if (pending.has(channel)) channelPatch[`${channel}Volume`] = pending.get(channel);
       });
-      if (Object.keys(channelPatch).length > 0) setChannel(channelPatch, meta);
-      if (pending.has("swing")) ctx.store.set("mixer", { swing: pending.get("swing") }, meta);
+      if (Object.keys(channelPatch).length > 0) setChannel(channelPatch, mixMeta);
+      if (pending.has("swing")) ctx.store.set("mixer", { swing: pending.get("swing") }, mixMeta);
+    });
+    ctx.store.batch(() => {
       ctx.state.mixerVoices.forEach((v) => {
         const key = `voice:${v.slug}`;
         if (pending.has(key)) setVoice(v.slug, { volume: pending.get(key) }, meta);
@@ -435,11 +444,12 @@ export function createMixer(ctx) {
         if (!current) return;
         // Un-muting a lead that Solo silenced is a one-off override (this
         // song, until Solo changes); the persisted mute choice stays as it was.
+        // A mute changes only what's heard (MIX_ONLY): no re-engrave.
         if (current.autoMuted) {
           leadUnmuted = true;
-          setVoice(v.slug, { autoMuted: false });
+          setVoice(v.slug, { autoMuted: false }, MIX_ONLY);
         } else {
-          setVoice(v.slug, { muted: !current.muted });
+          setVoice(v.slug, { muted: !current.muted }, MIX_ONLY);
         }
         drawVoiceRow(row);
       });
@@ -620,7 +630,7 @@ export function createMixer(ctx) {
     }
     on(ids.muteBtn, "click", () => {
       const key = `${channel}Muted`;
-      setChannel({ [key]: !mixerState()[key] });
+      setChannel({ [key]: !mixerState()[key] }, MIX_ONLY);
       updateStripVisual(channel);
       applyNow();
     });
@@ -631,7 +641,8 @@ export function createMixer(ctx) {
       const program = mixerState()[`${channel}Program`];
       select.value = String(resolveEffectiveProgram(program, DEFAULT_PROGRAM[channel]));
       select.addEventListener("change", () => {
-        setChannel({ [`${channel}Program`]: Number(select.value) });
+        // Like a mute, only what's heard changes (MIX_ONLY): no re-engrave.
+        setChannel({ [`${channel}Program`]: Number(select.value) }, MIX_ONLY);
         applyNow();
       });
     }
@@ -687,7 +698,7 @@ export function createMixer(ctx) {
     buildGchordPatternOptions(select);
     select.value = ctx.state.gchordPattern;
     select.addEventListener("change", () => {
-      ctx.state.gchordPattern = select.value;
+      ctx.store.set("mixer", { gchordPattern: select.value }, BACKGROUND);
     });
   }
 
@@ -711,7 +722,7 @@ export function createMixer(ctx) {
   // (see audio-player.js's initForTune), so there's nothing to debounce here.
   function wireQuality() {
     on("mixerHighQualityToggleBtn", "click", () => {
-      ctx.state.highQualityAudio = !ctx.state.highQualityAudio;
+      ctx.store.set("mixer", { highQualityAudio: !ctx.state.highQualityAudio }, BACKGROUND);
       updateQualityToggleVisual();
     });
   }

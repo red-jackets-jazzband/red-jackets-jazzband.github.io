@@ -65,7 +65,7 @@ Home Sweet Home,home_sweet_home.abc
 Honky Tonk Town,honky_tonk_town.abc
 I Ain't Gonna Give Nobody None of My Jelly Roll,jelly_roll.abc
 I Wanna Be Like You,be_like_you.abc
-I wish I coulde shimmy like my sister kater,sister_kate.abc
+I Wish I Could Shimmy Like My Sister Kate,sister_kate.abc
 I'll fly away,ill_fly_away.abc
 I'm Blue and Lonesome,im_blue_and_lonesome.abc
 I'm looking over,four_leaf_clover.abc

@@ -1,6 +1,7 @@
 import { byId, el, on, qsa } from "../../lib/core/dom.js";
 import { TEMPO_STEP } from "../../lib/music/tempo.js";
 import { tl } from "../../lib/core/i18n.js";
+import { BACKGROUND } from "../core/state.js";
 
 /*
   Strip any leftover setlist-booklet print classes from <body>. The setlist
@@ -134,7 +135,10 @@ function initStepperAnnouncements() {
 // The Key stepper (#transpose): a view of ctx.state.transpose, in semitones.
 // Typing into it or the -/+ buttons (which nudge it and dispatch "input",
 // see stepNumericField) write the store; a newly opened song seeds the
-// store, and the field follows.
+// store, and the field follows. The write is tagged BACKGROUND: re-engraving
+// takes a good half second on an old iPad, and drawn in the click it froze
+// the page — the field's own new number included — once per press. In the
+// background the number moves at once, and a burst of presses engraves once.
 function initKeyStepper(ctx) {
   const input = byId("transpose");
   if (!input) return;
@@ -146,7 +150,8 @@ function initKeyStepper(ctx) {
   input.addEventListener("input", () => {
     const n = Number(input.value);
     if (!Number.isFinite(n)) return; // mid-typing ("-")
-    ctx.state.transpose = Math.round(n);
+    const transpose = Math.round(n);
+    if (transpose !== ctx.state.transpose) ctx.store.set("settings", { transpose }, BACKGROUND);
   });
   on("keyUpBtn", "click", () => stepNumericField("transpose", 1, 0));
   on("keyDownBtn", "click", () => stepNumericField("transpose", -1, 0));

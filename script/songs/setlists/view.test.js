@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountPage } from "../../../../tests/helpers/dom.js";
-import { RENDER } from "../core/state.js";
+import { BACKGROUND, RENDER } from "../core/state.js";
 import { makeCtx, memoryStorage } from "../../../../tests/helpers/ctx.js";
 import {
   createPersonalSetlist, addSongToPersonalSetlist, addDividerToPersonalSetlist,
@@ -391,6 +391,65 @@ test("the Key stepper writes a per-song key override back to the open personal s
     const badge = document.querySelector(KEY_BADGE_SELECTOR);
     assert.equal(badge.textContent, "D", "the badge reflects the stepper's new override");
     assert.equal(badge.classList.contains(IS_TRANSPOSED_CLASS), true);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a background Key press redraws the setlist only once the sheet is done", async () => {
+  let release = null;
+  const { view, ctx, entry, storage, cleanup } = setup({ songs: [{ file: "a.abc" }] });
+  try {
+    ctx.sheet.whenIdle = () => new Promise((resolve) => {
+      release = resolve;
+    });
+    stubAbc(ctx, { "a.abc": "X:1\nK:C\nC2|" });
+    view.initControls();
+    view.renderOpen(entry.name, entry.songs, entry, "");
+    ctx.state.currentSongFile = "a.abc";
+    ctx.state.currentSetlistSongIndex = 0;
+    const before = document.querySelector(KEY_BADGE_SELECTOR);
+
+    ctx.store.set("settings", { transpose: 1 }, BACKGROUND);
+    ctx.store.set("settings", { transpose: 2 }, BACKGROUND);
+    assert.equal(getPersonalSetlist(storage, entry.id).songs[0].key, "2", "stored at once");
+    assert.equal(document.querySelector(KEY_BADGE_SELECTOR), before, "the list waits for the sheet");
+
+    release();
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.notEqual(document.querySelector(KEY_BADGE_SELECTOR), before);
+    assert.equal(document.querySelector(KEY_BADGE_SELECTOR).textContent, "D");
+  } finally {
+    cleanup();
+  }
+});
+
+test("a pending redraw for one setlist doesn't swallow the same redraw for the next", async () => {
+  const releases = [];
+  const { view, ctx, entry, cleanup } = setup({ songs: [{ file: "a.abc" }] });
+  try {
+    ctx.sheet.whenIdle = () => new Promise((resolve) => {
+      releases.push(resolve);
+    });
+    const rebuilt = [];
+    ctx.setlistPrint.buildBooklet = (name) => rebuilt.push(name);
+    view.initControls();
+    view.renderOpen(entry.name, entry.songs, entry, "");
+    ctx.state.setlistsView = "open";
+    ctx.state.currentOpenSongs = entry.songs;
+    rebuilt.length = 0; // opening it built the booklet once
+
+    ctx.state.currentOpenSetlistName = "First";
+    ctx.store.set("settings", { instrument: "trumpet" }, BACKGROUND);
+    ctx.state.currentOpenSetlistName = "Second";
+    ctx.store.set("settings", { instrument: "trombone" }, BACKGROUND);
+    assert.equal(releases.length, 2, "each setlist waits for the sheet itself");
+
+    releases.forEach((release) => release());
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.deepEqual(rebuilt, ["Second"], "only the setlist still open is rebuilt");
   } finally {
     cleanup();
   }

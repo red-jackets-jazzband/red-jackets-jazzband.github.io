@@ -3,6 +3,8 @@ import {
   DEFAULT_BPM, TEMPO_MIN_BPM, TEMPO_MAX_BPM, clampBpm, resolveBpm, bpmToWarpPercent,
 } from "../../lib/music/tempo.js";
 import { computeVoicesOff, percentToAbcjsSwing } from "../../lib/audio/audio-mix.js";
+import { restampAccompaniment } from "../../lib/music/render-plan.js";
+import { isMixOnlyWrite } from "../core/state.js";
 import { beatsPerMeasure } from "../../lib/audio/metronome.js";
 import { REPEAT_COUNT_MIN, REPEAT_COUNT_MAX, REPEAT_COUNT_DEFAULT } from "./state.js";
 import { tl } from "../../lib/core/i18n.js";
@@ -676,6 +678,59 @@ export function createAudioPlayer(ctx) {
       .catch((err) => console.warn("Tempo change failed:", err));
   }
 
+  /*
+    A Mixer mute (a MIX_ONLY write) without re-engraving the sheet: the
+    Bass/Chords levels are rewritten on the loaded tune object, a voice's
+    mute is the voicesOff synth option, and the controller re-primes with
+    both. setWarp at the current warp is exactly that re-prime, keeping the
+    position and whether it was playing (as a Tempo change does). A tune
+    never played yet has nothing primed: the new options are simply what its
+    first Play uses.
+  */
+  function remix() {
+    const ctrl = state.synthController;
+    if (!ctrl || !state.currentVisualObj) return;
+    restampAccompaniment(state.currentVisualObj, ctx.state.mixer);
+    ctrl.options = synthParams();
+    if (!ctrl.isLoading && !ctrl.isLoaded) return;
+    // setWarp left to itself resumes a playing controller once its async
+    // rebuild is done, Stop or no Stop in between. So pause it here (play()
+    // toggles a playing controller to paused), re-prime it paused, and only
+    // resume if no Stop came along meanwhile.
+    const token = state.stopToken;
+    const reprime = () => {
+      const wasPlaying = Boolean(ctrl.isStarted);
+      const percent = ctrl.percent;
+      const paused = wasPlaying ? ctrl.play() : undefined;
+      return Promise.resolve(paused)
+        .then(() => ctrl.setWarp(ctrl.warp))
+        .then(() => ({ wasPlaying, percent }));
+    };
+    const pending = ctrl.isLoading ? ctrl.runWhenReady(reprime) : reprime();
+    Promise.resolve(pending)
+      .then((result) => finishRemix(ctrl, token, result))
+      .catch((err) => console.warn("Mixer change failed:", err));
+  }
+
+  function finishRemix(ctrl, token, { wasPlaying, percent }) {
+    if (silenceIfStale(ctrl)) return undefined;
+    if (token !== state.stopToken) {
+      // Stopped while re-priming: the rebuild has put the position back where
+      // it was, so reset it to the top again — unless Play has since started.
+      if (!ctrl.isStarted) stop();
+      return undefined;
+    }
+    if (!wasPlaying || ctrl.isStarted) {
+      setIsPlaying(Boolean(ctrl.isStarted));
+      return undefined;
+    }
+    return Promise.resolve(ctrl.play()).then(() => {
+      if (silenceIfStale(ctrl) || token !== state.stopToken) return;
+      ctrl.seek(percent);
+      setIsPlaying(Boolean(ctrl.isStarted));
+    });
+  }
+
   function stepTempo(delta) {
     const base = ctx.state.tempoOverrideBpm !== null
       ? ctx.state.tempoOverrideBpm
@@ -810,6 +865,9 @@ export function createAudioPlayer(ctx) {
     state.firstBarMs = undefined;
     state.measureStartMs = [];
     state.currentVisualObj = visualObj;
+    // A Bass/Chords change made while a background render was on its way
+    // isn't in the text it engraved: bring the new tune up to date.
+    restampAccompaniment(visualObj, ctx.state.mixer);
     // ABCjs's own getBpm(), not a raw read of metaText.tempo.bpm: a tune with
     // no Q: field at all has metaText.tempo undefined, but ABCjs's synth
     // still plays it at its own default tempo (180qpm, or 120 for a compound
@@ -906,6 +964,10 @@ export function createAudioPlayer(ctx) {
     Tempo stepper to the tune's own tempo, and a fresh SynthController for
     every freshly engraved tune object.
   */
+  ctx.store.subscribe("mixer", (_mixer, _changed, _name, meta) => {
+    if (isMixOnlyWrite(meta)) remix();
+  });
+
   ctx.store.subscribe("tune", (tune, changed) => {
     state.transposeSemitones = tune.audioTranspose;
     state.chordOffset = tune.chordOffset;

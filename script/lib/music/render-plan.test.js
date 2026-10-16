@@ -3,9 +3,10 @@ import assert from "node:assert/strict";
 import ABCJS from "abcjs";
 import {
   effectiveSheetSettings, hasInstrumentVoices, resolveTranspose, buildRenderPlan,
-  mixerAudioOptions, mixRenderText,
+  mixerAudioOptions, mixRenderText, restampAccompaniment,
 } from "./render-plan.js";
 import { withTonal } from "../../../../tests/helpers/stubs.js";
+import { DEFAULT_PROGRAM } from "../audio/audio-mix.js";
 
 // The real ABCjs parser, headless — the same one the browser bundle wraps.
 const parse = (text, visualTranspose) => ABCJS.parseOnly(text, { visualTranspose })[0];
@@ -198,4 +199,41 @@ test("a transposed tune that changes key gets %%keywarn 0, working round an ABCj
   // rerender() feeds the text back in: once is enough, and concert pitch drops it.
   assert.equal(resolveTranspose(abcText, "trumpet", 0).abcText, abcText);
   assert.equal(resolveTranspose(abcText, "concert_pitch", 0).abcText, modulating);
+});
+
+test("restampAccompaniment rewrites a parsed tune's Bass/Chords levels so the synth hears a mute", () => {
+  const text = 'X:1\nM:4/4\nL:1/4\n%%MIDI bassvol 100\n%%MIDI chordvol 90\nK:C\n"C" C D E F | "G7" G A B c |';
+  const [tune] = ABCJS.parseOnly(text);
+  const volumes = () => tune.setUpAudio({}).tracks
+    .map((track) => [...new Set(track.filter((e) => e.cmd === "note").map((e) => e.volume))]);
+  const melody = volumes()[0];
+
+  const mixer = { bassMuted: true, bassVolume: 80, chordsMuted: false, chordsVolume: 100 };
+  assert.equal(restampAccompaniment(tune, mixer), true);
+  const after = volumes();
+  assert.deepEqual(after[0], melody, "the melody is untouched");
+  assert.deepEqual(after[1], [0, 127], "bass silent, chords at full");
+});
+
+test("restampAccompaniment leaves a tune without accompaniment lines alone", () => {
+  const [tune] = ABCJS.parseOnly("X:1\nK:C\nCDEF|");
+  assert.equal(restampAccompaniment(tune, { bassMuted: true }), false);
+  assert.equal(restampAccompaniment(null, {}), false);
+});
+
+test("restampAccompaniment switches a parsed tune's Bass/Chords instruments too", () => {
+  const text = 'X:1\nM:4/4\nL:1/4\n%%MIDI bassprog 32\n%%MIDI chordprog 0\n%%MIDI bassvol 100\n%%MIDI chordvol 90\nK:C\n"C" C D E F | "G7" G A B c |';
+  const [tune] = ABCJS.parseOnly(text);
+  const instruments = () => tune.setUpAudio({}).tracks
+    .map((track) => [...new Set(track.filter((e) => e.cmd === "note").map((e) => e.instrument))]);
+  const melody = instruments()[0];
+
+  const mixer = {
+    bassMuted: false, bassVolume: 100, bassProgram: 58, chordsMuted: false, chordsVolume: 100, chordsProgram: null,
+  };
+  restampAccompaniment(tune, mixer);
+  const after = instruments();
+  assert.deepEqual(after[0], melody);
+  assert.deepEqual(after[1].sort((a, b) => a - b), [58, DEFAULT_PROGRAM.chords].sort((a, b) => a - b),
+    "the bass's picked program, the chords' default (null = never picked)");
 });
