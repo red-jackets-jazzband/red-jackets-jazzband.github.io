@@ -18,6 +18,11 @@
   saxophone) is greyed out with a note instead — its switch keeps its stored
   value, so picking Trumpet again brings the fingerings straight back.
 
+  A switch flips at once, and the sheet re-renders in the background
+  (BACKGROUND-tagged write: sheet.js's rerenderInBackground) while the page
+  stays usable; the switch's knob spins (.is-busy) until the new sheet is
+  swapped in.
+
   setOpen(bool) is exposed for the tour, like the Mixer's.
 */
 import { byId, clear, el } from "../../lib/core/dom.js";
@@ -26,6 +31,7 @@ import { findInstrument, INSTRUMENTS } from "../../lib/music/instruments.js";
 import { trackRightEdge } from "./edge.js";
 import { initSheetDrag } from "./sheet-drag.js";
 import { listOf, tl } from "../../lib/core/i18n.js";
+import { BACKGROUND } from "../core/state.js";
 
 function brassLabels() {
   return INSTRUMENTS.filter((i) => LAYERS.find((l) => l.id === "fingerings").availableFor(i.value)).map((i) => i.label);
@@ -152,8 +158,32 @@ function showOpen(open) {
   announceResize();
 }
 
+// The switches whose layer is still being drawn spin (aria-busy says so too).
+function showBusy(rows, busy) {
+  rows.forEach(({ layer, switchBtn }) => {
+    const on = busy.has(layer.id);
+    switchBtn.classList.toggle("is-busy", on);
+    if (on) switchBtn.setAttribute("aria-busy", "true");
+    else switchBtn.removeAttribute("aria-busy");
+  });
+}
+
 export function createLayersPanel(ctx) {
   let rows = [];
+  const busy = new Set();
+
+  // Spin `ids`' switches until the sheet has caught up with them (at once
+  // when there's no sheet to draw, or no background render to wait for).
+  function waitForSheet(ids) {
+    const sheet = ctx.sheet;
+    if (!sheet || typeof sheet.whenIdle !== "function") return;
+    ids.forEach((id) => busy.add(id));
+    showBusy(rows, busy);
+    sheet.whenIdle().then(() => {
+      busy.clear();
+      showBusy(rows, busy);
+    }).catch(() => false); // never rejects
+  }
 
   function setOpen(open) {
     ctx.store.set("layers", { layersOpen: Boolean(open) });
@@ -161,7 +191,8 @@ export function createLayersPanel(ctx) {
 
   function toggle(id) {
     const active = ctx.store.get("layers").activeLayers;
-    ctx.store.set("layers", { activeLayers: { ...active, [id]: !active[id] } });
+    ctx.store.set("layers", { activeLayers: { ...active, [id]: !active[id] } }, BACKGROUND);
+    waitForSheet([id]);
   }
 
   function resetAll() {
@@ -170,7 +201,8 @@ export function createLayersPanel(ctx) {
     Object.keys(active).forEach((id) => {
       off[id] = false;
     });
-    ctx.store.set("layers", { activeLayers: off });
+    ctx.store.set("layers", { activeLayers: off }, BACKGROUND);
+    waitForSheet(Object.keys(active).filter((id) => active[id]));
   }
 
   function redraw() {

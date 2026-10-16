@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  APP_SLICES, createAppStore, bindAppPrefs, RENDER, isRenderWrite,
+  APP_SLICES, createAppStore, bindAppPrefs, BACKGROUND, RENDER, isBackgroundWrite, isRenderWrite,
 } from "./state.js";
 
 function memory(initial = {}) {
@@ -76,4 +76,10 @@ test("isRenderWrite recognises the RENDER tag only", () => {
   assert.equal(isRenderWrite(RENDER), true);
   assert.equal(isRenderWrite({}), false);
   assert.equal(isRenderWrite(undefined), false);
+});
+
+test("isBackgroundWrite recognises the BACKGROUND tag only", () => {
+  assert.equal(isBackgroundWrite(BACKGROUND), true);
+  assert.equal(isBackgroundWrite(RENDER), false);
+  assert.equal(isBackgroundWrite(undefined), false);
 });

@@ -9,13 +9,18 @@ import { parseSolfegeText } from "../../../lib/music/solfege.js";
 import { alignRows, noteheadCentre } from "./svg.js";
 
 export function styleSolfege(notationEl) {
-  const centred = [];
+  // Measure every note first, then restyle: a getBBox after a write lays the
+  // whole sheet out again, once per syllable.
+  const found = [];
   notationEl.querySelectorAll(".abcjs-annotation").forEach((text) => {
     const syllable = parseSolfegeText(text.textContent.trim());
     if (syllable === null) return;
+    found.push({ text, syllable, centre: typeof text.getBBox === "function" ? noteheadCentre(text) : null });
+  });
+  const centred = [];
+  found.forEach(({ text, syllable, centre }) => {
     text.textContent = syllable;
     text.classList.add("rj-layer-solfege");
-    const centre = typeof text.getBBox === "function" ? noteheadCentre(text) : null;
     if (centre === null) return;
     text.setAttribute("text-anchor", "middle");
     text.setAttribute("x", String(centre));

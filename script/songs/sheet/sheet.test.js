@@ -4,7 +4,7 @@ import { mountPage } from "../../../../tests/helpers/dom.js";
 import { makeCtx } from "../../../../tests/helpers/ctx.js";
 import { createAbcjsStub, withAbcjs } from "../../../../tests/helpers/stubs.js";
 import { createSheet } from "./sheet.js";
-import { RENDER } from "../core/state.js";
+import { BACKGROUND, RENDER } from "../core/state.js";
 
 function setup() {
   const page = mountPage();
@@ -28,7 +28,7 @@ test("render engraves the live sheet with the expected ABCjs params", () => {
   try {
     withAbcjs(abcjs, () => sheet.render(TUNE));
     const call = abcjs.calls.renderAbc.at(-1);
-    assert.equal(call.target, "notation");
+    assert.equal(call.target, document.getElementById("notation"));
     assert.equal(call.params.visualTranspose, 0);
     assert.equal(call.params.responsive, "resize");
     assert.equal(call.params.staffwidth, 1000);
@@ -143,7 +143,7 @@ test("a booklet render leaves the live sheet's state alone, so rerender() keeps 
       assert.equal(ctx.state.compingActive, true, "a booklet song's comping state doesn't leak");
       sheet.rerender();
     });
-    assert.equal(abcjs.calls.renderAbc.at(-1).target, "notation");
+    assert.equal(abcjs.calls.renderAbc.at(-1).target, document.getElementById("notation"));
     const last = abcjs.calls.renderAbc.at(-1).abc;
     assert.match(last, /T:Test\n/, "the live sheet re-engraves its own song");
     assert.doesNotMatch(last, /Booklet song/);
@@ -167,7 +167,7 @@ test("a booklet render ignores the Key stepper and never touches audio", () => {
       titlePrefix: "1. ", extraTransposeSteps: 2,
     }));
     const call = abcjs.calls.renderAbc.at(-1);
-    assert.equal(call.target, "bk-n");
+    assert.equal(call.target, document.getElementById("bk-n"));
     assert.equal(call.params.visualTranspose, 2); // extra only, no stepper
     assert.equal(call.params.responsive, "resize");
     assert.equal(call.params.staffwidth, 1000);
@@ -330,7 +330,7 @@ function withLyricsSvgs(abcjs) {
       text.setAttribute("class", "abcjs-unaligned-words");
       text.textContent = words.map((l) => l.slice(2)).join(" ");
       svg.append(text);
-      document.getElementById(target).append(svg);
+      (typeof target === "string" ? document.getElementById(target) : target).append(svg);
     }
     return result;
   };
@@ -359,6 +359,124 @@ test("building a booklet song keeps the live sheet's lyrics, and the booklet kee
     assert.match(
       document.getElementById("bk-nl").textContent, /Booklet words/, "the booklet song prints its own lyrics",
     );
+  } finally {
+    cleanup();
+  }
+});
+
+// An ABCjs stub that draws one marked line per render into its target, so a
+// test can see which render is on screen.
+function withMarkedLines(abcjs) {
+  const renderAbc = abcjs.renderAbc.bind(abcjs);
+  let n = 0;
+  abcjs.renderAbc = (target, abc, params) => {
+    n += 1;
+    const line = document.createElement("div");
+    line.className = "line";
+    line.textContent = `render ${n}`;
+    target.textContent = ""; // ABCjs empties its target first too
+    target.append(line);
+    return renderAbc(target, abc, params);
+  };
+  return abcjs;
+}
+
+// Run an async test body with the stub installed as the global ABCJS
+// (withAbcjs only covers a synchronous callback).
+function withAbcjsAsync(stub, fn) {
+  const real = globalThis.ABCJS;
+  globalThis.ABCJS = stub;
+  const restore = () => {
+    if (real === undefined) delete globalThis.ABCJS;
+    else globalThis.ABCJS = real;
+  };
+  return fn().finally(restore);
+}
+
+function toggleLayer(ctx, id) {
+  const active = ctx.store.get("layers").activeLayers;
+  ctx.store.set("layers", { activeLayers: { ...active, [id]: !active[id] } }, BACKGROUND);
+}
+
+test("a background render keeps the old sheet up, then swaps the new one in whole", async () => {
+  const { ctx, abcjs, audioCalls, sheet, cleanup } = setup();
+  try {
+    await withAbcjsAsync(withMarkedLines(abcjs), async () => {
+      sheet.render(TUNE);
+      const notation = document.getElementById("notation");
+      assert.equal(notation.textContent, "render 1");
+      const published = audioCalls.tunes.length;
+
+      toggleLayer(ctx, "scale-degrees");
+      assert.equal(abcjs.calls.renderAbc.length, 1, "nothing is engraved during the click");
+      assert.equal(notation.textContent, "render 1");
+
+      await sheet.whenIdle();
+      assert.equal(abcjs.calls.renderAbc.length, 2);
+      assert.notEqual(abcjs.calls.renderAbc[1].target, notation, "engraved off screen");
+      assert.equal(notation.textContent, "render 2", "the new lines replace the old ones");
+      assert.equal(document.querySelectorAll(".rj-sheet-staging").length, 0, "the staging copy is gone");
+      assert.equal(audioCalls.tunes.length, published + 1, "the new tune is published once");
+    });
+  } finally {
+    cleanup();
+  }
+});
+
+test("an ordinary render takes over from a background render still on its way", async () => {
+  const { ctx, abcjs, sheet, cleanup } = setup();
+  try {
+    await withAbcjsAsync(withMarkedLines(abcjs), async () => {
+      sheet.render(TUNE);
+      toggleLayer(ctx, "scale-degrees");
+      toggleLayer(ctx, "solfege"); // replaces the first background render
+      ctx.store.set("settings", { transpose: 2 }); // draws at once, with both layers
+      assert.equal(abcjs.calls.renderAbc.length, 2);
+      const notation = document.getElementById("notation");
+      assert.equal(notation.textContent, "render 2");
+
+      await sheet.whenIdle();
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20);
+      });
+      assert.equal(abcjs.calls.renderAbc.length, 2, "the cancelled background renders never engrave");
+      assert.equal(notation.textContent, "render 2");
+      assert.equal(document.querySelectorAll(".rj-sheet-staging").length, 0);
+    });
+  } finally {
+    cleanup();
+  }
+});
+
+test("whenIdle resolves at once when nothing is being drawn", async () => {
+  const { ctx, sheet, cleanup } = setup();
+  try {
+    toggleLayer(ctx, "scale-degrees"); // no song open: nothing to draw
+    let idle = false;
+    sheet.whenIdle().then(() => {
+      idle = true;
+    }, () => false);
+    await Promise.resolve();
+    assert.equal(idle, true);
+  } finally {
+    cleanup();
+  }
+});
+
+test("a tune subscriber that throws after a background swap still releases whenIdle, without re-engraving", async (t) => {
+  const { ctx, abcjs, sheet, cleanup } = setup();
+  t.mock.method(console, "warn", () => {});
+  try {
+    await withAbcjsAsync(withMarkedLines(abcjs), async () => {
+      sheet.render(TUNE);
+      ctx.store.subscribe("tune", () => {
+        throw new Error("synth can't start");
+      });
+      toggleLayer(ctx, "scale-degrees");
+      await sheet.whenIdle();
+      assert.equal(abcjs.calls.renderAbc.length, 2, "engraved once in the background, never retried");
+      assert.equal(document.getElementById("notation").textContent, "render 2");
+    });
   } finally {
     cleanup();
   }

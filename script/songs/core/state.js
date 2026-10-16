@@ -68,6 +68,15 @@ export function isRenderWrite(meta) {
   return Boolean(meta) && meta.source === RENDER.source;
 }
 
+// The meta tag for a write whose re-render may be done in the background: the
+// sheet on screen stays until the new one is ready, then is swapped in at once
+// (a Layers switch: songs/layers/panel.js, sheet.js's rerenderInBackground).
+export const BACKGROUND = Object.freeze({ source: "background" });
+
+export function isBackgroundWrite(meta) {
+  return Boolean(meta) && meta.source === BACKGROUND.source;
+}
+
 export const APP_SLICES = [CATALOG_SLICE, NAV_SLICE, SETTINGS_SLICE, TUNE_SLICE, MIXER_SLICE, PLAYBACK_SLICE, LAYERS_SLICE];
 
 const NOTHING_STORED = () => null;

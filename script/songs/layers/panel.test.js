@@ -89,6 +89,31 @@ test("a row toggles its layer in the store, and the sheet re-renders", () => {
   }
 });
 
+test("a switch spins until the sheet has drawn its layer", async () => {
+  let finish = null;
+  const { ctx, cleanup } = setup({
+    sheet: { whenIdle: () => new Promise((resolve) => { finish = resolve; }) },
+  });
+  try {
+    let meta = null;
+    ctx.store.subscribe("layers", (_slice, _changed, _name, m) => {
+      meta = m;
+    });
+    click(row("solfege"));
+    assert.equal(meta.source, "background", "the re-render may finish in the background");
+    assert.equal(sw("solfege").getAttribute("aria-checked"), "true", "the switch flips at once");
+    assert.ok(sw("solfege").classList.contains("is-busy"));
+    assert.equal(sw("solfege").getAttribute("aria-busy"), "true");
+    assert.ok(!sw("scale-degrees").classList.contains("is-busy"));
+    finish();
+    await Promise.resolve();
+    assert.ok(!sw("solfege").classList.contains("is-busy"));
+    assert.equal(sw("solfege").hasAttribute("aria-busy"), false);
+  } finally {
+    cleanup();
+  }
+});
+
 test("fingerings are greyed out for a non-brass instrument but keep their setting", () => {
   const { ctx, cleanup } = setup({ state: { instrument: "trumpet" } });
   try {

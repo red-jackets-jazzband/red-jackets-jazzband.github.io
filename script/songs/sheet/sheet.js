@@ -1,4 +1,4 @@
-import { byId, el, qsa } from "../../lib/core/dom.js";
+import { byId, clear, el, qsa } from "../../lib/core/dom.js";
 import { extractWordsTables, parseFormStep } from "../../lib/music/words-table.js";
 import { historyParagraphs, stripHistory } from "../../lib/music/history.js";
 import { findInstrument } from "../../lib/music/instruments.js";
@@ -15,7 +15,7 @@ import { renderChordTable, scanRepeatBoundaries, fitChordTable, fitSongForms } f
 import { stylePartMarkers, keepPartsTogether, applyCompingColors, applySplitCompingColors } from "./decorations.js";
 import { updateIrealProLink } from "./irealpro-link.js";
 import { decorateLayers } from "../layers/overlays.js";
-import { RENDER, isRenderWrite } from "../core/state.js";
+import { RENDER, isBackgroundWrite, isRenderWrite } from "../core/state.js";
 import { tl } from "../../lib/core/i18n.js";
 
 const LIVE_TARGETS = { notationId: "notation", chordId: "chordtable", titleId: "songtitle" };
@@ -79,11 +79,10 @@ function fitLiveChordGrid(chordId) {
   }
 }
 
-// Box the part markers now, and again once MuseJazzText has loaded — the
-// first render can measure a marker's box under a fallback face (undersized,
-// clipping the glyph's ascender through the top edge).
-function stylePartMarkersWhenReady(notationEl) {
-  stylePartMarkers(notationEl);
+// Box the part markers again once MuseJazzText has loaded — the first render
+// can measure a marker's box under a fallback face (undersized, clipping the
+// glyph's ascender through the top edge).
+function restylePartMarkersOnFontLoad(notationEl) {
   if (document.fonts && document.fonts.status !== "loaded") {
     document.fonts.ready.then(() => stylePartMarkers(notationEl)).catch(() => false); // never rejects
   }
@@ -226,29 +225,78 @@ function colorComping(notationEl, comping, voices) {
   else applyCompingColors(notationEl, comping.palette, voiceIndex);
 }
 
-// Engrave `renderText` (the plan's tune, maybe augmented) into the notation
-// container — an element id (the live sheet) or the element itself (a booklet
-// song, engraved later in idle time, by which point its id may have moved).
-function engraveNotation(plan, renderText, notation, voices) {
-  const notationEl = typeof notation === "string" ? byId(notation) : notation;
+// Engrave `renderText` (the plan's tune, maybe augmented) into `notationEl`
+// with ABCjs. ABCjs measures text as it lays the tune out, so `notationEl`
+// must be in the page and not display:none (it may be visibility:hidden).
+function engraveInto(plan, renderText, notationEl) {
   notationEl.classList.toggle("comping-active", plan.comping.active);
 
   // H: text is shown behind the drawer's History button (history.js), not
   // printed at the foot of the sheet.
   const { abcText: renderTextNoTables } = extractWordsTables(stripHistory(renderText));
   const visualObjs = ABCJS.renderAbc(
-    notation, TIGHT_HEADER_SPACING + renderTextNoTables, abcParams(plan.visualTranspose),
+    notationEl, TIGHT_HEADER_SPACING + renderTextNoTables, abcParams(plan.visualTranspose),
   );
+  return visualObjs && visualObjs.length > 0 ? visualObjs[0] : null;
+}
 
+// Everything drawn onto ABCjs's output: comping colours, the layers, the
+// boxed part markers. Measures too, so the same rule as engraveInto holds.
+function decorateNotation(plan, visualObj, notationEl, voices) {
   colorComping(notationEl, plan.comping, voices);
-  decorateLayers(notationEl, visualObjs && visualObjs[0], plan); // NOSONAR
+  decorateLayers(notationEl, visualObj, plan);
 
   notationEl.querySelectorAll(".abcjs-title, .abcjs-part-order").forEach((node) => {
     node.setAttribute("display", "none");
   });
-  stylePartMarkersWhenReady(notationEl);
+  stylePartMarkers(notationEl);
   keepPartsTogether(notationEl);
-  return { visualObj: visualObjs && visualObjs.length > 0 ? visualObjs[0] : null, notationEl };
+}
+
+// Both of the above, in place — the notation container is an element id (the
+// live sheet) or the element itself (a booklet song, engraved later in idle
+// time, by which point its id may have moved).
+function engraveNotation(plan, renderText, notation, voices) {
+  const notationEl = typeof notation === "string" ? byId(notation) : notation;
+  const visualObj = engraveInto(plan, renderText, notationEl);
+  decorateNotation(plan, visualObj, notationEl, voices);
+  restylePartMarkersOnFontLoad(notationEl);
+  return { visualObj, notationEl };
+}
+
+/*
+  A background render draws into a hidden copy of the notation container
+  next to the real one (split.css's .rj-sheet-staging: in the page, so ABCjs
+  and the layers can measure, but invisible and taking no room), and only
+  moves the finished lines into the real container once everything is drawn.
+*/
+function createStaging(liveEl) {
+  const inner = el("div", { class: liveEl.className });
+  const holder = el("div", { class: "rj-sheet-staging", attrs: { "aria-hidden": "true" } }, [inner]);
+  holder.style.width = `${liveEl.clientWidth}px`;
+  liveEl.after(holder);
+  return { holder, inner };
+}
+
+// Swap the staged lines in for the ones on screen, in one go (the page isn't
+// laid out between the two, so it keeps its scroll position).
+function swapInStaging(staging, liveEl) {
+  clear(liveEl);
+  liveEl.append(...staging.inner.childNodes);
+  // ABCjs stamps its container's own inline style; the copy carries it.
+  const style = staging.inner.getAttribute("style");
+  if (style === null) liveEl.removeAttribute("style");
+  else liveEl.setAttribute("style", style);
+  liveEl.classList.toggle("comping-active", staging.inner.classList.contains("comping-active"));
+  staging.holder.remove();
+}
+
+// Run `fn` once the browser has had a chance to paint (so a spinner shown
+// just before is on screen): the next frame, then a task after it.
+function afterPaint(fn) {
+  const later = () => setTimeout(fn, 0);
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(later);
+  else later();
 }
 
 // The chord table, form strip and title: everything on a song's block that
@@ -314,18 +362,22 @@ const SETTINGS_VIEW_KEYS = new Set(["advancedOpen"]);
   any `settings` change but the drawer's open state, a render-affecting Mixer key, or a Layers panel
   switch (the `layers` slice's activeLayers) — except writes a
   render makes itself (tagged RENDER: the Key stepper seeded by render(), the
-  Mixer's voice list), which must not loop back. Exported so a test double of
-  the sheet re-renders on exactly the same changes (tests/helpers/ctx.js).
+  Mixer's voice list), which must not loop back. A Layers switch tagged
+  BACKGROUND (core/state.js) calls `rerenderInBackground` instead, when given.
+  Exported so a test double of the sheet re-renders on exactly the same
+  changes (tests/helpers/ctx.js).
 */
-export function subscribeRerender(store, rerender) {
+export function subscribeRerender(store, rerender, rerenderInBackground = rerender) {
   const offSettings = store.subscribe("settings", (_settings, changed, _name, meta) => {
     if (!isRenderWrite(meta) && changed.some((key) => !SETTINGS_VIEW_KEYS.has(key))) rerender();
   });
   const offMixer = store.subscribe("mixer", (_mixer, changed, _name, meta) => {
     if (!isRenderWrite(meta) && changed.some((key) => MIXER_RENDER_KEYS.has(key))) rerender();
   });
-  const offLayers = store.subscribe("layers", (_layers, changed) => {
-    if (changed.includes("activeLayers")) rerender();
+  const offLayers = store.subscribe("layers", (_layers, changed, _name, meta) => {
+    if (!changed.includes("activeLayers")) return;
+    if (isBackgroundWrite(meta)) rerenderInBackground();
+    else rerender();
   });
   return () => {
     offSettings();
@@ -360,7 +412,9 @@ export function createSheet(ctx) {
     if (ctx.swipeNav) ctx.swipeNav.updateButtons();
   }
 
-  function renderLive(text, { fresh = false } = {}) {
+  // Everything a live render works out before drawing: the plan, the extra
+  // staves, the Mixer's voices and the final render text.
+  function prepareLive(text, fresh) {
     const settingsState = ctx.store.get("settings");
     updateInstrumentFooter(settingsState.instrument);
     const settings = effectiveSheetSettings(settingsState, { layers: ctx.store.get("layers").activeLayers });
@@ -384,12 +438,14 @@ export function createSheet(ctx) {
 
     if (fresh) songSerial += 1;
     updateIrealProLink(plan.song, plan.chords);
+    return { plan, solo, practice, voices, renderText };
+  }
 
-    // #rjSheet / #notation start display:none until a song is active; that
-    // must flip before ABCjs measures the container ("responsive: resize"
-    // reads its width at render time; a display:none box measures 0).
-    activateSheet();
-    const { visualObj, chordEl, notationEl } = paint(plan, renderText, LIVE_TARGETS, { voices });
+  // Everything after the staves are on screen: the chord table, title and
+  // lyrics, then the store's `tune` slice.
+  function publishLive({ plan, solo, practice, voices }, visualObj, notationEl) {
+    restylePartMarkersOnFontLoad(notationEl);
+    const chordEl = paintChordsAndTitle(plan, LIVE_TARGETS, "");
     fitLiveChordGrid(LIVE_TARGETS.chordId);
     // Live sheet only: #lyrics belongs to it. A booklet song keeps its lyrics
     // in its own print block (moving them here used to wipe the live song's
@@ -414,8 +470,119 @@ export function createSheet(ctx) {
     });
   }
 
+  function renderLive(text, { fresh = false } = {}) {
+    // This render reads the store as it is now, so it stands in for any
+    // background render still on its way.
+    cancelBackground();
+    // Waiters are released even when a `tune` subscriber throws.
+    try {
+      const prepared = prepareLive(text, fresh);
+      // #rjSheet / #notation start display:none until a song is active; that
+      // must flip before ABCjs measures the container ("responsive: resize"
+      // reads its width at render time; a display:none box measures 0).
+      activateSheet();
+      const notationEl = byId(LIVE_TARGETS.notationId);
+      const visualObj = engraveInto(prepared.plan, prepared.renderText, notationEl);
+      decorateNotation(prepared.plan, visualObj, notationEl, prepared.voices);
+      publishLive(prepared, visualObj, notationEl);
+    } finally {
+      settleIdle();
+    }
+  }
+
   function rerender() {
     if (ctx.state.currentSongText !== undefined) renderLive(ctx.state.currentSongText);
+  }
+
+  /*
+    rerender(), without holding the page up: the work is split into steps
+    (plan, engrave, decorate, swap), each its own task, so a click or scroll
+    in between is answered at once; the new sheet is drawn off screen
+    (createStaging) and replaces the old one in one go. Starts after the next
+    paint, so whatever the caller just showed (a Layers switch's spinner) is
+    on screen first. A newer background render, or any ordinary render, takes
+    over from one still running. whenIdle() resolves once none is pending.
+  */
+  let background = null; // the render in progress: { cancelled, staging, swapped }
+  let idleWaiters = [];
+
+  function settleIdle() {
+    if (background !== null) return;
+    const waiters = idleWaiters;
+    idleWaiters = [];
+    waiters.forEach((resolve) => resolve());
+  }
+
+  function cancelBackground() {
+    if (background === null) return;
+    background.cancelled = true;
+    if (background.staging) background.staging.holder.remove();
+    background = null;
+  }
+
+  function backgroundSteps(job) {
+    let prepared = null;
+    let visualObj = null;
+    return [
+      () => {
+        prepared = prepareLive(ctx.state.currentSongText, false);
+      },
+      () => {
+        job.staging = createStaging(byId(LIVE_TARGETS.notationId));
+        visualObj = engraveInto(prepared.plan, prepared.renderText, job.staging.inner);
+      },
+      () => decorateNotation(prepared.plan, visualObj, job.staging.inner, prepared.voices),
+      () => {
+        const notationEl = byId(LIVE_TARGETS.notationId);
+        swapInStaging(job.staging, notationEl);
+        job.swapped = true;
+        background = null;
+        try {
+          publishLive(prepared, visualObj, notationEl);
+        } finally {
+          settleIdle();
+        }
+      },
+    ];
+  }
+
+  function rerenderInBackground() {
+    if (ctx.state.currentSongText === undefined) return;
+    cancelBackground();
+    const job = { cancelled: false, staging: null, swapped: false };
+    background = job;
+    const steps = backgroundSteps(job);
+    const run = (i) => {
+      if (job.cancelled || i === steps.length) return;
+      try {
+        steps[i]();
+      } catch (err) {
+        console.warn("Background render failed:", err);
+        // Before the swap, draw it the ordinary way instead, so the sheet
+        // still follows the store. After it the new sheet is already up (a
+        // `tune` subscriber threw), and engraving again would only throw again.
+        if (!job.swapped) recoverFromFailedBackground();
+        return;
+      }
+      setTimeout(() => run(i + 1), 0);
+    };
+    afterPaint(() => run(0));
+  }
+
+  function recoverFromFailedBackground() {
+    cancelBackground();
+    try {
+      rerender();
+    } finally {
+      settleIdle();
+    }
+  }
+
+  function whenIdle() {
+    return new Promise((resolve) => {
+      idleWaiters.push(resolve);
+      settleIdle();
+    });
   }
 
   function render(text, { transposeSemitones = 0 } = {}) {
@@ -425,7 +592,7 @@ export function createSheet(ctx) {
 
   // A control only writes the store; anything that changes what's drawn or
   // played re-engraves here.
-  subscribeRerender(ctx.store, rerender);
+  subscribeRerender(ctx.store, rerender, rerenderInBackground);
 
   // Rotating a phone (or any resize) changes the space the grid has; re-fit the
   // live chord table so it scales back up when it now fits, or further down when
@@ -442,6 +609,8 @@ export function createSheet(ctx) {
   return {
     render,
     rerender,
+    rerenderInBackground,
+    whenIdle,
     renderFromFile(path) {
       ctx.readFile(`/songs/${path}`, (text) => render(text));
     },

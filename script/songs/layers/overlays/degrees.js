@@ -9,19 +9,15 @@ import { alignRows, bboxOf, noteheadCentre, svgEl } from "./svg.js";
 
 const DEGREE_PAD = 1.6;
 
-// The circle round a chord tone's number.
-function drawDegreeShape(text) {
-  const box = bboxOf(text);
-  const centre = noteheadCentre(text);
-  if (!box || centre === null || !text.parentNode) return;
-  const radius = Math.max(box.width, box.height) / 2 + DEGREE_PAD;
-  const shape = svgEl("circle", {
+// The circle round a chord tone's number, from its measured `box` and its
+// note's `centre`.
+function degreeShape(box, centre) {
+  return svgEl("circle", {
     class: "rj-layer-degree-circle",
     cx: centre,
     cy: box.y + box.height / 2,
-    r: radius,
+    r: Math.max(box.width, box.height) / 2 + DEGREE_PAD,
   });
-  text.parentNode.insertBefore(shape, text);
 }
 
 // How wide a degree label is drawn: a chord tone's circle (drawDegreeShape)
@@ -32,22 +28,30 @@ function degreeExtent(box, text) {
 }
 
 export function styleDegrees(notationEl) {
-  const styled = [];
+  // Measure every note first, then restyle: a getBBox after a write lays the
+  // whole sheet out again, once per degree.
+  const found = [];
   notationEl.querySelectorAll(".abcjs-annotation").forEach((text) => {
     const parsed = parseDegreeText(text.textContent.trim());
     if (parsed === null) return;
+    found.push({ text, parsed, centre: typeof text.getBBox === "function" ? noteheadCentre(text) : null });
+  });
+  const styled = [];
+  found.forEach(({ text, parsed, centre }) => {
     text.textContent = parsed.degree;
     text.classList.add("rj-layer-degree", `rj-layer-degree--${parsed.tone}`);
-    const centre = typeof text.getBBox === "function" ? noteheadCentre(text) : null;
     if (centre === null) return;
     text.setAttribute("text-anchor", "middle");
     text.setAttribute("x", String(centre));
-    styled.push({ text, tone: parsed.tone });
+    styled.push({ text, tone: parsed.tone, centre });
   });
   // Back on one row before the circles are drawn round where they end up,
   // a chord tone fitted by its circle, not just its number.
   alignRows(styled.map((s) => s.text), { extent: degreeExtent });
-  styled.forEach(({ text, tone }) => {
-    if (tone === "chord") drawDegreeShape(text);
+  const circles = styled
+    .filter(({ text, tone }) => tone === "chord" && text.parentNode)
+    .map(({ text, centre }) => ({ text, box: bboxOf(text), centre }));
+  circles.forEach(({ text, box, centre }) => {
+    if (box) text.parentNode.insertBefore(degreeShape(box, centre), text);
   });
 }

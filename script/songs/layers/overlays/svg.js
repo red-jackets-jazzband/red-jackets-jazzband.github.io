@@ -133,8 +133,7 @@ const MIN_FIT = 0.75;
 // Room kept clear between two neighbouring labels, in svg units.
 const FIT_GAP = 2;
 
-function shrinkToFit(text, room, extent) {
-  const box = bboxOf(text);
+function shrinkToFit(text, box, room, extent) {
   const size = Number(text.getAttribute("font-size"));
   if (!box || box.width <= 0 || !Number.isFinite(size) || size <= 0) return;
   const drawn = extent(box, text);
@@ -144,15 +143,19 @@ function shrinkToFit(text, room, extent) {
 }
 
 // Each label (centred on its x) gets the width up to its nearer neighbour
-// on the same staff line, less a small gap.
+// on the same staff line, less a small gap. Every label is measured before
+// any is shrunk, so the sheet is laid out once, not once per label.
 function fitBetweenNeighbours(texts, keyOf, extent) {
+  const fits = [];
   byStaff(texts, "x", keyOf).forEach((row) => {
     row.sort((a, b) => a.value - b.value);
     row.forEach(({ text, value }, i) => {
       const left = i > 0 ? value - row[i - 1].value : Infinity;
       const right = i < row.length - 1 ? row[i + 1].value - value : Infinity;
       const room = Math.min(left, right) - FIT_GAP;
-      if (Number.isFinite(room)) shrinkToFit(text, room, extent);
+      if (Number.isFinite(room)) fits.push({ text, room });
     });
   });
+  fits.map((fit) => ({ ...fit, box: bboxOf(fit.text) }))
+    .forEach(({ text, box, room }) => shrinkToFit(text, box, room, extent));
 }
