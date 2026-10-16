@@ -12,6 +12,8 @@ const SONG_INDEX = "Bourbon Street Parade,bourbon_street_parade.abc\nFive Foot T
   // fault" both pointing at aint_my_fault.abc) — must be fetched once, not
   // once per alias.
   + "St Louis Blues,st_louis_blues.abc\nSaint Louis Blues,st_louis_blues.abc\n";
+const SONG_INDEX_PATH = "/songs/index_of_songs.txt";
+const DOWNLOAD_LABEL = "Download for offline";
 const SETLIST_INDEX = "Setlist 2026,setlist_2026.txt\n";
 const TOUR_MD = "# ui\n";
 
@@ -23,7 +25,7 @@ function fakeFetch(calls, { failOn = [], status = {} } = {}) {
     if (failOn.includes(path)) return Promise.reject(new Error("network error"));
     const statusCode = status[path] || 200;
     let body = "";
-    if (path === "/songs/index_of_songs.txt") body = SONG_INDEX;
+    if (path === SONG_INDEX_PATH) body = SONG_INDEX;
     else if (path === "/setlists/index_of_setlists.txt") body = SETLIST_INDEX;
     else if (path.startsWith("/tour/")) body = TOUR_MD;
     return Promise.resolve({
@@ -136,7 +138,7 @@ test("beforeinstallprompt is captured and suppressed, and offers install on the 
   try {
     offline.init();
     const btn = document.getElementById("offlineBtn");
-    assert.equal(btn.title, "Download for offline");
+    assert.equal(btn.title, DOWNLOAD_LABEL);
 
     const event = makeInstallPromptEvent();
     window.dispatchEvent(event);
@@ -161,12 +163,12 @@ test("downloadForOffline shows the captured install prompt first, then proceeds 
     await runWithAbcjs(createAbcjsStub(), () => offline.downloadForOffline());
 
     assert.equal(event.calls.prompted, 1);
-    assert.ok(fetchCalls.includes("/songs/index_of_songs.txt"));
+    assert.ok(fetchCalls.includes(SONG_INDEX_PATH));
     assert.equal(document.getElementById("offlineStatus").textContent, "Available offline.");
     // The captured event is spent after one use — the button drops back to
     // a plain download affordance rather than offering an install that
     // would just throw if tried again.
-    assert.equal(document.getElementById("offlineBtn").title, "Download for offline");
+    assert.equal(document.getElementById("offlineBtn").title, DOWNLOAD_LABEL);
   } finally {
     delete globalThis.fetch;
     cleanup();
@@ -202,9 +204,110 @@ test("appinstalled clears the captured prompt and reverts the button to a plain 
     assert.equal(btn.title, "Install app & download for offline");
 
     window.dispatchEvent(new window.Event("appinstalled"));
-    assert.equal(btn.title, "Download for offline");
-    assert.equal(btn.getAttribute("aria-label"), "Download for offline");
+    assert.equal(btn.title, DOWNLOAD_LABEL);
+    assert.equal(btn.getAttribute("aria-label"), DOWNLOAD_LABEL);
   } finally {
+    cleanup();
+  }
+});
+
+const IPHONE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1";
+
+// Apple never fires beforeinstallprompt: pretend to be an iPhone.
+function pretendIphone({ standalone = false } = {}) {
+  Object.defineProperty(navigator, "userAgent", { value: IPHONE_UA, configurable: true });
+  Object.defineProperty(navigator, "standalone", { value: standalone, configurable: true });
+}
+
+test("on an iPhone the button offers an install, and a click shows the Home Screen steps while downloading", async () => {
+  const { offline, cleanup } = setup();
+  const fetchCalls = [];
+  globalThis.fetch = fakeFetch(fetchCalls);
+  try {
+    pretendIphone();
+    offline.init();
+    const btn = document.getElementById("offlineBtn");
+    assert.equal(btn.title, "Install app & download for offline");
+    const overlay = document.getElementById("installHint");
+    assert.equal(overlay.hidden, true);
+
+    await runWithAbcjs(createAbcjsStub(), () => offline.downloadForOffline());
+
+    assert.equal(overlay.hidden, false);
+    assert.equal(overlay.querySelector('[data-install="ios"]').hidden, false);
+    assert.equal(overlay.querySelector('[data-install="mac"]').hidden, true);
+    assert.equal(document.activeElement.id, "installHintOk");
+    assert.ok(fetchCalls.includes(SONG_INDEX_PATH), "the download still runs behind the steps");
+
+    document.getElementById("installHintOk").click();
+    assert.equal(overlay.hidden, true);
+    assert.equal(document.activeElement, btn, "focus returns to the button");
+  } finally {
+    delete globalThis.fetch;
+    cleanup();
+  }
+});
+
+test("the install steps close on Escape and on a backdrop click", async () => {
+  const { offline, cleanup } = setup();
+  globalThis.fetch = fakeFetch([]);
+  try {
+    pretendIphone();
+    offline.init();
+    const overlay = document.getElementById("installHint");
+    const download = runWithAbcjs(createAbcjsStub(), () => offline.downloadForOffline());
+    assert.equal(overlay.hidden, false);
+    document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Escape" }));
+    assert.equal(overlay.hidden, true);
+
+    offline.downloadForOffline();
+    assert.equal(overlay.hidden, false);
+    overlay.dispatchEvent(new window.Event("click", { bubbles: true }));
+    assert.equal(overlay.hidden, true);
+    await download;
+  } finally {
+    delete globalThis.fetch;
+    cleanup();
+  }
+});
+
+test("Tab stays inside the open install steps, wrapping both ways", async () => {
+  const { offline, cleanup } = setup();
+  globalThis.fetch = fakeFetch([]);
+  try {
+    pretendIphone();
+    offline.init();
+    const download = runWithAbcjs(createAbcjsStub(), () => offline.downloadForOffline());
+    const ok = document.getElementById("installHintOk");
+    const close = document.getElementById("installHintClose");
+    const tab = (shiftKey) => document.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Tab", shiftKey, cancelable: true }));
+    assert.equal(document.activeElement, ok);
+    tab(false);
+    assert.equal(document.activeElement, close, "Tab from the last button wraps to the first");
+    tab(true);
+    assert.equal(document.activeElement, ok, "Shift+Tab from the first wraps to the last");
+    document.getElementById("offlineBtn").focus();
+    tab(false);
+    assert.equal(document.activeElement, close, "focus outside is pulled back in");
+    ok.click();
+    await download;
+  } finally {
+    delete globalThis.fetch;
+    cleanup();
+  }
+});
+
+test("an already-installed app on an iPhone gets a plain download, no install steps", async () => {
+  const { offline, cleanup } = setup();
+  globalThis.fetch = fakeFetch([]);
+  try {
+    pretendIphone({ standalone: true });
+    offline.init();
+    assert.equal(document.getElementById("offlineBtn").title, DOWNLOAD_LABEL);
+    await runWithAbcjs(createAbcjsStub(), () => offline.downloadForOffline());
+    assert.equal(document.getElementById("installHint").hidden, true);
+  } finally {
+    delete globalThis.fetch;
     cleanup();
   }
 });
@@ -216,7 +319,7 @@ test("downloadForOffline fetches the indexes, every song/setlist/tour file, warm
   try {
     await runWithAbcjs(createAbcjsStub(), () => offline.downloadForOffline());
 
-    assert.ok(fetchCalls.includes("/songs/index_of_songs.txt"));
+    assert.ok(fetchCalls.includes(SONG_INDEX_PATH));
     assert.ok(fetchCalls.includes("/setlists/index_of_setlists.txt"));
     assert.ok(fetchCalls.includes("/songs/bourbon_street_parade.abc"));
     assert.ok(fetchCalls.includes("/songs/five_foot_two.abc"));
@@ -313,7 +416,7 @@ test("an HTTP error response on a library file counts as a failure too, not just
 
 test("a 500 on the song index is treated as a failure, not parsed as an empty/garbage index", async () => {
   const { offline, cleanup } = setup();
-  globalThis.fetch = fakeFetch([], { status: { "/songs/index_of_songs.txt": 500 } });
+  globalThis.fetch = fakeFetch([], { status: { [SONG_INDEX_PATH]: 500 } });
   try {
     await runWithAbcjs(createAbcjsStub(), () => offline.downloadForOffline());
     assert.equal(
@@ -338,7 +441,7 @@ test("waits for the page to become controlled before fetching, so early requests
 
     swStub.fireControllerChange({});
     await run;
-    assert.ok(fetchCalls.includes("/songs/index_of_songs.txt"));
+    assert.ok(fetchCalls.includes(SONG_INDEX_PATH));
   } finally {
     delete globalThis.fetch;
     cleanup();

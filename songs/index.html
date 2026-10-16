@@ -82,7 +82,7 @@
 
 
 
-<link rel="stylesheet" href="/css/split.min.5153055233d7fd4b1b00c4f114a1f75ecf9cb76cd9b04eed177f8febef4c052c.css" type="text/css" media="screen,print" integrity="sha256-UVMFUjPX/UsbAMTxFKH3Xs&#43;ct2zZsE7tF3&#43;P6&#43;9MBSw=" />
+<link rel="stylesheet" href="/css/split.min.ad1099f9915b03cef5adee865d33f7634a39015916a8eeb41af3f1d37273d1a4.css" type="text/css" media="screen,print" integrity="sha256-rRCZ&#43;ZFbA871re6GXTP3Y0o5AVkWqO60GvPx03Jz0aQ=" />
 
 
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -150,7 +150,7 @@
 
 <script src="/script/abcjs_midi_6.7.1-min.js" type="text/javascript" defer></script>
 <script src="/script/tonal.4.6.9-min.js" type="text/javascript" defer></script>
-<script type="module" src="/script/songs-app.63db361f54534da28eb51762c62564431e1171b51b6cd5d83c522239822ce8cb.js" integrity="sha256-Y9s2H1RTTaKOtRdixiVkQx4RcbUbbNXYPFIiOYIs6Ms="></script>
+<script type="module" src="/script/songs-app.3968a300559b64bc58e32523320c3b690584e5b6872e5fe7d05f41bba60a1d92.js" integrity="sha256-OWijAFWbZLxY4yUjMgw7aQWE5baHLl/n0F9Bu6YKHZI="></script>
 
 <div class="rj-songs-layout" data-default-tab="library">
 
@@ -387,6 +387,27 @@ Retrieved from www.redjackets.nl - <span id="instrumentText"></span>
     <div class="rj-modal-actions">
       <button type="button" id="setlistModalCancel" class="rj-modal-btn">Cancel</button>
       <button type="button" id="setlistModalCreate" class="rj-modal-btn rj-modal-btn-primary">Create</button>
+    </div>
+  </dialog>
+</div>
+
+<div id="installHint" class="rj-modal-overlay" hidden>
+  <dialog class="rj-modal" open aria-modal="true" aria-labelledby="installHintTitle">
+    <div class="rj-modal-head">
+      <h2 class="rj-modal-title" id="installHintTitle">Install RJ Songs</h2>
+      <button type="button" id="installHintClose" class="rj-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <ol class="rj-install-steps" data-install="ios" hidden>
+      <li>Tap the Share button (in the toolbar, or under ⋯) <span class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></span></li>
+      <li>Choose “Add to Home Screen”</li>
+    </ol>
+    <ol class="rj-install-steps" data-install="mac" hidden>
+      <li>Open Safari’s File menu</li>
+      <li>Choose “Add to Dock”</li>
+    </ol>
+    <p class="rj-install-note">The songs are now downloading for offline use in this browser. The installed app keeps its own copy: tap this button there too.</p>
+    <div class="rj-modal-actions">
+      <button type="button" id="installHintOk" class="rj-modal-btn rj-modal-btn-primary">OK</button>
     </div>
   </dialog>
 </div>

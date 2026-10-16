@@ -4,6 +4,7 @@ import { parseSongIndex } from "../../lib/core/song-index.js";
 import { STANDARD_SOUNDFONT_URL, HIGH_QUALITY_SOUNDFONT_URL } from "../audio/player.js";
 import { pageLanguage, tl } from "../../lib/core/i18n.js";
 import { afterPageLoad } from "../core/after-load.js";
+import { installHintFor } from "../../lib/platform/install-hint.js";
 
 const SW_URL = "/sw.js";
 
@@ -50,6 +51,23 @@ function setStatus(text) {
 
 const DOWNLOAD_LABEL = tl("offline_download", "Download for offline");
 const INSTALL_LABEL = tl("offline_install", "Install app & download for offline");
+
+// Already running as an installed app: iOS's own flag, else the display mode.
+function runningStandalone() {
+  if (navigator.standalone === true) return true;
+  return typeof window.matchMedia === "function" && window.matchMedia("(display-mode: standalone)").matches;
+}
+
+// "ios", "mac" or null: which by-hand install steps this browser needs
+// (lib/platform/install-hint.js).
+function currentInstallHint() {
+  return installHintFor({
+    userAgent: navigator.userAgent || "",
+    platform: navigator.platform || "",
+    maxTouchPoints: navigator.maxTouchPoints || 0,
+    standalone: runningStandalone(),
+  });
+}
 
 function serviceWorkerSupported() {
   return "serviceWorker" in navigator;
@@ -278,18 +296,41 @@ function downloadStatus(failures) {
   or not the visitor chose to install. Not every browser ever fires this
   event at all (Firefox desktop doesn't implement it; iOS/iPadOS Safari has
   no programmatic install prompt — installing there is a manual "Add to
-  Home Screen" from the share sheet) — on those the button quietly stays a
-  plain download action, since there's nothing here to offer beyond what's
-  already true.
+  Home Screen" from the share sheet, or File › "Add to Dock" in Mac Safari
+  17+). Firefox's button stays a plain download action. On Apple, where the
+  visitor can install but no page can start it, the button is labelled as an
+  install too and opens #installHint, the steps for that device
+  (lib/platform/install-hint.js picks them), while the download runs behind
+  it — it used to just start a download in the background, which on a phone
+  with a song open shows nothing at all, so the button seemed dead.
 */
+// The hint is aria-modal, so Tab must stay inside it: wrap from its last
+// button to its first (and back with Shift+Tab), and pull focus back in if it
+// has somehow got out.
+function trapTab(overlay, event) {
+  const buttons = Array.from(overlay.querySelectorAll("button")).filter((button) => !button.closest("[hidden]"));
+  if (buttons.length === 0) return;
+  const first = buttons[0];
+  const last = buttons[buttons.length - 1];
+  const active = document.activeElement;
+  let target = null;
+  if (!overlay.contains(active)) target = event.shiftKey ? last : first;
+  else if (event.shiftKey && active === first) target = last;
+  else if (!event.shiftKey && active === last) target = first;
+  if (!target) return;
+  event.preventDefault();
+  target.focus();
+}
+
 export function createOffline(ctx) {
   let downloading = false;
   let deferredInstallPrompt = null;
   let installBtn = null;
+  let installHint = null;
 
   function updateInstallAffordance() {
     if (!installBtn) return;
-    const label = deferredInstallPrompt ? INSTALL_LABEL : DOWNLOAD_LABEL;
+    const label = deferredInstallPrompt || installHint ? INSTALL_LABEL : DOWNLOAD_LABEL;
     installBtn.title = label;
     installBtn.setAttribute("aria-label", label);
   }
@@ -304,7 +345,41 @@ export function createOffline(ctx) {
       .catch(() => null); // a prompt failure shouldn't block the download that follows
   }
 
+  function closeInstallHint() {
+    const overlay = byId("installHint");
+    if (!overlay || overlay.hidden) return;
+    overlay.hidden = true;
+    if (installBtn) installBtn.focus();
+  }
+
+  function showInstallHint() {
+    const overlay = byId("installHint");
+    if (!overlay) return;
+    overlay.querySelectorAll("[data-install]").forEach((steps) => {
+      steps.hidden = steps.dataset.install !== installHint;
+    });
+    overlay.hidden = false;
+    const ok = byId("installHintOk");
+    if (ok) ok.focus();
+  }
+
+  function initInstallHint() {
+    const overlay = byId("installHint");
+    if (!overlay) return;
+    on("installHintOk", "click", closeInstallHint);
+    on("installHintClose", "click", closeInstallHint);
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) closeInstallHint();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (overlay.hidden) return;
+      if (event.key === "Escape") closeInstallHint();
+      else if (event.key === "Tab") trapTab(overlay, event);
+    });
+  }
+
   function downloadForOffline() {
+    if (!deferredInstallPrompt && installHint) showInstallHint();
     if (downloading) return Promise.resolve();
     downloading = true;
     return promptInstall()
@@ -321,6 +396,9 @@ export function createOffline(ctx) {
       return;
     }
     installBtn = btn;
+    installHint = currentInstallHint();
+    updateInstallAffordance();
+    initInstallHint();
     on("offlineBtn", "click", downloadForOffline);
     // Registered once the page has loaded and gone idle, not at start-up:
     // installing the worker downloads the whole app shell for offline use,
@@ -340,6 +418,7 @@ export function createOffline(ctx) {
     // stale, so drop it and the button reverts to a plain download action.
     window.addEventListener("appinstalled", () => {
       deferredInstallPrompt = null;
+      installHint = null;
       updateInstallAffordance();
     });
   }
