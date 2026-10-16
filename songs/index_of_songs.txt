@@ -152,6 +152,7 @@ Sister Kate,sister_kate.abc
 Skokiaan,skokiaan.abc
 Some of these Days,some_of_these_days.abc
 South,south.abc
+South Rampart Street Parade,south_rampart_street_parade.abc
 Sugarfoot stomp,dippermouth_blues.abc
 Summertime,summertime.abc
 Sweet Bye and Bye,in_the_sweet_bye_and_bye.abc
