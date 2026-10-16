@@ -126,6 +126,7 @@ Oh Didn't He Ramble,didnt_he_ramble.abc
 Oh on the 3rd day,happy_feet_blues.abc
 Oh when the Saints,oh_when_the_saints.abc
 Old Kentucky Home,my_old_kentucky_home.abc
+Old Rugged Cross,old_rugged_cross.abc
 Original Dixieland One-Step,original_dixieland_one_step.abc
 Over in the Gloryland,gloryland.abc
 Panama,panama.abc
@@ -159,6 +160,7 @@ Sweet Bye and Bye,in_the_sweet_bye_and_bye.abc
 Sweet Georgia Brown,sweet_georgia_brown.abc
 Sweet Sue,sweet_sue.abc
 Take My Hand Precious Lord,take_my_hand.abc
+The Old Rugged Cross,old_rugged_cross.abc
 The way I ride,all_the_girls.abc
 This Little Light of Mine,little_light.abc
 Ti-Pi-Tin,tipitin.abc
