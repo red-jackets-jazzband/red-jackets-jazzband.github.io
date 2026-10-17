@@ -940,6 +940,37 @@ test("onFinished restarts after the pickup (first double bar), not at the very t
   }
 });
 
+test("onFinished restarts after a P:Intro part, at the next part's first bar", async () => {
+  // Intro of two bars (measureIdx 0 and 1), then P:A at measureIdx 2.
+  const voice = [
+    { el_type: "part", title: "Intro" },
+    { el_type: "note" }, { el_type: "bar" },
+    { el_type: "note" }, { el_type: "bar" },
+    { el_type: "part", title: "A" },
+    { el_type: "note" }, { el_type: "bar" },
+  ];
+  const {
+    audio, abcjs, cleanup, play,
+  } = await setupPlayingTune({ repeatCount: 2 }, {
+    visualObj: { metaText: {}, lines: [{ staff: [{ voices: [voice] }] }] },
+    noteTimings: [
+      { type: "event", elements: [[{}]], milliseconds: 0 },
+      { type: "event", elements: [[{}]], milliseconds: 500, measureStart: true },
+      { type: "event", elements: [[{}]], milliseconds: 1000, measureStart: true },
+    ],
+  });
+  try {
+    const sc = await play();
+    withAbcjs(abcjs, () => sc._cursorControl.onFinished());
+    await flush();
+    assert.equal(audio.isPlaying, true);
+    // totalMs = maxMs(1000) + 500 slack = 1500; P:A starts at 1000
+    assert.equal(abcjs.calls.seek.at(-1), 1000 / 1500);
+  } finally {
+    cleanup();
+  }
+});
+
 test("onFinished restarts at the very top for a tune with no pickup, even with the same noteTimings shape", async () => {
   // No getPickupLength -> pickupBeatsOf is 0.
   const { audio, abcjs, cleanup } = await setupAtRepeatRestart({ metaText: {} });

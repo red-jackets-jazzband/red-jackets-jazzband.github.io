@@ -1,17 +1,16 @@
-import { byId, on } from "../../lib/core/dom.js";
-import { followScrollTarget } from "../../lib/platform/follow-scroll.js";
+import { byId } from "../../lib/core/dom.js";
+import { chordTableInView, followScrollTarget } from "../../lib/platform/follow-scroll.js";
 
 /*
   Follow playback: while a tune plays, keep the staff line being played in
   view by scrolling whatever box the sheet scrolls in (the page itself on a
   phone, the content column on desktop, #rjSheet in full screen). The rule
-  for when to move — not at all while the visitor is still at the top
-  reading the chord table, only when the played line leaves the visible
-  band — is lib/platform/follow-scroll.js's.
-
-  The More-controls drawer's #followPlaybackBtn switches it on and off
-  (`playback.followPlayback`, sticky): players who read the chord table
-  rather than the staff (banjo, sousaphone) can keep the page still.
+  for when to move — not at all while the chord table is in view (players
+  who read it rather than the staff, banjo and sousaphone, keep a still
+  page by staying up there), only when the played line leaves the visible
+  band — is lib/platform/follow-scroll.js's. It is always on: a toggle for
+  it was one more button in the drawer that the chord-table rule made
+  unnecessary.
 
   audio/player.js calls reveal(node) with the first note it highlights on
   every playback event; only a change of line is looked at. A wheel or touch
@@ -75,7 +74,12 @@ function scrollTo(container, top) {
   }
 }
 
-export function createFollowPlayback(ctx) {
+function chordTableRect() {
+  const table = byId("chordtable");
+  return table ? table.getBoundingClientRect() : null;
+}
+
+export function createFollowPlayback() {
   let lastLine = null;
   let userScrolledAt = -Infinity;
 
@@ -84,37 +88,31 @@ export function createFollowPlayback(ctx) {
   }
 
   function reveal(node) {
-    if (!ctx.state.followPlayback || !node || typeof node.closest !== "function") return;
+    if (!node || typeof node.closest !== "function") return;
     // ABCjs engraves one <svg> per staff line (sheet.js's oneSvgPerLine).
     const line = node.closest("svg");
     if (!line || line === lastLine) return;
-    lastLine = line;
-    if (Date.now() - userScrolledAt < USER_SCROLL_PAUSE_MS) return;
+    if (Date.now() - userScrolledAt < USER_SCROLL_PAUSE_MS) {
+      lastLine = line;
+      return;
+    }
     const container = scrollContainerOf(line);
+    const band = visibleBand(container);
+    const chordTable = chordTableRect();
+    // Held back only by the chord table: don't count this line as handled,
+    // so it's tried again on its next note once the table has left view.
+    if (chordTableInView(chordTable, band)) return;
+    lastLine = line;
     const target = followScrollTarget({
       line: line.getBoundingClientRect(),
-      band: visibleBand(container),
+      band,
       scrollTop: container.scrollTop,
+      chordTable,
     });
     if (target !== null) scrollTo(container, target);
   }
 
-  function draw() {
-    const btn = byId("followPlaybackBtn");
-    if (!btn) return;
-    const enabled = Boolean(ctx.state.followPlayback);
-    btn.classList.toggle("active", enabled);
-    btn.setAttribute("aria-pressed", String(enabled));
-  }
-
   function init() {
-    draw();
-    on("followPlaybackBtn", "click", () => {
-      ctx.state.followPlayback = !ctx.state.followPlayback;
-    });
-    ctx.store.subscribe("playback", (_slice, changed) => {
-      if (changed.includes("followPlayback")) draw();
-    });
     window.addEventListener("wheel", markUserScroll, { capture: true, passive: true });
     window.addEventListener("touchmove", markUserScroll, { capture: true, passive: true });
   }

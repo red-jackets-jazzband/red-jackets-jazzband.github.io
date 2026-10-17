@@ -10,6 +10,16 @@ test("followScrollTarget leaves a visitor at the top of the page alone", () => {
   assert.equal(followScrollTarget({ line, band, scrollTop: AT_TOP_PX }), null);
 });
 
+test("followScrollTarget leaves the page alone while the chord table is in view", () => {
+  const line = { top: 1200, bottom: 1300 };
+  // Scrolled a little, but the chord table's lower rows still show.
+  assert.equal(followScrollTarget({ line, band, scrollTop: 300, chordTable: { top: -200, bottom: 400 } }), null);
+  // Scrolled past it (or above the band, under a sticky toolbar): follow.
+  assert.equal(followScrollTarget({ line, band, scrollTop: 900, chordTable: { top: -600, bottom: 80 } }), 900 + 1200 - 100 - LEAD_PX);
+  // An empty chord table (a tune without chords) doesn't hold anything up.
+  assert.equal(followScrollTarget({ line, band, scrollTop: 300, chordTable: { top: 300, bottom: 300 } }), 300 + 1200 - 100 - LEAD_PX);
+});
+
 test("followScrollTarget does nothing while the line is comfortably in view", () => {
   assert.equal(followScrollTarget({ line: { top: 300, bottom: 400 }, band, scrollTop: 500 }), null);
 });

@@ -16,6 +16,16 @@ function dropdown(select) {
   return el("div", { class: "dropdown" }, select);
 }
 
+// A drawer picker (Comping, Solo): a small gold caption and the current pick
+// in one pill, the same reading as the Practice control beside it
+// ("PRACTICE  Off"), so every extra-staff picker says "off" the same way.
+function picker(select, label) {
+  return el("div", { class: "dropdown sheet-picker" }, [
+    el("label", { class: "sheet-picker-label", text: label, attrs: { for: select.id } }),
+    select,
+  ]);
+}
+
 /*
   The Instrument <select> (#instrument): the chart is transposed and clef-set
   for whichever instrument is chosen. Lives in the sheet's button bar (#sheetStatus,
@@ -60,7 +70,7 @@ export function createCompingDropdown(ctx) {
   if (!slot) return;
 
   const select = el("select", { class: "dropbtn", id: "comping" },
-    el("option", { value: "off", text: tl("comping_off", "COMPING: OFF") }));
+    el("option", { value: "off", text: tl("comping_off", "Off") }));
 
   const groups = new Map();
   for (const pattern of COMPING_PATTERNS) {
@@ -70,7 +80,7 @@ export function createCompingDropdown(ctx) {
       select.append(optgroup);
     }
     groups.get(pattern.group).append(
-      el("option", { value: pattern.value, text: pattern.label.toUpperCase() }),
+      el("option", { value: pattern.value, text: pattern.label }),
     );
   }
 
@@ -83,7 +93,7 @@ export function createCompingDropdown(ctx) {
     setInBackground(ctx, { comping: select.value });
   });
 
-  slot.append(dropdown(select), ...split.nodes);
+  slot.append(picker(select, tl("comping_label", "Comping")), ...split.nodes);
   draw();
   ctx.store.subscribe("settings", draw);
 }
@@ -161,9 +171,9 @@ export function createSoloDropdown(ctx) {
   if (!slot) return;
 
   const select = el("select", { class: "dropbtn", id: "solo" },
-    el("option", { value: "off", text: tl("solo_off", "SOLO: OFF") }));
+    el("option", { value: "off", text: tl("solo_off", "Off") }));
   for (const style of SOLO_STYLES) {
-    select.append(el("option", { value: style.value, text: style.label.toUpperCase() }));
+    select.append(el("option", { value: style.value, text: style.label }));
   }
 
   ctx.state.soloEnabled = true;
@@ -181,5 +191,5 @@ export function createSoloDropdown(ctx) {
   const status = el("span", {
     class: "sheet-solo-status", id: "soloStatus", attrs: { role: "status", "aria-live": "polite" },
   });
-  slot.append(dropdown(select), status);
+  slot.append(picker(select, tl("solo_label", "Solo")), status);
 }

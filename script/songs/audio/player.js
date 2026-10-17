@@ -4,6 +4,7 @@ import {
 } from "../../lib/music/tempo.js";
 import { computeVoicesOff, percentToAbcjsSwing } from "../../lib/audio/audio-mix.js";
 import { restampAccompaniment } from "../../lib/music/render-plan.js";
+import { introBarCount } from "../../lib/music/intro.js";
 import { isMixOnlyWrite } from "../core/state.js";
 import { beatsPerMeasure } from "../../lib/audio/metronome.js";
 import { REPEAT_COUNT_MIN, REPEAT_COUNT_MAX, REPEAT_COUNT_DEFAULT } from "./state.js";
@@ -463,20 +464,30 @@ export function createAudioPlayer(ctx) {
     return true;
   }
 
-  // Where a repeat restarts: the true top (fraction 0) for an ordinary tune,
-  // but a tune with a pickup/anacrusis instead restarts at the first double
-  // bar — state.firstBarMs, the offset of measureIdx 1 (the pickup itself is
-  // always measureIdx 0) — so the lead-in note(s) aren't replayed every time
-  // round the loop. This also keeps the chord-table cursor aligned with the
-  // chord schema on the restart: resolveChordCell maps straight off the same
-  // measureIdx the audio is actually at, pickup skipped or not, so it always
-  // lands on the same cell real (non-repeat) playback would.
-  function repeatRestartFraction() {
-    if (pickupBeatsOf(state.currentVisualObj) > 0
-      && state.firstBarMs !== undefined && state.totalMs > 0) {
-      return Math.max(0, Math.min(1, state.firstBarMs / state.totalMs));
+  // Where a repeat restarts: the true top (fraction 0) for an ordinary tune.
+  // A tune that opens with a `P:Intro` part restarts at the part after it
+  // (lib/music/intro.js's introBarCount, looked up in state.measureStartMs),
+  // so the intro is played the first time round only. Otherwise a tune with
+  // a pickup/anacrusis restarts at the first double bar — state.firstBarMs,
+  // the offset of measureIdx 1 (the pickup itself is always measureIdx 0) —
+  // so the lead-in note(s) aren't replayed every time round the loop. This
+  // also keeps the chord-table cursor aligned with the chord schema on the
+  // restart: resolveChordCell maps straight off the same measureIdx the
+  // audio is actually at, so it always lands on the same cell real
+  // (non-repeat) playback would.
+  function repeatRestartMs() {
+    const introBars = introBarCount(state.currentVisualObj);
+    if (introBars > 0 && state.measureStartMs[introBars] !== undefined) {
+      return state.measureStartMs[introBars];
     }
-    return 0;
+    if (pickupBeatsOf(state.currentVisualObj) > 0) return state.firstBarMs;
+    return undefined;
+  }
+
+  function repeatRestartFraction() {
+    const ms = repeatRestartMs();
+    if (ms === undefined || state.totalMs <= 0) return 0;
+    return Math.max(0, Math.min(1, ms / state.totalMs));
   }
 
   const cursorControl = {

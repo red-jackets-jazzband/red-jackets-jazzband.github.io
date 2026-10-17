@@ -1,7 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountPage } from "../../../../tests/helpers/dom.js";
-import { makeCtx } from "../../../../tests/helpers/ctx.js";
 import { createFollowPlayback } from "./follow.js";
 
 // Draws two engraved staff lines into the sheet, each one svg with one note,
@@ -20,15 +19,14 @@ function drawLines(tops) {
 
 function setup({ scrollTop }) {
   const page = mountPage();
-  const ctx = makeCtx();
-  const follow = createFollowPlayback(ctx);
+  const follow = createFollowPlayback();
   follow.init();
   const scroller = document.scrollingElement || document.documentElement;
   const scrolls = [];
   Object.defineProperty(scroller, "scrollTop", { configurable: true, get: () => scrollTop });
   scroller.scrollTo = (options) => scrolls.push(options.top);
   return {
-    ctx, follow, scrolls, btn: document.getElementById("followPlaybackBtn"), cleanup: page.cleanup,
+    follow, scrolls, cleanup: page.cleanup,
   };
 }
 
@@ -60,23 +58,19 @@ test("a visitor at the top of the page (reading the chord table) is left alone",
   }
 });
 
-test("the toggle button switches following off and on, and is remembered", () => {
-  const { ctx, follow, scrolls, btn, cleanup } = setup({ scrollTop: 400 });
+test("a visitor scrolled only a little, with the chord table still in view, is left alone", () => {
+  const { follow, scrolls, cleanup } = setup({ scrollTop: 120 });
   try {
-    assert.equal(btn.getAttribute("aria-pressed"), "true");
-    assert.equal(btn.classList.contains("active"), true);
-    btn.dispatchEvent(new window.Event("click"));
-    assert.equal(ctx.state.followPlayback, false);
-    assert.equal(btn.getAttribute("aria-pressed"), "false");
-    assert.equal(btn.classList.contains("active"), false);
-    assert.equal(window.localStorage.getItem("rj.followPlayback"), "0");
-
+    const table = document.getElementById("chordtable");
+    table.getBoundingClientRect = () => ({ top: -100, bottom: 200, height: 300 });
     const [line] = drawLines([window.innerHeight + 50]);
     follow.reveal(line);
     assert.deepEqual(scrolls, []);
-
-    btn.dispatchEvent(new window.Event("click"));
-    assert.equal(btn.getAttribute("aria-pressed"), "true");
+    // Once the visitor has scrolled the table out of view, the very same
+    // line is followed on its next note.
+    table.getBoundingClientRect = () => ({ top: -400, bottom: -100, height: 300 });
+    follow.reveal(line);
+    assert.equal(scrolls.length, 1);
   } finally {
     cleanup();
   }

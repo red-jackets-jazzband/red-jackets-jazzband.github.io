@@ -96,7 +96,5 @@ export const PLAYBACK_SLICE = {
       fallback: REPEAT_COUNT_DEFAULT, min: REPEAT_COUNT_MIN, max: REPEAT_COUNT_MAX, invalid: "fallback",
     }),
     metronomeEnabled: boolPref(PREF_KEYS.metronomeEnabled, false),
-    // Scroll the sheet along with the line being played (audio/follow.js).
-    followPlayback: boolPref(PREF_KEYS.followPlayback, true),
   },
 };
