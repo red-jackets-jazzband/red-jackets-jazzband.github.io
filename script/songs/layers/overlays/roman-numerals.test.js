@@ -64,6 +64,17 @@ test("a numeral running into the next chord on its line shrinks, not below 60%",
   assert.equal(f.getAttribute("font-size"), "12");
 });
 
+test("a numeral before an N.C. on its line shrinks to fit the N.C. too", () => {
+  const tune = tuneWithChordGroups('"C" C "N.C." G | "F" F |', [{ x: 0, width: 30 }, { x: 25, width: 30 }, { x: 200, width: 30 }]);
+  window.SVGElement.prototype.getComputedTextLength = function length() {
+    return 10;
+  };
+  drawRomanNumerals(tune);
+  const [c, f] = spans();
+  assert.equal(c.getAttribute("font-size"), "7.2", "measured against N.C., not against F");
+  assert.equal(f.getAttribute("font-size"), "12");
+});
+
 test("a tune with no key draws nothing", () => {
   drawRomanNumerals(tuneWithChordGroups('"C" C |', [], "none"));
   assert.equal(spans().length, 0);

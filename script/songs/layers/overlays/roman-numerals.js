@@ -11,6 +11,8 @@
   sheet is laid out once, not once per chord.
 */
 import { chordNumerals } from "../../../lib/music/roman-numerals.js";
+import { chordName } from "../../../lib/music/chord-symbol.js";
+import { walkMelody } from "../../../lib/music/melody-walk.js";
 import { bboxOf, chordTexts, SVG_NS } from "./svg.js";
 
 const GAP = 3; // between a symbol and its numeral, and before the next chord
@@ -35,15 +37,29 @@ function lineOf(text) {
   return names.find((name) => /^abcjs-l\d+$/.test(name)) || "";
 }
 
-export function drawRomanNumerals(visualObj) {
-  const placed = [];
-  chordNumerals(visualObj).forEach(({ el, numeral }) => {
-    chordTexts(el).forEach((text) => placed.push({ text, span: appendNumeral(text, numeral) }));
+// Every chord symbol drawn on the first voice, in tune order, numeral or not
+// (N.C. gets none, but a numeral before it must still fit).
+function drawnSymbols(visualObj) {
+  const texts = [];
+  walkMelody(visualObj, (el) => {
+    if (chordName(el) !== null) texts.push(...chordTexts(el));
   });
-  const measured = placed.map((p) => ({ ...p, line: lineOf(p.text), box: bboxOf(p.text), width: textLength(p.span) })).filter((p) => p.box);
+  return texts;
+}
+
+export function drawRomanNumerals(visualObj) {
+  const spans = new Map();
+  chordNumerals(visualObj).forEach(({ el, numeral }) => {
+    chordTexts(el).forEach((text) => spans.set(text, appendNumeral(text, numeral)));
+  });
+  if (spans.size === 0) return;
+  const measured = drawnSymbols(visualObj).map((text) => {
+    const span = spans.get(text);
+    return { text, span, line: lineOf(text), box: bboxOf(text), width: span ? textLength(span) : 0 };
+  }).filter((p) => p.box);
   measured.forEach((p, i) => {
     const next = measured[i + 1];
-    if (!next || next.line !== p.line || next.box.x <= p.box.x) return;
+    if (!p.span || !next || next.line !== p.line || next.box.x <= p.box.x) return;
     const overrun = p.box.x + p.box.width + GAP - next.box.x;
     if (overrun > 0) shrink(p.span, p.width, overrun);
   });
