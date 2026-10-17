@@ -71,6 +71,8 @@ Un morceau ne tombe pas toujours bien dans la tonalité imprimée. **−** et **
 ## tempo: Travaillez à votre rythme
 Le tempo est exprimé en **battements par minute** et part de l'indication du morceau lui-même. Ralentissez un passage délicat pour l'apprendre, puis remontez le tempo.
 
+Pour suivre un enregistrement, **tapez sur le nombre** en mesure : le tempo suit les quatre dernières frappes.
+
 ## more: Boucler un passage
 Relancer un passage à la main devient vite pénible. La petite flèche en bas de la barre (`fa-angles-right`) ouvre **Plus d'options**, où le compteur **Répétition** joue le morceau jusqu'à 20 fois de suite. Après le premier passage, la levée est sautée. Le choix du comping est aussi ici.
 

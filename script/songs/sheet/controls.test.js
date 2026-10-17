@@ -8,7 +8,7 @@ import { initSheetControls, clearBookletPrintState } from "./controls.js";
 function setup(overrides = {}) {
   const page = mountPage();
   const calls = {
-    rerender: 0, tempo: [], playPause: 0, mixerToggle: 0, repeatCount: [],
+    rerender: 0, tempo: [], setTempo: [], playPause: 0, mixerToggle: 0, repeatCount: [],
   };
   const ctx = makeCtx({
     sheet: { rerender: () => { calls.rerender += 1; } },
@@ -21,6 +21,7 @@ function setup(overrides = {}) {
       setupNotationClickHandler: () => {},
       updateTempoLabel: () => {},
       stepTempo: (d) => calls.tempo.push(d),
+      setTempo: (bpm) => calls.setTempo.push(bpm),
       playPause: () => { calls.playPause += 1; },
       stop: () => {},
     },
@@ -288,3 +289,23 @@ test("a newer press cancels the pending readout, so only the latest value is spo
   assert.match(live.textContent, /^150 \S/);
   assert.equal(writes.some((w) => w.startsWith("140")), false, "the first readout never went in");
 }));
+
+test("tapping the Tempo value sets the bpm from the last four taps", (t) => {
+  const { calls, cleanup } = setup();
+  t.after(cleanup);
+  let now = 10000;
+  t.mock.method(Date, "now", () => now);
+  const tap = (at) => {
+    now = at;
+    document.getElementById("tempoTapBtn").click();
+  };
+  tap(10000);
+  assert.deepEqual(calls.setTempo, []); // one tap is no tempo yet
+  tap(10500);
+  tap(11000);
+  tap(11500);
+  tap(11900); // the first tap drops out: 1400 ms over three beats
+  assert.deepEqual(calls.setTempo, [120, 120, 120, 129]);
+  tap(20000); // after a pause the count starts again
+  assert.equal(calls.setTempo.length, 4);
+});

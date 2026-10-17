@@ -1,5 +1,5 @@
 import { byId, el, on, qsa } from "../../lib/core/dom.js";
-import { TEMPO_STEP } from "../../lib/music/tempo.js";
+import { TEMPO_STEP, recordTap, tapBpm } from "../../lib/music/tempo.js";
 import { tl } from "../../lib/core/i18n.js";
 import { BACKGROUND } from "../core/state.js";
 
@@ -157,6 +157,18 @@ function initKeyStepper(ctx) {
   on("keyDownBtn", "click", () => stepNumericField("transpose", -1, 0));
 }
 
+// Tap tempo: the Tempo stepper's value is a button, and tapping it in time
+// with the music (a recording in the Inspiration panel, say) sets the bpm to
+// the average pace of the last four taps. One tap alone changes nothing.
+function initTapTempo(ctx) {
+  let taps = [];
+  on("tempoTapBtn", "click", () => {
+    taps = recordTap(taps, Date.now());
+    const bpm = tapBpm(taps);
+    if (bpm !== null) ctx.audio.setTempo(bpm);
+  });
+}
+
 function initPrintLink() {
   on("printLink", "click", (e) => {
     e.preventDefault();
@@ -209,6 +221,7 @@ export function initSheetControls(ctx) {
   initStepperAnnouncements();
   on("tempoUpBtn", "click", () => ctx.audio.stepTempo(TEMPO_STEP));
   on("tempoDownBtn", "click", () => ctx.audio.stepTempo(-TEMPO_STEP));
+  initTapTempo(ctx);
   const repeatCountInput = byId("repeatCount");
   if (repeatCountInput) repeatCountInput.value = String(ctx.state.repeatCount);
   on("repeatCount", "input", () => ctx.audio.setRepeatCount(byId("repeatCount").value));

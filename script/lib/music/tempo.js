@@ -33,3 +33,25 @@ export function bpmToWarpPercent(override, nativeQpm) {
   const native = nativeQpm || DEFAULT_BPM;
   return Math.max(1, Math.round((override / native) * 100));
 }
+
+// Tap tempo: tapping the Tempo stepper's value sets the bpm to the pace of the
+// taps, so it can be matched to a recording (the Inspiration panel's video).
+// The bpm is the average over the last TAP_COUNT taps; a pause longer than
+// TAP_RESET_MS starts a new count, so an old tap never drags a new pace down.
+export const TAP_COUNT = 4;
+export const TAP_RESET_MS = 2000;
+
+// The taps to keep after one more at `now` (ms): at most the last TAP_COUNT,
+// none from before a pause.
+export function recordTap(taps, now) {
+  const last = taps[taps.length - 1];
+  if (last === undefined || now - last > TAP_RESET_MS || now <= last) return [now];
+  return [...taps, now].slice(-TAP_COUNT);
+}
+
+// The bpm the taps keep, or null until there are two of them.
+export function tapBpm(taps) {
+  if (taps.length < 2) return null;
+  const span = taps[taps.length - 1] - taps[0];
+  return clampBpm(Math.round((60000 * (taps.length - 1)) / span));
+}

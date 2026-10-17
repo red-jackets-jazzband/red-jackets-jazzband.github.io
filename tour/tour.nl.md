@@ -71,6 +71,8 @@ Een song ligt niet altijd lekker in de gedrukte toonsoort. Met **−** en **+** 
 ## tempo: Oefen in je eigen tempo
 Het tempo staat in **slagen per minuut**, met als beginwaarde de tempo-aanduiding van de song zelf. Speel een lastige passage langzamer om hem te leren, en zet het tempo daarna weer omhoog.
 
+Wil je meespelen met een opname? **Tik op het getal** in de maat: het tempo volgt de laatste vier tikken.
+
 ## more: Herhaal een passage
 Een passage steeds met de hand opnieuw starten is vervelend. Het kleine pijltje onderaan de knoppenbalk (`fa-angles-right`) opent **Meer opties**, waar de **Herhalen**-teller de song tot 20 keer achter elkaar afspeelt. Na de eerste keer wordt de opmaat overgeslagen. Ook de keuzelijst voor comping staat hier.
 

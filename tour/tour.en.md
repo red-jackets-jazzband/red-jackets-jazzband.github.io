@@ -95,6 +95,8 @@ target: #tempoStepper
 interactive: true
 The tempo is in **beats per minute**, starting from the tune's own marking. Slow it down to learn a tricky passage, then bring it back up.
 
+To match a recording, **tap the number** in time with the beat: the tempo follows the last four taps.
+
 ## more: Loop a passage
 setup: openDrawer
 target: #repeatStepper

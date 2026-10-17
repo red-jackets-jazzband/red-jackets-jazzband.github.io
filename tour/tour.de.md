@@ -71,6 +71,8 @@ Nicht jeder Song liegt in der gedruckten Tonart gut. Mit **−** und **+** versc
 ## tempo: Übe in deinem eigenen Tempo
 Das Tempo wird in **Schlägen pro Minute** angegeben und beginnt bei der Tempoangabe des Songs selbst. Spiel eine schwierige Stelle langsamer, um sie zu lernen, und mach danach wieder schneller.
 
+Um zu einer Aufnahme zu passen, **tippe im Takt auf die Zahl**: Das Tempo folgt den letzten vier Tipps.
+
 ## more: Eine Stelle wiederholen
 Eine Stelle immer wieder von Hand neu zu starten ist mühsam. Der kleine Pfeil am unteren Rand der Leiste (`fa-angles-right`) öffnet **Mehr Optionen**, wo der **Wiederholen**-Zähler den Song bis zu 20 Mal hintereinander spielt. Nach dem ersten Durchgang wird der Auftakt übersprungen. Auch die Auswahl für das Comping ist hier.
 

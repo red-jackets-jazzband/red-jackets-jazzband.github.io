@@ -746,7 +746,12 @@ export function createAudioPlayer(ctx) {
     const base = ctx.state.tempoOverrideBpm !== null
       ? ctx.state.tempoOverrideBpm
       : (state.nativeQpm || DEFAULT_BPM);
-    ctx.state.tempoOverrideBpm = clampBpm(base + delta);
+    setTempo(base + delta);
+  }
+
+  // A tempo in bpm, e.g. from tapping the stepper's value.
+  function setTempo(bpm) {
+    ctx.state.tempoOverrideBpm = clampBpm(bpm);
     updateTempoLabel();
     applyTempo();
   }
@@ -1048,6 +1053,7 @@ export function createAudioPlayer(ctx) {
     updateTempoLabel,
     applyTempo,
     stepTempo,
+    setTempo,
     playPause,
     stop,
     TEMPO_BOUNDS: { min: TEMPO_MIN_BPM, max: TEMPO_MAX_BPM },
