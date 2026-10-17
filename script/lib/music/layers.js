@@ -92,6 +92,17 @@ export const LAYERS = [
     annotate: (song) => keyCenters(song).map((stretch) => ({ startChar: stretch.startChar, text: `_${keyCenterText(stretch)}` })),
   },
   {
+    id: "roman-numerals",
+    group: tl("layers_group_harmony", "Harmony"),
+    label: tl("layer_roman_numerals_label", "Roman numerals"),
+    hint: tl("layer_roman_numerals_hint", "Writes each chord's Roman numeral in the key just behind its chord symbol: G7 in C is V7, Dm7 is ii7."),
+    order: 8, // unused: it writes no annotation
+    availableFor: () => true,
+    appliesTo: () => true,
+    // Drawn as SVG after ABCjs engraves (songs/layers/overlays/roman-numerals.js).
+    annotate: () => [],
+  },
+  {
     id: "scale-degrees",
     group: tl("layers_group_melody", "Melody"),
     label: tl("layer_scale_degrees_label", "Scale degrees"),

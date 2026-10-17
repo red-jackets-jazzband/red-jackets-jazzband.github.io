@@ -14,6 +14,9 @@
   - a key centre (lib/music/key-centers.js: each key signature's stretch)
     gets a dim tint behind its staves, one shade
     per key, with the key's name at its left edge;
+  - a chord symbol gets its Roman numeral in the key written just behind
+    it (lib/music/roman-numerals.js), smaller, shrunk to fit before the
+    next chord;
   - scale degrees ("\u25CF3", "\u25CB\u266D7": lib/music/scale-degrees.js) lose their
     marker and sit centred under the note, a chord tone inside a magenta
     circle (as in Improvise for Real) and any other note bare;
@@ -25,7 +28,7 @@
 
   Called by sheet.js's paint() right after ABCjs draws, for the live sheet
   and a booklet alike (a booklet's plan simply has no layers on). One module
-  per layer in overlays/ (progression-bands, key-centers, chord-skeleton, outside-chords, degrees, solfege, fingerings), a
+  per layer in overlays/ (progression-bands, key-centers, chord-skeleton, outside-chords, roman-numerals, degrees, solfege, fingerings), a
   shared svg.js, and viewbox.js for the chord-letter clipping; the
   arithmetic is in lib/music/layer-geometry.js.
 */
@@ -37,16 +40,24 @@ import { styleFingerings } from "./overlays/fingerings.js";
 import { markOutsideChords } from "./overlays/outside-chords.js";
 import { drawChordSkeleton } from "./overlays/chord-skeleton.js";
 import { drawKeyCenters } from "./overlays/key-centers.js";
+import { drawRomanNumerals } from "./overlays/roman-numerals.js";
 import { uncropChords } from "./overlays/viewbox.js";
+
+// The Harmony group's layers, all drawn from the engraved tune.
+function drawHarmony(visualObj, applied) {
+  if (applied.includes("key-centers")) drawKeyCenters(visualObj);
+  if (applied.includes("chord-skeleton")) drawChordSkeleton(visualObj, { markOutside: applied.includes("outside-chords") });
+  // Numerals first, so an outside chord's shade takes in its numeral too.
+  if (applied.includes("roman-numerals")) drawRomanNumerals(visualObj);
+  if (applied.includes("outside-chords")) markOutsideChords(visualObj);
+}
 
 export function decorateLayers(notationEl, visualObj, plan) {
   if (!notationEl || !visualObj) return;
   const applied = plan.layersApplied || [];
   const progressions = plan.progressions || [];
   if (applied.length > 0 || progressions.length > 0) uncropChords(notationEl);
-  if (applied.includes("key-centers")) drawKeyCenters(visualObj);
-  if (applied.includes("chord-skeleton")) drawChordSkeleton(visualObj, { markOutside: applied.includes("outside-chords") });
-  if (applied.includes("outside-chords")) markOutsideChords(visualObj);
+  drawHarmony(visualObj, applied);
   if (progressions.length > 0) drawProgressions(visualObj, progressions);
   if (applied.includes("fingerings")) styleFingerings(notationEl, plan.instrument);
   if (applied.includes("scale-degrees")) styleDegrees(notationEl);
