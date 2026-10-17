@@ -291,9 +291,9 @@ Play the runs **up**, **down**, **up and down**, or voice-led from chord to chor
 
 ## rhythm: Add rhythm and syncopation
 setup: openDrawer, openPractice, practiceOn
-target: .practice-choices--mixes
+target: .practice-choices--patterns
 interactive: true
-**One pattern** keeps a single rhythm throughout, **Syncopated** keeps to pushes and notes on the off-beat, and **Varied** changes the rhythm every two bars. Every fourth bar ends with a rest, so there's always room to breathe.
+Tick one rhythm to keep it all the way through, or several to switch between them every two bars. Each one is written out as a bar of music, so you can see the pushes and off-beat notes before you play them. Every fourth bar ends with a rest, so there's always room to breathe.
 
 ## staff: Play along
 setup: openDrawer, practiceOn

@@ -18,7 +18,7 @@ import { boolPref, enumPref } from "../../lib/core/persisted.js";
 import { INSTRUMENTS } from "../../lib/music/instruments.js";
 import { COMPING_PATTERNS } from "../../lib/music/comping.js";
 import { SOLO_STYLES } from "../../lib/music/solo.js";
-import { PRACTICE_EXERCISES, PRACTICE_RHYTHM_MIXES, PRACTICE_RHYTHMS } from "../../lib/music/practice.js";
+import { PRACTICE_EXERCISES, PRACTICE_RHYTHMS } from "../../lib/music/practice.js";
 
 // The comping Split toggles, in staff order: root, third, fifth.
 export const COMPING_PARTS = ["R", "3", "5"];
@@ -35,6 +35,34 @@ const compingPartsPref = {
   },
   save(parts, write) {
     write(PREF_KEYS.compingParts, parts.map((index) => COMPING_PARTS[index]).join(","));
+  },
+};
+
+/*
+  The practice patterns ticked, stored by value ("charleston,pushes"); null
+  (stored as "") when none are, which plays the exercise's own set. An
+  unknown value (a removed pattern) is dropped. A visitor from before the
+  multi-select has only the old single choice, "rj.practiceRhythm": a
+  pattern (kept as the one ticked), "syncopated" (its syncopated run
+  patterns) or "varied" (nothing ticked).
+*/
+const LEGACY_RHYTHM_KEY = "rj.practiceRhythm";
+const RHYTHM_VALUES = PRACTICE_RHYTHMS.map((r) => r.value);
+function legacyRhythms(old) {
+  if (RHYTHM_VALUES.includes(old)) return [old];
+  if (old === "syncopated") return PRACTICE_RHYTHMS.filter((r) => r.sync && r.run).map((r) => r.value);
+  return null;
+}
+const practiceRhythmsPref = {
+  load(read) {
+    const raw = read(PREF_KEYS.practiceRhythms);
+    if (raw === null || raw === undefined) return legacyRhythms(read(LEGACY_RHYTHM_KEY));
+    const names = new Set(raw.split(","));
+    const values = RHYTHM_VALUES.filter((value) => names.has(value));
+    return values.length > 0 ? values : null;
+  },
+  save(values, write) {
+    write(PREF_KEYS.practiceRhythms, values ? values.join(",") : "");
   },
 };
 
@@ -56,9 +84,8 @@ export const SETTINGS_SLICE = {
     compingParts: compingPartsPref,
     solo: enumPref(PREF_KEYS.solo, ["off", ...SOLO_STYLES.map((s) => s.value)], "off"),
     practice: enumPref(PREF_KEYS.practice, ["off", ...PRACTICE_EXERCISES], "off"),
-    practiceRhythm: enumPref(
-      PREF_KEYS.practiceRhythm, [...PRACTICE_RHYTHM_MIXES, ...PRACTICE_RHYTHMS].map((r) => r.value), "varied",
-    ),
+    // The practice panel's ticked rhythms (null: the exercise's own set).
+    practiceRhythms: practiceRhythmsPref,
   },
 };
 

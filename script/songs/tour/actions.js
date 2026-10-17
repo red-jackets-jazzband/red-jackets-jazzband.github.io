@@ -453,7 +453,7 @@ export function createTourActions(ctx) {
         compingSplit: state.compingSplit,
         compingParts: state.compingParts,
         practice: state.practice,
-        practiceRhythm: state.practiceRhythm,
+        practiceRhythms: state.practiceRhythms,
       },
       fullscreen: document.body.classList.contains(FULLSCREEN_CLASS),
       mixerOpen: Boolean(ctx.mixer.isOpen()),

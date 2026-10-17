@@ -91,11 +91,12 @@ const CELL_BARS = 2;
   The Rhythm dropdown's patterns. `cell` is one bar in eighths: "x" a note
   starts, "-" it holds, "." a rest; a trailing ">" ties the bar's last note
   over the bar line (the next bar's first eighth becomes its continuation).
-  The mixes (PRACTICE_RHYTHM_MIXES) cycle through the exercise's own set
-  (`run` ones for the runs, `long` ones for guide tones) — all of it, or
-  only the `sync` ones: a note on an "and" held over the next beat or bar
-  line, or a beat left out for an offbeat; picking a pattern plays it all
-  the way.
+  The practice panel ticks any number of them (the `practiceRhythms`
+  setting): one plays all the way, several take turns every CELL_BARS bars.
+  Nothing ticked yet means the exercise's own set (`run` ones for the runs,
+  `long` ones for guide tones). `sync` marks a syncopated one: a note on an
+  "and" held over the next beat or bar line, or a beat left out for an
+  offbeat.
 */
 export const PRACTICE_RHYTHMS = [
   { value: "eighths", cell: "xxxxxxxx", run: true, label: tl("practice_rhythm_eighths", "Straight eighths") },
@@ -115,28 +116,15 @@ export const PRACTICE_RHYTHMS = [
 ];
 const RUN_CELLS = PRACTICE_RHYTHMS.filter((r) => r.run).map((r) => r.cell);
 const LONG_CELLS = PRACTICE_RHYTHMS.filter((r) => r.long).map((r) => r.cell);
-const SYNC_CELLS = new Set(PRACTICE_RHYTHMS.filter((r) => r.sync).map((r) => r.cell));
-
-// The Rhythm choices that cycle (every CELL_BARS bars) rather than keep one pattern.
-export const PRACTICE_RHYTHM_MIXES = [
-  {
-    value: "varied",
-    choice: tl("practice_mix_varied", "Varied"),
-    short: tl("practice_rhythm_varied_short", "Varied rhythm"),
-  },
-  {
-    value: "syncopated",
-    choice: tl("practice_mix_syncopated", "Syncopated"),
-    short: tl("practice_rhythm_syncopated_short", "Syncopated rhythm"),
-  },
-];
 
 /*
   What's set, in two parts — { exercise: "Scale runs, Up & down", rhythm:
-  "Syncopated rhythm" } — or null when practice is off. The closed practice
+  "Charleston" } — or null when practice is off. `rhythms` is the
+  practiceRhythms setting: the one pattern's name, "4 rhythms", or "Varied
+  rhythm" for the exercise's own set (null). The closed practice
   control shows them side by side, or stacked on a phone.
 */
-export function practiceSummaryParts(practice, rhythm) {
+export function practiceSummaryParts(practice, rhythms) {
   if (practice === "off") return null;
   const { kind, runs } = splitExercise(practice);
   const found = PRACTICE_KINDS.find((k) => k.value === kind);
@@ -145,17 +133,16 @@ export function practiceSummaryParts(practice, rhythm) {
   const what = found.runs && shape
     ? tl("practice_summary_run", "{kind}, {shape}", { kind: found.name, shape: shape.label })
     : found.name;
-  const mix = PRACTICE_RHYTHM_MIXES.find((m) => m.value === rhythm);
-  const pattern = PRACTICE_RHYTHMS.find((r) => r.value === rhythm);
-  let rhythmName = PRACTICE_RHYTHM_MIXES[0].short;
-  if (mix) rhythmName = mix.short;
-  else if (pattern) rhythmName = pattern.label;
+  const picked = pickedRhythms(rhythms);
+  let rhythmName = tl("practice_rhythm_varied_short", "Varied rhythm");
+  if (picked.length === 1) rhythmName = picked[0].label;
+  else if (picked.length > 1) rhythmName = tl("practice_rhythm_count", "{count} rhythms", { count: picked.length });
   return { exercise: what, rhythm: rhythmName };
 }
 
-// The same as one line: "Scale runs, Up & down · Syncopated rhythm", or "Off".
-export function practiceSummary(practice, rhythm) {
-  const parts = practiceSummaryParts(practice, rhythm);
+// The same as one line: "Scale runs, Up & down · Charleston", or "Off".
+export function practiceSummary(practice, rhythms) {
+  const parts = practiceSummaryParts(practice, rhythms);
   if (parts === null) return tl("practice_summary_off", "Off");
   return tl("practice_summary", "{exercise} · {rhythm}", parts);
 }
@@ -218,7 +205,9 @@ export function rhythmSlots(bars, breaks, cells, breathEvery = 0) {
       const breath = breathEvery > 0 && bar % breathEvery === breathEvery - 1;
       const cell = cells[Math.floor(bar / CELL_BARS) % cells.length];
       let body = cell.slice(0, SLOTS_PER_BAR);
-      if (tieIn && body[0] === "x") body = "-" + body.slice(1);
+      // A tie over the bar line always lands: the next bar's first eighth
+      // continues the note, even when its own pattern opens with a rest.
+      if (tieIn) body = "-" + body.slice(1);
       if (breath) body = body.slice(0, SLOTS_PER_BAR - BREATH_SLOTS) + ".".repeat(BREATH_SLOTS);
       out += body;
       tieIn = !breath && cell.endsWith(">") && !breaks.has(bar + 1) && bar + 1 < bars;
@@ -625,19 +614,29 @@ const EXERCISES = {
   rhythm: { cells: RUN_CELLS, pitches: rhythmPitches },
 };
 
-// The cells an exercise cycles through: its own set, or the one picked.
-function cellsFor(spec, rhythm) {
-  if (rhythm === "syncopated") return spec.cells.filter((cell) => SYNC_CELLS.has(cell));
-  const picked = PRACTICE_RHYTHMS.find((r) => r.value === rhythm);
-  return picked ? [picked.cell] : spec.cells;
+// The ticked patterns (rhythm values, in any order) in PRACTICE_RHYTHMS order.
+function pickedRhythms(rhythms) {
+  return rhythms ? PRACTICE_RHYTHMS.filter((r) => rhythms.includes(r.value)) : [];
+}
+
+// What an exercise kind plays with nothing ticked: its own patterns, as values.
+export function practiceDefaultRhythms(kind) {
+  const spec = EXERCISES[kind];
+  return spec ? PRACTICE_RHYTHMS.filter((r) => spec.cells.includes(r.cell)).map((r) => r.value) : [];
+}
+
+// The cells an exercise takes turns with: the ticked ones, or its own set.
+function cellsFor(spec, rhythms) {
+  const picked = pickedRhythms(rhythms);
+  return picked.length > 0 ? picked.map((r) => r.cell) : spec.cells;
 }
 
 /*
   The exercise's notes over `names` (resolveChordNames' per-bar chord rows),
   as [{ start, duration, midi, leadsUp }] in beats from the first chord bar — the
   shape solo.js's barFragments draws. Empty for an unknown exercise.
-  `rhythm` is a PRACTICE_RHYTHM_MIXES value ("varied", "syncopated") or a
-  PRACTICE_RHYTHMS one to keep all the way;
+  `rhythms` the PRACTICE_RHYTHMS values to take turns with (one: kept all
+  the way; null or none: the exercise's own set);
   `breathEvery` how many bars to a breath (0: none, for the tests); `key`
   the tune's key as a Set of pitch-class chromas, which picks each chord's
   scale tensions (null: the default scales); `tonic` its tonic's chroma, the
@@ -645,7 +644,7 @@ function cellsFor(spec, rhythm) {
   chord holds it (null: no such ending).
 */
 export function practiceNotes(names, exercise, {
-  rhythm = "varied", breathEvery = BREATH_EVERY, key = null, tonic = null,
+  rhythms = null, breathEvery = BREATH_EVERY, key = null, tonic = null,
 } = {}) {
   const { kind, runs } = splitExercise(exercise);
   const spec = EXERCISES[kind];
@@ -655,7 +654,7 @@ export function practiceNotes(names, exercise, {
     if (row.every((name) => name === null)) breaks.add(bar);
   });
   const timeline = chordTimeline(names, key);
-  const notes = onsetsOf(rhythmSlots(names.length, breaks, cellsFor(spec, rhythm), breathEvery))
+  const notes = onsetsOf(rhythmSlots(names.length, breaks, cellsFor(spec, rhythms), breathEvery))
     .map((note) => ({ ...note, at: chordFor(timeline, note) }))
     .filter((note) => note.at);
   const midis = spec.pitches(notes, runs, tonic);
@@ -689,7 +688,7 @@ function createPracticeSpeller(keyScale) {
   tune. `text`, `chords` and `song` are as for buildSoloTune; `text` may
   already carry the Comping / Solo voices. Returns { abc, notes }, or null
   when it can't apply (no chords, no such exercise, an unsupported meter, no
-  K: line). `options` is practiceNotes' { rhythm }.
+  K: line). `options` is practiceNotes' { rhythms }.
 */
 export function buildPracticeTune(text, chords, song, exercise, options = {}) {
   if (!chords || chords.length === 0 || !EXERCISES[splitExercise(exercise).kind]) return null;

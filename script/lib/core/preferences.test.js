@@ -30,7 +30,7 @@ test("PREF_KEYS pins the persisted key names", () => {
     compingParts: "rj.compingParts",
     solo: "rj.solo",
     practice: "rj.practice",
-    practiceRhythm: "rj.practiceRhythm",
+    practiceRhythms: "rj.practiceRhythms",
     sheetAdvanced: "rj.sheetAdvanced",
     inspirationWidth: "rj.inspirationWidth",
     mixerBassVolume: "rj.mixerBassVolume",

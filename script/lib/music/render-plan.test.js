@@ -42,8 +42,8 @@ test("effectiveSheetSettings: comping, solo and practice stay on with the drawer
   }
   assert.equal(effectiveSheetSettings(picked, { booklet: true }).practice, "off");
   assert.deepEqual(
-    effectiveSheetSettings({ ...SETTINGS, practiceRhythm: "pairs" }).practiceOptions,
-    { rhythm: "pairs" },
+    effectiveSheetSettings({ ...SETTINGS, practiceRhythms: ["pairs", "tied"] }).practiceOptions,
+    { rhythms: ["pairs", "tied"] },
   );
 });
 

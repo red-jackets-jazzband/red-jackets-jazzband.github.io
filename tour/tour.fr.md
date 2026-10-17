@@ -182,7 +182,7 @@ Jouez les traits **en montant**, **en descendant**, **en montant puis en descend
 > Jouez une forme sur tout le morceau, puis la suivante.
 
 ## rhythm: Ajouter rythme et syncopes
-**Un motif** garde un même rythme du début à la fin, **Syncopé** s'en tient aux anticipations et aux notes à contretemps, et **Varié** change de rythme toutes les deux mesures. Chaque quatrième mesure finit par un silence, pour avoir toujours le temps de respirer.
+Coche un rythme pour le garder du début à la fin, ou plusieurs pour alterner toutes les deux mesures. Chacun est écrit comme une mesure de musique, pour voir les anticipations et les notes à contretemps avant de les jouer. Chaque quatrième mesure finit par un silence, pour avoir toujours le temps de respirer.
 
 ## staff: Jouer avec
 Lancez la lecture et l'exercice sonne avec le morceau. Dans la console de mixage, c'est une voix à part, **Exercice**, que vous pouvez baisser une fois l'exercice connu, pour le jouer vous-même.

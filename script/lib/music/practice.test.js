@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import ABCJS from "abcjs";
 import {
   buildPracticeTune, joinExercise, practiceNotes, practiceSummary, practiceSummaryParts, PRACTICE_EXERCISES, PRACTICE_KINDS,
-  PRACTICE_RHYTHM_MIXES, PRACTICE_RHYTHMS, PRACTICE_SHAPES, splitExercise,
+  practiceDefaultRhythms, PRACTICE_RHYTHMS, PRACTICE_SHAPES, splitExercise,
   rhythmSlots,
 } from "./practice.js";
 import { buildCompingTune, COMPING_PATTERNS } from "./comping.js";
@@ -73,7 +73,7 @@ test("guide tones step to the nearest 3rd or 7th of the next chord", () => {
 });
 
 test("an enclosure opens each chord and lands on its target: a step above, a half step below", () => {
-  const notes = practiceNotes([["F"], ["C7"]], "enclosures", { rhythm: "eighths" });
+  const notes = practiceNotes([["F"], ["C7"]], "enclosures", { rhythms: ["eighths"] });
   [F_CHORD_TONES, C7_CHORD_TONES].forEach((tones, bar) => {
     const [above, below, target] = notes.filter((n) => Math.floor(n.start / 4) === bar);
     assert.equal(target.start, bar * 4 + 1, "the target is the chord's third note, on a beat");
@@ -87,14 +87,14 @@ test("an enclosure opens each chord and lands on its target: a step above, a hal
 test("an enclosure's target takes the long note: on a long downbeat it's enclosed from the bar before", () => {
   // Three against four: the dotted quarter on 1 is the target, the bar
   // before's last two notes enclose it.
-  const notes = practiceNotes([["F"], ["C7"]], "enclosures", { rhythm: "threefour", breathEvery: 0 });
+  const notes = practiceNotes([["F"], ["C7"]], "enclosures", { rhythms: ["threefour"], breathEvery: 0 });
   const at = notes.findIndex((n) => n.start === 4);
   assert.ok(C7_CHORD_TONES.has(mod12(notes[at].midi)));
   assert.equal(notes[at].duration, 1.5);
   assert.equal(notes[at - 1].midi, notes[at].midi - 1);
   assert.ok(notes[at - 2].midi > notes[at].midi);
   // A Charleston leaves no room before its long note: the target alone.
-  const charleston = practiceNotes([["F"], ["C7"]], "enclosures", { rhythm: "charleston", breathEvery: 0 });
+  const charleston = practiceNotes([["F"], ["C7"]], "enclosures", { rhythms: ["charleston"], breathEvery: 0 });
   const held = charleston.find((n) => n.start === 4);
   assert.ok(C7_CHORD_TONES.has(mod12(held.midi)));
   assert.equal(held.duration, 1.5);
@@ -103,7 +103,7 @@ test("an enclosure's target takes the long note: on a long downbeat it's enclose
 test("scale runs keep chord tones on the beats, whatever the rhythm", () => {
   for (const exercise of PRACTICE_EXERCISES.filter((e) => splitExercise(e).kind === "scales")) {
     for (const rhythm of PRACTICE_RHYTHMS.filter((r) => r.run)) {
-      const notes = practiceNotes([["F"], ["F"], ["F"], ["F"]], exercise, { rhythm: rhythm.value, breathEvery: 0 });
+      const notes = practiceNotes([["F"], ["F"], ["F"], ["F"]], exercise, { rhythms: [rhythm.value], breathEvery: 0 });
       for (const n of notes.filter((note) => Number.isInteger(note.start))) {
         assert.ok(F_CHORD_TONES.has(mod12(n.midi)), `${exercise} ${rhythm.value}: ${n.midi} on beat ${n.start}`);
       }
@@ -113,7 +113,7 @@ test("scale runs keep chord tones on the beats, whatever the rhythm", () => {
 
 test("enclosures: no note before the enclosure plays the target", () => {
   for (const rhythm of PRACTICE_RHYTHMS.filter((r) => r.run)) {
-    const notes = practiceNotes([["F"], ["C7"]], "enclosures", { rhythm: rhythm.value, breathEvery: 0 });
+    const notes = practiceNotes([["F"], ["C7"]], "enclosures", { rhythms: [rhythm.value], breathEvery: 0 });
     const bar = notes.filter((n) => n.start >= 4 && n.start < 8);
     const target = bar.findIndex((n, i) => i >= 2 && bar[i - 1].midi === n.midi - 1);
     for (const n of bar.slice(0, Math.max(0, target - 2))) assert.notEqual(n.midi, bar[target].midi, rhythm.value);
@@ -121,7 +121,7 @@ test("enclosures: no note before the enclosure plays the target", () => {
 });
 
 test("guide tones: the 7th falls a half step onto the next 3rd, on the downbeat", () => {
-  const notes = practiceNotes([["Dm7"], ["G7"], ["C"], ["C"]], "guide", { rhythm: "halves", breathEvery: 0 });
+  const notes = practiceNotes([["Dm7"], ["G7"], ["C"], ["C"]], "guide", { rhythms: ["halves"], breathEvery: 0 });
   const at = (beat) => notes.find((n) => n.start === beat).midi;
   assert.equal(at(4) - at(2), -1, "C (Dm7's 7th) to B (G7's 3rd)");
   assert.equal(at(8) - at(6), -1, "F (G7's 7th) to E (C's 3rd)");
@@ -137,7 +137,7 @@ A8|E8|]
 `;
   withRealTonal(() => {
     const song = ABCJS.parseOnly(minor)[0];
-    const { notes } = buildPracticeTune(minor, chordsOf(["Am"], ["E7"]), song, "scales", { rhythm: "eighths", breathEvery: 0 });
+    const { notes } = buildPracticeTune(minor, chordsOf(["Am"], ["E7"]), song, "scales", { rhythms: ["eighths"], breathEvery: 0 });
     const overE7 = new Set(notes.filter((n) => n.start >= 4).map((n) => mod12(n.midi)));
     assert.ok(overE7.has(5) && overE7.has(0), "F and C");
     assert.ok(!overE7.has(6) && !overE7.has(1), "never F# or C#");
@@ -156,7 +156,7 @@ test("every exercise ends on the key's tonic when the last chord holds it", () =
 });
 
 test("an enclosure's last target is the tonic, enclosed like any other", () => {
-  const notes = practiceNotes([["F"], ["C7"]], "enclosures", { rhythm: "eighths", breathEvery: 0, tonic: 0 });
+  const notes = practiceNotes([["F"], ["C7"]], "enclosures", { rhythms: ["eighths"], breathEvery: 0, tonic: 0 });
   const bar = notes.filter((n) => n.start >= 4);
   assert.equal(mod12(bar[2].midi), 0, "C, the tonic, is C7's root");
   assert.equal(bar[1].midi, bar[2].midi - 1);
@@ -173,6 +173,13 @@ test("a chromatic note leading up is spelled sharp", () => {
 test("a cell ending in > ties its last note into the next bar's chord", () => {
   assert.equal(rhythmSlots(2, new Set(), ["xxxxxx.x>"]), "xxxxxx.x-xxxxx.x");
   assert.equal(rhythmSlots(2, new Set([1]), ["xxxxxx.x>"]), "xxxxxx.x........", "never into a break");
+  // Into a pattern that opens with a rest (Anticipate, then Late start): the
+  // tied note still carries over onto the downbeat.
+  const handover = rhythmSlots(4, new Set(), ["xxxxxx.x>", ".x--x---"]);
+  assert.equal(handover.slice(8, 16), "-xxxxx.x", "bar 2: the anticipation again, tied into from bar 1");
+  assert.equal(handover.slice(16), "-x--x---.x--x---");
+  const notes = practiceNotes([["F"], ["F"], ["F"], ["F"]], "scales", { rhythms: ["anticipate", "late"], breathEvery: 0 });
+  assert.equal(notes.find((n) => n.start === 7.5).duration, 1, "the and of 4 held into bar 3");
   // The fifth cell (bars 9-10) is the anticipated one.
   const names = [...Array.from({ length: 8 }, () => ["F"]), ["F"], ["C7"]];
   const anticipation = practiceNotes(names, "rhythm").find((n) => n.start === 35.5);
@@ -246,12 +253,12 @@ function barRhythms(notes, bars) {
 const EIGHT_BARS = [["F"], ["C7"], ["F"], ["C7"], ["F"], ["C7"], ["F"], ["C7"]];
 
 test("a picked rhythm plays the whole way; varied changes it every two bars", () => {
-  const fixed = barRhythms(practiceNotes(EIGHT_BARS, "arpeggios", { rhythm: "charleston", breathEvery: 0 }), 8);
+  const fixed = barRhythms(practiceNotes(EIGHT_BARS, "arpeggios", { rhythms: ["charleston"], breathEvery: 0 }), 8);
   assert.ok(fixed.every((bar) => bar === "0:3 3:1"), fixed.join(" | "));
   const varied = barRhythms(practiceNotes(EIGHT_BARS, "arpeggios", { breathEvery: 0 }), 8);
   assert.notEqual(varied[0], varied[2]);
   for (const { value } of PRACTICE_RHYTHMS) {
-    assert.ok(practiceNotes(EIGHT_BARS, "guide", { rhythm: value }).length > 0, value);
+    assert.ok(practiceNotes(EIGHT_BARS, "guide", { rhythms: [value] }).length > 0, value);
   }
 });
 
@@ -265,7 +272,7 @@ function shapes(notes) {
 
 test("runs: up, down and up-then-down give every chord the same shape", () => {
   for (const runs of ["up", "down", "updown"]) {
-    const notes = practiceNotes([["F"], ["F"], ["F"], ["F"], ["F"], ["F"], ["F"], ["F"]], `arpeggios-${runs}`, { rhythm: "eighths", breathEvery: 0 });
+    const notes = practiceNotes([["F"], ["F"], ["F"], ["F"], ["F"], ["F"], ["F"], ["F"]], `arpeggios-${runs}`, { rhythms: ["eighths"], breathEvery: 0 });
     // The last bar has no next chord to lead into, so only the others compare.
     const each = shapes(notes).slice(0, -1);
     assert.ok(each.every((shape) => shape === each[0]), `${runs}: ${each.join(" | ")}`);
@@ -274,7 +281,7 @@ test("runs: up, down and up-then-down give every chord the same shape", () => {
 
 test("runs: always up only ever climbs within a bar, always down only falls", () => {
   for (const { runs, sign } of [{ runs: "up", sign: 1 }, { runs: "down", sign: -1 }]) {
-    const notes = practiceNotes(EIGHT_BARS, `scales-${runs}`, { rhythm: "eighths", breathEvery: 0 });
+    const notes = practiceNotes(EIGHT_BARS, `scales-${runs}`, { rhythms: ["eighths"], breathEvery: 0 });
     for (let bar = 0; bar < 8; bar++) {
       const run = notes.filter((n) => Math.floor(n.start / 4) === bar).map((n) => n.midi);
       // One octave drop (or climb) back is allowed when the run reaches the edge of the range.
@@ -286,16 +293,16 @@ test("runs: always up only ever climbs within a bar, always down only falls", ()
 
 test("runs: up-then-down climbs to the octave and back over eight notes", () => {
   // F major's chord tones here are 1 3 5 6: F A C D F' D C A.
-  const arpeggio = practiceNotes([["F"]], "arpeggios-updown", { rhythm: "eighths", breathEvery: 0 }).map((n) => n.midi);
+  const arpeggio = practiceNotes([["F"]], "arpeggios-updown", { rhythms: ["eighths"], breathEvery: 0 }).map((n) => n.midi);
   assert.deepEqual(arpeggio, [65, 69, 72, 74, 77, 74, 72, 69]);
-  const scale = practiceNotes([["F"]], SCALES_UPDOWN, { rhythm: "eighths", breathEvery: 0 }).map((n) => n.midi);
+  const scale = practiceNotes([["F"]], SCALES_UPDOWN, { rhythms: ["eighths"], breathEvery: 0 }).map((n) => n.midi);
   assert.deepEqual(scale, [65, 67, 69, 70, 72, 70, 69, 67]);
 });
 
 test("runs: up-then-down with too few notes per chord goes up one bar, down the next", () => {
   const names = [["F"], ["F"], ["F"], ["F"]];
   for (const exercise of ["arpeggios-updown", SCALES_UPDOWN]) {
-    const notes = practiceNotes(names, exercise, { rhythm: "charleston", breathEvery: 0 });
+    const notes = practiceNotes(names, exercise, { rhythms: ["charleston"], breathEvery: 0 });
     [0, 1, 2, 3].forEach((bar) => {
       const [first, second] = notes.filter((n) => Math.floor(n.start / 4) === bar).map((n) => n.midi);
       if (bar % 2 === 0) {
@@ -313,7 +320,7 @@ test("runs: a fixed shape stays within one octave of a root on the staff", () =>
   const names = [["F"], ["C7"], ["Bb"], ["G7"], ["Eb"], ["Ab"], ["D7"], ["A"]];
   for (const exercise of ["arpeggios", "scales"]) {
     for (const runs of ["up", "down", "updown"]) {
-      const notes = practiceNotes(names, `${exercise}-${runs}`, { rhythm: "eighths", breathEvery: 0 });
+      const notes = practiceNotes(names, `${exercise}-${runs}`, { rhythms: ["eighths"], breathEvery: 0 });
       for (let bar = 0; bar < names.length; bar++) {
         const run = notes.filter((n) => Math.floor(n.start / 4) === bar).map((n) => n.midi);
         const low = Math.min(...run);
@@ -339,7 +346,7 @@ test("runs: always up jumps to the chord's root at every new chord, no voice lea
   const names = [["F"], ["C7"], ["Bb"], ["F", "C7"]];
   const roots = { F: 5, C7: 0, Bb: 10 };
   for (const exercise of ["arpeggios", "scales"]) {
-    const notes = practiceNotes(names, `${exercise}-up`, { rhythm: "eighths" });
+    const notes = practiceNotes(names, `${exercise}-up`, { rhythms: ["eighths"] });
     names.forEach((row, bar) => {
       row.forEach((chord, i) => {
         const first = notes.find((n) => n.start === bar * 4 + i * (4 / row.length));
@@ -360,7 +367,7 @@ test("every 4th bar breathes: at least its last beat is a rest, nothing ties out
   // A note held into the last beat is cut short there.
   assert.equal(rhythmSlots(4, new Set(), ["x--x--x-"], 4).slice(24), "x--x--..");
   for (const value of PRACTICE_EXERCISES) {
-    const notes = practiceNotes(EIGHT_BARS, value, { rhythm: "eighths" });
+    const notes = practiceNotes(EIGHT_BARS, value, { rhythms: ["eighths"] });
     for (const bar of [3, 7]) {
       const end = bar * 4 + 4;
       assert.ok(notes.every((n) => n.start >= end || n.start + n.duration <= end - 1), `${value} bar ${bar}`);
@@ -372,14 +379,14 @@ test("every 4th bar breathes: at least its last beat is a rest, nothing ties out
 
 test("up-then-down turns its last note back towards the next chord, by a scale step", () => {
   // Bb into F7: ... F Eb D then Eb (not C), stepping up towards F.
-  const intoF7 = practiceNotes([["Bb"], ["F7"]], SCALES_UPDOWN, { rhythm: "eighths", breathEvery: 0 });
+  const intoF7 = practiceNotes([["Bb"], ["F7"]], SCALES_UPDOWN, { rhythms: ["eighths"], breathEvery: 0 });
   assert.deepEqual(intoF7.slice(0, 9).map((n) => n.midi), [58, 60, 62, 63, 65, 63, 62, 63, 65]);
   // Into the same chord again the run already steps onto its root: C stays.
-  const again = practiceNotes([["Bb"], ["Bb"]], SCALES_UPDOWN, { rhythm: "eighths", breathEvery: 0 });
+  const again = practiceNotes([["Bb"], ["Bb"]], SCALES_UPDOWN, { rhythms: ["eighths"], breathEvery: 0 });
   assert.equal(again[7].midi, 60);
   // Always up / down keep going their way and jump; G (Bb's 6th) is put off
   // by an F# so it lands on beat 4, not on the "and".
-  const up = practiceNotes([["Bb"], ["F7"]], "scales-up", { rhythm: "eighths", breathEvery: 0 });
+  const up = practiceNotes([["Bb"], ["F7"]], "scales-up", { rhythms: ["eighths"], breathEvery: 0 });
   assert.deepEqual(up.slice(0, 8).map((n) => n.midi), [58, 60, 62, 63, 65, 66, 67, 69]);
 });
 
@@ -390,10 +397,12 @@ function syncopated(cell) {
   return cell.split("").some((mark, i) => mark === "x" && i % 2 === 1 && cell[i + 1] !== "x");
 }
 
-test("Syncopated is a rhythm choice: it cycles only through syncopated patterns", () => {
-  assert.deepEqual(PRACTICE_RHYTHM_MIXES.map((m) => m.value), ["varied", "syncopated"]);
+// The syncopated run patterns, ticked together.
+const SYNC = PRACTICE_RHYTHMS.filter((r) => r.sync && r.run).map((r) => r.value);
+
+test("several ticked rhythms take turns; the syncopated ones are all syncopated", () => {
   for (const value of PRACTICE_EXERCISES) {
-    const notes = practiceNotes(EIGHT_BARS, value, { rhythm: "syncopated", breathEvery: 0 });
+    const notes = practiceNotes(EIGHT_BARS, value, { rhythms: SYNC, breathEvery: 0 });
     assert.ok(notes.length > 0, value);
     // Never a bar of plain on-the-beat eighths.
     assert.ok(!barRhythms(notes, 8).includes("0:1 1:1 2:1 3:1 4:1 5:1 6:1 7:1"), value);
@@ -403,15 +412,30 @@ test("Syncopated is a rhythm choice: it cycles only through syncopated patterns"
   }
   // All six of its patterns come round, two bars at a time (a bar after an
   // anticipation opens with the tied-over note, so it reads differently).
-  const bars = barRhythms(practiceNotes(Array.from({ length: 12 }, () => ["F"]), "scales", { rhythm: "syncopated", breathEvery: 0 }), 12);
+  const bars = barRhythms(practiceNotes(Array.from({ length: 12 }, () => ["F"]), "scales", { rhythms: SYNC, breathEvery: 0 }), 12);
   assert.ok(new Set(bars).size >= 6, bars.join(" | "));
   assert.equal(bars[0], bars[1]);
+});
+
+test("with nothing ticked an exercise plays its own set; ticked ones play in pattern order", () => {
+  const twelve = Array.from({ length: 12 }, () => ["F"]);
+  assert.deepEqual(practiceDefaultRhythms("scales"), PRACTICE_RHYTHMS.filter((r) => r.run).map((r) => r.value));
+  assert.deepEqual(practiceDefaultRhythms("guide"), PRACTICE_RHYTHMS.filter((r) => r.long).map((r) => r.value));
+  assert.deepEqual(practiceDefaultRhythms("nope"), []);
+  assert.deepEqual(
+    practiceNotes(twelve, "scales", { rhythms: null, breathEvery: 0 }),
+    practiceNotes(twelve, "scales", { rhythms: practiceDefaultRhythms("scales"), breathEvery: 0 }),
+  );
+  assert.deepEqual(
+    practiceNotes(twelve, "scales", { rhythms: ["pushes", "charleston"], breathEvery: 0 }),
+    practiceNotes(twelve, "scales", { rhythms: ["charleston", "pushes"], breathEvery: 0 }),
+  );
 });
 
 test("Pushes on the \"and\": the and of 2 held over beat 3, the and of 4 tied over the bar", () => {
   const pushes = PRACTICE_RHYTHMS.find((r) => r.value === "pushes");
   assert.equal(pushes.cell, "xx.x--.x>");
-  const notes = practiceNotes([["F"], ["F"]], "scales", { rhythm: "pushes", breathEvery: 0 });
+  const notes = practiceNotes([["F"], ["F"]], "scales", { rhythms: ["pushes"], breathEvery: 0 });
   assert.deepEqual(notes.slice(0, 4).map((n) => [n.start, n.duration]), [[0, 0.5], [0.5, 0.5], [1.5, 1.5], [3.5, 1]]);
 });
 
@@ -430,15 +454,15 @@ test("the panel's kinds and shapes join into exercise values and back", () => {
 });
 
 test("practiceSummaryParts: the exercise and its rhythm apart, for a phone to stack", () => {
-  assert.equal(practiceSummaryParts("off", "varied"), null);
-  assert.deepEqual(practiceSummaryParts(SCALES_UPDOWN, "halfanticipate"), {
+  assert.equal(practiceSummaryParts("off", null), null);
+  assert.deepEqual(practiceSummaryParts(SCALES_UPDOWN, ["halfanticipate"]), {
     exercise: "Scale runs, Up & down", rhythm: "Half note, anticipate",
   });
 });
 
 test("practiceSummary: one line for the closed control", () => {
-  assert.equal(practiceSummary("off", "varied"), "Off");
-  assert.equal(practiceSummary(SCALES_UPDOWN, "syncopated"), "Scale runs, Up & down · Syncopated rhythm");
-  assert.equal(practiceSummary("arpeggios", "charleston"), "Chord-tone runs, Voice-led · Charleston");
-  assert.equal(practiceSummary("guide", "varied"), "Guide tones · Varied rhythm");
+  assert.equal(practiceSummary("off", null), "Off");
+  assert.equal(practiceSummary(SCALES_UPDOWN, SYNC), `Scale runs, Up & down · ${SYNC.length} rhythms`);
+  assert.equal(practiceSummary("arpeggios", ["charleston"]), "Chord-tone runs, Voice-led · Charleston");
+  assert.equal(practiceSummary("guide", null), "Guide tones · Varied rhythm");
 });
