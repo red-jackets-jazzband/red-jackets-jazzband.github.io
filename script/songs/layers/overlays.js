@@ -11,6 +11,9 @@
   - an outside chord (one with a note outside the key: lib/music/diatonic.js)
     gets a soft magenta shade behind its chord symbol, and, with the Chord
     skeleton on, its out-of-key ghost notes are tinted to match;
+  - a key centre (lib/music/key-centers.js: each key signature's stretch)
+    gets a dim tint behind its staves, one shade
+    per key, with the key's name at its left edge;
   - scale degrees ("\u25CF3", "\u25CB\u266D7": lib/music/scale-degrees.js) lose their
     marker and sit centred under the note, a chord tone inside a magenta
     circle (as in Improvise for Real) and any other note bare;
@@ -22,7 +25,7 @@
 
   Called by sheet.js's paint() right after ABCjs draws, for the live sheet
   and a booklet alike (a booklet's plan simply has no layers on). One module
-  per layer in overlays/ (progression-bands, chord-skeleton, outside-chords, degrees, solfege, fingerings), a
+  per layer in overlays/ (progression-bands, key-centers, chord-skeleton, outside-chords, degrees, solfege, fingerings), a
   shared svg.js, and viewbox.js for the chord-letter clipping; the
   arithmetic is in lib/music/layer-geometry.js.
 */
@@ -33,6 +36,7 @@ import { styleSolfege } from "./overlays/solfege.js";
 import { styleFingerings } from "./overlays/fingerings.js";
 import { markOutsideChords } from "./overlays/outside-chords.js";
 import { drawChordSkeleton } from "./overlays/chord-skeleton.js";
+import { drawKeyCenters } from "./overlays/key-centers.js";
 import { uncropChords } from "./overlays/viewbox.js";
 
 export function decorateLayers(notationEl, visualObj, plan) {
@@ -40,6 +44,7 @@ export function decorateLayers(notationEl, visualObj, plan) {
   const applied = plan.layersApplied || [];
   const progressions = plan.progressions || [];
   if (applied.length > 0 || progressions.length > 0) uncropChords(notationEl);
+  if (applied.includes("key-centers")) drawKeyCenters(visualObj);
   if (applied.includes("chord-skeleton")) drawChordSkeleton(visualObj, { markOutside: applied.includes("outside-chords") });
   if (applied.includes("outside-chords")) markOutsideChords(visualObj);
   if (progressions.length > 0) drawProgressions(visualObj, progressions);

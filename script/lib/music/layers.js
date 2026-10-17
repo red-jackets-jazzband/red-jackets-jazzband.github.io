@@ -29,6 +29,7 @@
 */
 import { fingeringGlyphs, instrumentHasFingerings, melodyFingerings } from "./fingerings.js";
 import { PROGRESSION_NAMES, findNamedProgressions, progressionLabel } from "./progressions.js";
+import { keyCenterText, keyCenters } from "./key-centers.js";
 import { degreeText, melodyDegrees } from "./scale-degrees.js";
 import { melodySolfege, solfegeLabel, solfegeText } from "./solfege.js";
 import { listOf, tl } from "../core/i18n.js";
@@ -77,6 +78,18 @@ export const LAYERS = [
     appliesTo: () => true,
     // Drawn as SVG after ABCjs engraves (songs/layers/overlays/outside-chords.js).
     annotate: () => [],
+  },
+  {
+    id: "key-centers",
+    group: tl("layers_group_harmony", "Harmony"),
+    label: tl("layer_key_centers_label", "Key centres"),
+    hint: tl("layer_key_centers_hint", "Tints each stretch of the tune by the key signature it is written in — a part in the minor, a modulation — and names the key where it starts."),
+    order: 7,
+    availableFor: () => true,
+    appliesTo: () => true,
+    // The tints are drawn as SVG after ABCjs engraves
+    // (songs/layers/overlays/key-centers.js); only the names are annotations.
+    annotate: (song) => keyCenters(song).map((stretch) => ({ startChar: stretch.startChar, text: `_${keyCenterText(stretch)}` })),
   },
   {
     id: "scale-degrees",
