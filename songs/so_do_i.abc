@@ -1,27 +1,24 @@
 X:1
 T:So Do I
 C:Ian Grant, Hans Fritz & Theo Mackeben
-M:2/2
+F:https://youtu.be/nzM_jT_rBUM
+F:https://secondhandsongs.com/work/142912
+M:4/4
 L:1/4
 Q:1/4=200
-W:Four-bar piano introduction before the vocal pick-up. Melody is the top (vocal) line.
-F:https://secondhandsongs.com/work/142912
-K:Gmaj clef=treble
-D d || "D7" c2 B d | c2 d B | A4- | A2 D e |
-w:You like | mu-sic that | swings, so do | I  | _ You like
-w:You like | dreams can come | true, so do | I  | _ You like
-"G" d2  ^c e | d2  e c | B4- | "G7" B2 c d |
-w:flow'rs in the | spring, so do | I  | _ And you
-w:dates just for | two, so do | I  | _ And you
-"C" e e "Am7" c/2 B A/2 | "D7" A2 B c | "G" d d "B7" B A | "Em7" G4- |
-w:like to run a-round | _ with your | feet way off the | ground
-w:love St. Pet-er's Rome | _ with the | moon-light on the | dome
-"Em" G2 "Em7" E G | "A7" B2 E G | B2 A G | "D7" A4- |
-w:_ and to | feel love is | real, so do | I 
-w:_ stand-ing | there, you just | stare, so do | I 
- "D7"A2 D d | c2 B d |  c2  d B | A4- |
-w:_ You like | Jazz more than | Liszt, so do | I 
-w:_ You like | driv-ing thro' | France, so do | I 
- "D7"A2 D e | "G" d2  ^c e |  d2 e c |
-w:_ And you | like to be | kissed, so do
-w:_ New Year's | Eve at a | dance, so do
+K:Eb
+B,B |: [P:A]"Bb7"A2 G B | A2 G G/F/- | F4- | F z B, c | "Eb"B2 A c | B2 c A/G/- |
+w:You like mu-sic that swings, so do I _ _ You like flow'rs in the spring, so do I
+"Eb"G4- | "Ebdim"G z A B | "Ab"c2 A G | "Abm"F2 G A | "Eb"B B "G7"G F/E/- | "Cm"E2 C E/G/- |
+w:_ _ And you like to run a-round with your feet off the ground _ And to feel
+"F7"G2 C E/G/- | G2 F/E F/- | "Bb7"F4- | F z B, B ||
+w:_ life is real _ so do I _ _ You like
+P:B
+"Bb7"A2 G B | A2 G G/F/- | F4- | F z B, c |
+w:Jazz more than Liszt, so do I _ _ And you
+"Eb"B2 A c | B2 c A/G/- | G4- | G z A B |
+w:like to be kissed, so do I _ _ So it
+"Ab"c2 e c | "Abm"F2 E F | "Eb"G B "G7"d/B c/- | "C7"c2 C B |
+w:must be plain to see that~you've got-ta mar-ry me _ And as
+"F7"A2 B/G F/- | "Bb7"F2 G B |[1 "Eb"e4- | e z z/B,/C3/4D/4 :|[2 "Eb"e4- | e z z2 |]
+w:you say I do _ so do I _ * * * I _

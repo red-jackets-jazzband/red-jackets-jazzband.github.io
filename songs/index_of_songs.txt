@@ -151,6 +151,7 @@ Shine on me,shine_on_me.abc
 Sing On,sing_on.abc
 Sister Kate,sister_kate.abc
 Skokiaan,skokiaan.abc
+So Do I,so_do_i.abc
 Some of these Days,some_of_these_days.abc
 South,south.abc
 South Rampart Street Parade,south_rampart_street_parade.abc
