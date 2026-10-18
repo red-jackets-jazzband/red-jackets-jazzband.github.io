@@ -371,15 +371,23 @@ function deferredSetup() {
   return { page, ctx, print: createSetlistPrint(ctx), reads, renders, engraved };
 }
 
-test("staves are engraved after the build, not inside the read callbacks", async () => {
+test("staves aren't engraved until a songbook is printed", async () => {
   const { print, renders, engraved, page } = deferredSetup();
   try {
+    window.print = () => {};
     withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
     await flush();
     assert.equal(renders.length, 3);
     assert.ok(renders.every((r) => r.opts && r.opts.deferEngrave === true));
-    // Idle slices (a timeout where there's no requestIdleCallback) drain them.
+    // Engraving blocks the main thread, so nothing draws in the background.
     await new Promise((resolve) => { setTimeout(resolve, 400); });
+    assert.equal(engraved.length, 0);
+    print.print("setlist");
+    print.print("chordbook");
+    await new Promise((resolve) => { setTimeout(resolve, 100); });
+    assert.equal(engraved.length, 0, "only the songbook shows staves");
+    print.print("songbook");
+    await new Promise((resolve) => { setTimeout(resolve, 100); });
     assert.equal(engraved.length, 3);
   } finally {
     page.cleanup();
@@ -408,9 +416,11 @@ test("Print songbook waits for the staves; Print chordbook does not", async () =
 test("a rebuild re-attaches the finished blocks, renumbered, without reading or drawing again", async () => {
   const { print, reads, renders, engraved, page } = deferredSetup();
   try {
+    window.print = () => {};
     withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
     await flush();
-    await new Promise((resolve) => { setTimeout(resolve, 400); });
+    print.print("songbook");
+    await new Promise((resolve) => { setTimeout(resolve, 100); });
     const readsBefore = reads.length;
     assert.equal(engraved.length, 3);
 
@@ -428,6 +438,21 @@ test("a rebuild re-attaches the finished blocks, renumbered, without reading or 
   }
 });
 
+test("a rebuild from the cache still fills the stage list's keys and tempos", async () => {
+  const { print, page } = deferredSetup();
+  try {
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
+    await flush();
+    // e.g. the setlist view re-rendering when a song in it is opened
+    withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
+    assert.equal(document.getElementById("setlistStageConcert-1").textContent, "B♭");
+    assert.equal(document.getElementById("setlistStageConcert-2").textContent, "G"); // F + 2
+    assert.equal(document.getElementById("setlistStageTempo-2").textContent, "90");
+  } finally {
+    page.cleanup();
+  }
+});
+
 test("changing a song's key redoes only that song", async () => {
   const { print, renders, page } = deferredSetup();
   try {
@@ -437,7 +462,6 @@ test("changing a song's key redoes only that song", async () => {
     withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", changed, ""));
     await flush();
     assert.equal(renders.length, 4, "one more pass, for the song with the new key");
-    await new Promise((resolve) => { setTimeout(resolve, 400); }); // let the idle drain finish
   } finally {
     page.cleanup();
   }
@@ -448,7 +472,6 @@ test("clearCache plus the song texts' clear makes the next build re-read and red
   try {
     withAbcjs(createAbcjsStub(), () => print.buildBooklet("Gig", SONGS, ""));
     await flush();
-    await new Promise((resolve) => { setTimeout(resolve, 400); });
     const readsBefore = reads.length;
     // What opening a setlist does (setlists/view.js's dropBookletCache).
     ctx.songTexts.clear();
@@ -457,7 +480,6 @@ test("clearCache plus the song texts' clear makes the next build re-read and red
     await flush();
     assert.equal(reads.length, readsBefore + 2, "a.abc and b.abc, once each");
     assert.equal(renders.length, 6);
-    await new Promise((resolve) => { setTimeout(resolve, 400); });
   } finally {
     page.cleanup();
   }

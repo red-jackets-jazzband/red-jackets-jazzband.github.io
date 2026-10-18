@@ -717,12 +717,14 @@ export function createMixer(ctx) {
     range.addEventListener("change", applyNow);
   }
 
-  // A plain preference flip, applied at once like Pattern — full re-engrave
-  // is the only way to hand the new soundFontUrl to a fresh SynthController
-  // (see audio-player.js's initForTune), so there's nothing to debounce here.
+  // A plain preference flip, applied at once. Like a mute it only changes
+  // what's heard (MIX_ONLY): the player hands the new soundFontUrl to the
+  // loaded SynthController (audio/player.js's remix — every re-prime builds a
+  // fresh CreateSynth from the controller's options), so the sheet isn't
+  // re-engraved.
   function wireQuality() {
     on("mixerHighQualityToggleBtn", "click", () => {
-      ctx.store.set("mixer", { highQualityAudio: !ctx.state.highQualityAudio }, BACKGROUND);
+      ctx.store.set("mixer", { highQualityAudio: !ctx.state.highQualityAudio }, MIX_ONLY);
       updateQualityToggleVisual();
     });
   }

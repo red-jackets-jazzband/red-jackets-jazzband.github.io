@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountSvg } from "../../../../tests/helpers/svg-layout.js";
-import { decorateLayers } from "./overlays.js";
+import { decorateLayers, layerSteps } from "./overlays.js";
 
 // A line with a chord letter poking above its viewBox, a fingering and a
 // scale degree under two notes.
@@ -73,4 +73,24 @@ test("a trombone's positions are not drawn as valves", () => {
 test("a missing notation element or visual object is a no-op", () => {
   assert.doesNotThrow(() => decorateLayers(null, VISUAL_OBJ, { layersApplied: ["fingerings"] }));
   assert.doesNotThrow(() => decorateLayers({}, null, { layersApplied: ["fingerings"] }));
+});
+
+test("layerSteps: one step per switched-on layer (plus the viewBox fix), none with every layer off", () => {
+  const plan = { layersApplied: ["fingerings", "scale-degrees", "solfege"], progressions: [], instrument: "trumpet" };
+  assert.equal(layerSteps({}, VISUAL_OBJ, plan).length, 4);
+  assert.deepEqual(layerSteps({}, VISUAL_OBJ, { layersApplied: [], progressions: [] }), []);
+  assert.deepEqual(layerSteps(null, VISUAL_OBJ, plan), []);
+});
+
+test("running the steps one by one draws the same as decorateLayers", () => {
+  const plan = { layersApplied: ["fingerings", "scale-degrees"], progressions: [], instrument: "trumpet" };
+  const whole = run(plan);
+  const split = mountSvg(LINE, { viewBox: VIEW });
+  try {
+    layerSteps(split.notation, VISUAL_OBJ, plan).forEach((step) => step());
+    assert.equal(split.notation.innerHTML, whole.notation.innerHTML);
+  } finally {
+    split.page.cleanup();
+    whole.page.cleanup();
+  }
 });

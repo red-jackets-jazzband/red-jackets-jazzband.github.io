@@ -574,6 +574,30 @@ test("openPersonal still renders the setlist when the song index fails to load",
   }
 });
 
+test("openBand: a slower earlier pick doesn't open over the band setlist picked since", () => {
+  const page = mountPage();
+  const loads = {};
+  const ctx = makeCtx({
+    songName: (f) => f.replace(".abc", ""),
+    setlistData: { loadBand: (file, onLoad) => { loads[file] = onLoad; }, ensureSongsLoaded: (cb) => cb() },
+    setlistHome: { show: () => {}, render: () => {} },
+    setlistModal: { init: () => {} },
+    setlistPrint: { buildBooklet: () => {}, print: () => {} },
+    sheet: { render: () => {}, renderFromFile: () => {} },
+  });
+  const view = createSetlistView(ctx);
+  try {
+    view.openBand("first.txt", "First");
+    view.openBand("second.txt", "Second");
+    loads["second.txt"]({ name: "Second", songs: [{ file: "b.abc", key: "" }], desc: "" });
+    loads["first.txt"]({ name: "First", songs: [{ file: "a.abc", key: "" }, { file: "c.abc", key: "" }], desc: "" });
+    assert.equal(ctx.state.currentOpenSetlistName, "Second");
+    assert.equal(document.querySelectorAll(".setlist-song-row").length, 1);
+  } finally {
+    page.cleanup();
+  }
+});
+
 // Open a personal setlist of three songs (a/b/c), already rendered.
 function openThreeSongSetlist() {
   const result = setup({

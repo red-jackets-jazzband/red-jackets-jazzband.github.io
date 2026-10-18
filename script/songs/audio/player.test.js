@@ -1278,6 +1278,30 @@ test("a Mixer mute re-primes the loaded synth in place, never loading a new tune
   }
 });
 
+test("switching the soundfont re-primes the loaded synth with the new soundFontUrl, never loading a new tune", async () => {
+  const { ctx, audio, cleanup } = setup({ highQualityAudio: false });
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    const tune = { metaText: {}, formatting: { midi: {} } };
+    withAbcjs(abcjs, () => audio.initForTune(tune));
+    await flush();
+    const ctrl = abcjs.calls.synthControllers.at(-1);
+    const standardUrl = ctrl.options.soundFontUrl;
+    withAbcjs(abcjs, () => audio.playPause());
+    await flush();
+    const setTunes = abcjs.calls.setTune.length;
+
+    withAbcjs(abcjs, () => ctx.store.set("mixer", { highQualityAudio: true }, MIX_ONLY));
+    await flush();
+    assert.notEqual(ctrl.options.soundFontUrl, standardUrl);
+    assert.equal(abcjs.calls.setWarp.length, 1, "re-primed in place");
+    assert.equal(abcjs.calls.setTune.length, setTunes, "no new tune");
+    assert.equal(abcjs.calls.synthControllers.length, 1);
+  } finally {
+    cleanup();
+  }
+});
+
 function setupRemix() {
   const env = setup({ mixerVoices: [{ id: "1", index: 0, label: "Melody", muted: false }] });
   const abcjs = createAbcjsStub({ audioSupported: true });

@@ -269,6 +269,26 @@ test("a booklet render never touches ctx.state.instrumentVoices or calls ctx.mix
   }
 });
 
+test("renderFromFile: a slower earlier read doesn't replace the song opened since", () => {
+  const page = mountPage();
+  const abcjs = createAbcjsStub();
+  const reads = {};
+  const ctx = makeCtx({ readFile: (path, onLoad) => { reads[path] = onLoad; } });
+  const sheet = createSheet(ctx);
+  try {
+    withAbcjs(abcjs, () => {
+      sheet.renderFromFile("a.abc");
+      sheet.renderFromFile("b.abc");
+      reads["/songs/b.abc"]("X:1\nT:Song B\nK:C\nC8|");
+      reads["/songs/a.abc"]("X:1\nT:Song A\nK:C\nC8|");
+    });
+    assert.equal(abcjs.calls.renderAbc.length, 1);
+    assert.match(ctx.state.currentSongText, /Song B/);
+  } finally {
+    page.cleanup();
+  }
+});
+
 test("rerender re-engraves the stored (clef-adjusted) song text", () => {
   const { ctx, abcjs, sheet, cleanup } = setup();
   try {

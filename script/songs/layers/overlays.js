@@ -43,23 +43,39 @@ import { drawKeyCenters } from "./overlays/key-centers.js";
 import { drawRomanNumerals } from "./overlays/roman-numerals.js";
 import { uncropChords } from "./overlays/viewbox.js";
 
-// The Harmony group's layers, all drawn from the engraved tune.
-function drawHarmony(visualObj, applied) {
-  if (applied.includes("key-centers")) drawKeyCenters(visualObj);
-  if (applied.includes("chord-skeleton")) drawChordSkeleton(visualObj, { markOutside: applied.includes("outside-chords") });
-  // Numerals first, so an outside chord's shade takes in its numeral too.
-  if (applied.includes("roman-numerals")) drawRomanNumerals(visualObj);
-  if (applied.includes("outside-chords")) markOutsideChords(visualObj);
+// Each layer's overlay, in drawing order: the Harmony group's layers first,
+// all drawn from the engraved tune — numerals before outside chords, so an
+// outside chord's shade takes in its numeral too — then the annotations.
+const LAYER_OVERLAYS = [
+  ["key-centers", ({ visualObj }) => drawKeyCenters(visualObj)],
+  ["chord-skeleton", ({ visualObj, on }) => drawChordSkeleton(visualObj, { markOutside: on("outside-chords") })],
+  ["roman-numerals", ({ visualObj }) => drawRomanNumerals(visualObj)],
+  ["outside-chords", ({ visualObj }) => markOutsideChords(visualObj)],
+  ["progressions", ({ visualObj, plan }) => drawProgressions(visualObj, plan.progressions)],
+  ["fingerings", ({ notationEl, plan }) => styleFingerings(notationEl, plan.instrument)],
+  ["scale-degrees", ({ notationEl }) => styleDegrees(notationEl)],
+  ["solfege", ({ notationEl }) => styleSolfege(notationEl)],
+];
+
+/*
+  The switched-on layers' overlays as separate steps, in drawing order, so a
+  background render (sheet.js) can run each as its own task and the page
+  answers taps between them; decorateLayers runs them back to back. Each
+  layer measures before it writes, so splitting them adds no layout passes.
+*/
+export function layerSteps(notationEl, visualObj, plan) {
+  if (!notationEl || !visualObj) return [];
+  const applied = plan.layersApplied || [];
+  const hasProgressions = (plan.progressions || []).length > 0;
+  const on = (id) => (id === "progressions" ? hasProgressions : applied.includes(id));
+  const args = { notationEl, visualObj, plan, on };
+  const steps = LAYER_OVERLAYS
+    .filter(([id]) => on(id))
+    .map(([, draw]) => () => draw(args));
+  if (applied.length > 0 || hasProgressions) steps.unshift(() => uncropChords(notationEl));
+  return steps;
 }
 
 export function decorateLayers(notationEl, visualObj, plan) {
-  if (!notationEl || !visualObj) return;
-  const applied = plan.layersApplied || [];
-  const progressions = plan.progressions || [];
-  if (applied.length > 0 || progressions.length > 0) uncropChords(notationEl);
-  drawHarmony(visualObj, applied);
-  if (progressions.length > 0) drawProgressions(visualObj, progressions);
-  if (applied.includes("fingerings")) styleFingerings(notationEl, plan.instrument);
-  if (applied.includes("scale-degrees")) styleDegrees(notationEl);
-  if (applied.includes("solfege")) styleSolfege(notationEl);
+  layerSteps(notationEl, visualObj, plan).forEach((step) => step());
 }

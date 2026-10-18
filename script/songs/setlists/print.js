@@ -56,10 +56,14 @@ function coverPage(name, desc) {
   ]);
 }
 
-// Engraving is the slow part of a booklet, so it never runs in a read's
-// callback: one song per idle slice (requestIdleCallback where there is one —
-// Safari has none — else a short timeout), or back to back with a progress
-// line while a "Print songbook" is waiting on it.
+// Engraving is the slow part of a booklet (ABCjs, one main-thread task of
+// up to half a second a song on a slow device), so it only runs once a
+// "Print songbook" asks for the staves: back to back, a song per task, with a
+// progress line. Drawing them in the background whenever a setlist opened
+// froze taps and scrolling for seconds on end. Once started, a drain the
+// songbook stops waiting on (another print picked meanwhile) finishes in idle
+// slices (requestIdleCallback where there is one — Safari has none — else a
+// short timeout).
 const IDLE_GAP_MS = 40;
 
 function defer(fn, urgent) {
@@ -123,8 +127,8 @@ export function createSetlistPrint(ctx) {
   //               and engraved), its title, key/bpm meta and listen sources.
   //               A rebuild re-attaches these blocks, renumbered, instead of
   //               engraving them again; only changed songs cost anything.
-  // The staves themselves are engraved off the click path (engraveQueue, one
-  // song per idle slice), and only "Print songbook" shows them. The .abc
+  // The staves themselves are only engraved for a "Print songbook", the one
+  // form that shows them (engraveQueue, one song per task). The .abc
   // texts come from the page's shared store (ctx.songTexts), so a rebuild
   // doesn't re-read them and the rows' key badges don't fetch them again.
   const songCache = new Map();
@@ -344,10 +348,12 @@ export function createSetlistPrint(ctx) {
     defer(() => drainSlice(seq, token), waitingMode === "songbook");
   }
 
+  // Queued, not drawn: print("songbook") starts the drain. A song whose read
+  // lands while a songbook is already waiting joins the running one.
   function enqueueEngrave(record) {
     if (record.engraved) return;
     engraveQueue.push(record);
-    startDrain();
+    if (onBookletReady && waitingMode === "songbook") startDrain();
   }
 
   function songCacheKey(entry, occurrence) {
@@ -379,20 +385,22 @@ export function createSetlistPrint(ctx) {
     enqueueEngrave(record);
   }
 
-  // A song already engraved for this key + instrument: re-attach it.
-  function reuseSong(entry, record) {
+  // A song already engraved for this key + instrument: re-attach it. Its
+  // key/tempo meta is filled by buildBooklet once the stage list exists
+  // (reusedMeta) — filling it here, synchronously, would find no cells yet.
+  function reuseSong(entry, record, reusedMeta) {
     const n = entry.songCount;
     stampIds(record.parts, entry);
     if (record.baseTitle) record.parts.title.textContent = `${entry.displayNumber}. ${record.baseTitle}`;
-    fillSongMeta(n, record.meta);
+    reusedMeta.push({ n, meta: record.meta });
     listenSongs[n - 1] = { title: ctx.songName(entry.item.file), sources: record.sources };
     enqueueEngrave(record);
     return record.parts.block;
   }
 
-  function songBlock(entry, seq, cacheKey) {
+  function songBlock(entry, seq, cacheKey, reusedMeta) {
     const cached = songCache.get(cacheKey);
-    if (cached) return reuseSong(entry, cached);
+    if (cached) return reuseSong(entry, cached, reusedMeta);
 
     const parts = songParts();
     stampIds(parts, entry);
@@ -452,6 +460,7 @@ export function createSetlistPrint(ctx) {
 
     const occurrences = new Map();
     const usedKeys = new Set();
+    const reusedMeta = [];
     songTotal = 0;
     walkSetlist(songs).entries.forEach((entry) => {
       if (entry.kind === "set-heading") {
@@ -464,7 +473,7 @@ export function createSetlistPrint(ctx) {
       const cacheKey = songCacheKey(entry, occurrence);
       usedKeys.add(cacheKey);
       songTotal += 1;
-      container.append(songBlock(entry, seq, cacheKey));
+      container.append(songBlock(entry, seq, cacheKey, reusedMeta));
     });
     // Blocks of songs no longer in the list (or at another key) are dropped.
     Array.from(songCache.keys()).forEach((key) => {
@@ -475,6 +484,7 @@ export function createSetlistPrint(ctx) {
     // Appended after the (hidden-in-setlist-mode) chart stack: for "Print
     // setlist" the stack collapses and this lands right under the front matter.
     appendStageList(container, songs);
+    reusedMeta.forEach(({ n, meta }) => fillSongMeta(n, meta));
 
     // A rebuild (e.g. instrument change) with a print still queued: keep
     // counting against the fresh read total, or release the print now if the
@@ -498,13 +508,13 @@ export function createSetlistPrint(ctx) {
       setPrintProgress(mode);
       return;
     }
-    // Only the songbook shows the staves; chordbook and setlist never wait
-    // for them.
+    // Only the songbook shows the staves, so only it draws them (see defer);
+    // chordbook and setlist never wait for them.
     if (mode === "songbook" && engraveQueue.length > 0) {
       waitingMode = mode;
       onBookletReady = () => print(mode);
       setPrintProgress(mode);
-      startDrain(true); // at full speed from here
+      startDrain(true);
       return;
     }
     setPrintProgress(null);

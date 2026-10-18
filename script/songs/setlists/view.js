@@ -204,9 +204,16 @@ export function createSetlistView(ctx) {
     if (typeof ctx.setlistPrint.clearCache === "function") ctx.setlistPrint.clearCache();
   }
 
+  // Opening a setlist waits on a read (its .txt, or the song index); a
+  // slower earlier pick must not open over the setlist picked since.
+  let setlistOpenSeq = 0;
+
   function openBand(file, fallbackName, afterRender) {
     dropBookletCache();
+    setlistOpenSeq += 1;
+    const seq = setlistOpenSeq;
     ctx.setlistData.loadBand(file, (setlist) => {
+      if (seq !== setlistOpenSeq) return;
       ctx.nav.enterSetlist({ id: String(file).replace(/\.txt$/, "") });
       renderOpen(setlist.name || fallbackName, setlist.songs, null, setlist.desc);
       if (afterRender) afterRender();
@@ -219,8 +226,11 @@ export function createSetlistView(ctx) {
     const entry = getPersonalSetlist(ctx.storage(), id);
     if (!entry) return;
     dropBookletCache();
+    setlistOpenSeq += 1;
+    const seq = setlistOpenSeq;
     ctx.nav.enterSetlist({ id, personalId: id });
     const open = () => {
+      if (seq !== setlistOpenSeq) return;
       renderOpen(entry.name, entry.songs, entry, entry.desc);
       if (afterRender) afterRender();
     };

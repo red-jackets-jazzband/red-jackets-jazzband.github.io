@@ -614,7 +614,7 @@ test("loadSwingState falls back to the default on a corrupted (non-numeric) stor
   }
 });
 
-test("clicking the Quality toggle flips ctx.state.highQualityAudio, persists it, updates the button, and re-renders at once", () => {
+test("clicking the Quality toggle flips ctx.state.highQualityAudio, persists it, updates the button, and doesn't re-engrave the sheet", () => {
   const { ctx, rerenders, cleanup } = setup();
   try {
     const btn = document.getElementById("mixerHighQualityToggleBtn");
@@ -626,7 +626,7 @@ test("clicking the Quality toggle flips ctx.state.highQualityAudio, persists it,
     assert.equal(btn.getAttribute(ARIA_PRESSED), "true");
     assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-wave-square"), true);
     assert.equal(btn.title, "Disable high quality audio");
-    assert.equal(rerenders.length, 1);
+    assert.equal(rerenders.length, 0, "a soundfont change only reaches the synth");
     assert.equal(window.localStorage.getItem("rj.highQualityAudio"), "1");
 
     btn.dispatchEvent(new window.Event("click"));
@@ -635,7 +635,7 @@ test("clicking the Quality toggle flips ctx.state.highQualityAudio, persists it,
     assert.equal(btn.getAttribute(ARIA_PRESSED), "false");
     assert.equal(btn.querySelector(".fa-solid").classList.contains("fa-wave-square"), true);
     assert.equal(btn.title, "Enable high quality audio");
-    assert.equal(rerenders.length, 2);
+    assert.equal(rerenders.length, 0);
     assert.equal(window.localStorage.getItem("rj.highQualityAudio"), "0");
   } finally {
     window.localStorage.clear();

@@ -14,7 +14,7 @@ import { parseInspirationLinks } from "../../lib/media/inspiration-links.js";
 import { renderChordTable, scanRepeatBoundaries, fitChordTable, fitSongForms } from "./chord-table.js";
 import { stylePartMarkers, keepPartsTogether, applyCompingColors, applySplitCompingColors } from "./decorations.js";
 import { updateIrealProLink } from "./irealpro-link.js";
-import { decorateLayers } from "../layers/overlays.js";
+import { layerSteps } from "../layers/overlays.js";
 import { RENDER, isBackgroundWrite, isMixOnlyWrite, isRenderWrite } from "../core/state.js";
 import { tl } from "../../lib/core/i18n.js";
 
@@ -242,20 +242,30 @@ function engraveInto(plan, renderText, notationEl) {
 
 // Everything drawn onto ABCjs's output: comping colours, the layers, the
 // boxed part markers. Measures too, so the same rule as engraveInto holds.
-function decorateNotation(plan, visualObj, notationEl, voices) {
-  colorComping(notationEl, plan.comping, voices);
-  decorateLayers(notationEl, visualObj, plan);
+// What follows ABCjs's drawing, as steps: the comping colours, one step per
+// switched-on layer, then the part markers. A background render runs each
+// as its own task; decorateNotation runs them back to back.
+function decorateSteps(plan, visualObj, notationEl, voices) {
+  return [
+    () => colorComping(notationEl, plan.comping, voices),
+    ...layerSteps(notationEl, visualObj, plan),
+    () => {
+      notationEl.querySelectorAll(".abcjs-title, .abcjs-part-order").forEach((node) => {
+        node.setAttribute("display", "none");
+      });
+      stylePartMarkers(notationEl);
+      keepPartsTogether(notationEl);
+    },
+  ];
+}
 
-  notationEl.querySelectorAll(".abcjs-title, .abcjs-part-order").forEach((node) => {
-    node.setAttribute("display", "none");
-  });
-  stylePartMarkers(notationEl);
-  keepPartsTogether(notationEl);
+function decorateNotation(plan, visualObj, notationEl, voices) {
+  decorateSteps(plan, visualObj, notationEl, voices).forEach((step) => step());
 }
 
 // Both of the above, in place — the notation container is an element id (the
-// live sheet) or the element itself (a booklet song, engraved later in idle
-// time, by which point its id may have moved).
+// live sheet) or the element itself (a booklet song, engraved later — when a
+// songbook is printed — by which point its id may have moved).
 function engraveNotation(plan, renderText, notation, voices) {
   const notationEl = typeof notation === "string" ? byId(notation) : notation;
   const visualObj = engraveInto(plan, renderText, notationEl);
@@ -349,9 +359,11 @@ function paint(plan, renderText, targets, { titlePrefix = "", voices = [] } = {}
   Mixer's render-affecting keys) — so a control only has to write the store.
 */
 // Mixer keys that change the render text or the synth's construction
-// (soundfont, swing, voicesOff), i.e. need a re-engrave. mixerVoices is
-// written by the render itself (syncVoices) as well as by the Mixer.
-const MIXER_RENDER_KEYS = new Set(["mixer", "gchordPattern", "swing", "highQualityAudio", "mixerVoices"]);
+// (swing, voicesOff), i.e. need a re-engrave unless the write is MIX_ONLY.
+// mixerVoices is written by the render itself (syncVoices) as well as by the
+// Mixer. The soundfont (highQualityAudio) isn't one: it only reaches the synth,
+// through the player's remix.
+const MIXER_RENDER_KEYS = new Set(["mixer", "gchordPattern", "swing", "mixerVoices"]);
 // Settings keys that never change the render: opening or closing the
 // More-controls drawer only shows/hides controls (Comping, Solo and Practice
 // stay on with it closed), so it mustn't re-engrave — that would stop playback.
@@ -503,8 +515,8 @@ export function createSheet(ctx) {
 
   /*
     rerender(), without holding the page up: the work is split into steps
-    (plan, engrave, decorate, swap), each its own task, so a click or scroll
-    in between is answered at once; the new sheet is drawn off screen
+    (plan, engrave, each layer's overlay, swap, publish), each its own task,
+    so a click or scroll in between is answered at once; the new sheet is drawn off screen
     (createStaging) and replaces the old one in one go. Starts after the next
     paint, so whatever the caller just showed (a Layers switch's spinner) is
     on screen first. A newer background render, or any ordinary render, takes
@@ -538,14 +550,18 @@ export function createSheet(ctx) {
         job.staging = createStaging(byId(LIVE_TARGETS.notationId));
         visualObj = engraveInto(prepared.plan, prepared.renderText, job.staging.inner);
       },
-      () => decorateNotation(prepared.plan, visualObj, job.staging.inner, prepared.voices),
+      // Known only once engraved: hands back the decorate steps to run next.
+      () => decorateSteps(prepared.plan, visualObj, job.staging.inner, prepared.voices),
       () => {
-        const notationEl = byId(LIVE_TARGETS.notationId);
-        swapInStaging(job.staging, notationEl);
+        swapInStaging(job.staging, byId(LIVE_TARGETS.notationId));
         job.swapped = true;
+      },
+      // Its own task: the browser lays the swapped-in sheet out when it paints
+      // it, so the chord grid's fit here doesn't pay for that layout as well.
+      () => {
         background = null;
         try {
-          publishLive(prepared, visualObj, notationEl);
+          publishLive(prepared, visualObj, byId(LIVE_TARGETS.notationId));
         } finally {
           settleIdle();
         }
@@ -562,7 +578,8 @@ export function createSheet(ctx) {
     const run = (i) => {
       if (job.cancelled || i === steps.length) return;
       try {
-        steps[i]();
+        const more = steps[i]();
+        if (Array.isArray(more)) steps.splice(i + 1, 0, ...more);
       } catch (err) {
         console.warn("Background render failed:", err);
         // Before the swap, draw it the ordinary way instead, so the sheet
@@ -592,7 +609,12 @@ export function createSheet(ctx) {
     });
   }
 
+  // Opening a song (any path) supersedes a renderFromFile read still in
+  // flight: a slow earlier pick must not land over the song now open.
+  let fileLoadSeq = 0;
+
   function render(text, { transposeSemitones = 0 } = {}) {
+    fileLoadSeq += 1;
     ctx.store.set("settings", { transpose: transposeSemitones || 0 }, RENDER);
     renderLive(text, { fresh: true });
   }
@@ -619,7 +641,11 @@ export function createSheet(ctx) {
     rerenderInBackground,
     whenIdle,
     renderFromFile(path) {
-      ctx.readFile(`/songs/${path}`, (text) => render(text));
+      fileLoadSeq += 1;
+      const seq = fileLoadSeq;
+      ctx.readFile(`/songs/${path}`, (text) => {
+        if (seq === fileLoadSeq) render(text);
+      });
     },
     renderIntoBooklet(text, targets, { deferEngrave = false } = {}) {
       const { titlePrefix = "", extraTransposeSteps = 0, ...ids } = targets;
