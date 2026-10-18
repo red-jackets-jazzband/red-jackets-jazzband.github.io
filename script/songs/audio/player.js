@@ -92,6 +92,17 @@ function checkAudioSupport() {
   }
 }
 
+function noop() {}
+
+// fn()'s result as a promise, a synchronous throw included as a rejection.
+function promiseOf(fn) {
+  try {
+    return Promise.resolve(fn());
+  } catch (err) {
+    return Promise.reject(err);
+  }
+}
+
 // Calls fn() and reports {ok: false} if it throws synchronously, instead of
 // letting that throw propagate — shared by tryRepeat()'s own seek() and
 // play() calls, since both need the same "warn and back out" recovery.
@@ -678,15 +689,52 @@ export function createAudioPlayer(ctx) {
     to go through setWarp, which re-primes the MIDI buffer and resumes playback
     itself if it was running.
   */
+  /*
+    One setWarp at a time per controller. ABCjs's setWarp() destroys the
+    timer and builds a new one asynchronously; a second call while the first
+    is still re-priming runs two rebuilds on the same controller at once. The
+    first one's timer is then orphaned but keeps running (and firing note
+    events), and the second reads its start position after the first go() has
+    already reset it to 0, so the play cursor jumped between positions on a
+    quick run of Tempo presses. Every re-prime (a tempo change, a remix) waits
+    for the one before it; runs at once when nothing is in flight.
+  */
+  const warpQueue = { ctrl: null, tail: null, tempoQueued: false };
+
+  function queueWarp(ctrl, task) {
+    if (warpQueue.ctrl !== ctrl) {
+      warpQueue.ctrl = ctrl;
+      warpQueue.tail = null;
+      warpQueue.tempoQueued = false;
+    }
+    const start = () => (ctrl === state.synthController ? task() : undefined);
+    const run = warpQueue.tail
+      ? warpQueue.tail.then(start)
+      : promiseOf(start);
+    const settled = run.then(noop, noop);
+    warpQueue.tail = settled;
+    settled.then(() => {
+      if (warpQueue.tail === settled) warpQueue.tail = null;
+    }).catch(noop);
+    return run;
+  }
+
   function applyTempo() {
     const ctrl = state.synthController;
     if (!ctrl || typeof ctrl.setWarp !== "function") return;
-    Promise.resolve(ctrl.setWarp(bpmToWarpPercent(ctx.state.tempoOverrideBpm, state.nativeQpm)))
-      .then(() => {
-        if (silenceIfStale(ctrl)) return;
-        setIsPlaying(Boolean(ctrl.isStarted));
-      })
-      .catch((err) => console.warn("Tempo change failed:", err));
+    // A tempo change already waiting reads the tempo when it runs, so a burst
+    // of presses re-primes once for all of them.
+    if (warpQueue.ctrl === ctrl && warpQueue.tempoQueued) return;
+    const queued = warpQueue.ctrl === ctrl && warpQueue.tail !== null;
+    queueWarp(ctrl, () => {
+      warpQueue.tempoQueued = false;
+      return Promise.resolve(ctrl.setWarp(bpmToWarpPercent(ctx.state.tempoOverrideBpm, state.nativeQpm)))
+        .then(() => {
+          if (silenceIfStale(ctrl)) return;
+          setIsPlaying(Boolean(ctrl.isStarted));
+        });
+    }).catch((err) => console.warn("Tempo change failed:", err));
+    if (queued) warpQueue.tempoQueued = true;
   }
 
   /*
@@ -717,9 +765,8 @@ export function createAudioPlayer(ctx) {
         .then(() => ctrl.setWarp(ctrl.warp))
         .then(() => ({ wasPlaying, percent }));
     };
-    const pending = ctrl.isLoading ? ctrl.runWhenReady(reprime) : reprime();
-    Promise.resolve(pending)
-      .then((result) => finishRemix(ctrl, token, result))
+    queueWarp(ctrl, () => (ctrl.isLoading ? ctrl.runWhenReady(reprime) : reprime()))
+      .then((result) => (result ? finishRemix(ctrl, token, result) : undefined))
       .catch((err) => console.warn("Mixer change failed:", err));
   }
 

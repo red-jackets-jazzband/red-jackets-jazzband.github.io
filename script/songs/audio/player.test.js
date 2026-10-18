@@ -99,6 +99,39 @@ test("stepTempo seeds from the tune's native tempo, then steps and clamps", asyn
   }
 });
 
+// ABCjs's setWarp() rebuilds its timer asynchronously; two at once on one
+// controller left an orphaned timer still firing note events, so the cursor
+// jumped between two positions. A burst of presses waits for the re-prime in
+// flight and then re-primes once, at the latest tempo.
+test("Tempo presses during a re-prime wait for it and re-prime once at the latest tempo", async () => {
+  const { audio, cleanup } = setup();
+  const abcjs = createAbcjsStub({ audioSupported: true });
+  try {
+    withAbcjs(abcjs, () => audio.initForTune({ metaText: { tempo: { bpm: 100 } }, getBpm: () => 100 }));
+    await flush();
+    let release;
+    abcjs._warpPromise = new Promise((resolve) => { release = resolve; });
+    withAbcjs(abcjs, () => audio.stepTempo(4));
+    withAbcjs(abcjs, () => audio.stepTempo(4));
+    withAbcjs(abcjs, () => audio.stepTempo(4));
+    await flush();
+    assert.equal(abcjs.calls.setWarp.length, 1, "nothing else starts while the first re-prime runs");
+    assert.equal(abcjs.calls.setWarp[0].warp, 104);
+
+    abcjs._warpPromise = null;
+    release();
+    await flush();
+    assert.equal(abcjs.calls.setWarp.length, 2, "the waiting presses re-prime once");
+    assert.equal(abcjs.calls.setWarp[1].warp, 112);
+
+    withAbcjs(abcjs, () => audio.stepTempo(4));
+    assert.equal(abcjs.calls.setWarp.length, 3, "with nothing in flight a press re-primes at once");
+    await flush();
+  } finally {
+    cleanup();
+  }
+});
+
 test("stepTempo with no native tempo steps from the default bpm", () => {
   const { ctx, audio, cleanup } = setup();
   try {
