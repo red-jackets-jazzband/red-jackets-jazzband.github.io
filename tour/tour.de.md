@@ -179,10 +179,10 @@ Die **Üben**-Routine in der Schublade schreibt eine Übung auf eine eigene Note
 Wähle, was die Übung spielt: **Akkordtöne**, **Tonleitern** oder eine **Annäherung** an Terz oder Septime jedes Akkords.
 
 ## notes: Welche Töne
-Jede Karte zeigt ihre Töne auf einer kleinen Notenzeile. Fang mit den Grundtönen an, dann Dreiklänge, Septakkorde und Nonakkorde, so wie man die Akkorde eines neuen Songs lernt; bei Tonleitern die ersten 3 Töne, dann 5, dann die ganze Oktave. **Leittöne** spielt nur Terz und Septime, wobei jede Septime einen Halbton auf die Terz des nächsten Akkords fällt. Mit **Eigene** wählst du die Töne einzeln. Bei einer Annäherung wählst du, wie du den Zielton erreichst: einen Halbton von unten, einen Schritt von oben oder beides.
+Jede Karte zeigt ihre Töne auf einer kleinen Notenzeile. Fang mit den Grundtönen an, dann Dreiklänge, Septakkorde und Nonakkorde, so wie man die Akkorde eines neuen Songs lernt; bei Tonleitern die ersten 3 Töne, dann 5, dann die ganze Oktave, die **Pentatonik** jedes Akkords und die **Blues**-Tonleiter durch den ganzen Song. **Leittöne** spielt nur Terz und Septime, wobei jede Septime einen Halbton auf die Terz des nächsten Akkords fällt. Mit **Eigene** wählst du die Töne einzeln. Bei einer Annäherung wählst du, wie du den Zielton erreichst: einen Halbton von unten, einen Schritt von oben oder beides.
 
 ## shape: Läufe auf jeder Akkordform
-Spiele die Läufe **aufwärts**, **abwärts**, **auf und ab** oder stimmführend von Akkord zu Akkord. Wer verschiedene Läufe über jede Akkordform übt, bekommt die Harmonie des Songs in die Finger, und das ist die Grundlage, um eigene Linien zu improvisieren: ein Solo, ein Ad-lib oder ein Obligato um die Melodie.
+Spiele die Läufe **aufwärts**, **abwärts**, **auf und ab**, **in Terzen** (1 3 2 4 3 5 …) oder stimmführend von Akkord zu Akkord. Wer verschiedene Läufe über jede Akkordform übt, bekommt die Harmonie des Songs in die Finger, und das ist die Grundlage, um eigene Linien zu improvisieren: ein Solo, ein Ad-lib oder ein Obligato um die Melodie.
 
 > Spiel eine Form durch den ganzen Song, dann die nächste.
 

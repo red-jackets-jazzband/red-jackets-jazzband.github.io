@@ -179,10 +179,10 @@ La routine **Exercice** du tiroir écrit un exercice sur sa propre portée sous 
 Choisissez ce que joue l'exercice : les **Notes de l'accord**, des **Gammes** ou une **Approche** de la tierce ou de la septième de chaque accord.
 
 ## notes: Quelles notes
-Chaque carte montre ses notes sur une petite portée. Commencez par les fondamentales, puis les triades, les accords de 7e et de 9e, comme pour apprendre les accords d'un nouveau morceau ; pour les gammes, les 3 premières notes, puis 5, puis l'octave entière. **Notes guides** ne joue que la tierce et la septième, chaque septième descendant d'un demi-ton sur la tierce de l'accord suivant. **Personnalisé** permet de choisir les notes une à une. Pour une approche, choisissez comment atteindre la note cible : un demi-ton par le bas, un pas par le haut, ou les deux.
+Chaque carte montre ses notes sur une petite portée. Commencez par les fondamentales, puis les triades, les accords de 7e et de 9e, comme pour apprendre les accords d'un nouveau morceau ; pour les gammes, les 3 premières notes, puis 5, puis l'octave entière, la gamme **Pentatonique** de chaque accord, et la gamme **Blues** sur tout le morceau. **Notes guides** ne joue que la tierce et la septième, chaque septième descendant d'un demi-ton sur la tierce de l'accord suivant. **Personnalisé** permet de choisir les notes une à une. Pour une approche, choisissez comment atteindre la note cible : un demi-ton par le bas, un pas par le haut, ou les deux.
 
 ## shape: Des traits sur chaque forme d'accord
-Jouez les traits **en montant**, **en descendant**, **en montant puis en descendant**, ou enchaînés d'un accord à l'autre. Travailler différents traits sur chaque forme d'accord met l'harmonie du morceau dans vos doigts, et c'est la base pour improviser vos propres lignes : un solo, un ad lib ou un obligato autour de la mélodie.
+Jouez les traits **en montant**, **en descendant**, **en montant puis en descendant**, **en tierces** (1 3 2 4 3 5 …), ou enchaînés d'un accord à l'autre. Travailler différents traits sur chaque forme d'accord met l'harmonie du morceau dans vos doigts, et c'est la base pour improviser vos propres lignes : un solo, un ad lib ou un obligato autour de la mélodie.
 
 > Jouez une forme sur tout le morceau, puis la suivante.
 

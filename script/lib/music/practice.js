@@ -53,6 +53,7 @@ export const PRACTICE_SHAPES = [
   { value: "up", label: tl("practice_shape_up", "Up"), points: "4,22 18,16 32,10 46,4 50,22 60,16" },
   { value: "down", label: tl("practice_shape_down", "Down"), points: "4,4 18,10 32,16 46,22 50,4 60,10" },
   { value: "updown", label: tl("practice_shape_updown", "Up & down"), points: "4,22 18,13 32,4 46,13 60,20" },
+  { value: "thirds", label: tl("practice_shape_thirds", "In thirds"), points: "4,22 13,14 22,18 31,10 40,14 49,6 58,10" },
 ];
 // The degrees a set can hold: a chord's own tones (and its 9th), or the
 // scale's up to the octave. (A scale's 9th never sounds: a run has one
@@ -93,6 +94,23 @@ export const PRACTICE_NOTE_SETS = {
       value: "octave", degrees: [1, 2, 3, 4, 5, 6, 7, 8], default: true,
       label: tl("practice_set_octave", "Octave"), name: tl("practice_scales", "Scale runs"),
     },
+    // Named scales, not a set of the chord's scale degrees (`named`; their
+    // `degrees` only stand in for the length, `draw` is what the card shows).
+    // Pentatonic: over each chord its major pentatonic, 1 2 3 5 6, or over a
+    // minor chord its minor pentatonic, 1 b3 4 5 b7 (Aebersold's first
+    // scales after the chord tones).
+    {
+      value: "penta", named: true, degrees: [1, 2, 3, 5, 6, 8],
+      label: tl("practice_set_penta", "Pentatonic"), name: tl("practice_name_penta", "Pentatonic scale"),
+      draw: [{ degree: 1 }, { degree: 2 }, { degree: 3 }, { degree: 5 }, { degree: 6 }, { degree: 8 }],
+    },
+    // Blues: the key's blues scale through the whole tune, not each chord's
+    // scale (Aebersold: over a Bb blues, the Bb blues scale).
+    {
+      value: "blues", named: true, degrees: [1, 3, 4, 5, 7, 8],
+      label: tl("practice_set_blues", "Blues"), name: tl("practice_name_blues", "Blues scale"),
+      draw: [{ degree: 1 }, { degree: 3, flat: true }, { degree: 4 }, { degree: 4, sharp: true }, { degree: 5 }, { degree: 7, flat: true }],
+    },
   ],
 };
 export const PRACTICE_APPROACHES = [
@@ -115,11 +133,15 @@ const GUIDE_SET = [3, 7];
 const sameDegrees = (a, b) => a.length === b.length && a.every((d, i) => d === b[i]);
 const defaultDegrees = (kind) => PRACTICE_NOTE_SETS[kind].find((set) => set.default).degrees;
 
-// The preset card a kind's degrees match, if any.
-export function practiceNoteSet(kind, degrees) {
+// The preset card a kind's degrees match, if any (`named`: that named scale's).
+export function practiceNoteSet(kind, degrees, named = null) {
   const sets = PRACTICE_NOTE_SETS[kind];
-  return sets ? sets.find((set) => sameDegrees(set.degrees, degrees)) : undefined;
+  if (!sets) return undefined;
+  return sets.find((set) => (named ? set.value === named : !set.named && sameDegrees(set.degrees, degrees)));
 }
+const BLUES = "blues";
+const PENTA = "penta";
+const namedSet = (value) => PRACTICE_NOTE_SETS.scales.find((set) => set.named && set.value === value);
 
 // The exercise values from before note sets: guide tones are the 3rd-and-7th
 // set, rhythm on one note the root alone.
@@ -128,9 +150,10 @@ const LEGACY = { guide: "arpeggios@37", rhythm: "arpeggios@1" };
 /*
   An exercise value — "kind", "kind-variant", "kind@degrees" or
   "kind-variant@degrees" ("scales-updown", "arpeggios@1357", "enclosures-below")
-  — read as { kind, variant, degrees }: the variant is a run kind's shape or
-  an approach's style, `degrees` a run kind's note set (ascending; the
-  kind's default when none is written). Null for anything else.
+  or a named scale, "scales…@blues" or "scales…@penta" — read as { kind,
+  variant, degrees } (plus `named`: "blues" or "penta"): the variant is a
+  run kind's shape or an approach's style, `degrees` a run kind's note set
+  (ascending; the kind's default when none is written). Null for anything else.
 */
 export function parseExercise(value) {
   const text = Object.prototype.hasOwnProperty.call(LEGACY, value) ? LEGACY[value] : String(value);
@@ -145,7 +168,15 @@ export function parseExercise(value) {
   }
   const shape = variant === undefined ? "alternate" : variant;
   if (!PRACTICE_SHAPES.some((s) => s.value === shape)) return null;
+  return parseNotes(kind, shape, digits);
+}
+
+// A run kind's note set from what follows "@": none (the default), a named
+// scale (scales only) or its degrees as digits.
+function parseNotes(kind, shape, digits) {
   if (digits === undefined) return { kind, variant: shape, degrees: defaultDegrees(kind) };
+  const named = namedSet(digits);
+  if (named) return kind === "scales" ? { kind, degrees: named.degrees, variant: shape, named: named.value } : null;
   const degrees = PRACTICE_DEGREES[kind].filter((d) => digits.includes(String(d)));
   if (degrees.length === 0 || degrees.length !== digits.length) return null;
   return { kind, degrees, variant: shape };
@@ -160,15 +191,18 @@ export function exerciseTakesShape({ kind, degrees }) {
 
 /**
   { kind, variant, degrees } -> the shortest value that reads back the same
-  (no `degrees`: the kind's default set).
-  @param {{ kind: string, variant?: string, degrees?: number[] | null }} exercise
+  (no `degrees`: the kind's default set; `named`: a named scale's value).
+  @param {{ kind: string, variant?: string, degrees?: number[] | null, named?: string | null }} exercise
 */
-export function formatExercise({ kind, variant, degrees = null }) {
+export function formatExercise({
+  kind, variant, degrees = null, named = null,
+}) {
   const found = PRACTICE_KINDS.find((k) => k.value === kind);
   if (!found) return String(kind);
   if (!found.runs) return variant && variant !== DEFAULT_APPROACH ? `${kind}-${variant}` : kind;
   const set = degrees || defaultDegrees(kind);
   const shape = exerciseTakesShape({ kind, degrees: set }) && variant && variant !== "alternate" ? `-${variant}` : "";
+  if (named) return `${kind}${shape}@${named}`;
   const notes = sameDegrees(set, defaultDegrees(kind)) ? "" : `@${set.join("")}`;
   return `${kind}${shape}${notes}`;
 }
@@ -184,7 +218,9 @@ export const PRACTICE_EXERCISES = [
   ...["arpeggios", "scales"].flatMap((kind) => PRACTICE_SHAPES.map((shape) => formatExercise({ kind, variant: shape.value }))),
   ...["arpeggios", "scales"].flatMap((kind) => PRACTICE_NOTE_SETS[kind]
     .filter((set) => !set.default)
-    .map((set) => formatExercise({ kind, variant: "updown", degrees: set.degrees }))),
+    .map((set) => formatExercise({
+      kind, variant: "updown", degrees: set.degrees, named: set.named ? set.value : null,
+    }))),
   ...PRACTICE_APPROACHES.map((a) => formatExercise({ kind: "enclosures", variant: a.value })),
 ];
 
@@ -216,6 +252,11 @@ export const PRACTICE_RHYTHMS = [
   { value: "threefour", cell: "x--x--x-", run: true, label: tl("practice_rhythm_threefour", "Three against four") },
   { value: "and", cell: ".xxx.xxx", run: true, label: tl("practice_rhythm_and", "Start on the \"and\"") },
   { value: "pairs", cell: "xx.xx.xx>", run: true, sync: true, label: tl("practice_rhythm_pairs", "Pairs, last one anticipated") },
+  // Tick-only (neither `run` nor `long`, so in no exercise's own set): the
+  // Aebersold handbook's phrase shapes (p.29) — four eighths leading into a
+  // held target note, and a line that starts after a rest on beat 1.
+  { value: "target", cell: "xxxxx---", label: tl("practice_rhythm_target", "Four into a target") },
+  { value: "restone", cell: ".xxxxxxx", label: tl("practice_rhythm_restone", "Rest on one") },
   { value: "halves", cell: "x---x---", long: true, label: tl("practice_rhythm_halves", "Half notes") },
   { value: "halfanticipate", cell: "x---...x>", long: true, sync: true, label: tl("practice_rhythm_halfanticipate", "Half note, anticipate") },
   { value: "late", cell: ".x--x---", long: true, sync: true, label: tl("practice_rhythm_late", "Late start") },
@@ -245,7 +286,7 @@ export function practiceSummaryParts(practice, rhythms) {
 // "7th chords, Up & down", "Guide tones", "Chord tones: 3rd, 5th, 9th", "Enclosures".
 function exerciseName(parsed) {
   if (parsed.degrees === null) return PRACTICE_APPROACHES.find((a) => a.value === parsed.variant).name;
-  const set = practiceNoteSet(parsed.kind, parsed.degrees);
+  const set = practiceNoteSet(parsed.kind, parsed.degrees, parsed.named);
   let what = set ? set.name : null;
   if (what === null) {
     const notes = parsed.degrees.map((d) => PRACTICE_DEGREE_LABELS[d]).join(", ");
@@ -315,6 +356,8 @@ function degreeOf(chord, s) {
   that 6th, else the scale's. Scale degrees play the chord's scale.
 */
 function noteOffsets(chord, kind, degrees) {
+  if (kind === BLUES) return BLUES_OFFSETS;
+  if (kind === PENTA) return pentatonicOffsets(chord);
   const out = new Set();
   for (const d of degrees) {
     let offsets;
@@ -343,6 +386,36 @@ function chordToneOffsets(chord, d) {
   // The 6th: the one the chord is heard with, else the scale's.
   return chord.top !== undefined && degreeOf(chord, chord.top) === 6 ? [chord.top] : scaleDegree(chord, 6);
 }
+
+/*
+  The blues scale, 1 b3 4 #4 5 b7 and the octave, played through the whole
+  tune on the key's tonic: each chord is swapped for one rooted there
+  (`bluesChord`; its own root when the tune has no key), whose "chord tones"
+  — where a voice-led run enters — are 1 b3 5 b7. Runs walk it like any
+  scale but without the bebop beat alignment, which reads a chord's own
+  tones; the speller writes the #4 sharp where it rises to the 5th.
+*/
+const BLUES_OFFSETS = [0, 3, 5, 6, 7, 10, 12];
+const BLUES_RUN = { kind: BLUES, degrees: [] };
+function bluesChord(chord, tonic) {
+  return {
+    ...chord, root: tonic === null ? chord.root : tonic, tones: [0, 3, 7, 10], scale: BLUES_OFFSETS.slice(0, -1),
+  };
+}
+/*
+  A chord's pentatonic, with the octave: minor (1 b3 4 5 b7) over a minor
+  3rd, else major (1 2 3 5 6, a sus chord's 4th for the 3rd), each with
+  the chord's own 5th (a m7b5's b5, an augmented 5th).
+*/
+const PENTA_RUN = { kind: PENTA, degrees: [] };
+function pentatonicOffsets(chord) {
+  const notes = chord.third === 3 ? [0, 3, 5, chord.fifth, 10] : [0, 2, chord.third, chord.fifth, 9];
+  const unique = [...new Set(notes), 12];
+  unique.sort((a, b) => a - b);
+  return unique;
+}
+
+const onBlues = (notes, tonic) => notes.map((note) => ({ ...note, at: { ...note.at, chord: bluesChord(note.at.chord, tonic) } }));
 
 // A set's notes over a chord across the whole range: the pool a voice-led
 // run and a held note pick from.
@@ -813,14 +886,49 @@ function approachPitches(notes, style, tonic) {
   return out;
 }
 
+/*
+  "In thirds": the set's notes above each chord's root (fixedPool, as up and
+  down take them) in broken thirds — up 1 3 2 4 3 5 …, then back down from
+  the top, round and round — starting again from the root at every chord,
+  like the other fixed shapes. Aebersold's last rung for a scale (p.9).
+*/
+function brokenThirds(length) {
+  if (length < 3) return [0, 1].slice(0, length);
+  // Three notes: 1 3 2 up, 3 1 2 back (the general rule would skip the 2).
+  if (length === 3) return [0, 2, 1, 2, 0, 1];
+  const up = [];
+  for (let i = 0; i + 2 < length; i++) up.push(i, i + 2);
+  // Down is up mirrored; the turns at the top and the bottom aren't played twice.
+  const down = up.map((i) => length - 1 - i);
+  return [...up, ...down.slice(1, -1)];
+}
+
+function thirdsPitches(notes, set) {
+  const out = [];
+  segmentsOf(notes).forEach((seg) => {
+    const root = pitchesOf(seg.chord, [0], RUN_ROOTS)[0];
+    const pool = fixedPool(set, seg.chord, root, "updown");
+    const order = brokenThirds(pool.length);
+    for (let i = seg.start; i < seg.end; i++) out.push(pool[order[(i - seg.start) % order.length]]);
+  });
+  return out;
+}
+
+// A run in its shape: broken thirds, or a walk through the set (runPitches).
+function shapedRun(notes, set, runs) {
+  return runs === "thirds" ? thirdsPitches(notes, set) : runPitches(notes, set, runs);
+}
+
 // How a parsed exercise plays: its own rhythm cells and its pitch rule.
 function planFor(parsed) {
+  if (parsed.named === BLUES) return { cells: RUN_CELLS, pitches: (notes, tonic) => shapedRun(onBlues(notes, tonic), BLUES_RUN, parsed.variant) };
+  if (parsed.named === PENTA) return { cells: RUN_CELLS, pitches: (notes) => shapedRun(notes, PENTA_RUN, parsed.variant) };
   if (parsed.degrees === null) {
     return { cells: RUN_CELLS, pitches: (notes, tonic) => approachPitches(notes, parsed.variant, tonic) };
   }
   if (parsed.kind === "arpeggios" && sameDegrees(parsed.degrees, GUIDE_SET)) return { cells: LONG_CELLS, pitches: guidePitches };
   if (parsed.degrees.length === 1) return { cells: RUN_CELLS, pitches: (notes, tonic) => holdPitches(notes, parsed, tonic) };
-  return { cells: RUN_CELLS, pitches: (notes) => runPitches(notes, parsed, parsed.variant) };
+  return { cells: RUN_CELLS, pitches: (notes) => shapedRun(notes, parsed, parsed.variant) };
 }
 
 // The ticked patterns (rhythm values, in any order) in PRACTICE_RHYTHMS order.

@@ -179,10 +179,10 @@ De **Oefenen**-routine in de lade schrijft een oefening op een eigen notenbalk o
 Kies wat de oefening speelt: **Akkoordtonen**, **Toonladders**, of een **Aanloop** naar de terts of septiem van elk akkoord.
 
 ## notes: Welke noten
-Elke kaart toont zijn noten op een kleine notenbalk. Begin met de grondtonen, dan drieklanken, 7-akkoorden en 9-akkoorden, zoals je de akkoorden van een nieuwe song leert; bij toonladders de eerste 3 noten, dan 5, dan het hele octaaf. **Gidstonen** speelt alleen de terts en de septiem, waarbij elke septiem een halve toon zakt naar de terts van het volgende akkoord. Met **Eigen** kies je de noten één voor één. Bij een aanloop kies je hoe je de doeltoon bereikt: een halve toon van onderen, een stap van boven, of allebei.
+Elke kaart toont zijn noten op een kleine notenbalk. Begin met de grondtonen, dan drieklanken, 7-akkoorden en 9-akkoorden, zoals je de akkoorden van een nieuwe song leert; bij toonladders de eerste 3 noten, dan 5, dan het hele octaaf, de **Pentatonisch**e toonladder van elk akkoord, en de **Blues**-toonladder door de hele song. **Gidstonen** speelt alleen de terts en de septiem, waarbij elke septiem een halve toon zakt naar de terts van het volgende akkoord. Met **Eigen** kies je de noten één voor één. Bij een aanloop kies je hoe je de doeltoon bereikt: een halve toon van onderen, een stap van boven, of allebei.
 
 ## shape: Loopjes op elke akkoordvorm
-Speel de loopjes **omhoog**, **omlaag**, **op en neer**, of stemvoerend van akkoord naar akkoord. Door verschillende loopjes over elke akkoordvorm te oefenen krijg je de harmonie van de song in je vingers, en dat is de basis om je eigen lijnen te improviseren: een solo, een ad lib of een obligaat rond de melodie.
+Speel de loopjes **omhoog**, **omlaag**, **op en neer**, **in tertsen** (1 3 2 4 3 5 …), of stemvoerend van akkoord naar akkoord. Door verschillende loopjes over elke akkoordvorm te oefenen krijg je de harmonie van de song in je vingers, en dat is de basis om je eigen lijnen te improviseren: een solo, een ad lib of een obligaat rond de melodie.
 
 > Speel één vorm door de hele song, dan de volgende.
 

@@ -92,7 +92,9 @@ function buildCards(kind) {
     return PRACTICE_APPROACHES.map((a) => setCard(a.value, a.label, noteSetSvg(a.draw)));
   }
   const stacked = kind === "arpeggios";
-  const cards = PRACTICE_NOTE_SETS[kind].map((set) => setCard(set.value, set.label, noteSetSvg(degreeItems(set.degrees), { stacked })));
+  const cards = PRACTICE_NOTE_SETS[kind].map((set) => setCard(
+    set.value, set.label, noteSetSvg(set.draw || degreeItems(set.degrees), { stacked: stacked && !set.draw }),
+  ));
   cards.push(setCard(CUSTOM, tl("practice_set_custom", "Custom"), noteSetSvg(degreeItems(FIRST_CUSTOM[kind]), { stacked })));
   return cards;
 }
@@ -200,7 +202,7 @@ export function createPracticePanel(ctx) {
   const start = parsedNow();
   lastOfKind[start.kind] = formatExercise(start);
   let lastShape = exerciseTakesShape(start) ? start.variant : "updown";
-  if (start.degrees !== null && !practiceNoteSet(start.kind, start.degrees)) {
+  if (start.degrees !== null && !practiceNoteSet(start.kind, start.degrees, start.named)) {
     customOpen[start.kind] = true;
     custom[start.kind] = start.degrees;
   }
@@ -250,7 +252,7 @@ export function createPracticePanel(ctx) {
     for (const kind of Object.keys(notes.groups)) notes.groups[kind].box.hidden = kind !== parsed.kind;
     let picked = parsed.variant;
     if (parsed.degrees !== null) {
-      const preset = practiceNoteSet(parsed.kind, parsed.degrees);
+      const preset = practiceNoteSet(parsed.kind, parsed.degrees, parsed.named);
       picked = customOpen[parsed.kind] || !preset ? CUSTOM : preset.value;
     }
     markPressed(notes.groups[parsed.kind].cards, on ? picked : null);
@@ -331,8 +333,11 @@ export function createPracticePanel(ctx) {
         return;
       }
       customOpen[kind] = value === CUSTOM;
-      const degrees = value === CUSTOM ? custom[kind] : PRACTICE_NOTE_SETS[kind].find((set) => set.value === value).degrees;
-      writeExercise({ kind, degrees, variant: exerciseTakesShape(now) ? now.variant : lastShape });
+      const preset = PRACTICE_NOTE_SETS[kind].find((set) => set.value === value);
+      const degrees = value === CUSTOM ? custom[kind] : preset.degrees;
+      writeExercise({
+        kind, degrees, named: preset && preset.named ? preset.value : null, variant: exerciseTakesShape(now) ? now.variant : lastShape,
+      });
     });
   }
   // A degree of Custom's row switched on or off; the last one stays on.
