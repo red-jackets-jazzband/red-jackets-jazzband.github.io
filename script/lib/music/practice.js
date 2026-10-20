@@ -18,45 +18,35 @@ import { tl } from "../core/i18n.js";
     a dotted-quarter 3-over-4, a note tied over the beat, a last "and"
     anticipating the next bar's chord), each held for CELL_BARS bars so it
     can settle before the next one comes round — or one of them kept the
-    whole way through (the Rhythm dropdown); every fourth bar ends on a
-    breath, at least its last beat rested;
-  - a PITCH rule for every onset in it: chord-tone runs, scale runs, guide
-    tones (3rds and 7ths), enclosures into each new chord, or one note per
-    chord (rhythm alone); a run either voice-leads and turns round every
-    chord, or has the same shape over every chord — picked together with
-    the run itself in the Practice dropdown ("Scale runs: always up").
+    whole way through; every fourth bar ends on a breath, at least its last
+    beat rested;
+  - a PITCH rule for every onset in it: runs through a set of the chord's
+    tones or of its scale (Jamey Aebersold's ladder for learning a tune's
+    changes: roots, triads, 7th chords, 9th chords, the first 3 or 5 notes
+    of the scale, the whole scale to the octave), guide tones (the 3rd
+    and 7th set), one note held for the rhythm alone (a set of one), or an
+    approach into each chord's 3rd or 7th — a half step from below, a scale
+    step from above, or both (an enclosure). A run either voice-leads and
+    turns round every chord, or has the same shape over every chord.
   A note that crosses a bar line belongs to the chord it lands on: that is
   what an anticipation is, the new chord played an eighth early.
 */
 
 /*
-  What the practice panel offers. PRACTICE_KINDS: what to play, each with a
-  one-line hint; `runs` kinds also take a PRACTICE_SHAPES shape — "alternate"
-  voice-leads from the last note and turns round every chord, the others give
-  every chord the same shape starting on its root (`points`: the little
-  contour the panel draws, in a 64×26 box).
+  What the practice panel offers. PRACTICE_KINDS: what to play. Chord tones
+  and Scales take a note set (PRACTICE_NOTE_SETS: the panel's preset cards,
+  or any other set of PRACTICE_DEGREES) and a run shape (PRACTICE_SHAPES:
+  "alternate" voice-leads from the last note and turns round every chord,
+  the others give every chord the same shape from its lowest note —
+  `points`: the little contour the panel draws, in a 64×26 box). Approach
+  takes a PRACTICE_APPROACHES style. A card's `draw` is what its little
+  staff shows, on C: the degrees, or for an approach the notes in order
+  ({ degree, sharp, approach }: hollow approach notes, a filled target).
 */
 export const PRACTICE_KINDS = [
-  {
-    value: "arpeggios", runs: true, name: tl("practice_arpeggios", "Chord-tone runs"),
-    label: tl("practice_kind_arpeggios", "Chord tones"), hint: tl("practice_kind_arpeggios_hint", "root, 3rd, 5th, 7th"),
-  },
-  {
-    value: "scales", runs: true, name: tl("practice_scales", "Scale runs"),
-    label: tl("practice_kind_scales", "Scales"), hint: tl("practice_kind_scales_hint", "step through the scale"),
-  },
-  {
-    value: "guide", name: tl("practice_guide", "Guide tones"),
-    label: tl("practice_guide", "Guide tones"), hint: tl("practice_kind_guide_hint", "3rds and 7ths"),
-  },
-  {
-    value: "enclosures", name: tl("practice_enclosures", "Enclosures"),
-    label: tl("practice_enclosures", "Enclosures"), hint: tl("practice_kind_enclosures_hint", "surround the target"),
-  },
-  {
-    value: "rhythm", name: tl("practice_rhythm", "Rhythm on one note"),
-    label: tl("practice_kind_rhythm", "One note"), hint: tl("practice_kind_rhythm_hint", "rhythm only"),
-  },
+  { value: "arpeggios", runs: true, label: tl("practice_kind_arpeggios", "Chord tones") },
+  { value: "scales", runs: true, label: tl("practice_kind_scales", "Scales") },
+  { value: "enclosures", label: tl("practice_kind_enclosures", "Approach") },
 ];
 export const PRACTICE_SHAPES = [
   { value: "alternate", label: tl("practice_shape_alternate", "Voice-led"), points: "4,20 18,8 32,18 46,6 60,16" },
@@ -64,25 +54,142 @@ export const PRACTICE_SHAPES = [
   { value: "down", label: tl("practice_shape_down", "Down"), points: "4,4 18,10 32,16 46,22 50,4 60,10" },
   { value: "updown", label: tl("practice_shape_updown", "Up & down"), points: "4,22 18,13 32,4 46,13 60,20" },
 ];
+// The degrees a set can hold: a chord's own tones (and its 9th), or the
+// scale's up to the octave. (A scale's 9th never sounds: a run has one
+// chord's worth of notes, and a bar of eighths turns round before the octave.)
+export const PRACTICE_DEGREES = {
+  arpeggios: [1, 3, 5, 6, 7, 9],
+  scales: [1, 2, 3, 4, 5, 6, 7, 8],
+};
+export const PRACTICE_DEGREE_LABELS = {
+  1: tl("practice_degree_1", "Root"),
+  2: tl("practice_degree_2", "2nd"),
+  3: tl("practice_degree_3", "3rd"),
+  4: tl("practice_degree_4", "4th"),
+  5: tl("practice_degree_5", "5th"),
+  6: tl("practice_degree_6", "6th"),
+  7: tl("practice_degree_7", "7th"),
+  8: tl("practice_degree_8", "8ve"),
+  9: tl("practice_degree_9", "9th"),
+};
+// `label` the card's, `name` the closed summary's; the first `default` is
+// what a kind plays with no set stored — today's 7th chords and full scales.
+export const PRACTICE_NOTE_SETS = {
+  arpeggios: [
+    { value: "root", degrees: [1], label: tl("practice_set_root", "Root"), name: tl("practice_name_root", "Roots") },
+    { value: "triad", degrees: [1, 3, 5], label: tl("practice_set_triad", "Triad"), name: tl("practice_name_triad", "Triads") },
+    {
+      value: "seventh", degrees: [1, 3, 5, 7], default: true,
+      label: tl("practice_set_seventh", "7th chord"), name: tl("practice_name_seventh", "7th chords"),
+    },
+    { value: "ninth", degrees: [1, 3, 5, 7, 9], label: tl("practice_set_ninth", "9th chord"), name: tl("practice_name_ninth", "9th chords") },
+    { value: "sixth", degrees: [1, 3, 5, 6], label: tl("practice_set_sixth", "6th chord"), name: tl("practice_name_sixth", "6th chords") },
+    { value: "guide", degrees: [3, 7], label: tl("practice_guide", "Guide tones"), name: tl("practice_guide", "Guide tones") },
+  ],
+  scales: [
+    { value: "three", degrees: [1, 2, 3], label: tl("practice_set_three", "First 3"), name: tl("practice_name_three", "Scale, first 3 notes") },
+    { value: "five", degrees: [1, 2, 3, 4, 5], label: tl("practice_set_five", "First 5"), name: tl("practice_name_five", "Scale, first 5 notes") },
+    {
+      value: "octave", degrees: [1, 2, 3, 4, 5, 6, 7, 8], default: true,
+      label: tl("practice_set_octave", "Octave"), name: tl("practice_scales", "Scale runs"),
+    },
+  ],
+};
+export const PRACTICE_APPROACHES = [
+  {
+    value: "below", label: tl("practice_approach_below", "From below"), name: tl("practice_name_below", "Approach from below"),
+    draw: [{ degree: 2, sharp: true, approach: true }, { degree: 3 }],
+  },
+  {
+    value: "above", label: tl("practice_approach_above", "From above"), name: tl("practice_name_above", "Approach from above"),
+    draw: [{ degree: 4, approach: true }, { degree: 3 }],
+  },
+  {
+    value: "enclose", default: true, label: tl("practice_approach_enclose", "Enclosure"), name: tl("practice_enclosures", "Enclosures"),
+    draw: [{ degree: 4, approach: true }, { degree: 2, sharp: true, approach: true }, { degree: 3 }],
+  },
+];
+const DEFAULT_APPROACH = "enclose";
+const GUIDE_SET = [3, 7];
 
-// An exercise value ("scales", "scales-up", "guide", ...) <-> its kind and shape.
-export function splitExercise(exercise) {
-  const [kind, runs] = String(exercise).split("-");
-  return { kind, runs: runs === undefined ? "alternate" : runs };
+const sameDegrees = (a, b) => a.length === b.length && a.every((d, i) => d === b[i]);
+const defaultDegrees = (kind) => PRACTICE_NOTE_SETS[kind].find((set) => set.default).degrees;
+
+// The preset card a kind's degrees match, if any.
+export function practiceNoteSet(kind, degrees) {
+  const sets = PRACTICE_NOTE_SETS[kind];
+  return sets ? sets.find((set) => sameDegrees(set.degrees, degrees)) : undefined;
 }
-export function joinExercise(kind, shape) {
+
+// The exercise values from before note sets: guide tones are the 3rd-and-7th
+// set, rhythm on one note the root alone.
+const LEGACY = { guide: "arpeggios@37", rhythm: "arpeggios@1" };
+
+/*
+  An exercise value — "kind", "kind-variant", "kind@degrees" or
+  "kind-variant@degrees" ("scales-updown", "arpeggios@1357", "enclosures-below")
+  — read as { kind, variant, degrees }: the variant is a run kind's shape or
+  an approach's style, `degrees` a run kind's note set (ascending; the
+  kind's default when none is written). Null for anything else.
+*/
+export function parseExercise(value) {
+  const text = Object.prototype.hasOwnProperty.call(LEGACY, value) ? LEGACY[value] : String(value);
+  const [head, digits] = text.split("@");
+  const [kind, variant, extra] = head.split("-");
   const found = PRACTICE_KINDS.find((k) => k.value === kind);
-  return found && found.runs && shape !== "alternate" ? `${kind}-${shape}` : kind;
+  if (!found || extra !== undefined) return null;
+  if (!found.runs) {
+    const style = variant === undefined ? DEFAULT_APPROACH : variant;
+    if (digits !== undefined || !PRACTICE_APPROACHES.some((a) => a.value === style)) return null;
+    return { kind, variant: style, degrees: null };
+  }
+  const shape = variant === undefined ? "alternate" : variant;
+  if (!PRACTICE_SHAPES.some((s) => s.value === shape)) return null;
+  if (digits === undefined) return { kind, variant: shape, degrees: defaultDegrees(kind) };
+  const degrees = PRACTICE_DEGREES[kind].filter((d) => digits.includes(String(d)));
+  if (degrees.length === 0 || degrees.length !== digits.length) return null;
+  return { kind, degrees, variant: shape };
 }
 
-// Every exercise value the settings accept: each run kind in each shape, then the rest.
-export const PRACTICE_EXERCISES = PRACTICE_KINDS.flatMap((kind) => (kind.runs
-  ? PRACTICE_SHAPES.map((shape) => joinExercise(kind.value, shape.value))
-  : [kind.value]));
+// Whether a parsed exercise is runs with a shape to pick: not one held note, not guide tones.
+export function exerciseTakesShape({ kind, degrees }) {
+  const found = PRACTICE_KINDS.find((k) => k.value === kind);
+  if (!found || !found.runs) return false;
+  return degrees.length > 1 && !(kind === "arpeggios" && sameDegrees(degrees, GUIDE_SET));
+}
+
+/**
+  { kind, variant, degrees } -> the shortest value that reads back the same
+  (no `degrees`: the kind's default set).
+  @param {{ kind: string, variant?: string, degrees?: number[] | null }} exercise
+*/
+export function formatExercise({ kind, variant, degrees = null }) {
+  const found = PRACTICE_KINDS.find((k) => k.value === kind);
+  if (!found) return String(kind);
+  if (!found.runs) return variant && variant !== DEFAULT_APPROACH ? `${kind}-${variant}` : kind;
+  const set = degrees || defaultDegrees(kind);
+  const shape = exerciseTakesShape({ kind, degrees: set }) && variant && variant !== "alternate" ? `-${variant}` : "";
+  const notes = sameDegrees(set, defaultDegrees(kind)) ? "" : `@${set.join("")}`;
+  return `${kind}${shape}${notes}`;
+}
+
+// A practice setting the panel can show: "off" or a readable exercise.
+export function isPracticeSetting(value) {
+  return value === "off" || parseExercise(value) !== null;
+}
+
+// One exercise of each kind of choice — every run kind in every shape, every
+// other preset set, every approach — for the tests and the tour.
+export const PRACTICE_EXERCISES = [
+  ...["arpeggios", "scales"].flatMap((kind) => PRACTICE_SHAPES.map((shape) => formatExercise({ kind, variant: shape.value }))),
+  ...["arpeggios", "scales"].flatMap((kind) => PRACTICE_NOTE_SETS[kind]
+    .filter((set) => !set.default)
+    .map((set) => formatExercise({ kind, variant: "updown", degrees: set.degrees }))),
+  ...PRACTICE_APPROACHES.map((a) => formatExercise({ kind: "enclosures", variant: a.value })),
+];
 
 // General MIDI trumpet: the Mixer's Practice voice default.
 export const PRACTICE_PROGRAM = 56;
-
 const SLOTS_PER_BAR = 8;
 const SLOTS_PER_BEAT = 2;
 const CELL_BARS = 2;
@@ -93,8 +200,8 @@ const CELL_BARS = 2;
   over the bar line (the next bar's first eighth becomes its continuation).
   The practice panel ticks any number of them (the `practiceRhythms`
   setting): one plays all the way, several take turns every CELL_BARS bars.
-  Nothing ticked yet means the exercise's own set (`run` ones for the runs,
-  `long` ones for guide tones). `sync` marks a syncopated one: a note on an
+  Nothing ticked yet means the exercise's own set (`long` ones for guide
+  tones, `run` ones for everything else). `sync` marks a syncopated one: a note on an
   "and" held over the next beat or bar line, or a beat left out for an
   offbeat.
 */
@@ -126,18 +233,29 @@ const LONG_CELLS = PRACTICE_RHYTHMS.filter((r) => r.long).map((r) => r.cell);
 */
 export function practiceSummaryParts(practice, rhythms) {
   if (practice === "off") return null;
-  const { kind, runs } = splitExercise(practice);
-  const found = PRACTICE_KINDS.find((k) => k.value === kind);
-  if (!found) return null;
-  const shape = PRACTICE_SHAPES.find((s) => s.value === runs);
-  const what = found.runs && shape
-    ? tl("practice_summary_run", "{kind}, {shape}", { kind: found.name, shape: shape.label })
-    : found.name;
+  const parsed = parseExercise(practice);
+  if (parsed === null) return null;
   const picked = pickedRhythms(rhythms);
   let rhythmName = tl("practice_rhythm_varied_short", "Varied rhythm");
   if (picked.length === 1) rhythmName = picked[0].label;
   else if (picked.length > 1) rhythmName = tl("practice_rhythm_count", "{count} rhythms", { count: picked.length });
-  return { exercise: what, rhythm: rhythmName };
+  return { exercise: exerciseName(parsed), rhythm: rhythmName };
+}
+
+// "7th chords, Up & down", "Guide tones", "Chord tones: 3rd, 5th, 9th", "Enclosures".
+function exerciseName(parsed) {
+  if (parsed.degrees === null) return PRACTICE_APPROACHES.find((a) => a.value === parsed.variant).name;
+  const set = practiceNoteSet(parsed.kind, parsed.degrees);
+  let what = set ? set.name : null;
+  if (what === null) {
+    const notes = parsed.degrees.map((d) => PRACTICE_DEGREE_LABELS[d]).join(", ");
+    what = parsed.kind === "scales"
+      ? tl("practice_name_custom_scale", "Scale: {notes}", { notes })
+      : tl("practice_name_custom_chord", "Chord tones: {notes}", { notes });
+  }
+  if (!exerciseTakesShape(parsed)) return what;
+  const shape = PRACTICE_SHAPES.find((s) => s.value === parsed.variant);
+  return tl("practice_summary_run", "{kind}, {shape}", { kind: what, shape: shape.label });
 }
 
 // The same as one line: "Scale runs, Up & down · Charleston", or "Off".
@@ -169,10 +287,66 @@ function pitchesOf(chord, intervals, range = { low: LOW, high: HIGH }) {
 
 // The chord's notes as practice-chords.js reads them: chord tones, its scale
 // (tensions picked from the key), and the guide tones — the 3rd and the 7th or 6th.
-const chordTones = (chord, range) => pitchesOf(chord, chord.tones, range);
-const scaleTones = (chord, range) => pitchesOf(chord, chord.scale, range);
+const chordTones = (chord) => pitchesOf(chord, chord.tones);
+const scaleTones = (chord) => pitchesOf(chord, chord.scale);
 const guideTones = (chord) => pitchesOf(chord, chord.guide);
 const isChordTone = (chord, midi) => chord.tones.includes(mod12(midi - chord.root));
+
+// A scale note's degree (1-7) over its chord: the chord's own root, 3rd,
+// 5th and 7th-or-6th first; any other note by its distance from the root —
+// a b9 or 9 (or a #9 over a major 3rd) is the 2nd, an 11 or #11 the 4th, a
+// b13 or 13 the 6th. A symmetrical scale can put two notes on one degree.
+const DEGREE_BY_SEMITONE = [1, 2, 2, 3, 3, 4, 4, 5, 6, 6, 7, 7];
+function degreeOf(chord, s) {
+  if (s === 0) return 1;
+  if (s === chord.third) return 3;
+  if (s === chord.fifth) return 5;
+  if (s === chord.top) return s >= 10 ? 7 : 6;
+  if (s === 3 && chord.third === 4) return 2;
+  return DEGREE_BY_SEMITONE[s];
+}
+
+/*
+  A note set's notes over one chord, as semitones above its root (8: the
+  octave, 9: the chord's 9th, the 2nd an octave up), ascending. Chord tones play the chord's
+  own: its 3rd (or sus note), 5th, and the 7th or 6th it's written or heard
+  with — so "7th chord" over a plain F is F A C D, the way the chord tones
+  have always sounded here, and an augmented triad has no 7th; the 6th is
+  that 6th, else the scale's. Scale degrees play the chord's scale.
+*/
+function noteOffsets(chord, kind, degrees) {
+  const out = new Set();
+  for (const d of degrees) {
+    let offsets;
+    if (d === 8) offsets = [12];
+    else if (d === 9) offsets = scaleDegree(chord, 2).map((s) => s + 12);
+    else if (kind === "scales") offsets = scaleDegree(chord, d);
+    else offsets = chordToneOffsets(chord, d);
+    offsets.forEach((s) => out.add(s));
+  }
+  // Nothing the chord has (an augmented triad's 7th alone): its root.
+  if (out.size === 0) return [0];
+  // Sorted in place, on a copy: toSorted() is Safari 16+.
+  const offsets = [...out];
+  offsets.sort((a, b) => a - b);
+  return offsets;
+}
+
+const scaleDegree = (chord, d) => chord.scale.filter((s) => degreeOf(chord, s) === d);
+
+// One degree of a chord-tone set: the chord's own note for it.
+function chordToneOffsets(chord, d) {
+  if (d === 1) return [0];
+  if (d === 3) return [chord.third];
+  if (d === 5) return [chord.fifth];
+  if (d === 7) return chord.top === undefined ? [] : [chord.top];
+  // The 6th: the one the chord is heard with, else the scale's.
+  return chord.top !== undefined && degreeOf(chord, chord.top) === 6 ? [chord.top] : scaleDegree(chord, 6);
+}
+
+// A set's notes over a chord across the whole range: the pool a voice-led
+// run and a held note pick from.
+const setTones = (chord, set) => pitchesOf(chord, noteOffsets(chord, set.kind, set.degrees).map(mod12));
 
 function nearest(candidates, ref) {
   let best = candidates[0];
@@ -325,11 +499,14 @@ const UPDOWN_MIN_NOTES = 4;
 
 // Where a run starts over a new chord, and which way it goes. `size`: how
 // many notes play over the chord.
-function runStart(runs, chord, prev, walk, size) {
+function runStart({ runs, set, align }, chord, prev, walk, size) {
   if (runs === "alternate") {
-    // Voice-led from the last note, the other way round from last time.
+    // Voice-led from the last note, the other way round from last time,
+    // entering on one of the set's chord tones when it has any.
     walk.dir = -walk.dir;
-    return nearest(chordTones(chord), prev);
+    const pool = setTones(chord, set);
+    const tones = pool.filter((m) => isChordTone(chord, m));
+    return nearest(tones.length > 0 ? tones : pool, prev);
   }
   // Up then down over one chord; with too few notes for that (a Charleston's
   // two), every other chord goes up and the ones between come down.
@@ -337,42 +514,55 @@ function runStart(runs, chord, prev, walk, size) {
   let shape = runs;
   if (runs === "updown" && size < UPDOWN_MIN_NOTES) shape = walk.flip ? "up" : "down";
   // A fixed shape: no voice leading, every chord jumps to its root and the
-  // run stays in that root's octave (octaveRange).
+  // run moves through the set's notes above it (fixedPool).
   const root = pitchesOf(chord, [0], RUN_ROOTS)[0];
-  walk.range = octaveRange(runs, root, walk.withOctave);
+  walk.fixed = fixedPool(set, chord, root, runs);
   walk.dir = shape === "down" ? -1 : 1;
-  const start = shape === "down" ? root + 12 : root;
+  // Coming down, a full scale starts on its highest chord tone, never on a
+  // tension: the 9th of "To the 9th" is reached going up.
+  const tops = align ? walk.fixed.filter((m) => isChordTone(chord, m)) : walk.fixed;
+  const start = shape === "down" ? tops[tops.length - 1] : walk.fixed[0];
   walk.restart = runs === "updown" ? null : start;
   return start;
 }
 
 /*
-  The one octave a fixed-shape run moves in. A scale run (`withOctave`) and
-  an up-then-down run take root to octave, both ends; an arpeggio that only
-  goes one way leaves out the far root, so it repeats root-3-5-7 going up
-  (octave-7-5-3 going down) instead of doubling the root at the turn.
+  The notes a fixed-shape run moves through over one chord: the set's notes
+  above `root` (a MIDI note). A chord-tone set's root counts at either end:
+  going up only it's left at the bottom, so the run repeats root-3-5-7
+  instead of doubling the root at the turn; going down only it's taken an
+  octave up (octave-7-5-3); up then down has both. A scale set is played as
+  it reads: "Octave" holds both ends, "First 5" stops at the 5th.
 */
-function octaveRange(runs, root, withOctave) {
-  if (withOctave || runs === "updown") return { low: root, high: root + 12 };
-  return runs === "down" ? { low: root + 1, high: root + 12 } : { low: root, high: root + 11 };
+function fixedPool(set, chord, root, runs) {
+  let offsets = noteOffsets(chord, set.kind, set.degrees);
+  if (set.kind === "arpeggios" && offsets.includes(0) && !offsets.includes(12)) {
+    if (runs === "down") offsets = [...offsets.filter((o) => o !== 0), 12];
+    else if (runs === "updown") offsets = [...offsets, 12];
+  }
+  const unique = [...new Set(offsets)];
+  unique.sort((a, b) => a - b);
+  return unique.map((o) => root + o);
 }
 
 /*
-  A run over each chord, walking `pool` from a chord tone. `runs` (a
-  RUN_SHAPES value) sets its shape: "alternate" starts on the chord tone
-  nearest the last note (so the line voice-leads through the changes) and
-  goes up over one chord, down over the next; the others don't voice-lead
-  but jump to the chord's root at every new chord (so every bar starts on
-  one): "up" climbs from the root, "down" falls from its octave, and
-  "updown" climbs from the root to the note after the middle of the chord's
-  notes and comes back down (or, over a chord with fewer than four notes,
-  climbs over one chord and falls over the next) — all within one octave of
-  the root. `withOctave`:
-  the pool is a scale, whose run spans root to octave.
+  A run over each chord, walking the note set (`set`: { kind, degrees }) from
+  one of its tones. `runs` (a PRACTICE_SHAPES value) sets its shape:
+  "alternate" starts on the set's chord tone nearest the last note (so the
+  line voice-leads through the changes, its notes in any octave) and goes up
+  over one chord, down over the next; the others don't voice-lead but jump
+  to the chord's root at every new chord (so every bar starts on its lowest
+  note): "up" climbs, "down" falls from the top, and "updown" climbs to the
+  note after the middle of the chord's notes and comes back down (or, over
+  a chord with fewer than four notes, climbs over one chord and falls over
+  the next) — all within the set's notes above that root. A full scale (all
+  seven degrees) keeps chord tones on the beats (alignToBeat).
 */
-function runPitches(notes, pool, runs = "alternate", withOctave = false) {
+function runPitches(notes, set, runs = "alternate") {
+  const align = set.kind === "scales" && [1, 2, 3, 4, 5, 6, 7].every((d) => set.degrees.includes(d));
   // Flipped at the first chord, so an alternating line opens going up.
-  const walk = { dir: -1, restart: null, range: undefined, withOctave, flip: false };
+  const walk = { dir: -1, restart: null, fixed: null, flip: false };
+  const poolFor = (chord) => walk.fixed || setTones(chord, set);
   const sizes = segmentSizes(notes);
   let prev = START;
   let segment = null;
@@ -384,16 +574,16 @@ function runPitches(notes, pool, runs = "alternate", withOctave = false) {
       index += 1;
       // Up to the middle note, then back down: 1 2 3 4 5 4 3 2 over eight.
       if (runs === "updown" && index === Math.ceil(sizes.get(segment) / 2) + 1) walk.dir = -1;
-      const scale = pool(note.at.chord, walk.range);
-      const next = stepThrough(scale, prev, walk);
+      const pool = poolFor(note.at.chord);
+      const next = stepThrough(pool, prev, walk);
       const following = all[i + 1] !== undefined && all[i + 1].at.id === segment ? all[i + 1] : undefined;
-      prev = withOctave ? alignToBeat({ chord: note.at.chord, pool: scale, walk }, prev, next, note, following) : next;
+      prev = align ? alignToBeat({ chord: note.at.chord, pool, walk }, prev, next, note, following) : next;
     } else {
       segment = note.at.id;
       index = 0;
-      prev = runStart(runs, note.at.chord, prev, walk, sizes.get(segment));
+      prev = runStart({ runs, set, align }, note.at.chord, prev, walk, sizes.get(segment));
     }
-    pools.push(pool(note.at.chord, walk.range));
+    pools.push(poolFor(note.at.chord));
     return prev;
   });
   // Only up-then-down turns into the next chord: "always up/down" jump.
@@ -512,34 +702,36 @@ function homeNotes(chord, tonic) {
   return pitchesOf(chord, [mod12(tonic - chord.root)]);
 }
 
-// One note per chord: rhythm alone, on the guide tone nearest the last one —
-// the tonic over the last chord.
-function rhythmPitches(notes, runs, tonic) {
+// A set of one note: held for the rhythm alone, each chord's in the octave
+// nearest the last one — the tonic over the last chord.
+function holdPitches(notes, set, tonic) {
   const out = [];
   let prev = START;
   segmentsOf(notes).forEach((seg, k, segs) => {
     const home = k === segs.length - 1 ? homeNotes(seg.chord, tonic) : [];
-    prev = nearest(home.length > 0 ? home : guideTones(seg.chord), prev);
+    prev = nearest(home.length > 0 ? home : setTones(seg.chord, set), prev);
     for (let i = seg.start; i < seg.end; i++) out.push(prev);
   });
   return out;
 }
 
 /*
-  Enclosures: each chord's target — its 3rd or 7th (or 6th), the one nearest
-  the last note; over the tune's last chord, the tonic — is enclosed by the scale step above and the half step
-  below, and lands on the strongest note the rhythm gives it (targetIndex):
-  a long note, on a beat, with room for both approach notes before it. The
-  approach notes come from the chord's own notes when they can, else from
-  the end of the chord before when it runs straight into it (a long target
-  on the downbeat: the two notes before the bar line enclose it). Notes
-  before the enclosure walk the chord's tones towards it; notes after the
-  target run on through them, up over one chord and down over the next.
+  Approach notes: each chord's target — its 3rd or 7th (or 6th), the one
+  nearest the last note; over the tune's last chord, the tonic — is reached
+  from the half step below ("below"), the scale step above ("above"), or
+  both, above first (an enclosure, "enclose"), and lands on the strongest
+  note the rhythm gives it (targetIndex): a long note, on a beat, with room
+  for its approach notes before it. The approach notes come from the
+  chord's own notes when they can, else from the end of the chord before
+  when it runs straight into it (a long target on the downbeat: the notes
+  before the bar line lead into it). Notes before the approach walk the
+  chord's tones towards it; notes after the target run on through them, up
+  over one chord and down over the next.
 */
-function approachRoom(notes, seg, prevSeg, locked) {
+function approachRoom(notes, seg, prevSeg, locked, count) {
   let room = 0;
   if (prevSeg === undefined) return room;
-  for (let i = seg.start - 1; room < 2 && i >= prevSeg.start && !locked.has(i); i--) {
+  for (let i = seg.start - 1; room < count && i >= prevSeg.start && !locked.has(i); i--) {
     if (notes[i + 1].slot - (notes[i].slot + notes[i].len) > LEAD_GAP) break;
     room += 1;
   }
@@ -547,12 +739,15 @@ function approachRoom(notes, seg, prevSeg, locked) {
 }
 
 // Which note of the chord (0-based) the target lands on: the best score.
-function targetIndex(notes, seg, crossRoom) {
+// `count`: how many approach notes lead into it.
+function targetIndex(notes, seg, crossRoom, count) {
   let best = 0;
   let bestScore = -1;
   for (let t = 0; t < seg.end - seg.start; t++) {
     const note = notes[seg.start + t];
-    const room = [crossRoom / 4, 0.5, 1][Math.min(t, 2)];
+    let room = 0.5;
+    if (t >= count) room = 1;
+    else if (t === 0) room = crossRoom / (2 * count);
     const score = note.len + (note.slot % SLOTS_PER_BEAT === 0 ? 1 : 0) + room;
     if (score > bestScore) {
       best = t;
@@ -562,16 +757,27 @@ function targetIndex(notes, seg, crossRoom) {
   return best;
 }
 
-// `count` chord tones falling onto the enclosure from just above it (or,
+// `count` chord tones falling onto the approach from just above it (or,
 // with no room up there, rising from just below), never the target itself.
-function leadIn(tones, approach, count) {
+function leadIn(tones, approach, target, count) {
   if (count <= 0) return [];
-  const above = tones.filter((m) => m > approach[0]).slice(0, count).reverse();
+  const top = Math.max(target, ...approach);
+  const bottom = Math.min(target, ...approach);
+  const above = tones.filter((m) => m > top).slice(0, count).reverse();
   if (above.length === count) return above;
-  return tones.filter((m) => m < approach[1]).slice(-count);
+  return tones.filter((m) => m < bottom).slice(-count);
 }
 
-function enclosurePitches(notes, runs, tonic) {
+// The approach notes into `target`, in the order they're played.
+function approachNotes(chord, target, style) {
+  const up = scaleTones(chord).find((m) => m > target);
+  const above = up === undefined ? target + 2 : up;
+  if (style === "below") return [target - 1];
+  if (style === "above") return [above];
+  return [above, target - 1];
+}
+
+function approachPitches(notes, style, tonic) {
   const out = [];
   const locked = new Set();
   let dir = 1;
@@ -581,17 +787,18 @@ function enclosurePitches(notes, runs, tonic) {
     // The last chord's target is the tonic, when it's one of its tones.
     const home = k === segs.length - 1 ? homeNotes(chord, tonic) : [];
     const target = nearest(home.length > 0 ? home : guideTones(chord), before);
-    const up = scaleTones(chord).find((m) => m > target);
-    const approach = [up === undefined ? target + 2 : up, target - 1];
-    const t = targetIndex(notes, seg, approachRoom(notes, seg, segs[k - 1], locked));
+    const approach = approachNotes(chord, target, style);
+    const count = approach.length;
+    const crossRoom = approachRoom(notes, seg, segs[k - 1], locked, count);
+    const t = targetIndex(notes, seg, crossRoom, count);
     const at = seg.start + t;
-    // Approach notes: as many of the two as fit before the target, in this chord or the last.
-    const room = t >= 2 ? 2 : Math.max(t, approachRoom(notes, seg, segs[k - 1], locked));
+    // Approach notes: as many as fit before the target, in this chord or the last.
+    const room = t >= count ? count : Math.max(t, crossRoom);
     const tones = chordTones(chord);
-    out.push(...leadIn(tones, approach, at - 2 - seg.start));
-    for (let j = 0; j < Math.min(t, 2); j++) out.push(null);
+    out.push(...leadIn(tones, approach, target, t - count));
+    for (let j = 0; j < Math.min(t, count); j++) out.push(null);
     out.push(target);
-    approach.slice(2 - room).forEach((m, j) => {
+    approach.slice(count - room).forEach((m, j) => {
       out[at - room + j] = m;
     });
     locked.add(at);
@@ -606,23 +813,28 @@ function enclosurePitches(notes, runs, tonic) {
   return out;
 }
 
-const EXERCISES = {
-  arpeggios: { cells: RUN_CELLS, pitches: (notes, runs) => runPitches(notes, chordTones, runs) },
-  scales: { cells: RUN_CELLS, pitches: (notes, runs) => runPitches(notes, scaleTones, runs, true) },
-  guide: { cells: LONG_CELLS, pitches: guidePitches },
-  enclosures: { cells: RUN_CELLS, pitches: enclosurePitches },
-  rhythm: { cells: RUN_CELLS, pitches: rhythmPitches },
-};
+// How a parsed exercise plays: its own rhythm cells and its pitch rule.
+function planFor(parsed) {
+  if (parsed.degrees === null) {
+    return { cells: RUN_CELLS, pitches: (notes, tonic) => approachPitches(notes, parsed.variant, tonic) };
+  }
+  if (parsed.kind === "arpeggios" && sameDegrees(parsed.degrees, GUIDE_SET)) return { cells: LONG_CELLS, pitches: guidePitches };
+  if (parsed.degrees.length === 1) return { cells: RUN_CELLS, pitches: (notes, tonic) => holdPitches(notes, parsed, tonic) };
+  return { cells: RUN_CELLS, pitches: (notes) => runPitches(notes, parsed, parsed.variant) };
+}
 
 // The ticked patterns (rhythm values, in any order) in PRACTICE_RHYTHMS order.
 function pickedRhythms(rhythms) {
   return rhythms ? PRACTICE_RHYTHMS.filter((r) => rhythms.includes(r.value)) : [];
 }
 
-// What an exercise kind plays with nothing ticked: its own patterns, as values.
-export function practiceDefaultRhythms(kind) {
-  const spec = EXERCISES[kind];
-  return spec ? PRACTICE_RHYTHMS.filter((r) => spec.cells.includes(r.cell)).map((r) => r.value) : [];
+// What an exercise plays with nothing ticked: its own patterns, as values
+// (long notes for guide tones, runs for the rest).
+export function practiceDefaultRhythms(exercise) {
+  const parsed = parseExercise(exercise);
+  if (parsed === null) return [];
+  const { cells } = planFor(parsed);
+  return PRACTICE_RHYTHMS.filter((r) => cells.includes(r.cell)).map((r) => r.value);
 }
 
 // The cells an exercise takes turns with: the ticked ones, or its own set.
@@ -646,9 +858,9 @@ function cellsFor(spec, rhythms) {
 export function practiceNotes(names, exercise, {
   rhythms = null, breathEvery = BREATH_EVERY, key = null, tonic = null,
 } = {}) {
-  const { kind, runs } = splitExercise(exercise);
-  const spec = EXERCISES[kind];
-  if (!spec) return [];
+  const parsed = parseExercise(exercise);
+  if (parsed === null) return [];
+  const spec = planFor(parsed);
   const breaks = new Set();
   names.forEach((row, bar) => {
     if (row.every((name) => name === null)) breaks.add(bar);
@@ -657,7 +869,7 @@ export function practiceNotes(names, exercise, {
   const notes = onsetsOf(rhythmSlots(names.length, breaks, cellsFor(spec, rhythms), breathEvery))
     .map((note) => ({ ...note, at: chordFor(timeline, note) }))
     .filter((note) => note.at);
-  const midis = spec.pitches(notes, runs, tonic);
+  const midis = spec.pitches(notes, tonic);
   // Every exercise ends at home: its last note on the tonic, when that's a
   // tone of the last chord, in the octave nearest the note before.
   const last = notes.length - 1;
@@ -684,14 +896,14 @@ function createPracticeSpeller(keyScale) {
 }
 
 /*
-  Add a Practice staff for `exercise` (a PRACTICE_EXERCISES value) to the
+  Add a Practice staff for `exercise` (any value parseExercise reads) to the
   tune. `text`, `chords` and `song` are as for buildSoloTune; `text` may
   already carry the Comping / Solo voices. Returns { abc, notes }, or null
   when it can't apply (no chords, no such exercise, an unsupported meter, no
   K: line). `options` is practiceNotes' { rhythms }.
 */
 export function buildPracticeTune(text, chords, song, exercise, options = {}) {
-  if (!chords || chords.length === 0 || !EXERCISES[splitExercise(exercise).kind]) return null;
+  if (!chords || chords.length === 0 || parseExercise(exercise) === null) return null;
   const head = song.lines[0] && song.lines[0].staff[0] && song.lines[0].staff[0].key;
   const scale = keyScaleNotes(head || { root: "C", acc: "", mode: "" }).map(pcChromaVal);
   const notes = practiceNotes(resolveChordNames(chords), exercise, { ...options, key: new Set(scale), tonic: scale[0] });

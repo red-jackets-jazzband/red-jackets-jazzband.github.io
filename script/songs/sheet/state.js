@@ -18,7 +18,7 @@ import { boolPref, enumPref } from "../../lib/core/persisted.js";
 import { INSTRUMENTS } from "../../lib/music/instruments.js";
 import { COMPING_PATTERNS } from "../../lib/music/comping.js";
 import { SOLO_STYLES } from "../../lib/music/solo.js";
-import { PRACTICE_EXERCISES, PRACTICE_RHYTHMS } from "../../lib/music/practice.js";
+import { formatExercise, isPracticeSetting, parseExercise, PRACTICE_RHYTHMS } from "../../lib/music/practice.js";
 
 // The comping Split toggles, in staff order: root, third, fifth.
 export const COMPING_PARTS = ["R", "3", "5"];
@@ -66,6 +66,23 @@ const practiceRhythmsPref = {
   },
 };
 
+/*
+  The practice exercise ("off", or a value practice.js's parseExercise
+  reads: "scales-updown", "arpeggios@37", "enclosures-below"), stored as
+  written back by formatExercise — so a value from before note sets
+  ("guide", "rhythm") loads as the set it became. Anything unreadable is off.
+*/
+const practicePref = {
+  load(read) {
+    const raw = read(PREF_KEYS.practice);
+    if (raw === "off" || !isPracticeSetting(raw)) return "off";
+    return formatExercise(parseExercise(raw));
+  },
+  save(value, write) {
+    write(PREF_KEYS.practice, String(value));
+  },
+};
+
 export const SETTINGS_SLICE = {
   name: "settings",
   initial: {
@@ -83,7 +100,7 @@ export const SETTINGS_SLICE = {
     compingSplit: boolPref(PREF_KEYS.compingSplit, false),
     compingParts: compingPartsPref,
     solo: enumPref(PREF_KEYS.solo, ["off", ...SOLO_STYLES.map((s) => s.value)], "off"),
-    practice: enumPref(PREF_KEYS.practice, ["off", ...PRACTICE_EXERCISES], "off"),
+    practice: practicePref,
     // The practice panel's ticked rhythms (null: the exercise's own set).
     practiceRhythms: practiceRhythmsPref,
   },

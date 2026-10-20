@@ -290,6 +290,26 @@ test("a step that doesn't ask for comping or practice has them off (they'd keep 
   }
 });
 
+test("the run-shape step always has runs to shape, keeping the visitor's pick where it can", async () => {
+  const { actions, ctx, cleanup } = setup({ state: { activeTab: "library" } });
+  const runsOn = async (practice) => {
+    ctx.store.set("settings", { practice });
+    await actions.apply(["openDemoSong", "openDrawer", "practiceRunsOn"]);
+    return ctx.state.practice;
+  };
+  try {
+    actions.begin();
+    assert.equal(await runsOn("off"), "arpeggios-updown", "the demo when off");
+    assert.equal(await runsOn("scales-down@123"), "scales-down@123", "a run stays as picked");
+    assert.equal(await runsOn("arpeggios@1"), "arpeggios-updown", "Root alone: its kind's runs");
+    assert.equal(await runsOn("arpeggios@37"), "arpeggios-updown", "guide tones: its kind's runs");
+    assert.equal(await runsOn("enclosures-below"), "arpeggios-updown", "Approach: the demo");
+    actions.end();
+  } finally {
+    cleanup();
+  }
+});
+
 test("begin() silences playback; end() puts back the drawer, comping and the visitor's own song", async () => {
   const { actions, calls, ctx, cleanup } = setup({
     state: { currentSongFile: OWN_SONG_FILE, activeTab: "library" },

@@ -65,7 +65,7 @@ test("each step writes its own setting, and any pick switches practice on", () =
     click('.practice-shape[data-value="up"]');
     assert.equal(ctx.state.practice, "arpeggios-up");
     assert.deepEqual(pressed("shape"), ["up"]);
-    assert.equal($(SUMMARY_TEXT).textContent, "Chord-tone runs, Up · Varied rhythm");
+    assert.equal($(SUMMARY_TEXT).textContent, "7th chords, Up · Varied rhythm");
 
     // Nothing ticked yet: the exercise's own set shows ticked, every pattern on offer.
     const runs = PRACTICE_RHYTHMS.filter((r) => r.run).map((r) => r.value);
@@ -77,15 +77,127 @@ test("each step writes its own setting, and any pick switches practice on", () =
   }
 });
 
+// The rhythm step's number: the last of the four step numbers.
+const rhythmStepNum = () => document.querySelectorAll(".practice-step-num")[3].textContent;
+const setCard = (value) => `.practice-choices--sets:not([hidden]) .practice-set[data-value="${value}"]`;
+
 test("the shape step only shows for runs, and the rhythm step renumbers", () => {
   const { page } = setup();
   try {
-    click('.practice-kind[data-value="guide"]');
+    click('.practice-kind[data-value="enclosures"]');
     assert.equal($("#practiceShapeStep").hidden, true);
-    assert.equal(document.querySelectorAll(".practice-step-num")[2].textContent, "2");
+    assert.equal(rhythmStepNum(), "3");
     click('.practice-kind[data-value="scales"]');
     assert.equal($("#practiceShapeStep").hidden, false);
-    assert.equal(document.querySelectorAll(".practice-step-num")[2].textContent, "3");
+    assert.equal(rhythmStepNum(), "4");
+  } finally {
+    page.cleanup();
+  }
+});
+
+test("which notes: a run kind's preset cards, each drawn on a staff, and Custom", () => {
+  const { page, ctx } = setup();
+  try {
+    click('.practice-kind[data-value="arpeggios"]');
+    assert.equal($("#practiceNotesTitle").textContent, "Which notes");
+    const cards = [...document.querySelectorAll(".practice-choices--sets:not([hidden]) .practice-set")];
+    assert.deepEqual(cards.map((c) => c.getAttribute("data-value")), ["root", "triad", "seventh", "ninth", "sixth", "guide", "custom"]);
+    assert.ok(cards.every((c) => c.querySelector("svg.practice-notes")), "every card draws its notes");
+    assert.equal(cards[1].querySelectorAll("ellipse").length, 3, "a triad is three notes");
+    assert.deepEqual(pressed("set"), ["seventh"], "the default set");
+
+    click(setCard("triad"));
+    assert.equal(ctx.state.practice, "arpeggios-updown@135", "keeps the shape");
+    assert.equal($(SUMMARY_TEXT).textContent, "Triads, Up & down · Varied rhythm");
+    // Guide tones and Root play no run: no shape to pick, and guide tones
+    // tick the long-note rhythms.
+    click(setCard("guide"));
+    assert.equal(ctx.state.practice, "arpeggios@37");
+    assert.equal($("#practiceShapeStep").hidden, true);
+    assert.deepEqual(pressed("pattern"), PRACTICE_RHYTHMS.filter((r) => r.long).map((r) => r.value));
+    click(setCard("root"));
+    assert.equal(ctx.state.practice, "arpeggios@1");
+    assert.equal($(SUMMARY_TEXT).textContent, "Roots · Varied rhythm");
+    // Back to a run: the shape last picked comes back.
+    click(setCard("ninth"));
+    assert.equal(ctx.state.practice, "arpeggios-updown@13579");
+  } finally {
+    page.cleanup();
+  }
+});
+
+test("Custom opens a row of degrees to switch on and off, never none", () => {
+  const { page, ctx } = setup();
+  const row = '.practice-degrees[data-kind="arpeggios"]';
+  try {
+    click('.practice-kind[data-value="arpeggios"]');
+    assert.equal($(row).hidden, true, "only for Custom");
+    click(setCard("custom"));
+    assert.equal($(row).hidden, false);
+    assert.equal(ctx.state.practice, "arpeggios-updown@137");
+    const labels = [...document.querySelectorAll(`${row} .practice-degree`)].map((b) => b.textContent);
+    assert.deepEqual(labels, ["Root", "3rd", "5th", "6th", "7th", "9th"]);
+    click(`${row} .practice-degree[data-value="1"]`);
+    click(`${row} .practice-degree[data-value="9"]`);
+    assert.equal(ctx.state.practice, "arpeggios-updown@379");
+    assert.equal($(SUMMARY_TEXT).textContent, "Chord tones: 3rd, 7th, 9th, Up & down · Varied rhythm");
+    assert.equal(document.querySelectorAll(`${setCard("custom")} ellipse`).length, 3, "Custom's card draws its set");
+    // Down to the 3rd and 7th: still Custom (it was picked), playing guide tones.
+    click(`${row} .practice-degree[data-value="9"]`);
+    assert.equal(ctx.state.practice, "arpeggios@37");
+    assert.deepEqual(pressed("set"), ["custom"]);
+    click(`${row} .practice-degree[data-value="3"]`);
+    click(`${row} .practice-degree[data-value="7"]`);
+    assert.equal(ctx.state.practice, "arpeggios@7", "the last one stays on");
+    // A preset closes the row again.
+    click(setCard("triad"));
+    assert.equal($(row).hidden, true);
+  } finally {
+    page.cleanup();
+  }
+});
+
+test("a click on a card's staff keeps the panel open, even as the click redraws it", () => {
+  const { page } = setup();
+  try {
+    click(SUMMARY);
+    click('.practice-kind[data-value="arpeggios"]');
+    $(`${setCard("custom")} ellipse`).dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+    assert.equal($(PANEL).hidden, false);
+    assert.deepEqual(pressed("set"), ["custom"]);
+  } finally {
+    page.cleanup();
+  }
+});
+
+test("a stored set that isn't a preset opens on Custom", () => {
+  const page = mountPage();
+  try {
+    const ctx = makeCtx({ state: { practice: "scales-up@1235" } });
+    createPracticePanel(ctx);
+    assert.deepEqual(pressed("set"), ["custom"]);
+    assert.equal($('.practice-degrees[data-kind="scales"]').hidden, false);
+    assert.deepEqual(pressed("degree"), ["1", "2", "3", "5"]);
+  } finally {
+    page.cleanup();
+  }
+});
+
+test("approach: how to approach the target, from below, above or both", () => {
+  const { page, ctx } = setup();
+  try {
+    click('.practice-kind[data-value="enclosures"]');
+    assert.equal(ctx.state.practice, "enclosures");
+    assert.equal($("#practiceNotesTitle").textContent, "How to approach");
+    assert.deepEqual(pressed("set"), ["enclose"]);
+    click(setCard("below"));
+    assert.equal(ctx.state.practice, "enclosures-below");
+    assert.equal($(SUMMARY_TEXT).textContent, "Approach from below · Varied rhythm");
+    assert.equal(document.querySelectorAll(`${setCard("below")} .practice-notes-head.is-hollow`).length, 1);
+    // Each kind comes back as it was left.
+    click('.practice-kind[data-value="scales"]');
+    click('.practice-kind[data-value="enclosures"]');
+    assert.equal(ctx.state.practice, "enclosures-below");
   } finally {
     page.cleanup();
   }

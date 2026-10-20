@@ -1,4 +1,5 @@
 import { byId } from "../../lib/core/dom.js";
+import { exerciseTakesShape, formatExercise, parseExercise } from "../../lib/music/practice.js";
 import { isSetlistDivider } from "../../lib/setlists/setlist-format.js";
 import {
   clearPersonalSetlistMarker, copyBandSetlistToPersonal, deletePersonalSetlist, getPersonalSetlist,
@@ -73,6 +74,7 @@ export const TOUR_ACTION_NAMES = [
   "compingUnsplit",
   "openPractice",
   "practiceOn",
+  "practiceRunsOn",
   "createDemoSetlist",
   "addDemoSong1",
   "addDemoSong2",
@@ -83,8 +85,9 @@ export const TOUR_ACTION_NAMES = [
 ];
 
 // The exercise the "Learning a tune" chapter switches on when none is set:
-// scale runs, up to the octave and back over every chord.
-const PRACTICE_DEMO_EXERCISE = "scales-updown";
+// 7th chords, up and back over every chord — so "Which notes" opens on the
+// chord-tone cards its copy walks through.
+const PRACTICE_DEMO_EXERCISE = "arpeggios-updown";
 
 const SHEET_ACTIVE_CLASS = "rj-sheet-active";
 
@@ -377,6 +380,18 @@ export function createTourActions(ctx) {
     if (ctx.state.practice === "off") setSettings({ practice: PRACTICE_DEMO_EXERCISE });
   }
 
+  // Runs with a shape to pick, for the step about run shapes (its target is
+  // hidden otherwise, and a step whose target is missing is skipped for the
+  // rest of the tour). The visitor's own pick stays when it already takes a
+  // shape; a set that plays no run (Root alone, guide tones) goes to its
+  // kind's default set, Approach to the demo.
+  async function practiceRunsOn() {
+    const parsed = parseExercise(ctx.state.practice);
+    if (parsed && exerciseTakesShape(parsed)) return;
+    const runs = parsed && parsed.degrees !== null;
+    setSettings({ practice: runs ? formatExercise({ kind: parsed.kind, variant: "updown" }) : PRACTICE_DEMO_EXERCISE });
+  }
+
   const actions = {
     showLibrary,
     showSetlists,
@@ -394,6 +409,7 @@ export function createTourActions(ctx) {
     compingUnsplit,
     openPractice,
     practiceOn,
+    practiceRunsOn,
     createDemoSetlist,
     addDemoSong1,
     addDemoSong2,
@@ -414,7 +430,8 @@ export function createTourActions(ctx) {
     // Comping and Practice keep playing with the drawer closed; the tour only
     // has them on in the steps that ask (the visitor's own picks come back at the end).
     if (!names.includes("compingOn") && ctx.state.comping !== "off") setSettings({ comping: "off" });
-    if (!names.includes("practiceOn") && ctx.state.practice !== "off") setSettings({ practice: "off" });
+    const wantsPractice = names.includes("practiceOn") || names.includes("practiceRunsOn");
+    if (!wantsPractice && ctx.state.practice !== "off") setSettings({ practice: "off" });
     if (!names.includes("openPractice")) closePractice();
     if (!names.includes("revealDemoSplit")) {
       document.querySelectorAll(`.${TOUR_REVEAL_SPLIT_CLASS}`)

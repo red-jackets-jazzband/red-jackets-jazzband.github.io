@@ -176,7 +176,10 @@ Eine eigene Setlist kannst du mit dem Button `fa-file-arrow-down` als **.txt**-D
 Die **Üben**-Routine in der Schublade schreibt eine Übung auf eine eigene Notenzeile unter der Melodie, gebaut aus den Akkorden des Songs, sodass du Takt für Takt die Harmonien spielst und nicht nur die Melodie.
 
 ## what: Was gespielt wird
-Wähle, was die Übung spielt: **Akkordtöne** (Grundton, Terz, Quinte und Septime), **Tonleiterläufe**, **Leittöne**, **Umspielungen** oder einen einzigen Ton, um nur am Rhythmus zu arbeiten.
+Wähle, was die Übung spielt: **Akkordtöne**, **Tonleitern** oder eine **Annäherung** an Terz oder Septime jedes Akkords.
+
+## notes: Welche Töne
+Jede Karte zeigt ihre Töne auf einer kleinen Notenzeile. Fang mit den Grundtönen an, dann Dreiklänge, Septakkorde und Nonakkorde, so wie man die Akkorde eines neuen Songs lernt; bei Tonleitern die ersten 3 Töne, dann 5, dann die ganze Oktave. **Leittöne** spielt nur Terz und Septime, wobei jede Septime einen Halbton auf die Terz des nächsten Akkords fällt. Mit **Eigene** wählst du die Töne einzeln. Bei einer Annäherung wählst du, wie du den Zielton erreichst: einen Halbton von unten, einen Schritt von oben oder beides.
 
 ## shape: Läufe auf jeder Akkordform
 Spiele die Läufe **aufwärts**, **abwärts**, **auf und ab** oder stimmführend von Akkord zu Akkord. Wer verschiedene Läufe über jede Akkordform übt, bekommt die Harmonie des Songs in die Finger, und das ist die Grundlage, um eigene Linien zu improvisieren: ein Solo, ein Ad-lib oder ein Obligato um die Melodie.

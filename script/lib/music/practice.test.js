@@ -2,9 +2,9 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import ABCJS from "abcjs";
 import {
-  buildPracticeTune, joinExercise, practiceNotes, practiceSummary, practiceSummaryParts, PRACTICE_EXERCISES, PRACTICE_KINDS,
-  practiceDefaultRhythms, PRACTICE_RHYTHMS, PRACTICE_SHAPES, splitExercise,
-  rhythmSlots,
+  buildPracticeTune, exerciseTakesShape, formatExercise, isPracticeSetting, parseExercise, practiceNotes, practiceNoteSet,
+  practiceSummary, practiceSummaryParts, PRACTICE_APPROACHES, PRACTICE_EXERCISES, PRACTICE_KINDS, PRACTICE_NOTE_SETS,
+  practiceDefaultRhythms, PRACTICE_RHYTHMS, PRACTICE_SHAPES, rhythmSlots,
 } from "./practice.js";
 import { buildCompingTune, COMPING_PATTERNS } from "./comping.js";
 import { parseChordScheme } from "./chords.js";
@@ -21,6 +21,7 @@ after(() => {
 });
 
 const SCALES_UPDOWN = "scales-updown";
+const GUIDE_TONES = "arpeggios@37";
 const NAMES = [["F"], ["C7"], ["F", "F7"], [null]];
 
 const mod12 = (x) => ((x % 12) + 12) % 12;
@@ -101,7 +102,9 @@ test("an enclosure's target takes the long note: on a long downbeat it's enclose
 });
 
 test("scale runs keep chord tones on the beats, whatever the rhythm", () => {
-  for (const exercise of PRACTICE_EXERCISES.filter((e) => splitExercise(e).kind === "scales")) {
+  const fullScales = PRACTICE_EXERCISES.filter((e) => parseExercise(e).kind === "scales" && parseExercise(e).degrees.length === 8);
+  assert.equal(fullScales.length, 4);
+  for (const exercise of fullScales) {
     for (const rhythm of PRACTICE_RHYTHMS.filter((r) => r.run)) {
       const notes = practiceNotes([["F"], ["F"], ["F"], ["F"]], exercise, { rhythms: [rhythm.value], breathEvery: 0 });
       for (const n of notes.filter((note) => Number.isInteger(note.start))) {
@@ -228,14 +231,14 @@ test("a key change before a repeat is followed: the new section sounds as genera
 });
 
 test("a note tied into a bar doesn't set its accidental for the rest of the bar", () => {
-  // Rhythm on one note over C7 in Eb ties an E-natural into the next C7 bar:
+  // The 3rd alone over C7 in Eb ties an E-natural into the next C7 bar:
   // abcjs ignores the accidental on a tied-over note, so the next E in that
   // bar must carry its own natural.
   // The anticipated cell comes round at bars 9-10.
   const bars = Array.from({ length: 12 }, () => "\"C7\"G8").join("|");
   const text = ["X:1", "T:Tie", "M:4/4", "L:1/8", "K:Eb", `${bars}|]`, ""].join("\n");
   withRealTonal(() => {
-    const built = practiceOf(text, "rhythm");
+    const built = practiceOf(text, "arpeggios@3");
     // "...E- |E=E...": the tied-over E is written bare, the next one spells its own natural.
     assert.match(built.abc, /E- \|E=E/);
     assert.deepEqual(practicePlayback(built.abc), built.notes.map((n) => n.midi));
@@ -331,12 +334,14 @@ test("runs: a fixed shape stays within one octave of a root on the staff", () =>
   }
 });
 
-test("the Practice list offers each run in each shape, read back from one value", () => {
+test("the Practice list offers each run in each shape, each set and each approach, read back from one value", () => {
   const values = PRACTICE_EXERCISES;
   assert.deepEqual(values, [
     "arpeggios", "arpeggios-up", "arpeggios-down", "arpeggios-updown",
     "scales", "scales-up", "scales-down", SCALES_UPDOWN,
-    "guide", "enclosures", "rhythm",
+    "arpeggios@1", "arpeggios-updown@135", "arpeggios-updown@13579", "arpeggios-updown@1356", GUIDE_TONES,
+    "scales-updown@123", "scales-updown@12345",
+    "enclosures-below", "enclosures-above", "enclosures",
   ]);
   for (const value of values) assert.ok(practiceNotes(EIGHT_BARS, value).length > 0, value);
   assert.deepEqual(practiceNotes(EIGHT_BARS, "kazoo-up"), []);
@@ -421,6 +426,8 @@ test("with nothing ticked an exercise plays its own set; ticked ones play in pat
   const twelve = Array.from({ length: 12 }, () => ["F"]);
   assert.deepEqual(practiceDefaultRhythms("scales"), PRACTICE_RHYTHMS.filter((r) => r.run).map((r) => r.value));
   assert.deepEqual(practiceDefaultRhythms("guide"), PRACTICE_RHYTHMS.filter((r) => r.long).map((r) => r.value));
+  assert.deepEqual(practiceDefaultRhythms(GUIDE_TONES), practiceDefaultRhythms("guide"));
+  assert.deepEqual(practiceDefaultRhythms("arpeggios@1"), practiceDefaultRhythms("scales"));
   assert.deepEqual(practiceDefaultRhythms("nope"), []);
   assert.deepEqual(
     practiceNotes(twelve, "scales", { rhythms: null, breathEvery: 0 }),
@@ -439,18 +446,99 @@ test("Pushes on the \"and\": the and of 2 held over beat 3, the and of 4 tied ov
   assert.deepEqual(notes.slice(0, 4).map((n) => [n.start, n.duration]), [[0, 0.5], [0.5, 0.5], [1.5, 1.5], [3.5, 1]]);
 });
 
-test("the panel's kinds and shapes join into exercise values and back", () => {
-  assert.deepEqual(PRACTICE_KINDS.map((k) => k.value), ["arpeggios", "scales", "guide", "enclosures", "rhythm"]);
+test("an exercise value reads back as kind, variant and note set, and writes back the same", () => {
+  assert.deepEqual(PRACTICE_KINDS.map((k) => k.value), ["arpeggios", "scales", "enclosures"]);
   assert.deepEqual(PRACTICE_SHAPES.map((s) => s.value), ["alternate", "up", "down", "updown"]);
-  assert.equal(joinExercise("scales", "updown"), SCALES_UPDOWN);
-  assert.equal(joinExercise("scales", "alternate"), "scales");
-  assert.equal(joinExercise("guide", "up"), "guide", "only runs take a shape");
-  assert.deepEqual(splitExercise("arpeggios-down"), { kind: "arpeggios", runs: "down" });
-  assert.deepEqual(splitExercise("enclosures"), { kind: "enclosures", runs: "alternate" });
-  for (const value of PRACTICE_EXERCISES) {
-    const { kind, runs } = splitExercise(value);
-    assert.equal(joinExercise(kind, runs), value);
+  assert.deepEqual(parseExercise("arpeggios-down"), { kind: "arpeggios", variant: "down", degrees: [1, 3, 5, 7] });
+  assert.deepEqual(parseExercise("scales"), { kind: "scales", variant: "alternate", degrees: [1, 2, 3, 4, 5, 6, 7, 8] });
+  assert.deepEqual(parseExercise("scales-up@12345"), { kind: "scales", variant: "up", degrees: [1, 2, 3, 4, 5] });
+  assert.deepEqual(parseExercise("enclosures"), { kind: "enclosures", variant: "enclose", degrees: null });
+  assert.deepEqual(parseExercise("enclosures-below"), { kind: "enclosures", variant: "below", degrees: null });
+  for (const bad of ["kazoo", "scales-sideways", "arpeggios@2", "arpeggios@", "scales@11", "scales@19", "enclosures-up", "enclosures@1", "scales-up-down"]) {
+    assert.equal(parseExercise(bad), null, bad);
   }
+  for (const value of PRACTICE_EXERCISES) assert.equal(formatExercise(parseExercise(value)), value);
+  // The default set and the voice-led shape are left out; so is a shape
+  // that a set of one note or guide tones can't take.
+  assert.equal(formatExercise({ kind: "scales", variant: "updown", degrees: [1, 2, 3, 4, 5, 6, 7, 8] }), SCALES_UPDOWN);
+  assert.equal(formatExercise({ kind: "arpeggios", variant: "up", degrees: [3, 7] }), GUIDE_TONES);
+  assert.equal(formatExercise({ kind: "arpeggios", variant: "up", degrees: [5] }), "arpeggios@5");
+  assert.equal(formatExercise({ kind: "enclosures", variant: "enclose" }), "enclosures");
+  assert.ok(exerciseTakesShape(parseExercise("arpeggios@135")));
+  assert.ok(!exerciseTakesShape(parseExercise(GUIDE_TONES)));
+  assert.ok(!exerciseTakesShape(parseExercise("scales@1")));
+  assert.ok(!exerciseTakesShape(parseExercise("enclosures")));
+});
+
+test("the old guide tones and one-note exercises carry over as note sets", () => {
+  assert.equal(formatExercise(parseExercise("guide")), GUIDE_TONES);
+  assert.equal(formatExercise(parseExercise("rhythm")), "arpeggios@1");
+  assert.deepEqual(practiceNotes(EIGHT_BARS, "guide"), practiceNotes(EIGHT_BARS, GUIDE_TONES));
+  assert.ok(isPracticeSetting("off") && isPracticeSetting("guide") && isPracticeSetting("scales@135"));
+  assert.ok(!isPracticeSetting("kazoo") && !isPracticeSetting(null));
+});
+
+test("every preset is a set the summary names; a card's set reads back as that preset", () => {
+  for (const kind of ["arpeggios", "scales"]) {
+    for (const set of PRACTICE_NOTE_SETS[kind]) {
+      assert.equal(practiceNoteSet(kind, set.degrees), set, `${kind} ${set.value}`);
+      const value = formatExercise({ kind, variant: "alternate", degrees: set.degrees });
+      assert.ok(practiceSummary(value, null).startsWith(set.name), value);
+    }
+  }
+  assert.equal(practiceNoteSet("arpeggios", [1, 7]), undefined);
+});
+
+// The chromas each chord of a run plays, by bar.
+function chromasByBar(notes, bars) {
+  return Array.from({ length: bars }, (_, bar) => new Set(notes
+    .filter((n) => Math.floor(n.start / 4) === bar).map((n) => mod12(n.midi))));
+}
+
+test("a chord-tone set plays only its own degrees of each chord", () => {
+  const names = [["F"], ["C7"], ["F"], ["C7"]];
+  const expect = {
+    "arpeggios-up@135": [[5, 9, 0], [0, 4, 7]],
+    "arpeggios-up@13579": [[5, 9, 0, 2, 7], [0, 4, 7, 10, 2]],
+    // A plain F's 7th is the 6th it's heard with (F A C D); C7's is Bb.
+    "arpeggios-up": [[5, 9, 0, 2], [0, 4, 7, 10]],
+  };
+  for (const [value, [overF, overC7]] of Object.entries(expect)) {
+    const bars = chromasByBar(practiceNotes(names, value, { rhythms: ["eighths"], breathEvery: 0 }), 4);
+    assert.deepEqual([...bars[0]].sort((a, b) => a - b), [...overF].sort((a, b) => a - b), `${value} over F`);
+    assert.deepEqual([...bars[1]].sort((a, b) => a - b), [...overC7].sort((a, b) => a - b), `${value} over C7`);
+  }
+});
+
+test("Root alone holds each chord's root for the rhythm", () => {
+  const notes = practiceNotes([["F"], ["C7"], ["Bb"], ["F"]], "arpeggios@1", { rhythms: ["charleston"], breathEvery: 0 });
+  [5, 0, 10, 5].forEach((root, bar) => {
+    const run = notes.filter((n) => Math.floor(n.start / 4) === bar).map((n) => n.midi);
+    assert.ok(run.every((m) => m === run[0] && mod12(m) === root), `bar ${bar}: ${run}`);
+  });
+});
+
+// One bar of F in eighths, as MIDI notes.
+const runOverF = (value) => practiceNotes([["F"]], value, { rhythms: ["eighths"], breathEvery: 0 }).map((n) => n.midi);
+
+test("scale sets: the first 3 or 5 notes, up and back or up and again", () => {
+  // F G A G F G A G: up to the 3rd and back.
+  assert.deepEqual(runOverF("scales-updown@123"), [65, 67, 69, 67, 65, 67, 69, 67]);
+  // F G A Bb C, then again from F.
+  assert.deepEqual(runOverF("scales-up@12345"), [65, 67, 69, 70, 72, 65, 67, 69]);
+});
+
+test("approach from below or above: one note leads into the target", () => {
+  for (const { style, offset } of [{ style: "below", offset: -1 }, { style: "above" }]) {
+    const notes = practiceNotes([["F"], ["C7"]], `enclosures-${style}`, { rhythms: ["eighths"], breathEvery: 0 });
+    const bar = notes.filter((n) => n.start >= 4);
+    // The target: a chord tone on a beat, with its one approach note before it.
+    const at = bar.findIndex((n) => C7_CHORD_TONES.has(mod12(n.midi)) && n.start % 1 === 0 && n.start > 4);
+    const [lead, target] = [bar[at - 1], bar[at]];
+    if (offset === -1) assert.equal(lead.midi, target.midi - 1, style);
+    else assert.ok(lead.midi > target.midi && lead.midi - target.midi <= 2, style);
+  }
+  assert.deepEqual(PRACTICE_APPROACHES.map((a) => a.value), ["below", "above", "enclose"]);
 });
 
 test("practiceSummaryParts: the exercise and its rhythm apart, for a phone to stack", () => {
@@ -463,6 +551,11 @@ test("practiceSummaryParts: the exercise and its rhythm apart, for a phone to st
 test("practiceSummary: one line for the closed control", () => {
   assert.equal(practiceSummary("off", null), "Off");
   assert.equal(practiceSummary(SCALES_UPDOWN, SYNC), `Scale runs, Up & down · ${SYNC.length} rhythms`);
-  assert.equal(practiceSummary("arpeggios", ["charleston"]), "Chord-tone runs, Voice-led · Charleston");
+  assert.equal(practiceSummary("arpeggios", ["charleston"]), "7th chords, Voice-led · Charleston");
   assert.equal(practiceSummary("guide", null), "Guide tones · Varied rhythm");
+  assert.equal(practiceSummary("arpeggios-up@1", null), "Roots · Varied rhythm");
+  assert.equal(practiceSummary("arpeggios-up@359", null), "Chord tones: 3rd, 5th, 9th, Up · Varied rhythm");
+  assert.equal(practiceSummary("scales-down@1235", null), "Scale: Root, 2nd, 3rd, 5th, Down · Varied rhythm");
+  assert.equal(practiceSummary("enclosures-below", null), "Approach from below · Varied rhythm");
+  assert.equal(practiceSummary("kazoo", null), "Off");
 });

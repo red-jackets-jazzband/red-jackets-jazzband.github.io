@@ -112,9 +112,12 @@ function scaleOf(family, shape, tones, inKey) {
 
 /*
   `sym` a chord name ("Cmaj7", "E7b9", "Dm6"), `key` the tune's key as a Set
-  of pitch-class chromas (or null). Returns { sym, root, tones, guide, scale }
-  — `root` a chroma, the rest arrays of semitones above it. Throws on a name
-  Tonal can't read, like solo-ga.js's parseChord.
+  of pitch-class chromas (or null). Returns { sym, root, tones, guide, scale,
+  third, fifth, top } — `root` a chroma, `tones`/`guide`/`scale` arrays of
+  semitones above it, and `third` (the sus note of a sus chord), `fifth` and
+  `top` (the 7th or 6th, written or implied; undefined for an augmented
+  triad) the chord tones' own semitones, for practice.js's note sets. Throws
+  on a name Tonal can't read, like solo-ga.js's parseChord.
 */
 export function practiceChord(sym, key = null) {
   const info = Tonal.Chord.get(String(sym).trim());
@@ -130,5 +133,7 @@ export function practiceChord(sym, key = null) {
   const guide = [third, top].filter((s) => s !== undefined);
   const tones = [0, ...guide, shape.fifth].filter((s, i, all) => all.indexOf(s) === i).sort((a, b) => a - b);
   const inKey = (s) => key !== null && key.has(mod12(root + s));
-  return { sym, root, tones, guide, scale: scaleOf(family, shape, tones, inKey) };
+  return {
+    sym, root, tones, guide, third, top, scale: scaleOf(family, shape, tones, inKey), fifth: shape.fifth,
+  };
 }

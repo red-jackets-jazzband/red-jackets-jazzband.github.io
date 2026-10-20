@@ -25,3 +25,19 @@ test("practiceRhythms: the old single choice carries over", () => {
   // Once the new key is written, the old one is ignored.
   assert.equal(codec.load(reader({ "rj.practiceRhythm": "charleston", "rj.practiceRhythms": "" })), null);
 });
+
+test("practice: an exercise round-trips; the old guide tones and one-note values load as note sets", () => {
+  const practice = SETTINGS_SLICE.prefs.practice;
+  const load = (value) => practice.load(reader({ "rj.practice": value }));
+  assert.equal(load("scales-updown"), "scales-updown");
+  assert.equal(load("arpeggios-up@135"), "arpeggios-up@135");
+  assert.equal(load("enclosures-below"), "enclosures-below");
+  assert.equal(load("guide"), "arpeggios@37");
+  assert.equal(load("rhythm"), "arpeggios@1");
+  assert.equal(load("off"), "off");
+  assert.equal(load("kazoo"), "off");
+  assert.equal(practice.load(reader({})), "off");
+  const written = {};
+  practice.save("arpeggios@1", (key, value) => { written[key] = value; });
+  assert.deepEqual(written, { "rj.practice": "arpeggios@1" });
+});

@@ -176,7 +176,10 @@ Een eigen setlist kun je met de `fa-file-arrow-down`-knop als **.txt**-bestand e
 De **Oefenen**-routine in de lade schrijft een oefening op een eigen notenbalk onder de melodie, gebouwd op de akkoorden van de song zelf, zodat je maat voor maat de akkoorden speelt in plaats van alleen de melodie.
 
 ## what: Wat je speelt
-Kies wat de oefening speelt: **akkoordtonen** (grondtoon, terts, kwint en septiem), **toonladderloopjes**, **gidstonen**, **omspelingen** of één noot om alleen aan ritme te werken.
+Kies wat de oefening speelt: **Akkoordtonen**, **Toonladders**, of een **Aanloop** naar de terts of septiem van elk akkoord.
+
+## notes: Welke noten
+Elke kaart toont zijn noten op een kleine notenbalk. Begin met de grondtonen, dan drieklanken, 7-akkoorden en 9-akkoorden, zoals je de akkoorden van een nieuwe song leert; bij toonladders de eerste 3 noten, dan 5, dan het hele octaaf. **Gidstonen** speelt alleen de terts en de septiem, waarbij elke septiem een halve toon zakt naar de terts van het volgende akkoord. Met **Eigen** kies je de noten één voor één. Bij een aanloop kies je hoe je de doeltoon bereikt: een halve toon van onderen, een stap van boven, of allebei.
 
 ## shape: Loopjes op elke akkoordvorm
 Speel de loopjes **omhoog**, **omlaag**, **op en neer**, of stemvoerend van akkoord naar akkoord. Door verschillende loopjes over elke akkoordvorm te oefenen krijg je de harmonie van de song in je vingers, en dat is de basis om je eigen lijnen te improviseren: een solo, een ad lib of een obligaat rond de melodie.
