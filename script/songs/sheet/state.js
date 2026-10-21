@@ -121,6 +121,7 @@ export const TUNE_SLICE = {
     title: "",
     inspirationLinks: [], // the tune's F: links, lib/media/inspiration-links.js
     history: [], // the tune's H: paragraphs, lib/music/history.js
+    formTables: [], // the band's form: the tune's W: pipe tables (render-plan.js's wordsTables)
     audioTranspose: 0, // semitones the synth plays at (Key stepper + setlist row)
     chordOffset: 0, // leading chordless bars before the chord table's first cell
     repeatBoundaries: null, // the chord table's { start, end } repeat span

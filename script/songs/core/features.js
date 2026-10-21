@@ -13,6 +13,7 @@ import { createInstrumentDropdown, createCompingDropdown } from "../sheet/select
 import { createPracticePanel } from "../sheet/practice-panel.js";
 import { createFullscreen } from "../sheet/fullscreen.js";
 import { createSongHistory } from "../sheet/history.js";
+import { createSongForm } from "../sheet/song-form.js";
 import { createSwipeNav } from "../sheet/swipe-nav.js";
 import { createInspiration } from "../inspiration/inspiration.js";
 import { createLibraryTab } from "../library/library-tab.js";
@@ -142,5 +143,8 @@ export const FEATURES = [
       whenFontReady(document.fonts, "16px MuseJazzText", SHEET_FONT_WAIT_MS, () => ctx.nav.start());
     },
   },
+  // After the deep link: its pencil and a visitor's own version wait for the
+  // page to finish loading anyway (song-form.js's init).
+  { name: "songForm", create: createSongForm, init: (ctx) => ctx.songForm.init() },
   { name: "tour", create: createTour, init: (ctx) => ctx.tour.init() },
 ];

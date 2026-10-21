@@ -210,6 +210,9 @@ export function fitChordTable(container) {
   grid.style.zoom = String(available / natural);
 }
 
+// The smallest the form strip is shrunk to fit its width; past this it wraps.
+const MIN_FORM_ZOOM = 0.75;
+
 /*
   Fit the song-form arrow strip(s) under the chord grid the same way: each
   step keeps at least its own min-content width, so on a phone the strip
@@ -223,6 +226,7 @@ export function fitSongForms(chordEl) {
   const parent = chordEl && chordEl.parentNode; // NOSONAR: `?.` is a SyntaxError on Safari 12 (see Browser support)
   if (!parent) return;
   parent.querySelectorAll(".songForm").forEach((form) => {
+    form.classList.remove("songForm--wrap");
     form.style.zoom = "";
     form.style.width = "";
     forceReflow(form);
@@ -232,8 +236,15 @@ export function fitSongForms(chordEl) {
     const natural = form.scrollWidth;
     form.style.width = "";
     if (natural <= available + 1) return;
+    const zoom = available / natural;
+    // A long form on a phone (Panama's seven rounds) would shrink past reading:
+    // it wraps onto a second line at full size instead.
+    if (zoom < MIN_FORM_ZOOM) {
+      form.classList.add("songForm--wrap");
+      return;
+    }
     form.style.width = `${natural}px`;
-    form.style.zoom = String(available / natural);
+    form.style.zoom = String(zoom);
   });
 }
 

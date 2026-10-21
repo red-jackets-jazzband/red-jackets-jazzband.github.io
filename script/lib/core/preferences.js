@@ -34,6 +34,12 @@ export function layerPrefKey(id) {
   return `rj.layer.${id}`;
 }
 
+// A song's own version of its form (songs/sheet/song-form.js), by song file —
+// dynamic, one key per song the visitor has made a version of.
+export function songFormPrefKey(songFile) {
+  return `rj.songForm.${songFile}`;
+}
+
 // The raw Storage object, or null when it can't be reached. Callers that hand
 // this to setlists-store.js want the object itself.
 export function safeStorage() {
@@ -61,6 +67,17 @@ export function writePref(key, value) {
     return true;
   } catch {
     // Unwritable storage (private mode, quota) — the choice just won't stick.
+    return false;
+  }
+}
+
+// Forget a stored value. Returns false when storage was unavailable.
+export function removePref(key) {
+  try {
+    window.localStorage.removeItem(key);
+    return true;
+  } catch {
+    // Unwritable storage — nothing was stored there to forget anyway.
     return false;
   }
 }

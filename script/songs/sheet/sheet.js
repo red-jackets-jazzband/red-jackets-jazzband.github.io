@@ -1,5 +1,6 @@
-import { byId, clear, el, qsa } from "../../lib/core/dom.js";
-import { extractWordsTables, parseFormStep } from "../../lib/music/words-table.js";
+import { byId, clear, el } from "../../lib/core/dom.js";
+import { extractWordsTables } from "../../lib/music/words-table.js";
+import { renderWordsTables } from "./form-strip.js";
 import { historyParagraphs, stripHistory } from "../../lib/music/history.js";
 import { findInstrument } from "../../lib/music/instruments.js";
 import {
@@ -140,63 +141,6 @@ function showSoloStatus(fraction) {
   const status = byId("soloStatus");
   if (!status) return;
   status.textContent = fraction === null ? "" : tl("solo_composing", "Composing solo… {percent}%", { percent: Math.round(fraction * 100) });
-}
-
-// Shade of the `index`th of `count` kinds of step in the form strip: very light grey to light grey (dark text on top, to save ink).
-function stepShade(index, count) {
-  const level = Math.round(225 - (count > 1 ? (index / (count - 1)) * 60 : 0));
-  return `rgb(${level}, ${level}, ${level})`;
-}
-
-// A step's share of the strip's width: what its arrow needs for the number, part box and repeat
-// note, plus a bonus growing with its text length.
-function stepWeight(step) {
-  const text = [step.lead, ...step.adds, ...step.notes].join(" ");
-  const arrow = step.number.length + step.part.length + step.repeat.length + 8;
-  // Square root: a long text earns more room, but not so much that its neighbours get squeezed.
-  return arrow + 4 * Math.sqrt(text.length);
-}
-
-// One step of the form strip: an arrow with the step number and part box,
-// and below it what plays (underlined), who joins (+), and any asides.
-function formStep(step, shade) {
-  const arrow = el("div", { class: "songForm-arrow", style: { backgroundColor: shade } }, [
-    el("span", { class: "songForm-num", text: step.number }),
-    ...step.part.split(" ").filter(Boolean).map((name) => el("span", { class: name === "..." ? "songForm-part songForm-part--more" : "songForm-part", text: name })),
-    step.repeat ? el("span", { class: "songForm-repeat", text: step.repeat }) : null,
-  ]);
-  return el("li", { class: "songForm-step", style: { flex: `${stepWeight(step)} 1 0` } }, [
-    arrow,
-    step.lead ? el("div", { class: "songForm-lead", text: step.lead }) : null,
-    ...step.adds.map((add) => el("div", { class: "songForm-add", text: `+ ${add}` })),
-    step.notes.length > 0 ? el("div", { class: "songForm-note", text: step.notes.join(" · ") }) : null,
-  ]);
-}
-
-// Arrow colour per step: the same part (every A, every Intro) always gets the same shade, so a
-// repeated part reads at a glance. Steps without a part each count as their own kind.
-function stepShades(steps) {
-  const kinds = [];
-  const kindOf = steps.map((step, i) => {
-    const key = step.part || `#${i}`;
-    if (!kinds.includes(key)) kinds.push(key);
-    return kinds.indexOf(key);
-  });
-  return kindOf.map((kind) => stepShade(kind, kinds.length));
-}
-
-// Draw the tables written as `W:| a | b |` lines as a strip of arrows, one per form step, just below
-// the chord table, replacing whatever an earlier render of this sheet left there.
-function renderWordsTables(chordEl, tables) {
-  qsa(".songForm", chordEl.parentNode).forEach((old) => old.remove());
-  let anchor = chordEl;
-  tables.forEach((source) => {
-    const steps = source.rows.map(parseFormStep);
-    const shades = stepShades(steps);
-    const form = el("ol", { class: "songForm" }, steps.map((step, i) => formStep(step, shades[i])));
-    anchor.after(form);
-    anchor = form;
-  });
 }
 
 // Move W: lyric SVGs out of the notation container so the printer can
@@ -477,6 +421,7 @@ export function createSheet(ctx) {
       title: plan.song.metaText.title,
       inspirationLinks: parseInspirationLinks(plan.song.metaText.url),
       history: historyParagraphs(plan.song.metaText.history),
+      formTables: plan.wordsTables,
       hasChords: plan.hasChords,
       compingActive: plan.comping.active,
       soloActive: solo.program !== null,
