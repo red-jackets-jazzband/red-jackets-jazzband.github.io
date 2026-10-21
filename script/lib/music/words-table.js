@@ -71,8 +71,9 @@ function splitPartRepeat(part) {
   if (part.endsWith(NO_REPEAT)) return { name: part.slice(0, -NO_REPEAT.length), repeat: NO_REPEAT.trim() };
   const cut = part.lastIndexOf(" ");
   const last = part.slice(cut + 1);
-  const isCount = cut > 0 && last.length > 1 && last.endsWith("x") && Number.isInteger(Number(last.slice(0, -1)));
-  return isCount ? { name: part.slice(0, cut), repeat: last } : { name: part, repeat: "" };
+  // A count alone ("| 2 | 2x | Collective |") is the round's repeat, with no part named.
+  const isCount = cut !== 0 && last.length > 1 && last.endsWith("x") && Number.isInteger(Number(last.slice(0, -1)));
+  return isCount ? { name: cut > 0 ? part.slice(0, cut) : "", repeat: last } : { name: part, repeat: "" };
 }
 
 // One row of a form table -> a step of the form: `[number, text]` or

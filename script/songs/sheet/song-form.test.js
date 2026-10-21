@@ -20,6 +20,8 @@ const $$ = (selector) => [...document.querySelectorAll(selector)];
 const click = (node) => node.dispatchEvent(new window.Event("click", { bubbles: true }));
 const CARD = ".songForm-card";
 const CHIP = ".songForm-chip";
+const TYPE = ".songForm-type";
+const MORE_TIMES = (round) => $(`[data-focus="more-${round}"]`);
 const leads = () => $$(".songForm .songForm-lead").map((node) => node.textContent);
 const parts = (round) => $$(CARD)[round].querySelectorAll(CHIP).length;
 
@@ -437,4 +439,86 @@ test("adding a ... keeps the focus in its round, and a click on the strip closes
   } finally {
     cleanup();
   }
+});
+
+test("parts typed by hand and a repeat count, for a form the music doesn't mark", async () => {
+  const { openSong, cleanup } = await setup();
+  openSong();
+  click(editButton());
+  const field = $$(TYPE)[2];
+  field.value = "aaba";
+  field.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  assert.equal(parts(2), 6);
+  assert.equal(document.activeElement, $$(TYPE)[2]);
+  // Backspace in the empty field takes the last part off.
+  $$(TYPE)[2].dispatchEvent(new window.KeyboardEvent("keydown", { key: "Backspace", bubbles: true }));
+  assert.equal(parts(2), 5);
+  // − 2x +: two steps up from once.
+  click(MORE_TIMES(2));
+  click(MORE_TIMES(2));
+  assert.equal($$(".songForm-repeat-value")[2].textContent, "3x");
+  // A space after a part makes it a part, as in a mail address field.
+  const typing = $$(TYPE)[1];
+  typing.value = "Intro ";
+  typing.dispatchEvent(new window.Event("input", { bubbles: true }));
+  assert.equal(parts(1), 5);
+  // Text still typed in a field counts when saving, and survives other edits first.
+  $$(TYPE)[0].value = "C 2x";
+  click(button(" Add a round"));
+  assert.equal($$(TYPE)[0].value, "C 2x");
+  click(button("Save"));
+  const rows = JSON.parse(localStorage.getItem(STORE_KEY)).rows;
+  assert.deepEqual(rows[0], ["1", "A B C 2x", "Collective; count-off: 3 tempo ticks"]);
+  assert.deepEqual(rows[1], ["2", "A B A B Intro", "Vocals"]);
+  assert.deepEqual(rows[2], ["3", "A B A A B 3x", CLARINET]);
+  cleanup();
+});
+
+test("only the round being worked on shows its tools", async () => {
+  const { openSong, cleanup } = await setup();
+  openSong();
+  click(editButton());
+  const active = () => $$(CARD).map((node) => node.classList.contains("is-active"));
+  assert.deepEqual(active(), [true, false, false]);
+  $$(TYPE)[2].dispatchEvent(new window.Event("mousedown", { bubbles: true }));
+  assert.deepEqual(active(), [false, false, true]);
+  // Moving there doesn't redraw: the control pressed is still in the page.
+  assert.ok($$(TYPE)[2].isConnected);
+  cleanup();
+});
+
+test("a song with no form and no part markers gets one from \"+ Song form\"", async () => {
+  const { ctx, cleanup } = await setup();
+  ctx.store.set("nav", { currentSongFile: "plain.abc" });
+  renderWordsTables(document.getElementById("chordtable"), []);
+  ctx.store.set("tune", { currentSongText: "X:1\nT:Plain\nK:C\nC4|]", formTables: [], songSerial: ctx.state.songSerial + 1 });
+  const add = $(".songForm-add-form");
+  assert.ok(add, "a labelled button, not the menu");
+  click(add);
+  assert.equal($$(CARD).length, 1);
+  assert.equal(document.activeElement, $(TYPE));
+  // A and B to pick from, though the music names no parts.
+  assert.deepEqual($$(".songForm-add-part").map((node) => node.textContent), ["+ A", "+ B", "+ …"]);
+  const field = $(TYPE);
+  field.value = "aaba";
+  field.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  click(MORE_TIMES(0));
+  click(button("Save"));
+  assert.deepEqual(JSON.parse(localStorage.getItem("rj.songForm.plain.abc")).rows, [["1", "A A B A 2x", ""]]);
+  // With a version of its own the menu is back (band's form / mine).
+  assert.ok($(MENU_BTN) && !$(".songForm-add-form"));
+  cleanup();
+});
+
+test("text half typed in a round stays with it when rounds are deleted or moved", async () => {
+  const { openSong, cleanup } = await setup();
+  openSong();
+  click(editButton());
+  $$(TYPE)[2].value = "C";
+  click($('[aria-label="Delete round 1"]'));
+  assert.equal($$(CARD).length, 2);
+  click(button("Save"));
+  const rows = JSON.parse(localStorage.getItem(STORE_KEY)).rows;
+  assert.deepEqual(rows.map((cells) => cells[1]), ["A B A B", "A B C"]);
+  cleanup();
 });

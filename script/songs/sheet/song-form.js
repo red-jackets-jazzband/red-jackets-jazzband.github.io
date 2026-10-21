@@ -2,9 +2,9 @@ import { byId, el, qsa } from "../../lib/core/dom.js";
 import { readPref, removePref, songFormPrefKey, writePref } from "../../lib/core/preferences.js";
 import { tl } from "../../lib/core/i18n.js";
 import {
-  MORE, addPart, addRound, cloneRounds, deleteRound, duplicateRound, formText, movePart,
-  moveRound, partChoices, readStoredForm, removePart, removeRepeat, roundsFromTables,
-  roundsToRows, sameForm, sameRound, setText, writeStoredForm,
+  MORE, REPEAT_CHOICES, addPart, addRound, addTypedParts, cloneRounds, deleteRound,
+  duplicateRound, formText, movePart, moveRound, partChoices, readStoredForm, removePart,
+  roundsFromTables, roundsToRows, sameForm, sameRound, setRepeat, setText, writeStoredForm,
 } from "../../lib/music/song-form.js";
 import { buildFormStrip, renderWordsTables } from "./form-strip.js";
 import { fitSongForms } from "./chord-table.js";
@@ -18,7 +18,9 @@ import { afterPageLoad } from "../core/after-load.js";
   tune's `W:|` table (published as `tune.formTables`). Under it sits a small
   pencil; it opens an editor below the strip: one card per round, with its
   part chips (tap to remove, drag to reorder or into another round), buttons
-  to add a part or "..." (as long as it takes), what plays and a note. The
+  to add a part or "..." (as long as it takes), a field to type any parts
+  ("A A B A", "AABA", "Intro"; for a tune whose music marks no parts), a
+  repeat count (2x, 3x, ...), what plays and a note. The
   strip follows every edit. Save keeps the version in this browser only
   (rj.songForm.<file>, lib/music/song-form.js's stored shape); a version that
   matches the band's exactly isn't kept. Once there is one, a two-icon switch
@@ -44,6 +46,7 @@ const LEAD_SUGGESTIONS = [
 ];
 const DATALIST_ID = "songFormWho";
 const ICON_BTN = "songForm-icon-btn";
+const TYPE_FIELD = ".songForm-type";
 // How long the menu square stays once the pointer leaves the form: enough to
 // cross the few pixels between the strip and the square.
 const REVEAL_GRACE_MS = 400;
@@ -136,10 +139,12 @@ function inRevealArea(target) {
 export function createSongForm(ctx) {
   let file = null;
   let band = [];
+  let songText = "";
   let choices = [];
   let mine = null; // the visitor's rounds, or null
   let show = "band"; // which one the strip shows when not editing
   let draft = null; // the rounds being edited, or null
+  let active = 0; // the round whose tools show while editing
   let textOpen = false;
   let menuOpen = false;
   // The menu square shows only while the form is hovered, tapped or focused.
@@ -259,10 +264,22 @@ export function createSongForm(ctx) {
   function tools(hasStrip) {
     let cls = hasStrip ? "songForm-tools" : "songForm-tools songForm-tools--alone";
     if (revealed || menuOpen) cls += " is-revealed";
+    // A song with no form at all: one labelled button straight into the
+    // editor, since a menu would hold nothing else worth picking.
+    if (!hasStrip && !mine) return el("div", { class: cls }, [addFormButton()]);
     return el("div", { class: cls }, [
       menuButton(),
       menuOpen ? menu() : null,
     ]);
+  }
+
+  function addFormButton() {
+    return el("button", {
+      type: "button",
+      class: "songForm-menu-btn songForm-add-form",
+      attrs: { "data-focus": "menu" },
+      on: { click: startEdit },
+    }, [icon("fa-plus"), ` ${tl("form_add_form", "Song form")}`]);
   }
 
   // ↑ / ↓ (and Home / End) walk the menu, Escape or Tab closes it.
@@ -306,6 +323,7 @@ export function createSongForm(ctx) {
 
   function edit(next, focus) {
     draft = next;
+    active = Math.min(active, Math.max(0, draft.length - 1));
     draw(focus);
   }
 
@@ -395,10 +413,103 @@ export function createSongForm(ctx) {
   }
 
   /*
-    A round, laid out on one grid so every control lines up with the rest:
-    a handle column (grip and number), a field column (the parts, as one
-    tag field holding its chips and add buttons, over "Who plays" and
-    "Note"), and the round's own actions, all the fields' height.
+    How many times the round plays: − 2x +, from once (no count) up to the
+    last of REPEAT_CHOICES; a count the form writes otherwise ("no repeat")
+    shows as it is until stepped.
+  */
+  function repeatStepper(round, i) {
+    const steps = ["", ...REPEAT_CHOICES];
+    const at = steps.indexOf(round.repeat);
+    const step = (by) => {
+      // From a count not on the list, + goes to 2x and − to once.
+      let to = Math.min(steps.length - 1, Math.max(0, at + by));
+      if (at < 0) to = by > 0 ? 1 : 0;
+      edit(setRepeat(draft, i, steps[to]), by > 0 ? `more-${i}` : `less-${i}`);
+    };
+    const shown = round.repeat || tl("form_repeat_once", "1x");
+    return el("span", {
+      class: round.repeat ? "songForm-repeat-step is-set" : "songForm-repeat-step",
+      attrs: { role: "group", "aria-label": tl("form_repeat_round", "How often round {n} plays", { n: i + 1 }) },
+    }, [
+      iconButton("songForm-step-btn", "fa-minus", tl("form_repeat_less", "Play round {n} fewer times", { n: i + 1 }), () => step(-1), `less-${i}`),
+      el("span", { class: "songForm-repeat-value", text: shown, attrs: { "aria-live": "polite" } }),
+      iconButton("songForm-step-btn", "fa-plus", tl("form_repeat_more", "Play round {n} more times", { n: i + 1 }), () => step(1), `more-${i}`),
+    ]);
+  }
+
+  // Add what's typed in round `i`'s part field, keeping the focus there.
+  function commitField(i, input) {
+    const text = input.value;
+    input.value = "";
+    edit(addTypedParts(draft, i, text), `type-${i}`);
+  }
+
+  /*
+    The caret at the end of the round's parts, as in a mail address field:
+    typing "AABA", "A A B A" or "Intro" makes parts of it at a space, a comma
+    or Enter (a count, "2x", sets the repeat); Backspace in the empty field
+    takes the last part off. A hint shows only while the round has no parts.
+  */
+  function typeField(round, i) {
+    const input = el("input", {
+      type: "text",
+      class: "songForm-type",
+      placeholder: round.parts.length === 0 ? tl("form_type", "AABA…") : "",
+      dataset: { round: String(i) },
+      attrs: {
+        "aria-label": tl("form_type_round", "Type parts for round {n}, like A A B A or 2x", { n: i + 1 }),
+        autocomplete: "off",
+        autocapitalize: "characters",
+        spellcheck: "false",
+        "data-focus": `type-${i}`,
+      },
+      on: {
+        keydown: (e) => typeKey(e, i, input),
+        input: () => {
+          const last = input.value.slice(-1);
+          if ((last === " " || last === ",") && input.value.trim()) commitField(i, input);
+        },
+      },
+    });
+    return input;
+  }
+
+  function typeKey(e, i, input) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (input.value.trim()) commitField(i, input);
+      else refocus(input.closest(".songForm-editor"), `lead-${i}`);
+    } else if (e.key === "Backspace" && input.value === "" && draft[i].parts.length > 0) {
+      e.preventDefault();
+      edit(removePart(draft, i, draft[i].parts.length - 1), `type-${i}`);
+    }
+  }
+
+  /*
+    A change that adds, removes or moves rounds: what's half typed in a part
+    field goes into its round first, since a redraw puts typed text back by
+    position, and the positions are about to change.
+  */
+  function reshape(change, i, focus) {
+    commitTyped();
+    edit(change(draft, i), focus);
+  }
+
+  // Parts still sitting typed in a field count too, once the form is saved or shown as text.
+  function commitTyped() {
+    qsa(TYPE_FIELD).forEach((input) => {
+      if (input.value.trim()) draft = addTypedParts(draft, Number(input.dataset.round), input.value);
+      input.value = "";
+    });
+  }
+
+  /*
+    A round is one line of a plain list: grip and number, its parts (a
+    token field, as a mail address field holds addresses), who plays, and
+    its actions. The tools (add a part, how often, a note) show only on the
+    round being worked on (`active`), so the list reads as the form itself;
+    a note shows on every round that has one.
   */
   function card(round, i) {
     const n = i + 1;
@@ -414,16 +525,18 @@ export function createSongForm(ctx) {
       },
       on: { keydown: (e) => gripKey(e, i) },
     }, [icon("fa-grip-vertical")]);
-    const adds = choices.map((name) => addButton(i, name));
+    // A part typed into an earlier round is offered in every round; a tune
+    // whose music marks no parts gets A and B, the letters forms are written in.
+    let names = partChoices(songText, [...band, ...draft]);
+    if (names.length === 0) names = ["A", "B"];
+    const adds = names.map((name) => addButton(i, name));
     if (!round.parts.includes(MORE)) adds.push(addButton(i, MORE));
-    const repeat = round.repeat ? el("button", {
-      type: "button",
-      class: "songForm-chip songForm-chip--repeat",
-      attrs: { "aria-label": tl("form_remove_repeat", "Remove {repeat} from round {n}", { repeat: round.repeat, n }) },
-      on: { click: () => edit(removeRepeat(draft, i), `card-${i}`) },
-    }, [round.repeat, el("span", { class: "songForm-chip-x", attrs: { "aria-hidden": "true" }, text: "×" })]) : null;
+    let cls = "songForm-card";
+    if (!sameRound(round, band[i])) cls += " is-changed";
+    if (i === active) cls += " is-active";
+    if (round.note) cls += " has-note";
     const cardNode = el("div", {
-      class: sameRound(round, band[i]) ? "songForm-card" : "songForm-card is-changed",
+      class: cls,
       dataset: { round: String(i) },
       attrs: { tabindex: "-1", "data-focus": `card-${i}` },
     }, [
@@ -433,17 +546,37 @@ export function createSongForm(ctx) {
       ]),
       el("div", { class: "songForm-parts", attrs: { role: "group", "aria-label": tl("form_parts_round", "Parts of round {n}", { n }) } }, [
         ...round.parts.map((name, j) => chip(round, i, name, j)),
-        repeat,
-        el("span", { class: "songForm-parts-adds" }, adds),
+        round.repeat ? el("span", { class: "songForm-parts-repeat", text: round.repeat }) : null,
+        typeField(round, i),
       ]),
+      textField(round, i, "lead"),
       el("div", { class: "songForm-card-actions" }, [
-        iconButton(ICON_BTN, "fa-copy", tl("form_duplicate", "Duplicate round {n}", { n }), () => edit(duplicateRound(draft, i), `grip-${i + 1}`), `dup-${i}`),
-        iconButton(`${ICON_BTN} songForm-icon-btn--danger`, "fa-trash-can", tl("form_delete", "Delete round {n}", { n }), () => edit(deleteRound(draft, i), afterDelete(i)), `del-${i}`),
+        iconButton(ICON_BTN, "fa-copy", tl("form_duplicate", "Duplicate round {n}", { n }), () => reshape(duplicateRound, i, `grip-${i + 1}`), `dup-${i}`),
+        iconButton(`${ICON_BTN} songForm-icon-btn--danger`, "fa-trash-can", tl("form_delete", "Delete round {n}", { n }), () => reshape(deleteRound, i, afterDelete(i)), `del-${i}`),
       ]),
-      el("div", { class: "songForm-card-fields" }, [textField(round, i, "lead"), textField(round, i, "note")]),
+      el("div", { class: "songForm-card-tools" }, [
+        el("span", { class: "songForm-parts-adds" }, adds),
+        repeatStepper(round, i),
+        textField(round, i, "note"),
+      ]),
     ]);
     drag.bind(grip, () => cardNode, { kind: "round", round: i }, { grab: true });
     return cardNode;
+  }
+
+  // The round being worked on shows its tools; moving to another round moves
+  // them, without a redraw (that would lose the click that moved there).
+  function setActive(i) {
+    if (i === active) return;
+    active = i;
+    qsa(".songForm-editor .songForm-card").forEach((node) => {
+      node.classList.toggle("is-active", Number(node.dataset.round) === i);
+    });
+  }
+
+  function activateFrom(e) {
+    const cardEl = e.target.closest && e.target.closest(".songForm-card");
+    if (cardEl) setActive(Number(cardEl.dataset.round));
   }
 
   // Where the focus goes once round `i` is deleted: the grip now in its place.
@@ -456,7 +589,7 @@ export function createSongForm(ctx) {
   function gripKey(e, i) {
     if (e.key === "Delete" || e.key === "Backspace") {
       e.preventDefault();
-      edit(deleteRound(draft, i), afterDelete(i));
+      reshape(deleteRound, i, afterDelete(i));
       return;
     }
     if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
@@ -473,7 +606,7 @@ export function createSongForm(ctx) {
     const dash = key.indexOf("-");
     const rest = key.slice(dash + 1);
     const after = rest.indexOf("-");
-    edit(moveRound(draft, i, to), `${key.slice(0, dash)}-${to}${after < 0 ? "" : rest.slice(after)}`);
+    reshape((rounds) => moveRound(rounds, i, to), i, `${key.slice(0, dash)}-${to}${after < 0 ? "" : rest.slice(after)}`);
   }
 
   /*
@@ -540,7 +673,7 @@ export function createSongForm(ctx) {
     return el("section", {
       class: "songForm-editor",
       attrs: { "aria-label": tl("form_editor", "Edit your song form") },
-      on: { keydown: editorKey },
+      on: { keydown: editorKey, focusin: activateFrom, mousedown: activateFrom, touchstart: activateFrom },
     }, [
       leadSuggestions(),
       ...draft.map((round, i) => card(round, i)),
@@ -580,10 +713,18 @@ export function createSongForm(ctx) {
     const chordEl = byId("chordtable");
     if (!chordEl || !chordEl.parentNode || ctx.state.currentSongText === undefined) return;
     const parent = chordEl.parentNode;
+    const typed = qsa(TYPE_FIELD, parent).map((input) => input.value);
     qsa(".songForm-tools, .songForm-editor", parent).forEach((old) => old.remove());
     const last = drawStrip(chordEl);
-    if (editing()) last.after(editor());
-    else chordEl.after(tools(last !== chordEl));
+    if (editing()) {
+      last.after(editor());
+      // A redraw for another control keeps what's half typed in a part field.
+      qsa(TYPE_FIELD, parent).forEach((input, i) => {
+        if (typed[i]) input.value = typed[i];
+      });
+    } else {
+      chordEl.after(tools(last !== chordEl));
+    }
     fitSongForms(chordEl);
     const first = focus === "menu-first" ? parent.querySelector(".songForm-menu-item") : null;
     if (first) first.focus();
@@ -656,8 +797,10 @@ export function createSongForm(ctx) {
     let start = cloneRounds(mine || band);
     if (start.length === 0) start = addRound([], choices);
     textOpen = false;
-    // The card, not its text field: on a phone a field would pop the keyboard up.
-    edit(start, "card-0");
+    active = 0;
+    // The card, not its text field (on a phone a field would pop the keyboard
+    // up), unless there's nothing yet: then the parts field, to type in.
+    edit(start, start[0].parts.length === 0 ? "type-0" : "card-0");
   }
 
   function cancel() {
@@ -667,6 +810,7 @@ export function createSongForm(ctx) {
   }
 
   function save() {
+    commitTyped();
     if (sameForm(draft, band)) {
       mine = null;
       show = "band";
@@ -679,13 +823,14 @@ export function createSongForm(ctx) {
   }
 
   function setTextOpen(open) {
+    if (open) commitTyped();
     textOpen = open;
     draw(open ? "text" : "copyText");
   }
 
   function dropped(source, target) {
     if (source.kind === "round") {
-      edit(moveRound(draft, source.round, target.round), `card-${target.round}`);
+      reshape((rounds) => moveRound(rounds, source.round, target.round), source.round, `card-${target.round}`);
     } else {
       edit(movePart(draft, source, target.round, target.part), `card-${target.round}`);
     }
@@ -697,7 +842,8 @@ export function createSongForm(ctx) {
     const songFile = ctx.state.currentSongFile;
     if (songFile !== file) load(songFile);
     band = roundsFromTables(tune.formTables);
-    choices = partChoices(tune.currentSongText, band);
+    songText = tune.currentSongText;
+    choices = partChoices(songText, band);
     if (ready) draw();
   });
 

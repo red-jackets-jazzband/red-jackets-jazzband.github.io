@@ -123,9 +123,66 @@ export function removePart(rounds, index, partIndex) {
 }
 
 export function removeRepeat(rounds, index) {
+  return setRepeat(rounds, index, "");
+}
+
+// The count written after a round's parts: "2x", "3x", ..., or "" for none.
+export function setRepeat(rounds, index, repeat) {
   return changeRound(rounds, index, (round) => {
-    round.repeat = "";
+    round.repeat = repeat;
   });
+}
+
+// The counts the editor offers for a round.
+export const REPEAT_CHOICES = ["2x", "3x", "4x", "5x", "6x", "8x"];
+
+const COUNT = /^(\d{1,2})x$/i;
+// "AABA" or "abac": a run of letters A-D in one case, a form written the way
+// a reader says it. "Head", "Bad" or "Intro" stay one name.
+const LETTERS = /^(?:[A-D]{2,}|[a-d]{2,})$/;
+
+function typedToken(token, typed) {
+  const count = COUNT.exec(token);
+  if (count) {
+    typed.repeat = Number(count[1]) > 1 ? `${Number(count[1])}x` : "";
+  } else {
+    // "A..." is A, then as long as it takes; "..." inside a name stays put.
+    let name = token;
+    if (name.endsWith(MORE)) name = name.slice(0, -MORE.length);
+    else if (name.endsWith("…")) name = name.slice(0, -1);
+    if (LETTERS.test(name)) typed.parts.push(...name.toUpperCase().split(""));
+    else if (name) typed.parts.push(name);
+    if (name !== token) typed.parts.push(MORE);
+  }
+}
+
+// What separates typed parts: any white space (a tab, a no-break space), a comma or a |.
+const SEPARATORS = /[\s|,]+/;
+
+/*
+  Parts typed into a round's part field, for a form whose parts the music
+  doesn't mark: "A A B A", "AABA" and "aaba" all give A A B A, "Intro Verse"
+  two parts, "..." or "…" as long as it takes, and a count ("2x") the round's
+  repeat. `repeat` is null when nothing typed was a count.
+*/
+export function parseTypedParts(text) {
+  const typed = { parts: [], repeat: null };
+  (text || "").split(SEPARATORS)
+    .filter(Boolean)
+    .forEach((token) => typedToken(token, typed));
+  return typed;
+}
+
+// Add whatever `text` types to round `index`: its parts at the end (before a
+// "..."), a count as its repeat.
+export function addTypedParts(rounds, index, text) {
+  const typed = parseTypedParts(text);
+  let next = rounds;
+  typed.parts.forEach((name) => {
+    next = addPart(next, index, name);
+  });
+  if (typed.repeat !== null) next = setRepeat(next, index, typed.repeat);
+  return next;
 }
 
 // `field` is "lead" or "note".

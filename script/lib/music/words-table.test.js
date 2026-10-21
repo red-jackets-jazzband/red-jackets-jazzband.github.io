@@ -50,6 +50,9 @@ test("parseFormStep splits the lead, the additions and the asides", () => {
 test("parseFormStep moves a trailing repeat note out of the part", () => {
   assert.deepEqual(parseFormStep(["2", "Verse 2x", "collective"]).repeat, "2x");
   assert.deepEqual(parseFormStep(["2", "Verse 2x", "collective"]).part, "Verse");
+  // A count alone is the round's repeat, not a part named "2x".
+  assert.deepEqual(parseFormStep(["2", "2x", "Collective"]).part, "");
+  assert.deepEqual(parseFormStep(["2", "2x", "Collective"]).repeat, "2x");
   assert.deepEqual(parseFormStep(["4", "A no repeat", "collective"]).part, "A");
   assert.deepEqual(parseFormStep(["4", "A no repeat", "collective"]).repeat, "no repeat");
   assert.equal(parseFormStep(["5", "B B B", "x"]).part, "B B B");

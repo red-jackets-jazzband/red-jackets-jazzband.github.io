@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { extractWordsTables } from "./words-table.js";
 import {
   MORE, addPart, addRound, deleteRound, duplicateRound, formText, movePart, moveRound,
-  partChoices, readStoredForm, removePart, removeRepeat, roundsFromTables, sameForm,
-  sameRound, setText, writeStoredForm,
+  addTypedParts, parseTypedParts, partChoices, readStoredForm, removePart, removeRepeat,
+  roundsFromTables, sameForm, sameRound, setRepeat, setText, writeStoredForm,
 } from "./song-form.js";
 
 const WOMAN = [
@@ -128,4 +128,32 @@ test("a stored form reads back, and anything unreadable is null", () => {
   assert.equal(readStoredForm(null), null);
   assert.equal(readStoredForm("{oops"), null);
   assert.equal(readStoredForm("{\"rows\":3}"), null);
+});
+
+test("typed parts: a form a reader says, names, ... and a count", () => {
+  assert.deepEqual(parseTypedParts("AABA"), { parts: ["A", "A", "B", "A"], repeat: null });
+  assert.deepEqual(parseTypedParts("aaba"), { parts: ["A", "A", "B", "A"], repeat: null });
+  assert.deepEqual(parseTypedParts("A A B A 2x"), { parts: ["A", "A", "B", "A"], repeat: "2x" });
+  assert.deepEqual(parseTypedParts("Intro, Head …"), { parts: ["Intro", "Head", MORE], repeat: null });
+  assert.deepEqual(parseTypedParts("Bad 1x"), { parts: ["Bad"], repeat: "" });
+  assert.deepEqual(parseTypedParts("A|B"), { parts: ["A", "B"], repeat: null });
+  // Tabs and no-break spaces separate too; a trailing ... or … is its own part.
+  assert.deepEqual(parseTypedParts("A\tB\u00a0C"), { parts: ["A", "B", "C"], repeat: null });
+  assert.deepEqual(parseTypedParts("Solos... aab…"), { parts: ["Solos", MORE, "A", "A", "B", MORE], repeat: null });
+  assert.deepEqual(parseTypedParts("Riff...out"), { parts: ["Riff...out"], repeat: null });
+});
+
+test("typed parts go into a round, before its ..., and a count sets its repeat", () => {
+  const rounds = addPart(band(), 0, MORE);
+  const next = addTypedParts(rounds, 0, "aaba 3x");
+  assert.deepEqual(next[0].parts, ["A", "B", "A", "A", "B", "A", MORE]);
+  assert.equal(next[0].repeat, "3x");
+  assert.equal(formText(next).split("\n")[0], "W:| 1 | A B A A B A ... 3x | Collective; count-off: 3 tempo ticks |");
+  assert.equal(roundsFromTables(extractWordsTables(formText(next)).tables)[0].repeat, "3x");
+});
+
+test("a repeat count is set and cleared", () => {
+  const twice = setRepeat(band(), 2, "2x");
+  assert.equal(twice[2].repeat, "2x");
+  assert.equal(setRepeat(twice, 2, "")[2].repeat, "");
 });
