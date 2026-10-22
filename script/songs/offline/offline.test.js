@@ -124,7 +124,12 @@ test("init() registers the service worker at /songs/ scope, once the page has lo
     assert.equal(document.getElementById("offlineBtn").hidden, false);
     // Not during start-up: its install download mustn't compete with the song.
     assert.equal(registerCalls.length, 0);
-    await new Promise((resolve) => { setTimeout(resolve, 10); });
+    // Polled, not a fixed sleep: a loaded CI runner can take longer than a
+    // few milliseconds to reach the post-load idle callback.
+    const deadline = Date.now() + 2000;
+    while (registerCalls.length === 0 && Date.now() < deadline) {
+      await new Promise((resolve) => { setTimeout(resolve, 5); });
+    }
     assert.equal(registerCalls.length, 1);
     assert.equal(registerCalls[0].url, "/sw.js");
     assert.deepEqual(registerCalls[0].options, { scope: "/songs/", type: "module" });

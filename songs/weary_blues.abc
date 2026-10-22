@@ -1,0 +1,26 @@
+X:1
+T:Weary Blues
+C:Artie Matthews (1915)
+F:https://www.youtube.com/watch?v=yez29hXBjuY
+F:https://secondhandsongs.com/work/232643
+R:New Orleans
+W:| 1 | A A B B | collective |
+W:| 2 | A Coda | collective; A once, to the coda (D.C. al Coda) |
+W:| 3 | C C | collective |
+W:| 4 | C ... | solos |
+W:| 5 | C | collective |
+M:4/4
+L:1/4
+K:F
+P:A
+|: "F" c4 | A4 | F z z2 | "F7" z4 | "Bb" z/F/G/F/ _A/F/ G | z/F/G/F/ _A/F/ G | "F" z/C/D/C/ _E/C/ D | z/C/D/C/ _E/C/ D |
+"C7" c c/c/- c2- | c B/B/ A/A/ G | !coda! "^To Coda" "F" F4- | F A B =B :|
+P:B
+|: "F" c4- | "C7" c d c B | "F" A4- | "F7" A F/G/ A/B/c/^c/ | "Bb" d4- | d f e d | "F" c4- | c A B =B |
+"F" c A B =B | "C7" c4- | c B A G | "F" F4- |[1 F A B =B :|[2 "F" F A _B =B !D.C.alcoda! ||
+P:Coda
+!coda! "F" F4- | "F7" F E/F/ ^F/G/ ^G/A/ ||
+P:C
+K:Bb
+|: "Bb" B/B/G/G/ B/B/G/G/ | "F7" A/A/G/G/ A/A/G/G/ | "Bb" B/B/G/G/ B/B/G/G/ | d/_d/c/B/- B "F7" z | "Bb" B/B/G/G/ B/B/G/G/ | "F7" A/A/G/G/ A/A/G/G/ | "Bb" B/B/G/G/ B/B/ G | d/_d/c/B/- B/B/A/_A/ |
+"G7" G4 | d4 | "Eb" c3 c | "Bbdim" ^c4 | "Bb" B/B/G/G/ B/B/G/G/ | "F7" A/A/G/G/ A/A/G/G/ | "Bb" B/B/G/G/ B/B/ G | "^Solos at C" d/_d/c/B/- B2 :|
