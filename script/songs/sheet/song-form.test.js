@@ -99,6 +99,47 @@ test("the pencil opens one card per round, and the strip follows every edit", as
   }
 });
 
+test("a duplicated round's Who plays offers every suggestion, and a pick sets it", async () => {
+  const { openSong, leads, cleanup } = await setup();
+  try {
+    openSong();
+    click(editButton());
+    click($('[aria-label="Duplicate round 3"]'));
+    const field = $$(".songForm-field--lead")[3];
+    click(field);
+    const options = $$(".songForm-card")[3].querySelectorAll(".songForm-who-option");
+    const names = [...options].map((node) => node.textContent);
+    assert.ok(names.includes("Saxophone solo"));
+    assert.ok(names.includes("Trumpet solo"));
+    click([...options].find((node) => node.textContent === "Saxophone solo"));
+    assert.deepEqual(leads(), ["Collective", "Vocals", CLARINET, "Saxophone solo"]);
+    assert.equal(field.getAttribute("aria-expanded"), "false");
+  } finally {
+    cleanup();
+  }
+});
+
+test("Who plays: an arrow key opens the suggestions on the first or last, and Enter picks it", async () => {
+  const { openSong, leads, cleanup } = await setup();
+  try {
+    openSong();
+    click(editButton());
+    const field = $$(".songForm-field--lead")[2];
+    const key = (name) => field.dispatchEvent(new window.KeyboardEvent("keydown", { key: name, bubbles: true }));
+    const options = () => [...$$(".songForm-card")[2].querySelectorAll(".songForm-who-option")];
+    key("ArrowUp");
+    assert.ok(options()[options().length - 1].classList.contains("is-active"));
+    key("Escape");
+    assert.equal(field.getAttribute("aria-expanded"), "false");
+    key("ArrowDown");
+    assert.ok(options()[0].classList.contains("is-active"));
+    key("Enter");
+    assert.deepEqual(leads(), ["Collective", "Vocals", options()[0].textContent]);
+  } finally {
+    cleanup();
+  }
+});
+
 test("rounds move by the grip's arrow keys, and duplicate and delete from their buttons", async () => {
   const { openSong, leads, cleanup } = await setup();
   try {

@@ -185,6 +185,17 @@ export function addTypedParts(rounds, index, text) {
   return next;
 }
 
+/*
+  The "Who plays" suggestions to offer for what a field holds: all of them
+  while it's empty or holds one of them exactly (so a duplicated round's
+  "Trumpet solo" still offers the rest), else those containing what's typed.
+*/
+export function leadChoices(value, names) {
+  const typed = (value || "").trim().toLowerCase();
+  if (!typed || names.some((name) => name.toLowerCase() === typed)) return names.slice();
+  return names.filter((name) => name.toLowerCase().includes(typed));
+}
+
 // `field` is "lead" or "note".
 export function setText(rounds, index, field, value) {
   return changeRound(rounds, index, (round) => {

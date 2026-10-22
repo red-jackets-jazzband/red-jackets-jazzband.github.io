@@ -9,6 +9,7 @@ import {
 import { buildFormStrip, renderWordsTables } from "./form-strip.js";
 import { fitSongForms } from "./chord-table.js";
 import { createFormDrag } from "./form-drag.js";
+import { withLeadSuggestions } from "./form-who.js";
 import { afterPageLoad } from "../core/after-load.js";
 
 /*
@@ -41,10 +42,9 @@ import { afterPageLoad } from "../core/after-load.js";
 // (with whatever the band's form already says). Written as the band's .abc
 // files write them.
 const LEAD_SUGGESTIONS = [
-  "Collective", "Vocals", "Clarinet solo", "Trumpet solo", "Trombone solo",
-  "Banjo solo", "Sousaphone solo", "Drum solo",
+  "Collective", "Vocals", "Clarinet solo", "Saxophone solo", "Trumpet solo",
+  "Trombone solo", "Banjo solo", "Sousaphone solo", "Drum solo",
 ];
-const DATALIST_ID = "songFormWho";
 const ICON_BTN = "songForm-icon-btn";
 const TYPE_FIELD = ".songForm-type";
 // How long the menu square stays once the pointer leaves the form: enough to
@@ -396,20 +396,20 @@ export function createSongForm(ctx) {
         "aria-label": isLead
           ? tl("form_who_round", "Who plays in round {n}", { n: i + 1 })
           : tl("form_note_round", "Note for round {n}", { n: i + 1 }),
-        list: isLead ? DATALIST_ID : null,
         "data-focus": `${field}-${i}`,
       },
-      on: {
-        input: () => {
-          draft = setText(draft, i, field, input.value);
-          redrawStrip();
-        },
-        keydown: (e) => {
-          if (e.key === "Enter" && !e.ctrlKey && !e.metaKey && !e.altKey) nextField(e, input);
-        },
-      },
     });
-    return input;
+    const change = () => {
+      draft = setText(draft, i, field, input.value);
+      redrawStrip();
+    };
+    const suggest = isLead ? withLeadSuggestions(input, leadSuggestions, change) : null;
+    input.addEventListener("input", change);
+    input.addEventListener("keydown", (e) => {
+      if (suggest && suggest.onKey(e)) return;
+      if (e.key === "Enter" && !e.ctrlKey && !e.metaKey && !e.altKey) nextField(e, input);
+    });
+    return suggest ? suggest.node : input;
   }
 
   /*
@@ -638,7 +638,7 @@ export function createSongForm(ctx) {
     [...band.map((round) => round.lead), ...LEAD_SUGGESTIONS].forEach((name) => {
       if (name && !names.includes(name)) names.push(name);
     });
-    return el("datalist", { id: DATALIST_ID }, names.map((name) => el("option", { value: name })));
+    return names;
   }
 
   function textPanel() {
@@ -675,7 +675,6 @@ export function createSongForm(ctx) {
       attrs: { "aria-label": tl("form_editor", "Edit your song form") },
       on: { keydown: editorKey, focusin: activateFrom, mousedown: activateFrom, touchstart: activateFrom },
     }, [
-      leadSuggestions(),
       ...draft.map((round, i) => card(round, i)),
       el("button", {
         type: "button",

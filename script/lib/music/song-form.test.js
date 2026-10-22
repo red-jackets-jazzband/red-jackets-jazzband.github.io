@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { extractWordsTables } from "./words-table.js";
 import {
   MORE, addPart, addRound, deleteRound, duplicateRound, formText, movePart, moveRound,
-  addTypedParts, parseTypedParts, partChoices, readStoredForm, removePart, removeRepeat,
+  addTypedParts, leadChoices, parseTypedParts, partChoices, readStoredForm, removePart, removeRepeat,
   roundsFromTables, sameForm, sameRound, setRepeat, setText, writeStoredForm,
 } from "./song-form.js";
 
@@ -156,4 +156,13 @@ test("a repeat count is set and cleared", () => {
   const twice = setRepeat(band(), 2, "2x");
   assert.equal(twice[2].repeat, "2x");
   assert.equal(setRepeat(twice, 2, "")[2].repeat, "");
+});
+
+test("who plays suggests every name while the field holds one of them, else the matching ones", () => {
+  const names = ["Collective", "Trumpet solo", "Trombone solo", "Saxophone solo"];
+  assert.deepEqual(leadChoices("", names), names);
+  // A duplicated round already says "Trumpet solo": the others are still offered.
+  assert.deepEqual(leadChoices("trumpet solo ", names), names);
+  assert.deepEqual(leadChoices("tr", names), ["Trumpet solo", "Trombone solo"]);
+  assert.deepEqual(leadChoices("piano", names), []);
 });
