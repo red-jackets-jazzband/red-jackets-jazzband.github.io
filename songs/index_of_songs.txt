@@ -182,6 +182,7 @@ Whoopin' Blues,whoopin_blues.abc
 Why don't you go down to New Orleans,go_down_to_new_orleans.abc
 Willie the Weeper,willie_the_weeper.abc
 Won't you come home Bill Bailey,bill_bailey.abc
+Yearning,yearning.abc
 You are my Sunshine,you_are_my_sunshine.abc
 You Rascal You,you_rascal_you.abc
 You're All I Want for Christmas,algiers_strut.abc
