@@ -9,11 +9,11 @@ W:| 3 | Verse 2x | |
 W:| 4 | Chorus | end |
 K:B
 P:Intro
-"B"c2 cc "B6"B2 BB |"B"cccB- "B6"Bc B2 |"G#sus4"c2 cc "G#m"B2 BB |"G#sus4"cccB- "G#m"Bc B2 |
-"C#sus4"d2 d(d "C#m"c2) cc |"C#sus4"dddc- "C#m"cd c2 |"F#7sus4"B2 BB "F#7"A2 AA |"F#7sus4"BBBA- "F#7"AB A2 |:
+"B"c2 cc B2 BB |cccB- Bc B2 |"G#m"c2 cc B2 BB |cccB- Bc B2 |
+"C#m"d2 d(d c2) cc |dddc- cd c2 |"F#"B2 BB A2 AA |BBBA- AB A2 |:
 P:Chorus
-"B"c3 c- "B6"c B2 F |"B"ccdB- "B6"B2 GB |"G#sus4"cc d2 "G#m"B3 G |"G#sus4"ABAG- "G#m"G2 z2 |
-"C#sus4"d3 c- "C#m"c3 G |"C#sus4"dedc- "C#m"c2 z B |"F#7sus4"ABBA- "F#7"A B2 A- |"F#7sus4"A "F#7"F3 z4 :|
+"B"c3 c- c B2 F |ccdB- B2 GB |"G#m"cc d2 B3 G |ABAG- G2 z2 |
+"C#m"d3 c- c3 G |dedc- c2 z B |"F#"ABBA- A B2 A- |A F3 z4 :|
 P:Verse
-"B"z2 c2 cB z B | f3 d- d/c/B- B2 |"G#sus4"z c cc "G#m"cB z B |"G#sus4"gg z d- "G#m"d c2 B- |
-"C#sus4"B2 dG/B/- "C#m"Bc z2 |"C#sus4"dd dG/B/- "C#m"Bc z2 |"F#sus4"z B2 B "F#7"A/A/A- AA |"F#sus4"BAAG- "F#7"GF z2 |]
+"B"z2 c2 cB z B | f3 d- d/c/B- B2 |"G#m"z c cc cB z B |gg z d- d c2 B- |
+"C#m"B2 dG/B/- Bc z2 |dd dG/B/- Bc z2 |"F#"z B2 B A/A/A- AA |BAAG- GF z2 |]

@@ -6,7 +6,7 @@ M:4/4
 L:1/8
 K:Eb
 P:Intro
-B=A_A | "Eb"G2 BG BGBc- | "Ebdim"c2 z2 z Bc^c | "Bb7"d2 _d2 c2 _c2 | B4 z2 Bc ||
+B=A_A || "Eb"G2 BG BGBc- | "Ebdim"c2 z2 z Bc^c | "Bb7"d2 _d2 c2 _c2 | B4 z2 Bc ||
 P:A
 |:"Eb"e2 e2 e3 c | "Bb7"d2 c B3 FG | B2 B2 B3 F | "Eb"G2 F E4 z | E2 E2 E3 C | "Bb7"D2 D2 B4 | D2 D2 B4 | "Eb"E2 E2 B2 Bc |
 "Eb"e2 e2 e3 c | "Bb7"d2 c B3 FG | B2 B2 B3 F | "Eb"G2 F E4 z | "Ab"c2 c2 c3 G | "Eb"B2 =A2 "C7"_A4 | "F7"G2 G2 "Bb7"BG F2 |1 "Eb"E4 z2 Bc :|2 "Eb"E2 e2 e2 e2 ||

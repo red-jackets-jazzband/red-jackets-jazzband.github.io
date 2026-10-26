@@ -9,10 +9,10 @@ W:| 2 | Intro | 4-bar vamp, C to G7 |
 W:| 3 | Chorus Bridge Chorus 2x | swing |
 K:C
 P:Verse
-AB |"F"c A2 F "Em"B G2 E |"Dm"A F2 D "C"A G3 |"F"c A2 F "Em"B G2 E |
-"Dm"A F2 D "C"A G3 |"Am"E2 E2 E2 E2 | A6 AB |"D7"c2 c2 c B2 A |"G7"G8 |:
+AB ||"F"c A2 F "Em"B G2 E |"Dm"A F2 D "C"A G3 |"F"c A2 F "Em"B G2 E |
+"Dm"A F2 D "C"A G3 |"Am"E2 E2 E2 E2 | A6 AB |"D7"c2 c2 c B2 A |"G7"G8 ||
 P:Chorus
-"^Med. Shuffle""C"G A2 G E2 c2 | A2 G6 | GAGA G2 c2 |"G7"B8 | F G2 F D2 B2 |
+|:"^Med. Shuffle""C"G A2 G E2 c2 | A2 G6 | GAGA G2 c2 |"G7"B8 | F G2 F D2 B2 |
 "G7"A2 G6 |[1 GAGA G2 A2 |"C"E8 :|[2 GAGA G2 d2 |"C"c8 & x4 "C7"x4 ||
 P:Bridge
 "F"A2 A2 c2 A2 |"Em"G2 EG- "A7"G4 |"Dm"F2 A2 "G7"G2 F2 |"C"E8 |
