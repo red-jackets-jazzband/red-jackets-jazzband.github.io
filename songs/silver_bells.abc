@@ -3,16 +3,32 @@ T:Silver Bells
 C:Jay Livingston, Ray Evans (1950)
 M:3/4
 L:1/8
-W:| 1 | Song | blues; vocals |
-W:| 2 | Song ... | New Orleans swing |
-K:D
-V:1 name="Violin 1"
-V:2 name="Violin 2"
-[V:1] |: dB | A2 F2 dB | A2 F2 fe | d2 B2 B2 | B4 ed | c2 A2 ^G2 | =G2 A3 G | G2 F4- | F2 z2 dB |
-[V:2] |: z2 | F2 D2 G2 | F2 D2 A2 | B2 G2 F2 | E4 z2 | A2 F2 D2 | D2 E4 | D6- | D2 z2 F2 |
-[V:1] A2 F2 dB | A2 F2 fe | d2 B2 B2 | B4 ed | c2 A2 ^G2 | =G2 A2 e2 | d6- | d6 ||
-[V:2] F2 D2 F2 | F2 D2 F2 | B2 G2 F2 | E4 z2 | A2 F2 E2 | E2 F2 A2 | z6 | B2 A2 G2 ||
-[V:1] FG A4- | A6 | Bc d4- | d6 | c2 c2 d2 | e4 dc | d2 A4- | A4 z2 |
-[V:2] z6 | de f4 | z6 | ga b4 | G2 A2 B2 | B4 A2 | G2 (F4 | E2) D2 z2 |
-[V:1] FG A4- | A6 | Bc d4- | d6 | c2 c2 d2 | e2 d2 c2 |[1 d6- | d4 z2 :|[2 d6- | d6 |]
-[V:2] z6 | de f4 | z6 | ga b4 | G2 A2 B2 | c2 A2 G2 |[1 A6- | A4 z2 :|[2 B6- | B6 |]
+W:| 1 | A B A B | blues; vocals |
+W:| 2 | A B ... | New Orleans swing |
+K:Bb
+P:A
+BG |:"Bb"F2 D2 BG |"Dm"F2 D2 "Bb7"dc |"Eb"B2 G2 G2 |"Cm7"G4 cB |
+w:Cit-y side-walks, bus-y side-walks dressed in hol-li-day style. In the
+w:* * street lights, ev-en stop lights, blink a bright red and green, As the
+"F7"A2 F2 =E2 |_E2 F3 E |"Cm7"E2 D4- & x2 "Bb"x4 |"Eb"D2 "Bb"z2 "Cm7"BG |
+w:air there's a feel-ing if Christ-mas. _ Child-ren
+w:shop-pers rush home with their treas-ures. _ Hear the
+"Bb"F2 D2 BG |"Dm"F2 D2 "Bb7"dc |"Eb"B2 G2 G2 |"Cm7"G4 cB |
+w:laugh-ing, peo-ple pass-ing, meet-ing smile af-ter smile, And on
+w:show crunch, see the kids bunch, this is San-ta's big scene, And a-
+"F7"A2 F2 =E2 |_E2 F2 c2 |"Bb"B6- |"Cm7"B6 & x2 "Bb"x2 "Cm7"x2 ||
+w:ev-'ry street cor-ner you hear: _
+w:bove all this bus-tle you hear: _
+P:B
+"Bb"DE F4- |F6 |"Eb"GA B4- |B6 |
+w:Sil-ver bells, _ sil-ver bells, _
+"F"A2 A2 "C7"B2 |"F7"c4 BA |"Bb"B2 G4- |"Cm7"G4 z2 & x2 "Bb"x2 "Cm7"x2 |
+w:It's Christ-mas time in the cit-y. _
+"Bb"DE F4- |F6 |"Eb"GA B4- |B6 |
+w:Ring-a-ling, _ hear them ring, _
+"F"A2 A2 "C7"B2 |"F7"c2 "Cm7"B2 "F7"A2 |
+w:Soon it will be Christ-mas
+[1 "Bb"B6- |"Eb"B4 z2 |"Dm"z6 |"Cm7"z2 "F7"z2 "Cm7"BG :|
+w:day. _ Strings of
+[2 "Bb"B6- |"Eb"B6 |"Dm"z4 "F7"z2 |"Bb"z6 |]
+w:day. _

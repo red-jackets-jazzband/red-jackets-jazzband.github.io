@@ -1,19 +1,22 @@
 X:1
 T:Jingle Bell Rock
 C:Joe Beal, Jim Boothe (1957)
-N:2-bar intro.
+N:2-bar intro. D.C. al Coda: after the A2 section go back to the top, play the A section once (2nd ending), then B, and from "To Coda" to the Coda.
 W:| 1 | Intro | 2 bars |
 W:| 2 | A B A2 | swing |
+W:| 3 | A B A2 Coda | A once |
 M:4/4
 L:1/8
 K:C
 P:A
-"C"cc c2 "Cmaj7"BB B2 |"C6"AB A2 "C"E4 |"C6"AB A2 E2 "C#dim7"G2 |
+"C"cc c2 BB B2 | AB A2 E4 |"C"AB A2 "C#dim7"E2 G2 |
 "Dm7"AB A2 "G7"F4 |"Dm7"D2 EF "G7"G2 AG |"Dm7"DE F2 "G7"G4 |
-[1 "Dm7"z2 A^G AG A2 |"G7#5"A2 _E2 =E4 :|[2 "D7"z2 AA B "G7"G2 c- |"C6"c6 "C7"cc ||
+[1 "Dm7"z2 A^G AG A2 |"G7#5"A2 _E2 =E4 :|[2 "D7"z2 AA B "G7"G2 c- |"C"c6 "C7"cc ||
 P:B
-"Fmaj7"c2 d2 c2 Ac |"F#dim7"c2 d2 c3 c |"C/G"c2 B2 A2 G2 |"C/G"E6 "C7#5"cc |
-"Am7"c d2 c- "D7"c2 Ac |"Am7"d3 c- "D7"c4 |"G7"z G G2 "Dm7"AAAA |"G7"B A2 G- "G7#5"G2 z2 ||
+"F"c2 d2 c2 Ac |"F#dim7"c2 d2 c3 c |"C/G"c2 B2 A2 G2 |"C"E6 cc |
+"Am7"c d2 c- "D7"c2 Ac |"Am7"d3 c- "D7"c4 |"G7"z G G2 "Dm7"AAAA |"G7"B A2 G- G2 z2 ||
 P:A2
-"C6"cc c2 "F9#11"BB B2 |"Em7"ABAE- "Dm7"E4 & x6 "G7"x2 |"C6"AB A2 "Em7b5/Bb"E2 G2 |"A7"A8 |
-"F6"A2 c2 ddcc |"Bb9"_AA c2 d4 |"D7"z2 cA "G7"BA G2 |"C6"c4 z4 & x4 "Dm7"x2 "G7"x2 |]
+"C"cc c2 BB B2 |"Em7"ABAE- "Dm7"E4 & x6 "G7"x2 |"C"AB A2 "C7"E2 G2 |"A7"A8 |
+"F"A2 c2 ddcc |"Bb7"_AA c2 d4 |"D7"z2 cA "G7"BA "^To ⊕"G2 |"C"c4 z4 & x4 "Dm7"x2 "G7"x2 ||
+P:Coda
+!coda!"D7"z2 cA "G7"BA G2 |"D7"z2 cA "G7"BA G2 |"C"c6 z2 |]
