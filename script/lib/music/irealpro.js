@@ -1,17 +1,26 @@
 import { BREAK_CHORD } from "./chords.js";
 
+// The tune's time signature as iReal Pro's header writes it ("44", "22").
+// abcjs gives M:C and M:C| as a named type with no numbers (no `value`), so
+// those are spelled out here; a missing meter reads as 4/4.
+function irealTimeSignature(meter) {
+  if (meter && meter.type === "cut_time") return "22";
+  const v = meter && meter.value && meter.value[0];
+  return v ? String(v.num) + String(v.den) : "44";
+}
+
 // Builds an irealbook:// URL from a parsed abcjs tune and its chord-per-measure
 // array (the same array that feeds the on-page chord table).
 export function irealProFromAbc(song, chords) {
-  const key = song.lines[0].staff[0].key.root + song.lines[0].staff[0].key.acc;
-  const num = song.lines[0].staff[0].meter.value[0].num;
-  const denom = song.lines[0].staff[0].meter.value[0].den;
+  const staff = song.lines[0].staff[0];
+  const key = staff.key.root + staff.key.acc;
+  const timeSignature = irealTimeSignature(staff.meter);
 
   const title = song.metaText.title;
   const composer = song.metaText.composer !== undefined ? song.metaText.composer : "Unknown";
   const style = "Second Line";
 
-  const irealProHeader = title + "=" + composer + "=" + style + "=" + key + "=n=T" + num + denom;
+  const irealProHeader = title + "=" + composer + "=" + style + "=" + key + "=n=T" + timeSignature;
   let irealProText = "";
   for (const [i, chord] of chords.entries()) {
     // A measure carrying `part` (an ABC P: field's title, e.g. "Chorus") is

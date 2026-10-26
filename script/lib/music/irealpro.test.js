@@ -29,6 +29,23 @@ test("irealProFromAbc builds an irealbook:// URL with header info", () => {
   assert.match(decoded, /^Basin Street Blues=Unknown=Second Line=Bb=n=T44/);
 });
 
+// abcjs parses M:C| and M:C to a named meter with no `value` (God Rest Ye
+// Merry, Gentlemen is in cut time); reading value[0] used to throw and stop
+// the whole sheet render.
+function timeSignatureFor(meter) {
+  const song = baseSong();
+  song.lines[0].staff[0].meter = meter;
+  const decoded = decodeURIComponent(irealProFromAbc(song, [{ text: ["Bb"] }]).replace("irealbook://", ""));
+  return /=n=T(\d+)/.exec(decoded)[1];
+}
+
+test("irealProFromAbc reads cut time, common time and a missing meter without throwing", () => {
+  assert.equal(timeSignatureFor({ type: "cut_time" }), "22");
+  assert.equal(timeSignatureFor({ type: "common_time" }), "44");
+  assert.equal(timeSignatureFor(undefined), "44");
+  assert.equal(timeSignatureFor({ type: "specified", value: [{ num: "3", den: "4" }] }), "34");
+});
+
 test("irealProFromAbc uses the composer when present, else defaults to Unknown", () => {
   const withComposer = baseSong({ metaText: { title: "T", composer: "Jelly Roll Morton" } });
   const url = irealProFromAbc(withComposer, [{ text: ["C"] }]);

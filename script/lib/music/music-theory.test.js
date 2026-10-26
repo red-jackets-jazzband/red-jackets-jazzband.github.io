@@ -223,11 +223,21 @@ test("convertChordsToRoman keeps every other field on a measure object untouched
   assert.deepEqual(result, [{ text: ["V"], key: { root: "C", acc: "", mode: "" }, startChar: 12, endChar: 15 }]);
 });
 
-test("extractKeyFromAbc reads the tonic, ignoring the mode word", () => {
+test("extractKeyFromAbc reads the tonic, ignoring a mode word other than minor", () => {
   assert.equal(extractKeyFromAbc("X:1\nK:Bbmaj\nC D E F|"), "Bb");
   assert.equal(extractKeyFromAbc("X:1\nK:Ebmaj\n"), "Eb");
-  assert.equal(extractKeyFromAbc("X:1\nK:Em\n"), "E");
   assert.equal(extractKeyFromAbc("X:1\nK:C\n"), "C");
+  assert.equal(extractKeyFromAbc("X:1\nK:Gmix\n"), "G");
+  assert.equal(extractKeyFromAbc("X:1\nK:D clef=bass\n"), "D");
+});
+
+test("extractKeyFromAbc keeps an \"m\" for a minor key, however the mode is written", () => {
+  assert.equal(extractKeyFromAbc("X:1\nK:Em\n"), "Em");
+  assert.equal(extractKeyFromAbc("X:1\nK:Dm\n"), "Dm");
+  assert.equal(extractKeyFromAbc("X:1\nK:D minor\n"), "Dm");
+  assert.equal(extractKeyFromAbc("X:1\nK:Bbmin\n"), "Bbm");
+  assert.equal(extractKeyFromAbc("X:1\nK:Aaeolian\n"), "Am");
+  assert.equal(extractKeyFromAbc("X:1\nK:Dm clef=bass\n"), "Dm");
 });
 
 test("extractKeyFromAbc returns null when there's no K: line", () => {
@@ -369,6 +379,18 @@ test("resolvedSetlistKeyName resolves both override forms to the same spelled ke
   assert.equal(resolvedSetlistKeyName("2", "F"), "G"); // semitone offset
   assert.equal(resolvedSetlistKeyName("Bb", "C"), "B♭"); // target key name, spelled canonically
   assert.equal(resolvedSetlistKeyName("", "F"), "F"); // no override — the tune's own key
+});
+
+test("a minor key keeps its \"m\" when transposed, and doesn't change the shift", () => {
+  assert.equal(transposeKeyName("Dm", -2), "Cm");
+  assert.equal(transposeKeyName("Dm", 1), "E♭m");
+  assert.equal(transposeKeyName("E♭m", 0), "E♭m");
+  assert.equal(transposeKeyName("Dmaj", 0), "D");
+  assert.equal(setlistTransposeSteps("Cm", "Dm"), -2);
+  assert.equal(setlistTransposeSteps("-2", "Dm"), -2);
+  assert.equal(resolvedSetlistKeyName("Cm", "Dm"), "Cm"); // God Rest Ye's setlist row
+  assert.equal(resolvedSetlistKeyName("", "Dm"), "Dm");
+  assert.equal(resolvedSetlistKeyName("3", "Am"), "Cm");
 });
 
 test("resolvedSetlistKeyName is null when the tune's own key isn't known", () => {

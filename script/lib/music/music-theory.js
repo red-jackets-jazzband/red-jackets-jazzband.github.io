@@ -69,13 +69,43 @@ export function convertChordsToRoman(chords) {
   });
 }
 
-// Reads the tonic (letter + optional single accidental) off an ABC file's
-// K: line, ignoring any mode word that follows (maj/min/m/dor/...) so
-// "K:Bbmaj" doesn't get misread as "Bbm". Returns null if there's no K:
-// line to read (e.g. malformed input).
+// True for an ABC mode word that names a minor key: "m", "min", "minor",
+// "aeo"/"aeolian" (any case). "maj", "mix", "dor", ... and a clef= or other
+// K: field word are not.
+function isMinorModeWord(word) {
+  const w = word.toLowerCase();
+  return w === "m" || w.startsWith("min") || w.startsWith("aeo");
+}
+
+// The mode word that follows a key's tonic: the run of letters after any
+// spaces ("Dm" -> "m", "D minor" -> "minor", "Bbmaj" -> "maj").
+function modeWordAfter(str, start) {
+  let i = start;
+  while (str[i] === " " || str[i] === "\t") i++;
+  let end = i;
+  while (end < str.length && /[A-Za-z]/.test(str[end])) end++;
+  return str.slice(i, end);
+}
+
+// Splits a key name ("Bb", "E♭m", "Dmin", "Ebmaj") into its tonic (letter +
+// optional accidental) and whether it's a minor key.
+function splitKeyName(keyStr) {
+  const str = String(keyStr || "C");
+  let end = 1;
+  if ("#b♯♭".includes(str[1] || "-")) end = 2;
+  return { tonic: str.slice(0, end), minor: isMinorModeWord(modeWordAfter(str, end)) };
+}
+
+// Reads the key off an ABC file's K: line: the tonic (letter + optional
+// single accidental), plus "m" for a minor key ("K:Dm", "K:D minor",
+// "K:Daeo" -> "Dm"). Any other mode word (maj/mix/dor/...) is dropped, so
+// "K:Bbmaj" reads "Bb", not "Bbm". Returns null if there's no K: line to
+// read (e.g. malformed input).
 export function extractKeyFromAbc(text) {
-  const match = text.match(/^K:\s*([A-Ga-g])([#b]?)/m);
-  return match ? match[1] + match[2] : null;
+  const match = /^K:[ \t]*([A-Ga-g])([#b]?)/m.exec(text);
+  if (!match) return null;
+  const minor = isMinorModeWord(modeWordAfter(text, match.index + match[0].length));
+  return match[1] + match[2] + (minor ? "m" : "");
 }
 
 /*
@@ -107,7 +137,7 @@ export function tempoBpmFromAbc(text) {
 // string are ignored; only the tonic pitch class matters for transposition.
 export function semitonesBetweenKeys(fromKeyStr, toKeyStr) {
   if (!fromKeyStr || !toKeyStr) return 0;
-  let diff = (noteChroma(toKeyStr) - noteChroma(fromKeyStr) + 12) % 12;
+  let diff = (noteChroma(splitKeyName(toKeyStr).tonic) - noteChroma(splitKeyName(fromKeyStr).tonic) + 12) % 12;
   if (diff > 6) diff -= 12;
   return diff;
 }
@@ -142,17 +172,20 @@ export function setlistTransposeSteps(rawOverride, nativeKey) {
 export const KEY_NAME_BY_CHROMA = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"];
 
 /*
-   Transpose a key name (letter + optional accidental; any trailing mode word
-   is ignored) by a signed semitone count and return the resulting key name.
+   Transpose a key name (letter + optional accidental, then an optional mode
+   word) by a signed semitone count and return the resulting key name. A
+   minor key keeps its "m" ("Dm" down 2 is "Cm"); any other mode word is
+   dropped.
    Used for the printed setlist / chordbook / songbook, where musicians want
    the key spelled out ("B♭") rather than a raw semitone offset ("+2").
 */
 export function transposeKeyName(keyStr, semitones) {
-  const base = noteChroma(keyStr || "C");
+  const { tonic, minor } = splitKeyName(keyStr);
+  const base = noteChroma(tonic);
   const raw = Number(semitones);
   const n = Number.isFinite(raw) ? Math.round(raw) : 0;
   const idx = (((base + n) % 12) + 12) % 12;
-  return KEY_NAME_BY_CHROMA[idx];
+  return KEY_NAME_BY_CHROMA[idx] + (minor ? "m" : "");
 }
 
 // Human-readable badge for a setlist override column: a signed "+2" / "−3"
