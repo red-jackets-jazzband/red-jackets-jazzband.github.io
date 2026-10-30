@@ -42,6 +42,7 @@ Doctor Jazz,doctor_jazz.abc
 Down by the Riverside,down_by_the_riverside.abc
 Down in Honky Tonk Town,honky_tonk_town.abc
 Drop me off in New Orleans,drop_me_off_in_new_orleans.abc
+Eh la bas,eh_la_bas.abc
 Exactly like you,exactly_like_you.abc
 Feel like Funkin' it up,feel_like_funkin_it_up.abc
 Five Foot Two,five_foot_two.abc
@@ -115,6 +116,7 @@ Mardi Gras in New Orleans,go_to_the_mardi_gras.abc
 Margie,margie.abc
 Mercedes Benz,mercedes_benz.abc
 Milenburg Joys,milenburg_joys.abc
+Mood Indigo,mood_indigo.abc
 Muskrat Ramble,muskrat_ramble.abc
 My Blue Heaven,my_blue_heaven.abc
 My Bucket's got a Hole in it,buckets_got_a_hole.abc
@@ -149,6 +151,7 @@ Sheik of Araby,sheik_of_araby.abc
 Short Dressed Gal,short_dressed_gal.abc
 Shine,shine.abc
 Shine on me,shine_on_me.abc
+S'il Vous Plait,sil_vous_plait.abc
 Sing On,sing_on.abc
 Sister Kate,sister_kate.abc
 Skokiaan,skokiaan.abc
