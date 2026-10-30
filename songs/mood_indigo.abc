@@ -7,29 +7,25 @@ W:| 1 | A | collective |
 W:| 2 | B | clarinet solo |
 W:| 3 | B | trombone solo |
 W:| 4 | A | collective |
-M:6/8
+M:4/4
 L:1/8
 Q:1/4=100
 K:C
 P:A
-"C"e6 | "B7"_e3 "C"=e3 | "D7"e6- | e6 | "G7"g6 | "Gaug"_e6 | "C"=e6- | "G7"e6 ||
-w:You ain't been blue _ no no no _
-"C"e6 | "B7"_e3 "C"=e3 | "D7"e6- | e6 | "Ab7"_e3 e3 | _d3 c3 | "G7"B6 | A2 _B =B3 ||
-w:You ain't been blue _ till you've had that mood in-di-go
-"C"z3 c3 | c3 B3 | "C7"z3 z G2- | G2 A G3 | "F"F6 | F3 F3 | "Bb13"D6- | D3 z _e2 ||
-w:That feel-in' goes _ steal-in' down to my shoes _ while
-"C"=e6 | "B7"_e3 "C"=e3 | "D7"e6- | e6 | "G7"g6 | "Gaug"_e6 | "C"=e6- | "G7"e4 z2 ||
-w:I sit and sigh _ Go 'long blues _
+"C"e4 "B7"_e2 "C"=e2 | "D7"e8 | "G7"g4 "Gaug"_e4 | "C"=e4- "G7"e4 |
+w:You ain't been blue no no no _
+"C"e4 "B7"_e2 "C"=e2 | "D7"e8 | "Ab7"_e2 e2 _d2 c2 | "G7"B4 A _B =B2 ||
+w:You ain't been blue till you've had that mood in-di-go
+"C"z2 c2 c2 B2 | "C7"z3 G2 A G2 | "F"F4 F2 F2 | "Bb13"D4- D2 z _e |
+w:That feel-in' goes steal-in' down to my shoes _ while
+"C"=e4 "B7"_e2 "C"=e2 | "D7"e8 | "G7"g4 "Gaug"_e4 | "C"=e4- "G7"e3 z ||
+w:I sit and sigh Go 'long blues _
 P:B
-"C"z3 G2 _A | "A7"=A3- A z G | "D7"^F2 e _e2 d- | d6 | "G7"e2 d c2 A | "Gaug"B3 d3 | "C"G6- | "G7"G4 z z ||
-w:Al-ways get _ that mood in-di-go _ Since my ba-by said good-bye _
-"C"z3 G2 _A | "A7"=A3- A z G | "D7"^F2 e _e2 d- | d6 | "Ab7"e2 _e =e2 _e | =e3 _e3 | "G7"d6- | d4 z2 ||
-w:In the eve-_ nin' when lights are low _ I'm so lone-some I could cry _
-"C"z2 A d2 G | c2 d- d2 G | "C7"c2 d G2 c- | c6 |
-w:'cause there's no-bod-y _ who cares a-bout me _
-"F"z2 c d2 c | _e3- e2 c | "Bb13"_e2 c d2 c- | c2 _A G3 ||
-w:I'm just a soul _ who's blu-er than blue _ can be
-"C"z3 G2 _A | "A7"=A3- A z G | "D7"^F2 e _e2 d- | d6 |
-w:when I get _ that mood in-di-go _
-"G7"e2 d c2 A | "Gaug"B3 d3 | "C"c6- | "G7"c4 z2 | "C"z6 |]
-w:I could lay me down and die _
+"C"z2 G _A "A7"=A3 G | "D7"^F e _e d- d4 | "G7"e d c A "Gaug"B2 d2 | "C"G4- "G7"G3 z |
+w:Al-ways get that mood in-di-go _ Since my ba-by said good-bye _
+"C"z2 G _A "A7"=A3 G | "D7"^F e _e d- d4 | "Ab7"e _e =e _e =e2 _e2 | "G7"d4- d3 z ||
+w:In the eve-nin' when lights are low _ I'm so lone-some I could cry _
+"C"z A d G c d2 G | "C7"c d G c- c4 | "F"z c d c _e3 c | "Bb13"_e c d c- c _A G2 |
+w:'cause there's no-bod-y who cares a-bout me _ I'm just a soul who's blu-er than blue _ can be
+"C"z2 G _A "A7"=A3 G | "D7"^F e _e d- d4 | "G7"e d c A "Gaug"B2 d2 | "C"c4- "G7"c3 z |]
+w:when I get that mood in-di-go _ I could lay me down and die _
