@@ -52,7 +52,7 @@ test("buildBooklet lays out front matter, per-song blocks and the stage list", a
 
     assert.equal(container.querySelector(".setlist-booklet-fm-title").textContent, "Gig");
     // one engraved block per song (3), each targeting its own ids
-    assert.equal(container.querySelectorAll(".setlist-booklet-song").length, 3);
+    assert.equal(container.querySelectorAll(".setlist-booklet-song:not(.setlist-booklet-song--cont)").length, 3);
     assert.equal(bookletRenders.length, 3);
     assert.equal(bookletRenders[0].notationId, "setlistPrintNotation-1");
     assert.equal(bookletRenders[0].titlePrefix, "1. ");
@@ -430,7 +430,7 @@ test("a rebuild re-attaches the finished blocks, renumbered, without reading or 
     assert.equal(reads.length, readsBefore, "no new reads");
     assert.equal(renders.length, 3, "no new chord/title passes");
     assert.equal(engraved.length, 3, "no new staves");
-    const titles = [...document.querySelectorAll("#setlistPrintBooklet .songtitle")].map((t) => t.textContent);
+    const titles = [...document.querySelectorAll("#setlistPrintBooklet .setlist-booklet-song:not(.setlist-booklet-song--cont) .songtitle")].map((t) => t.textContent);
     assert.deepEqual(titles, ["1. Song A", "2. Song B", "3. Song A"]);
     assert.ok(document.getElementById("setlistPrintNotation-3"));
   } finally {

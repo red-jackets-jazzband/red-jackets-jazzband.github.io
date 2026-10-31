@@ -9,6 +9,11 @@ import { clearBookletPrintState, printWithTitle } from "../sheet/controls.js";
 import { buildTitlePage, fitTitlePage } from "./titlepage.js";
 import { listenSourcesFromAbc, buildYoutubePlaylistUrl } from "../../lib/setlists/setlist-listen.js";
 import { tl } from "../../lib/core/i18n.js";
+import { splitChordGrid } from "../sheet/chord-table.js";
+
+// A chord grid of more than this many rows prints as two chordbook tiles,
+// "(1/2)" and "(2/2)", rather than one at a few points' type.
+const SPLIT_ROWS = 12;
 
 const NOADS_SETLIST_ID = "noads_songbook";
 
@@ -85,7 +90,30 @@ function songParts() {
   const title = el("div", { class: "songtitle" });
   const chord = el("div", { class: "chordtable" });
   const notation = el("div", { class: "notation" });
-  return { block: el("div", { class: "setlist-booklet-song" }, [title, chord, notation]), title, chord, notation };
+  // The second tile of a chart split for the chordbook (splitLongChart);
+  // hidden otherwise, and never shown in the songbook.
+  const contTitle = el("div", { class: "songtitle" });
+  const contChord = el("div", { class: "chordtable" });
+  const cont = el("div", { class: "setlist-booklet-song setlist-booklet-song--cont", attrs: { hidden: "" } }, [contTitle, contChord]);
+  return {
+    block: el("div", { class: "setlist-booklet-song" }, [title, chord, notation]),
+    title, chord, notation, cont, contTitle, contChord,
+  };
+}
+
+// A long chord grid goes on two chordbook tiles: the song's own block keeps
+// the first half (and the form strip), the continuation the rest.
+function splitLongChart(parts) {
+  const grid = parts.chord.querySelector(".chordGrid");
+  const second = grid && splitChordGrid(grid, SPLIT_ROWS);
+  if (!second) return;
+  clear(parts.contChord).append(second);
+  parts.block.classList.add("setlist-booklet-song--split");
+  parts.cont.hidden = false;
+}
+
+function syncContTitle(parts) {
+  parts.contTitle.textContent = parts.title.textContent;
 }
 
 // The ids a song's cells carry are by position, so a re-attached block
@@ -379,6 +407,8 @@ export function createSetlistPrint(ctx) {
       engraved: !(rendered && typeof rendered.engrave === "function"),
       engrave: rendered && rendered.engrave, // NOSONAR: `?.` is a SyntaxError on Safari 12 (see Browser support)
     };
+    splitLongChart(parts);
+    syncContTitle(parts);
     songCache.set(cacheKey, record);
     fillSongMeta(n, record.meta);
     listenSongs[n - 1] = { title: ctx.songName(entry.item.file), sources: record.sources };
@@ -392,10 +422,11 @@ export function createSetlistPrint(ctx) {
     const n = entry.songCount;
     stampIds(record.parts, entry);
     if (record.baseTitle) record.parts.title.textContent = `${entry.displayNumber}. ${record.baseTitle}`;
+    syncContTitle(record.parts);
     reusedMeta.push({ n, meta: record.meta });
     listenSongs[n - 1] = { title: ctx.songName(entry.item.file), sources: record.sources };
     enqueueEngrave(record);
-    return record.parts.block;
+    return [record.parts.block, record.parts.cont];
   }
 
   function songBlock(entry, seq, cacheKey, reusedMeta) {
@@ -423,7 +454,7 @@ export function createSetlistPrint(ctx) {
       console.warn(`Setlist references a missing song file: ${entry.item.file} (status ${status})`);
       readSettled(seq);
     });
-    return parts.block;
+    return [parts.block, parts.cont];
   }
 
   function buildBooklet(name, songs, desc) {
@@ -473,7 +504,7 @@ export function createSetlistPrint(ctx) {
       const cacheKey = songCacheKey(entry, occurrence);
       usedKeys.add(cacheKey);
       songTotal += 1;
-      container.append(songBlock(entry, seq, cacheKey, reusedMeta));
+      container.append(...songBlock(entry, seq, cacheKey, reusedMeta));
     });
     // Blocks of songs no longer in the list (or at another key) are dropped.
     Array.from(songCache.keys()).forEach((key) => {

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountPage } from "../../../../tests/helpers/dom.js";
-import { renderChordTable, scanRepeatBoundaries, fitChordTable } from "./chord-table.js";
+import { renderChordTable, scanRepeatBoundaries, fitChordTable, splitChordGrid } from "./chord-table.js";
 
 function inDom(fn) {
   const page = mountPage({ html: "<div id='chordtable'></div>" });
@@ -17,6 +17,7 @@ const bar = (text, extra = {}) => ({ text, ...extra });
 const CHORD_GRID_SELECTOR = ".chordGrid";
 const PART_MARKER_SELECTOR = ".chordPartMarker";
 const CELL_SELECTOR = ".chordCell";
+const CHORD_ROWS = "--chord-rows";
 
 test("renderChordTable lays cells out in reading order with 4 columns", () => {
   inDom((container) => {
@@ -37,6 +38,80 @@ test("renderChordTable shows a break (\"N.C.\") marker as plain text, alone or a
       [...container.querySelectorAll(".chordDiv")].map((d) => d.textContent),
       ["C", "N.C.", "F7,N.C."],
     );
+  });
+});
+
+test("renderChordTable puts each chord of a multi-chord bar in its own span, first and last marked", () => {
+  inDom((container) => {
+    renderChordTable([bar(["C"]), bar(["C", "C♯dim7"]), bar(["Dm7", "C", "G7"])], container);
+    const divs = [...container.querySelectorAll(".chordDiv")];
+    assert.equal(divs[0].classList.contains("chordDiv--multi"), false);
+    assert.ok(divs[1].classList.contains("chordDiv--multi"));
+    assert.equal(divs[1].querySelector(".chordName--first").textContent, "C");
+    assert.equal(divs[1].querySelector(".chordName--last").textContent, "C♯dim7");
+    assert.deepEqual(
+      [...divs[2].querySelectorAll(".chordName")].map((s) => s.className),
+      ["chordName chordName--first", "chordName", "chordName chordName--last"],
+    );
+  });
+});
+
+test("renderChordTable gives each chord cell its longest chord's length for the print to fit, three chords their own class", () => {
+  inDom((container) => {
+    renderChordTable([bar(["B♭maj7"]), bar(["C", "C♯dim7"]), bar(["Dm7", "C", "G7"])], container);
+    const divs = [...container.querySelectorAll(".chordDiv")];
+    assert.deepEqual(divs.map((d) => d.style.getPropertyValue("--chord-chars")), ["6", "6", "3"]);
+    assert.deepEqual(divs.map((d) => d.classList.contains("chordDiv--multi3")), [false, false, true]);
+  });
+});
+
+test("renderChordTable counts its rows for the print, and marks a grid of more than 8 rows dense", () => {
+  inDom((container) => {
+    renderChordTable(Array.from({ length: 20 }, (_, i) => bar([`C${i}`])), container);
+    const grid = container.querySelector(CHORD_GRID_SELECTOR);
+    assert.equal(grid.style.getPropertyValue(CHORD_ROWS), "5");
+    assert.equal(grid.classList.contains("chordGrid--dense"), false);
+    renderChordTable(Array.from({ length: 80 }, (_, i) => bar([`C${i}`])), container);
+    const dense = container.querySelector(CHORD_GRID_SELECTOR);
+    assert.equal(dense.style.getPropertyValue(CHORD_ROWS), "10");
+    assert.ok(dense.classList.contains("chordGrid--dense"));
+  });
+});
+
+test("splitChordGrid leaves a grid of up to maxRows alone", () => {
+  inDom((container) => {
+    renderChordTable(Array.from({ length: 48 }, (_, i) => bar([`C${i}`])), container);
+    assert.equal(splitChordGrid(container.querySelector(CHORD_GRID_SELECTOR), 6), null);
+  });
+});
+
+test("splitChordGrid halves a long grid, each half's other cells marked and its own row count set", () => {
+  inDom((container) => {
+    // 160 bars, 8 columns: 20 rows, no parts — split in the middle.
+    renderChordTable(Array.from({ length: 160 }, (_, i) => bar([`C${i}`])), container);
+    const grid = container.querySelector(CHORD_GRID_SELECTOR);
+    const second = splitChordGrid(grid, 12);
+    const firstShown = [...grid.querySelectorAll(".chordCell:not(.chordCell--part2)")];
+    const secondShown = [...second.querySelectorAll(".chordCell:not(.chordCell--part1)")];
+    assert.equal(firstShown.length, 80);
+    assert.equal(secondShown[0].textContent, "C80");
+    assert.equal(secondShown.length, 80);
+    assert.equal(grid.style.getPropertyValue(CHORD_ROWS), "10");
+    assert.equal(second.style.getPropertyValue(CHORD_ROWS), "10");
+    assert.ok(second.classList.contains("chordGrid--dense"));
+  });
+});
+
+test("splitChordGrid moves the split to a part's first row near the middle", () => {
+  inDom((container) => {
+    const chords = Array.from({ length: 160 }, (_, i) => bar([`C${i}`]));
+    chords[0].part = "A";
+    chords[96].part = "B"; // row 12, two rows past the middle
+    renderChordTable(chords, container);
+    const grid = container.querySelector(CHORD_GRID_SELECTOR);
+    const second = splitChordGrid(grid, 12);
+    assert.equal(second.querySelector(".chordCell:not(.chordCell--part1)").textContent.startsWith("C96"), true);
+    assert.equal(grid.style.getPropertyValue(CHORD_ROWS), "12");
   });
 });
 

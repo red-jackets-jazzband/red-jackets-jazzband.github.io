@@ -1,10 +1,13 @@
-import { el, clear } from "../../lib/core/dom.js";
+import { el, clear, qsa } from "../../lib/core/dom.js";
 import { simplifyBlues, simplifySong } from "../../lib/music/chords.js";
 import { tl } from "../../lib/core/i18n.js";
 
 // At 24 bars or more, a 4-column grid runs too tall for the sheet, so long
 // schemes (e.g. The Bare Necessities' 42 bars) always switch to 8 columns.
 const LONG_SCHEME_BAR_THRESHOLD = 24;
+// Past this many rows a chordbook tile's rows are too short to stack a bar's
+// chords on two lines (split.css, .chordGrid--dense).
+const DENSE_ROWS = 8;
 
 // Reading offsetWidth is what forces a layout reflow; returning it (rather
 // than discarding it inline with `void` or an unused variable) is what
@@ -30,8 +33,41 @@ function isContinuationBar(measure) {
   return Array.isArray(measure.text) && measure.text.length === 1 && measure.text[0] === " % ";
 }
 
+// A bar with several chords ("C,C#dim7") gets one span per chord, the commas
+// in spans of their own: the text reads as before, while the printed
+// chordbook, whose large type doesn't fit two chords side by side in a cell,
+// can stack them (first chord top left, last bottom right — split.css's
+// .chordDiv--multi).
+function multiChordDiv(names) {
+  const parts = [];
+  names.forEach((name, index) => {
+    if (index > 0) parts.push(el("span", { class: "chordSep", text: "," }));
+    let cls = "chordName";
+    if (index === 0) cls += " chordName--first";
+    else if (index === names.length - 1) cls += " chordName--last";
+    parts.push(el("span", { class: cls, text: name }));
+  });
+  const cls = names.length > 2 ? "chordDiv chordDiv--multi chordDiv--multi3" : "chordDiv chordDiv--multi";
+  return el("div", { class: cls, style: chordCharsStyle(names) }, parts);
+}
+
+// The longest chord's length, for the printed chordbook to shrink a chord
+// that wouldn't fit its cell's width (split.css, --chord-chars), and the
+// length of the whole "C,C#dim7" for a grid too dense to stack them in
+// (--chord-chars-inline).
+function chordCharsStyle(names) {
+  return {
+    "--chord-chars": String(Math.max(...names.map((name) => name.length))),
+    "--chord-chars-inline": String(names.join(",").length),
+  };
+}
+
 function chordDivFor(measure) {
-  if (!isContinuationBar(measure)) return el("div", { class: "chordDiv", html: String(measure.text) });
+  if (Array.isArray(measure.text) && measure.text.length > 1) return multiChordDiv(measure.text);
+  if (!isContinuationBar(measure)) {
+    const text = String(measure.text);
+    return el("div", { class: "chordDiv", text, style: chordCharsStyle([text]) });
+  }
   return el("div", { class: "chordDiv" }, [
     el("span", { attrs: { "aria-hidden": "true" }, text: " % " }),
     el("span", { class: "rj-sr-only", text: tl("chords_same", "same chord") }),
@@ -69,6 +105,24 @@ function endingRowStarts(measures) {
     if (index > 0 && measure.part !== undefined && /\b(outro|coda)\b/i.test(measure.part)) starts.add(index);
   });
   return starts;
+}
+
+// A measure's double bar lines and repeat signs on its cell.
+function applyBarLines(cell, chordDiv, measure) {
+  if (measure.doubeThinBarLeft !== undefined) cell.classList.add("chordCellDoubleThinBarLeft");
+  if (measure.doubeThinBarRight !== undefined) cell.classList.add("chordCellDoubleThinBarRight");
+
+  if (measure.rightRepeat !== undefined) {
+    cell.classList.add("chordCellRightRepeat");
+    chordDiv.append(el("span", { class: "chordRightRepeatSign", text: ":" }));
+  }
+  if (measure.leftRepeat !== undefined) {
+    cell.classList.add("chordCellLeftRepeat");
+    chordDiv.insertBefore(
+      el("span", { class: "chordLeftRepeatSign", text: ":" }),
+      chordDiv.firstChild,
+    );
+  }
 }
 
 /*
@@ -131,6 +185,7 @@ export function renderChordTable(chords, container) {
   // 0-based column the next cell lands in — tracked rather than derived from
   // the index, since a forced row start shifts every cell after it.
   let column = 0;
+  let rows = 0;
 
   measures.forEach((measure, index) => {
     // Column 1 on the first cell after an intro starts a fresh row without
@@ -148,27 +203,67 @@ export function renderChordTable(chords, container) {
     if (inGapRow) cell.classList.add("chordCellSectionGap");
 
     if (hasMultipleParts && measure.part !== undefined) cell.append(partMarker(measure.part, column === 0));
-    if (measure.doubeThinBarLeft !== undefined) cell.classList.add("chordCellDoubleThinBarLeft");
-    if (measure.doubeThinBarRight !== undefined) cell.classList.add("chordCellDoubleThinBarRight");
-
-    if (measure.rightRepeat !== undefined) {
-      cell.classList.add("chordCellRightRepeat");
-      chordDiv.append(el("span", { class: "chordRightRepeatSign", text: ":" }));
-    }
-    if (measure.leftRepeat !== undefined) {
-      cell.classList.add("chordCellLeftRepeat");
-      chordDiv.insertBefore(
-        el("span", { class: "chordLeftRepeatSign", text: ":" }),
-        chordDiv.firstChild,
-      );
-    }
+    applyBarLines(cell, chordDiv, measure);
 
     grid.append(cell);
+    if (column === 0) rows += 1;
+    cell.dataset.row = String(rows - 1);
     column = (column + 1) % cols;
     if (column === 0) inGapRow = false;
   });
 
+  // The printed chordbook scales a long chart's type to its row count, and
+  // stops stacking a bar's chords once rows get too short for two lines.
+  setGridRows(grid, rows);
   clear(container).append(grid);
+}
+
+function setGridRows(grid, rows) {
+  grid.style.setProperty("--chord-rows", String(rows));
+  grid.classList.toggle("chordGrid--dense", rows > DENSE_ROWS);
+}
+
+const cellRow = (cell) => Number(cell.dataset.row);
+
+// The row to split a long grid at: the middle, or a part's first row within
+// two rows of it (the closest one), so a section isn't cut in two.
+function splitRow(cells, rows) {
+  const middle = Math.ceil(rows / 2);
+  let best = middle;
+  let bestDistance = Infinity;
+  cells.forEach((cell, index) => {
+    const row = cellRow(cell);
+    const startsRow = index === 0 || cellRow(cells[index - 1]) !== row;
+    if (!startsRow || row === 0 || !cell.querySelector(".chordPartMarker")) return;
+    const distance = Math.abs(row - middle);
+    if (distance <= 2 && distance < bestDistance) {
+      best = row;
+      bestDistance = distance;
+    }
+  });
+  return best;
+}
+
+/*
+  Split a rendered grid of more than `maxRows` rows in two for the printed
+  chordbook, where a long chart (South Rampart Street Parade's 20 rows) would
+  otherwise shrink to a few points to fit one tile. Marks the grid's cells
+  from the split row on `chordCell--part2`, and returns a copy of the grid
+  whose cells before it are marked `chordCell--part1` (split.css hides each
+  half's other cells in the chordbook), each half's row count set for its own
+  type size. Returns null for a grid that fits.
+*/
+export function splitChordGrid(grid, maxRows) {
+  const cells = qsa(".chordCell", grid);
+  const rows = cells.length === 0 ? 0 : cellRow(cells[cells.length - 1]) + 1;
+  if (rows <= maxRows) return null;
+  const split = splitRow(cells, rows);
+  const second = grid.cloneNode(true);
+  cells.forEach((cell) => cell.classList.toggle("chordCell--part2", cellRow(cell) >= split));
+  qsa(".chordCell", second).forEach((cell) => cell.classList.toggle("chordCell--part1", cellRow(cell) < split));
+  setGridRows(grid, split);
+  setGridRows(second, rows - split);
+  return second;
 }
 
 /*
