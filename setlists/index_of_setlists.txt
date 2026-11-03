@@ -1,4 +1,5 @@
 N.O.A.D.S. Songbook,noads_songbook.txt
+Setlist 2027,setlist_2027.txt
 Setlist 2026,setlist_2026.txt
 Volgende Repetitie,repetitie.txt
 Christmas,christmas.txt
