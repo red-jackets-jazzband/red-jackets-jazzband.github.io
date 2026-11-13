@@ -72,3 +72,9 @@ test("fingerprintStem leaves every other path alone", () => {
   assert.equal(fingerprintStem("/script/lib.short.js"), null);
   assert.equal(fingerprintStem("/noext"), null);
 });
+
+test("the device-sync host is never cached", () => {
+  const path = `/v1/vault/${"a".repeat(64)}`;
+  assert.equal(classify(path, "https://rj-sync.redjackets.workers.dev", "cors"), null);
+  assert.equal(classify(`${path}/live`, "https://rj-sync.redjackets.workers.dev", "websocket"), null);
+});

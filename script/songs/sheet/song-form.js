@@ -1,5 +1,7 @@
 import { byId, el, qsa } from "../../lib/core/dom.js";
-import { readPref, removePref, songFormPrefKey, writePref } from "../../lib/core/preferences.js";
+import { readPref, removePref, safeStorage, songFormPrefKey, writePref } from "../../lib/core/preferences.js";
+import { addTombstone, nextStamp, setFormStamp } from "../../lib/sync/clock.js";
+import { notifyLocalChange } from "../../lib/sync/changes.js";
 import { tl } from "../../lib/core/i18n.js";
 import {
   MORE, REPEAT_CHOICES, addPart, addRound, addTypedParts, cloneRounds, deleteRound,
@@ -144,6 +146,7 @@ export function createSongForm(ctx) {
   let mine = null; // the visitor's rounds, or null
   let show = "band"; // which one the strip shows when not editing
   let draft = null; // the rounds being edited, or null
+  let staleStore = false; // a sync changed this song's stored version during an edit
   let active = 0; // the round whose tools show while editing
   let textOpen = false;
   let menuOpen = false;
@@ -175,8 +178,19 @@ export function createSongForm(ctx) {
 
   function persist() {
     if (!file) return;
-    if (mine === null) removePref(songFormPrefKey(file));
-    else writePref(songFormPrefKey(file), writeStoredForm(mine, show));
+    // Stamp for device sync (docs/device-sync-plan.md, WBS 4.2): the form's own
+    // key stays what older app copies expect; its stamp / tombstone live in
+    // rj.sync.meta.
+    const storage = safeStorage();
+    const at = nextStamp(storage);
+    if (mine === null) {
+      removePref(songFormPrefKey(file));
+      addTombstone(storage, "forms", file, at);
+    } else {
+      writePref(songFormPrefKey(file), writeStoredForm(mine, show));
+      setFormStamp(storage, file, at);
+    }
+    notifyLocalChange();
   }
 
   // ---- the strip -----------------------------------------------------------
@@ -805,6 +819,9 @@ export function createSongForm(ctx) {
   function cancel() {
     draft = null;
     textOpen = false;
+    // Not saved: show what a sync wrote meanwhile, not the copy read before.
+    if (staleStore && file) load(file);
+    staleStore = false;
     draw("menu");
   }
 
@@ -818,6 +835,7 @@ export function createSongForm(ctx) {
       show = "mine";
     }
     persist();
+    staleStore = false; // what was just saved is the newest
     cancel();
   }
 
@@ -859,6 +877,17 @@ export function createSongForm(ctx) {
         ready = true;
         draw();
       });
+    },
+    // A device sync brought changes: re-read this song's stored version. With
+    // the editor open the edit stays; Save writes it (device-sync-plan WBS 6.4).
+    refresh() {
+      if (!file) return;
+      if (editing()) {
+        staleStore = true;
+        return;
+      }
+      load(file);
+      if (ready) draw();
     },
     // For the tour and tests: open or close the editor.
     setEditing(open) {

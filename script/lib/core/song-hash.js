@@ -80,3 +80,16 @@ export function buildSongsHash({
   if (bb !== null) parts.push(`b=${formatSeconds(bb)}`);
   return parts.join("&");
 }
+
+// The device-sync pairing code in a hash like "#sync=RJ7K-Q2MD-…", or null
+// (docs/device-sync-plan.md, WBS 7.2). Validation is the sync engine's job.
+export function syncCodeFromHash(raw) {
+  const code = parseQueryString(String(raw).replace(/^[#?]/, "")).sync;
+  return code ? decode(code) : null;
+}
+
+// The same hash without its `sync` parameter (without the leading "#"), so a
+// pairing link's code can be taken out of the address bar.
+export function hashWithoutSync(raw) {
+  return String(raw).replace(/^[#?]/, "").split("&").filter((pair) => { return pair && pair.split("=")[0] !== "sync"; }).join("&");
+}

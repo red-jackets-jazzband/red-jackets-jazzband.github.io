@@ -7,6 +7,8 @@ import { renderWordsTables } from "./form-strip.js";
 
 const FILE = "gotta_woman.abc";
 const STORE_KEY = `rj.songForm.${FILE}`;
+const CANCEL = "Cancel";
+const EDITOR = ".songForm-editor";
 const CLARINET = "Clarinet solo";
 const DELETE_LAST = '[aria-label="Delete round 3"]';
 const SONG = "X:1\nT:Woman\nK:C\nP:A\nC4|\nP:B\nD4|]";
@@ -169,7 +171,7 @@ test("save keeps your version, and the switch flips between it and the band's", 
     click($(DELETE_LAST));
     click(button("Save"));
 
-    assert.equal($(".songForm-editor"), null);
+    assert.equal($(EDITOR), null);
     assert.deepEqual(leads(), ["Collective", "Vocals"]);
     assert.ok($(".songForm--mine"));
     const stored = JSON.parse(localStorage.getItem(STORE_KEY));
@@ -223,6 +225,21 @@ test("cancel leaves everything as it was", async () => {
   }
 });
 
+test("cancel after a sync changed the song meanwhile shows what the sync wrote", async () => {
+  const { ctx, openSong, leads, cleanup } = await setup();
+  try {
+    openSong();
+    click(editButton());
+    localStorage.setItem(STORE_KEY, JSON.stringify({ show: "mine", rows: [["1", "A B", "Synced"]] }));
+    ctx.songForm.refresh(); // the editor is open: the edit stays
+    assert.ok($(EDITOR));
+    click(button(CANCEL));
+    assert.deepEqual(leads(), ["Synced"]);
+  } finally {
+    cleanup();
+  }
+});
+
 test("the form copies as the W: lines a song's file carries", async () => {
   const { openSong, cleanup } = await setup();
   try {
@@ -260,7 +277,7 @@ test("opening another song closes the editor", async () => {
     openSong();
     click(editButton());
     openSong("other.abc");
-    assert.equal($(".songForm-editor"), null);
+    assert.equal($(EDITOR), null);
   } finally {
     cleanup();
   }
@@ -325,13 +342,13 @@ test("the setlist editor's keys: Ctrl+Enter saves, Escape cancels", async () => 
     click(editButton());
     click($(DELETE_LAST));
     press($(".songForm-field--lead"), "Enter", { ctrlKey: true });
-    assert.equal($(".songForm-editor"), null);
+    assert.equal($(EDITOR), null);
     assert.deepEqual(leads(), ["Collective", "Vocals"]);
 
     click(editButton());
     click($('[aria-label="Delete round 1"]'));
     press($(".songForm-field"), "Escape");
-    assert.equal($(".songForm-editor"), null);
+    assert.equal($(EDITOR), null);
     assert.deepEqual(leads(), ["Collective", "Vocals"]);
   } finally {
     cleanup();

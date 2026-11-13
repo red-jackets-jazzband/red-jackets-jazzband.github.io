@@ -19,6 +19,16 @@ import {
 
 const BASIN_STREET = "basin_street.abc";
 
+// Rows carry sync bookkeeping (id, updatedAt); most tests only care about content.
+function bare(rows) {
+  return rows.map((row) => {
+    const rest = { ...row };
+    delete rest.id;
+    delete rest.updatedAt;
+    return rest;
+  });
+}
+
 function makeStorage() {
   const data = {};
   return {
@@ -49,7 +59,7 @@ test("addSongToPersonalSetlist and removeSongFromPersonalSetlist", () => {
   assert.equal(listPersonalSetlists(storage)[0].songs.length, 2);
 
   removeSongFromPersonalSetlist(storage, entry.id, 0);
-  assert.deepEqual(listPersonalSetlists(storage)[0].songs, [{ file: "tiger_rag.abc", key: "Bb" }]);
+  assert.deepEqual(bare(listPersonalSetlists(storage)[0].songs), [{ file: "tiger_rag.abc", key: "Bb" }]);
 });
 
 test("updateSongKeyInPersonalSetlist changes just that song's key override", () => {
@@ -100,7 +110,7 @@ test("addDividerToPersonalSetlist / updateDividerLabelInPersonalSetlist manage s
   addDividerToPersonalSetlist(storage, entry.id);
   addSongToPersonalSetlist(storage, entry.id, { file: "b.abc", key: "" });
 
-  assert.deepEqual(listPersonalSetlists(storage)[0].songs, [
+  assert.deepEqual(bare(listPersonalSetlists(storage)[0].songs), [
     { file: "a.abc", key: "" },
     { divider: "" },
     { file: "b.abc", key: "" },
@@ -111,7 +121,7 @@ test("addDividerToPersonalSetlist / updateDividerLabelInPersonalSetlist manage s
 
   // Refuses to relabel a non-divider index.
   updateDividerLabelInPersonalSetlist(storage, entry.id, 0, "nope");
-  assert.deepEqual(listPersonalSetlists(storage)[0].songs[0], { file: "a.abc", key: "" });
+  assert.deepEqual(bare([listPersonalSetlists(storage)[0].songs[0]])[0], { file: "a.abc", key: "" });
 
   // A divider survives export/import as a "##" heading.
   const text = exportPersonalSetlistText(storage, entry.id);
@@ -177,7 +187,7 @@ test("copyBandSetlistToPersonal clones songs into an independent new entry", () 
   const bandSetlist = { name: "Zeeland Jazz 2026", desc: "text", songs: [{ file: BASIN_STREET, key: "C" }] };
   const copy = copyBandSetlistToPersonal(storage, bandSetlist);
   assert.equal(copy.name, "Zeeland Jazz 2026");
-  assert.deepEqual(copy.songs, bandSetlist.songs);
+  assert.deepEqual(bare(copy.songs), bandSetlist.songs);
 
   addSongToPersonalSetlist(storage, copy.id, { file: "extra.abc", key: "" });
   assert.equal(bandSetlist.songs.length, 1); // original untouched
@@ -195,7 +205,7 @@ test("exportPersonalSetlistText / importPersonalSetlistText round-trip across tw
   const deviceB = makeStorage(); // a different browser/device
   const imported = importPersonalSetlistText(deviceB, text, "fallback");
   assert.equal(imported.name, "Export Me");
-  assert.deepEqual(imported.songs, [{ file: BASIN_STREET, key: "Bb" }]);
+  assert.deepEqual(bare(imported.songs), [{ file: BASIN_STREET, key: "Bb" }]);
 });
 
 test("exportPersonalSetlistText uses the given songName resolver for each link's text", () => {
@@ -246,4 +256,49 @@ test("every function degrades to a no-op / empty result when storage is unavaila
   assert.doesNotThrow(() => {
     deletePersonalSetlist(brokenStorage, "nonexistent");
   });
+});
+
+test("every mutation stamps the setlist and its rows; stamps only ever rise", () => {
+  const storage = makeStorage();
+  const entry = createPersonalSetlist(storage, "Gig");
+  const created = listPersonalSetlists(storage)[0];
+  assert.equal(created.metaAt, entry.metaAt);
+  addSongToPersonalSetlist(storage, entry.id, { file: "a.abc", key: "" });
+  const afterAdd = listPersonalSetlists(storage)[0];
+  assert.ok(afterAdd.orderAt > created.orderAt);
+  assert.equal(afterAdd.metaAt, created.metaAt);
+  assert.ok(afterAdd.songs[0].id);
+  updateSongKeyInPersonalSetlist(storage, entry.id, 0, "Bb");
+  const afterKey = listPersonalSetlists(storage)[0];
+  assert.ok(afterKey.songs[0].updatedAt > afterAdd.songs[0].updatedAt);
+  assert.equal(afterKey.orderAt, afterAdd.orderAt);
+  renamePersonalSetlist(storage, entry.id, "Gig 2");
+  const afterRename = listPersonalSetlists(storage)[0];
+  assert.ok(afterRename.metaAt > afterKey.metaAt);
+  assert.equal(afterRename.updatedAt, afterRename.metaAt);
+});
+
+test("deleting a setlist or a row leaves a tombstone", () => {
+  const storage = makeStorage();
+  const entry = createPersonalSetlist(storage, "Gig");
+  addSongToPersonalSetlist(storage, entry.id, { file: "a.abc", key: "" });
+  const rowId = listPersonalSetlists(storage)[0].songs[0].id;
+  removeSongFromPersonalSetlist(storage, entry.id, 0);
+  deletePersonalSetlist(storage, entry.id);
+  const meta = JSON.parse(storage.getItem("rj.sync.meta"));
+  assert.ok(meta.tomb.rows[`${entry.id}/${rowId}`] > 0);
+  assert.ok(meta.tomb.setlists[entry.id] > 0);
+});
+
+test("entries stored before sync existed get ids and stamp 0, once", () => {
+  const storage = makeStorage();
+  storage.setItem("rj.setlists.v1", JSON.stringify([
+    { id: "old", name: "Old", desc: "", songs: [{ file: "a.abc", key: "" }, { divider: "" }] },
+  ]));
+  const first = listPersonalSetlists(storage)[0];
+  assert.equal(first.updatedAt, 0);
+  assert.equal(first.metaAt, 0);
+  assert.ok(first.songs.every((row) => row.id && row.updatedAt === 0));
+  assert.notEqual(first.songs[0].id, first.songs[1].id);
+  assert.deepEqual(listPersonalSetlists(storage)[0], first); // ids are stable across reads
 });

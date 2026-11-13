@@ -170,6 +170,9 @@ Der Button `fa-youtube` unter **Anhören** öffnet alle Songs der Setlist mit Yo
 ## exports: Eine Setlist woanders nutzen
 Eine eigene Setlist kannst du mit dem Button `fa-file-arrow-down` als **.txt**-Datei exportieren und auf einem anderen Gerät wieder importieren. Das ist die Setlist-Version der Print-, MP3- und iReal-Pro-Exporte, die du von einem einzelnen Song schon kennst.
 
+## sync: Setlists auf jedem Gerät
+Eine Setlist liegt nur in diesem Browser. **Geräte verbinden** erzeugt einen Code, der Handy, Tablet und Laptop verknüpft: Setlists und Songformen, die du auf einem änderst, erscheinen auf den anderen, Ende-zu-Ende verschlüsselt, sodass der Server nur verschlüsselte Daten speichert. Es ist aus, bis du es einschaltest, und der `.txt`-Export bleibt deine Sicherung.
+
 # learn: Einen Song lernen
 
 ## routine: Über die Akkorde üben

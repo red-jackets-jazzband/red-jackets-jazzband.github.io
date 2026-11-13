@@ -34,7 +34,7 @@ import {
 //   once published. Bump only when caching *those* changes —
 //   it deletes the soundfonts visitors downloaded with "Download for
 //   offline", so their offline playback is gone until they download again.
-const SHELL_VERSION = "v12";
+const SHELL_VERSION = "v13";
 const ASSET_VERSION = "v1";
 // Every cache this worker owns is named under this prefix, and activate()'s
 // cleanup only ever deletes caches under it — CacheStorage is shared across
@@ -57,15 +57,16 @@ const CURRENT_CACHES = new Set([SHELL_CACHE, SOUNDFONT_CACHE]);
 // covers the rest (the whole song/setlist list, warmed proactively) and the
 // soundfont samples (which nothing short of actually rendering audio can
 // discover the URLs for — see that file's own doc comment).
-// lamejs is loaded on demand by the Export MP3 button, so it has no <script>
-// tag for the scan below to find — list it here to have it offline.
+// lamejs (Export MP3) and the QR generator (Connect devices) are loaded on
+// demand, so they have no <script> tag for the scan below to find — list them
+// here to have them offline.
 // The page this registration serves: its own scope, "/songs/" or one of the
 // translated "/nl/songs/", "/de/songs/", "/fr/songs/".
 const PAGE_URL = new URL(self.registration.scope).pathname;
 // Its own language's manifest: /manifest.webmanifest, /manifest.nl.webmanifest ...
 const LANG_PREFIX = /^\/(nl|de|fr)\//.exec(PAGE_URL);
 const MANIFEST_URL = LANG_PREFIX ? `/manifest.${LANG_PREFIX[1]}.webmanifest` : "/manifest.webmanifest";
-const PRECACHE_URLS = [PAGE_URL, MANIFEST_URL, "/script/lamejs-1.2.1-min.js"];
+const PRECACHE_URLS = [PAGE_URL, MANIFEST_URL, "/script/lamejs-1.2.1-min.js", "/script/qrcode-generator-2.0.4-min.js"];
 
 // A page's own <head>/<body> — its stylesheet(s), the webfonts they declare
 // via @font-face, and its own <script> tags (including, for the type="module"

@@ -1,4 +1,6 @@
 import { parseSetlistFile, serializeSetlistFile, isSetlistDivider } from "./setlist-format.js";
+import { notifyLocalChange } from "../sync/changes.js";
+import { addTombstone, nextStamp, rowTombstoneKey } from "../sync/clock.js";
 
 const STORAGE_KEY = "rj.setlists.v1";
 
@@ -18,21 +20,61 @@ function parseStoredList(raw) {
   }
 }
 
+// Sync bookkeeping (docs/device-sync-plan.md, WBS 4): every setlist carries
+// `metaAt` (name/desc), `orderAt` (which rows, in what order) and `updatedAt`
+// (the newest of everything); every row an `id` and its own `updatedAt`.
+// A delete leaves a tombstone in rj.sync.meta. Entries written before this
+// existed get ids and stamp 0 on first read (a real edit anywhere beats them).
+function migrateRow(row) {
+  let changed = false;
+  if (typeof row.id !== "string" || !row.id) {
+    row.id = generateId();
+    changed = true;
+  }
+  if (!Number.isFinite(row.updatedAt)) {
+    row.updatedAt = 0;
+    changed = true;
+  }
+  return changed;
+}
+
+function migrateEntry(entry) {
+  let changed = false;
+  ["metaAt", "orderAt", "updatedAt"].forEach((field) => {
+    if (!Number.isFinite(entry[field])) {
+      entry[field] = 0;
+      changed = true;
+    }
+  });
+  if (!Array.isArray(entry.songs)) {
+    entry.songs = [];
+    changed = true;
+  }
+  return entry.songs.map(migrateRow).some(Boolean) || changed;
+}
+
+function isEntryObject(entry) {
+  return Boolean(entry) && typeof entry === "object" && !Array.isArray(entry);
+}
+
 function readStorage(storage) {
   if (!storage) return [];
   const raw = safeGetItem(storage, STORAGE_KEY);
   if (!raw) return [];
   const parsed = parseStoredList(raw);
-  return Array.isArray(parsed) ? parsed : [];
+  if (!Array.isArray(parsed)) return [];
+  if (parsed.filter(isEntryObject).map(migrateEntry).some(Boolean)) writeStorage(storage, parsed, true);
+  return parsed;
 }
 
-function writeStorage(storage, list) {
+function writeStorage(storage, list, silent) {
   if (!storage) return;
   try {
     storage.setItem(STORAGE_KEY, JSON.stringify(list));
   } catch (_e) {
     // storage unavailable/full — the change just won't persist.
   }
+  if (!silent) notifyLocalChange();
 }
 
 function generateId() {
@@ -61,13 +103,21 @@ export function getPersonalSetlist(storage, id) {
   return findEntry(readStorage(storage), id) || null;
 }
 
+function stampRow(row, at) {
+  return { ...row, id: generateId(), updatedAt: at };
+}
+
 function createEntry(storage, data) {
   const list = readStorage(storage);
+  const at = nextStamp(storage);
   const entry = {
     id: generateId(),
     name: data.name,
     desc: data.desc || "",
-    songs: data.songs ? data.songs.slice() : [],
+    songs: data.songs ? data.songs.map((row) => { return stampRow(row, at); }) : [],
+    metaAt: at,
+    orderAt: at,
+    updatedAt: at,
   };
   list.push(entry);
   writeStorage(storage, list);
@@ -79,85 +129,119 @@ export function createPersonalSetlist(storage, name) {
 }
 
 export function deletePersonalSetlist(storage, id) {
-  const list = readStorage(storage).filter((entry) => {
+  const list = readStorage(storage);
+  if (findEntry(list, id)) addTombstone(storage, "setlists", id, nextStamp(storage));
+  writeStorage(storage, list.filter((entry) => {
     return entry.id !== id;
-  });
-  writeStorage(storage, list);
+  }));
+}
+
+// Finds the entry, runs `change(entry, at)` with a fresh stamp, bumps the
+// entry's `updatedAt` and saves. A missing id changes nothing.
+function mutate(storage, id, change) {
+  const list = readStorage(storage);
+  const entry = findEntry(list, id);
+  if (entry) {
+    const at = nextStamp(storage);
+    change(entry, at);
+    entry.updatedAt = at;
+    writeStorage(storage, list);
+  }
 }
 
 export function renamePersonalSetlist(storage, id, name) {
-  const list = readStorage(storage);
-  const entry = findEntry(list, id);
-  if (entry) entry.name = name;
-  writeStorage(storage, list);
+  mutate(storage, id, (entry, at) => {
+    entry.name = name;
+    entry.metaAt = at;
+  });
 }
 
 // Blanks an entry's desc — used to drop a hidden marker (see the guided
 // tour's demo-setlist marker) once whatever set it no longer applies,
 // without touching anything a visitor can see or set themselves.
 export function clearPersonalSetlistMarker(storage, id) {
-  const list = readStorage(storage);
-  const entry = findEntry(list, id);
-  if (entry) entry.desc = "";
-  writeStorage(storage, list);
+  mutate(storage, id, (entry, at) => {
+    entry.desc = "";
+    entry.metaAt = at;
+  });
 }
 
 export function addSongToPersonalSetlist(storage, id, song) {
-  const list = readStorage(storage);
-  const entry = findEntry(list, id);
-  if (entry) entry.songs.push(song);
-  writeStorage(storage, list);
+  mutate(storage, id, (entry, at) => {
+    entry.songs.push(stampRow(song, at));
+    entry.orderAt = at;
+  });
 }
 
 // Insert a song or a set divider at `index` (clamped to the list), shifting
 // everything after it down — how a set is split between two songs, or a
 // song lands at the end of a particular set rather than the whole list.
 export function insertItemInPersonalSetlist(storage, id, index, item) {
-  const list = readStorage(storage);
-  const entry = findEntry(list, id);
-  if (entry) entry.songs.splice(Math.max(0, Math.min(index, entry.songs.length)), 0, item);
-  writeStorage(storage, list);
+  mutate(storage, id, (entry, at) => {
+    entry.songs.splice(Math.max(0, Math.min(index, entry.songs.length)), 0, stampRow(item, at));
+    entry.orderAt = at;
+  });
 }
 
 export function removeSongFromPersonalSetlist(storage, id, index) {
-  const list = readStorage(storage);
-  const entry = findEntry(list, id);
-  if (entry) entry.songs.splice(index, 1);
-  writeStorage(storage, list);
+  mutate(storage, id, (entry, at) => {
+    entry.songs.splice(index, 1).forEach((row) => {
+      addTombstone(storage, "rows", rowTombstoneKey(id, row.id), at);
+    });
+    entry.orderAt = at;
+  });
 }
 
 // Appends a set divider ("break") to the end of the list. Its label is left
 // blank — the UI shows an auto "Set N" caption until one is typed in.
 export function addDividerToPersonalSetlist(storage, id) {
-  const list = readStorage(storage);
-  const entry = findEntry(list, id);
-  if (entry) entry.songs.push({ divider: "" });
-  writeStorage(storage, list);
+  mutate(storage, id, (entry, at) => {
+    entry.songs.push(stampRow({ divider: "" }, at));
+    entry.orderAt = at;
+  });
 }
 
 export function updateDividerLabelInPersonalSetlist(storage, id, index, label) {
-  const list = readStorage(storage);
-  const entry = findEntry(list, id);
-  if (entry && isSetlistDivider(entry.songs[index])) entry.songs[index].divider = label;
-  writeStorage(storage, list);
+  mutate(storage, id, (entry, at) => {
+    const row = entry.songs[index];
+    if (isSetlistDivider(row)) {
+      row.divider = label;
+      row.updatedAt = at;
+    }
+  });
 }
 
 export function updateSongKeyInPersonalSetlist(storage, id, index, key) {
-  const list = readStorage(storage);
-  const entry = findEntry(list, id);
-  if (entry && entry.songs[index]) entry.songs[index].key = key;
-  writeStorage(storage, list);
+  mutate(storage, id, (entry, at) => {
+    const row = entry.songs[index];
+    if (row) {
+      row.key = key;
+      row.updatedAt = at;
+    }
+  });
 }
 
 // A per-song note — printed-setlist-only, e.g. who takes the solo. Sanitized
 // on the way in (see sanitizeNote below), the one place this ever gets set
 // from the UI, so every read of it is already clean.
 export function updateSongNoteInPersonalSetlist(storage, id, index, note) {
-  const list = readStorage(storage);
-  const entry = findEntry(list, id);
-  const song = entry && entry.songs[index];
-  if (song) song.note = sanitizeNote(note);
-  writeStorage(storage, list);
+  mutate(storage, id, (entry, at) => {
+    const row = entry.songs[index];
+    if (row) {
+      row.note = sanitizeNote(note);
+      row.updatedAt = at;
+    }
+  });
+}
+
+function isPermutation(order, length) {
+  const seen = {};
+  return Array.isArray(order) && order.length === length &&
+    order.every((i) => {
+      if (!Number.isInteger(i) || i < 0 || i >= length || seen[i]) return false;
+      seen[i] = true;
+      return true;
+    });
 }
 
 /*
@@ -169,22 +253,13 @@ export function updateSongNoteInPersonalSetlist(storage, id, index, note) {
    `order` is a genuine permutation of exactly `0..songs.length-1`.
 */
 export function setPersonalSetlistOrder(storage, id, order) {
-  const list = readStorage(storage);
-  const entry = findEntry(list, id);
-  if (entry) {
-    const songs = entry.songs;
-    const seen = {};
-    const valid = Array.isArray(order) && order.length === songs.length &&
-      order.every((i) => {
-        if (!Number.isInteger(i) || i < 0 || i >= songs.length || seen[i]) return false;
-        seen[i] = true;
-        return true;
-      });
-    if (valid) {
-      entry.songs = order.map((i) => { return songs[i]; });
-    }
-  }
-  writeStorage(storage, list);
+  const entry = getPersonalSetlist(storage, id);
+  if (!entry || !isPermutation(order, entry.songs.length)) return;
+  mutate(storage, id, (target, at) => {
+    const songs = target.songs;
+    target.songs = order.map((i) => { return songs[i]; });
+    target.orderAt = at;
+  });
 }
 
 // Clones a band setlist's songs into a new, independent personal entry —
@@ -254,4 +329,11 @@ export function importPersonalSetlistText(storage, text, fallbackName) {
     desc: sanitizeDesc(parsed.desc),
     songs: sanitizeSongs(parsed.songs),
   });
+}
+
+// Replaces the whole stored list — what the device-sync merge writes back
+// (lib/sync/doc.js). Not for ordinary edits: those go through the mutators
+// above, which stamp.
+export function replacePersonalSetlists(storage, list) {
+  writeStorage(storage, list, true);
 }

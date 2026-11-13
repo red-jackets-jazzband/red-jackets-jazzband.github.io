@@ -170,6 +170,9 @@ De `fa-youtube`-knop onder **Luisteren** opent alle songs van de setlist met een
 ## exports: Neem een setlist ergens anders mee naartoe
 Een eigen setlist kun je met de `fa-file-arrow-down`-knop als **.txt**-bestand exporteren en op een ander apparaat weer importeren. Het is de setlistversie van de Print-, mp3- en iReal Pro-exports die je al kent van een losse song.
 
+## sync: Houd je setlists op elk apparaat bij
+Een setlist staat alleen in deze browser. **Apparaten koppelen** maakt een code die je telefoon, tablet en laptop met elkaar verbindt: setlists en songvormen die je op de een wijzigt, verschijnen op de andere, end-to-end versleuteld, zodat de server alleen versleutelde gegevens bewaart. Het staat uit tot je het aanzet, en de `.txt`-export blijft je back-up.
+
 # learn: Een song leren
 
 ## routine: Oefen over de akkoorden

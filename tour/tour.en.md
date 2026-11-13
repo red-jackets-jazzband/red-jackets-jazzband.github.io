@@ -269,6 +269,10 @@ setup: createDemoSetlist, addDemoSong1, addDemoSong2
 target: #setlistExportBtn
 A personal setlist can be exported with the `fa-file-arrow-down` button as a **.txt** file and imported again on another device. It's the setlist version of the Print, MP3 and iReal Pro exports you've seen for a single song.
 
+## sync: Keep your setlists on every device
+target: #syncBtn
+A setlist lives in this browser only. **Connect devices** makes a code that links your phone, tablet and laptop: setlists and song forms you change on one show up on the others, end to end encrypted, so the server only ever holds scrambled data. It's off until you turn it on, and the `.txt` export stays as your backup.
+
 # learn: Learning a tune
 setup: openDemoSong
 

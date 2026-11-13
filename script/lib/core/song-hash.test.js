@@ -62,3 +62,11 @@ test("buildSongsHash omits empty parts and adds i=1 only without markers", () =>
   assert.equal(buildSongsHash({}), "");
   assert.equal(buildSongsHash({ setlist: "s", song: "x", b: 4, inspiration: true }), "sl=s&s=x&b=4");
 });
+
+test("syncCodeFromHash reads a pairing code and hashWithoutSync removes it", async () => {
+  const { syncCodeFromHash, hashWithoutSync } = await import("./song-hash.js");
+  assert.equal(syncCodeFromHash("#sync=RJ7K-Q2MD"), "RJ7K-Q2MD");
+  assert.equal(syncCodeFromHash("#s=basin_street"), null);
+  assert.equal(hashWithoutSync("#s=basin_street&sync=ABCD&i=1"), "s=basin_street&i=1");
+  assert.equal(hashWithoutSync("#sync=ABCD"), "");
+});

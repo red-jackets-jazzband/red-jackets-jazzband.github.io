@@ -170,6 +170,9 @@ Le bouton `fa-youtube` sous **Écouter** ouvre à la suite tous les morceaux de 
 ## exports: Utiliser une setlist ailleurs
 Une setlist personnelle peut être exportée avec le bouton `fa-file-arrow-down` en fichier **.txt** et réimportée sur un autre appareil. C'est la version setlist des exports Print, MP3 et iReal Pro que vous avez vus pour un seul morceau.
 
+## sync: Vos setlists sur tous vos appareils
+Une setlist n'existe que dans ce navigateur. **Connecter des appareils** crée un code qui relie votre téléphone, votre tablette et votre ordinateur : les setlists et formes de morceaux modifiées sur l'un apparaissent sur les autres, chiffrées de bout en bout, de sorte que le serveur ne détient que des données brouillées. C'est désactivé tant que vous ne l'activez pas, et l'export `.txt` reste votre sauvegarde.
+
 # learn: Apprendre un morceau
 
 ## routine: Travailler sur les accords
