@@ -12,9 +12,14 @@ export const FORMAT = 1;
 
 const ID = /^[\w-]{1,64}$/;
 const SONG_FILE = /^[a-z0-9][\w.-]{0,100}\.abc$/i;
+
+export function isSongFile(value) {
+  return typeof value === "string" && SONG_FILE.test(value);
+}
+
 const FORM_KEY = /^[\w.-]{1,120}$/;
 const MAX_ROWS = 500;
-const MAX_SETLISTS = 100;
+export const MAX_SETLISTS = 100;
 const MAX_FORMS = 200;
 const LIMITS = { name: 200, desc: 5000, note: 2000, divider: 200, key: 20, form: 20000 };
 
@@ -27,19 +32,19 @@ export function hasInternalMarker(desc) {
   return CONTROL.test(String(desc || ""));
 }
 
-function isObject(value) {
+export function isObject(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function isId(value) {
+export function isId(value) {
   return typeof value === "string" && ID.test(value);
 }
 
-function stamp(value) {
+export function stamp(value) {
   return Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
-function text(value, max) {
+export function text(value, max) {
   return typeof value === "string" && value.length <= max;
 }
 
@@ -57,7 +62,7 @@ function cleanRow(row) {
   return out;
 }
 
-function cleanSetlist(entry) {
+export function cleanSetlist(entry) {
   if (!isObject(entry) || !isId(entry.id) || !text(entry.name, LIMITS.name)) return null;
   if (!Array.isArray(entry.songs) || entry.songs.length > MAX_ROWS) return null;
   const desc = text(entry.desc, LIMITS.desc) && !hasInternalMarker(entry.desc) ? entry.desc : "";
@@ -83,7 +88,7 @@ function cleanForm(form) {
   return { ...form, at: stamp(form.at) };
 }
 
-function cleanTombs(tomb) {
+export function cleanTombs(tomb) {
   const out = { setlists: {}, rows: {}, forms: {} };
   if (!isObject(tomb)) return out;
   Object.keys(out).forEach((kind) => {
@@ -95,11 +100,11 @@ function cleanTombs(tomb) {
   return out;
 }
 
-function cleanList(list, max, clean) {
+export function cleanList(list, max, clean) {
   return (Array.isArray(list) ? list : []).slice(0, max).map((item) => { return clean(item); }).filter(Boolean);
 }
 
-function uniqueBy(items, field) {
+export function uniqueBy(items, field) {
   const seen = {};
   return items.filter((item) => {
     if (seen[item[field]]) return false;

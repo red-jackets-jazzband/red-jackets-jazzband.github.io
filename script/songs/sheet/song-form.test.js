@@ -8,6 +8,8 @@ import { renderWordsTables } from "./form-strip.js";
 const FILE = "gotta_woman.abc";
 const STORE_KEY = `rj.songForm.${FILE}`;
 const CANCEL = "Cancel";
+const MINE_STRIP = ".songForm--mine";
+const CHECKED = "aria-checked";
 const EDITOR = ".songForm-editor";
 const CLARINET = "Clarinet solo";
 const DELETE_LAST = '[aria-label="Delete round 3"]';
@@ -64,7 +66,7 @@ test("a song shows the band's strip with only the menu button under it", async (
   try {
     openSong();
     assert.deepEqual(leads(), ["Collective", "Vocals", CLARINET]);
-    assert.equal($(".songForm--mine"), null);
+    assert.equal($(MINE_STRIP), null);
     assert.equal($(MENU), null);
     assert.equal($(MENU_BTN).getAttribute("aria-expanded"), "false");
     assert.equal(hasChoice(), false);
@@ -87,7 +89,7 @@ test("the pencil opens one card per round, and the strip follows every edit", as
     lead.value = "Banjo solo";
     lead.dispatchEvent(new window.Event("input"));
     assert.deepEqual(leads(), ["Collective", "Vocals", "Banjo solo"]);
-    assert.ok($(".songForm--mine"));
+    assert.ok($(MINE_STRIP));
     assert.equal($$(".songForm-changed").length, 1);
 
     click($$(CARD)[0].querySelector('[aria-label="Add part A to round 1"]'));
@@ -173,7 +175,7 @@ test("save keeps your version, and the switch flips between it and the band's", 
 
     assert.equal($(EDITOR), null);
     assert.deepEqual(leads(), ["Collective", "Vocals"]);
-    assert.ok($(".songForm--mine"));
+    assert.ok($(MINE_STRIP));
     const stored = JSON.parse(localStorage.getItem(STORE_KEY));
     assert.equal(stored.show, "mine");
     assert.deepEqual(stored.rows.map((row) => row[2]), ["Collective; count-off: 3 tempo ticks", "Vocals"]);
@@ -182,15 +184,15 @@ test("save keeps your version, and the switch flips between it and the band's", 
     click(menuItem("band"));
     assert.equal($(MENU), null);
     assert.deepEqual(leads(), ["Collective", "Vocals", CLARINET]);
-    assert.equal($(".songForm--mine"), null);
+    assert.equal($(MINE_STRIP), null);
     assert.equal($(MENU_BTN).classList.contains("is-mine"), false);
     assert.equal(JSON.parse(localStorage.getItem(STORE_KEY)).show, "band");
     assert.equal(editButton().textContent, "Edit my version");
 
     click(menuItem("mine"));
     assert.deepEqual(leads(), ["Collective", "Vocals"]);
-    assert.equal(menuItem("mine").getAttribute("aria-checked"), "true");
-    assert.equal(menuItem("band").getAttribute("aria-checked"), "false");
+    assert.equal(menuItem("mine").getAttribute(CHECKED), "true");
+    assert.equal(menuItem("band").getAttribute(CHECKED), "false");
   } finally {
     cleanup();
   }
@@ -579,4 +581,73 @@ test("text half typed in a round stays with it when rounds are deleted or moved"
   const rows = JSON.parse(localStorage.getItem(STORE_KEY)).rows;
   assert.deepEqual(rows.map((cells) => cells[1]), ["A B A B", "A B C"]);
   cleanup();
+});
+
+test("a joined band space lists a bandmate's version, shows it plain, and copies it to mine", async () => {
+  const { openSong, leads, cleanup } = await setup();
+  try {
+    const raw = JSON.stringify({ show: "mine", rows: [["1", "A B", "Anna's solo"]] });
+    localStorage.setItem("rj.band.list", JSON.stringify([{ id: "b1", label: "Jazz" }]));
+    localStorage.setItem("rj.band.b1.code", "x");
+    localStorage.setItem("rj.band.b1.doc", JSON.stringify({
+      format: 1, device: "d", tomb: { versions: {} },
+      members: [{ author: "anna1", name: "Anna", at: 1 }],
+      versions: [{ file: FILE, author: "anna1", raw, at: 2 }],
+    }));
+    openSong();
+    const item = menuItem("by-anna1");
+    assert.equal(item.textContent.includes("Anna"), true);
+    click(item);
+    assert.deepEqual(leads(), ["Anna's solo"]);
+    assert.equal($(MINE_STRIP), null);
+    assert.equal(menuItem("by-anna1").getAttribute(CHECKED), "true");
+    assert.equal(localStorage.getItem(STORE_KEY), null);
+    click(menuItem("adopt"));
+    assert.deepEqual(leads(), ["Anna's solo"]);
+    assert.notEqual($(MINE_STRIP), null);
+    assert.notEqual(localStorage.getItem(STORE_KEY), null);
+    // With a version of mine and a band space, it can be shared.
+    assert.equal(menuItem("share").getAttribute(CHECKED), "false");
+    click(menuItem("share"));
+    assert.equal(menuItem("share").getAttribute(CHECKED), "true");
+  } finally {
+    cleanup();
+  }
+});
+
+test("with two band spaces each version names its band, and sharing is chosen per band", async () => {
+  const { openSong, cleanup } = await setup({ stored: JSON.stringify({ show: "mine", rows: [["1", "A", ""]] }) });
+  try {
+    const raw = JSON.stringify({ show: "mine", rows: [["1", "A B", ""]] });
+    localStorage.setItem("rj.band.list", JSON.stringify([{ id: "b1", label: "Jazz" }, { id: "b2", label: "Swing" }]));
+    ["b1", "b2"].forEach((id, i) => {
+      localStorage.setItem(`rj.band.${id}.code`, "x");
+      localStorage.setItem(`rj.band.${id}.doc`, JSON.stringify({
+        format: 1, device: "d", tomb: { versions: {} },
+        members: [{ author: `anna${i}`, name: "Anna", at: 1 }],
+        versions: [{ file: FILE, author: `anna${i}`, raw, at: 2 + i }],
+      }));
+    });
+    openSong();
+    assert.equal(menuItem("by-anna0").textContent.includes("Anna's version (Jazz)"), true);
+    assert.equal(menuItem("by-anna1").textContent.includes("Anna's version (Swing)"), true);
+    assert.equal(menuItem("share"), null);
+    assert.equal(menuItem("share-b1").textContent.includes("Share with Jazz"), true);
+    click(menuItem("share-b2"));
+    assert.equal(menuItem("share-b2").getAttribute(CHECKED), "true");
+    assert.equal(menuItem("share-b1").getAttribute(CHECKED), "false");
+  } finally {
+    cleanup();
+  }
+});
+
+test("without a band space the menu offers no bandmates and no sharing", async () => {
+  const { openSong, cleanup } = await setup({ stored: JSON.stringify({ show: "mine", rows: [["1", "A", ""]] }) });
+  try {
+    openSong();
+    assert.equal(menuItem("share"), null);
+    assert.equal(menuItem("adopt"), null);
+  } finally {
+    cleanup();
+  }
 });

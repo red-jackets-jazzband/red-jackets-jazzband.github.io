@@ -20,12 +20,15 @@ import { afterPageLoad } from "../core/after-load.js";
 const UPLOAD_DELAY_MS = 3000;
 const PULL_GAP_MS = 30000;
 const LEASE_RENEW_MS = 5000;
+// A hidden tab keeps its push socket this long: switching away and back (or a
+// quick look at another tab) must not cost a new connection to the server each time.
+const HIDDEN_GRACE_MS = 120000;
 const QR_SRC = "/script/qrcode-generator-2.0.4-min.js";
 const SVG_NS = "http://www.w3.org/2000/svg";
 const DIRTY_KEY = "rj.sync.dirty";
 const WATCHED_KEYS = new Set(["rj.setlists.v1", "rj.sync.meta"]);
 
-function statusText(result, time) {
+export function statusText(result, time) {
   switch (result.status) {
     case "ok": return tl("sync_ok", "Synced {time}", { time });
     case "working": return tl("sync_working", "Syncing…");
@@ -42,7 +45,7 @@ function statusText(result, time) {
   }
 }
 
-function clockTime() {
+export function clockTime() {
   const now = new Date();
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 }
@@ -61,14 +64,10 @@ function drawQr(svg, url) {
   svg.append(path);
 }
 
-function hideQr() {
-  const box = byId("syncQrBox");
-  const toggle = byId("syncQrToggle");
-  if (box) box.hidden = true;
-  if (toggle) {
-    toggle.setAttribute("aria-expanded", "false");
-    toggle.textContent = tl("sync_qr_show", "Show QR code");
-  }
+// Draws `url` as a QR code into `svg`; the generator loads on first use (and is precached for offline).
+export function renderQr(svg, url) {
+  const ready = typeof qrcode === "undefined" ? loadScriptOnce(QR_SRC) : Promise.resolve();
+  return ready.then(() => { drawQr(svg, url); });
 }
 
 function closeDialog() {
@@ -83,8 +82,11 @@ export function createSync(ctx) {
   let uploadTimer = null;
   let changeGen = 0; // counts local edits; a cycle that began before one can't clear "dirty"
   let lastPull = 0;
+  let qrFor = null; // the code the drawn QR belongs to
+  let qrFailedFor = null; // the code whose QR failed to draw (not retried until the dialog opens)
   let lastResult = { status: "off" };
   let live = null;
+  let hiddenSince = 0;
   // Read at creation, before navigation's own hash rewriting can drop it.
   const pairingCode = syncCodeFromHash(window.location.hash);
 
@@ -122,9 +124,13 @@ export function createSync(ctx) {
     return getEngine().liveUrl().then((url) => { return url ? new window.WebSocket(url) : null; });
   }
 
-  // Open only in the visible tab that holds the lease; closed otherwise.
+  // Open in the visible tab that holds the lease, and for HIDDEN_GRACE_MS after it
+  // was hidden (the lease timer re-checks); closed otherwise.
   function syncLive() {
-    const wanted = connected() && !document.hidden && typeof window.WebSocket === "function"
+    if (!document.hidden) hiddenSince = 0;
+    else if (!hiddenSince) hiddenSince = Date.now();
+    const shown = !document.hidden || Date.now() - hiddenSince < HIDDEN_GRACE_MS;
+    const wanted = connected() && shown && typeof window.WebSocket === "function"
       && holdLease(storage(), tabId, Date.now());
     if (wanted && !live) {
       live = createLiveChannel({ connect: openSocket, onVersion: onPushed });
@@ -145,21 +151,9 @@ export function createSync(ctx) {
     }
   }
 
-  // Show the pairing QR; the generator loads on first use (and is precached for offline).
-  function toggleQr() {
-    const box = byId("syncQrBox");
-    if (!box) return Promise.resolve();
-    if (!box.hidden) { hideQr(); return Promise.resolve(); }
-    const code = getEngine().code();
-    if (!code) return Promise.resolve();
-    const ready = typeof qrcode === "undefined" ? loadScriptOnce(QR_SRC) : Promise.resolve();
-    return ready.then(() => {
-      drawQr(byId("syncQr"), pairingUrl(window.location.href, formatCode(code)));
-      box.hidden = false;
-      const toggle = byId("syncQrToggle");
-      toggle.setAttribute("aria-expanded", "true");
-      toggle.textContent = tl("sync_qr_hide", "Hide QR code");
-    });
+  // Draw the pairing QR; the generator loads on first use (and is precached for offline).
+  function showQr(code) {
+    return renderQr(byId("syncQr"), pairingUrl(window.location.href, formatCode(code)));
   }
 
   function render() {
@@ -171,11 +165,26 @@ export function createSync(ctx) {
     if (line) line.textContent = statusText(shown, clockTime());
     const codeBox = byId("syncCodeBox");
     if (codeBox) codeBox.hidden = !code;
-    if (!code) hideQr();
+    ["syncNow", "syncLinks"].forEach((id) => {
+      const node = byId(id);
+      if (node) node.hidden = !code;
+    });
+    const intro = byId("syncIntro");
+    if (intro) intro.hidden = Boolean(code);
     const setup = byId("syncSetup");
     if (setup) setup.hidden = Boolean(code);
     const codeEl = byId("syncCode");
     if (codeEl) codeEl.textContent = code ? formatCode(code) : "";
+    if (!code) qrFor = null;
+    if (code && code !== qrFor && code !== qrFailedFor) {
+      qrFor = code;
+      // A failed draw (generator not loaded) isn't remembered as drawn, and isn't
+      // retried by the render it triggers: the next try is when the dialog opens.
+      showQr(code).catch(() => {
+        if (qrFor === code) qrFor = null;
+        qrFailedFor = code;
+      });
+    }
   }
 
   function finish(result, gen) {
@@ -260,12 +269,10 @@ export function createSync(ctx) {
     overlay.addEventListener("click", (e) => { if (e.target === overlay) closeDialog(); });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) closeDialog(); });
     on("syncClose", "click", closeDialog);
-    on("syncDone", "click", closeDialog);
     on("syncConnect", "click", () => { settle(action(() => getEngine().connect())); });
     const join = () => { settle(action(() => getEngine().join(byId("syncCodeInput").value))); };
     on("syncJoin", "click", join);
     on("syncCodeInput", "keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); join(); } });
-    on("syncQrToggle", "click", () => { settle(toggleQr()); });
     on("syncNow", "click", () => { lastPull = 0; settle(run()); });
     on("syncDisconnect", "click", () => {
       if (flags.acting) return;
@@ -299,6 +306,7 @@ export function createSync(ctx) {
   function openDialog() {
     const overlay = byId("syncModal");
     if (!overlay) return;
+    qrFailedFor = null;
     render();
     overlay.hidden = false;
     const first = byId(connected() ? "syncNow" : "syncConnect");

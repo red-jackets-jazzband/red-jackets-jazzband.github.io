@@ -4,6 +4,7 @@ import { mountPage } from "../../../../tests/helpers/dom.js";
 import { makeCtx, memoryStorage } from "../../../../tests/helpers/ctx.js";
 import { createPersonalSetlist, addSongToPersonalSetlist, listPersonalSetlists } from "../../lib/setlists/setlists-store.js";
 import { createSetlistHome } from "./home.js";
+import { bandSetlistStorage, registerBand } from "../../lib/sync/band-vault.js";
 
 function setup() {
   const page = mountPage();
@@ -63,6 +64,31 @@ test("the trash icon deletes a personal setlist after confirmation", () => {
     home.render();
     window.confirm = () => true;
     document.querySelector(".setlist-row-delete").dispatchEvent(new window.Event("click"));
+    assert.equal(listPersonalSetlists(storage).length, 0);
+  } finally {
+    cleanup();
+  }
+});
+
+test("each shared space gets its own shelf, named after the space, with its own New button", () => {
+  const { storage, home, ctx, cleanup } = setup();
+  try {
+    const opened = [];
+    ctx.setlistModal.open = (bandId) => opened.push(bandId);
+    registerBand(storage, "b1", "My Band");
+    registerBand(storage, "b2", "Brass Crew");
+    storage.setItem("rj.band.b1.code", "x");
+    storage.setItem("rj.band.b2.code", "y");
+    createPersonalSetlist(bandSetlistStorage(storage, "b1"), "Gig");
+    home.render();
+    const headings = [...document.querySelectorAll("#songList .song-list-letter")].map((h) => h.textContent);
+    assert.deepEqual(headings, ["From the band", "Yours", "My Band", "Brass Crew"]);
+    assert.ok([...document.querySelectorAll(".setlist-row-main")].some((b) => b.textContent === "Gig"));
+    const buttons = [...document.querySelectorAll(".rj-library-new-setlist-btn")];
+    assert.equal(buttons.length, 3);
+    buttons[1].dispatchEvent(new window.Event("click"));
+    buttons[2].dispatchEvent(new window.Event("click"));
+    assert.deepEqual(opened, ["b1", "b2"]);
     assert.equal(listPersonalSetlists(storage).length, 0);
   } finally {
     cleanup();

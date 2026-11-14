@@ -16,12 +16,14 @@ topicAdjust: Tonart und Tempo ändern, eine Stelle wiederholen, ein MP3 exportie
 topicInspiration: Aufnahmen neben dem Leadsheet anhören und eine Phrase wiederholen.
 topicMixer: Die Lautstärke von Bass, Akkorden und jeder Stimme einstellen.
 topicSetlists: Setlists für einen Gig erstellen, ordnen und drucken.
+topicShare: Verbinde deine Geräte und teile Setlists und Songformen mit der Band.
 topicLearn: Läufe und Rhythmen über die Akkorde eines Songs üben, um ihn von innen zu lernen.
 topicComping: Eine ausgeschriebene Begleitstimme hinzufügen.
 topicLayers: Zusatzhilfen im Leadsheet anzeigen, etwa benannte Verläufe, Stufen und Griffe.
-topicsIntro: Acht kurze Stationen. Tipp auf eine, um hinzuspringen:
+topicsIntro: Neun kurze Stationen. Tippe auf eine, um dorthin zu springen:
 railComping: Comping
 railSetlists: Sets
+railShare: Teilen
 railLearn: Lernen
 railMixer: Mix
 railInspiration: Mitspielen
@@ -170,8 +172,19 @@ Der Button `fa-youtube` unter **Anhören** öffnet alle Songs der Setlist mit Yo
 ## exports: Eine Setlist woanders nutzen
 Eine eigene Setlist kannst du mit dem Button `fa-file-arrow-down` als **.txt**-Datei exportieren und auf einem anderen Gerät wieder importieren. Das ist die Setlist-Version der Print-, MP3- und iReal-Pro-Exporte, die du von einem einzelnen Song schon kennst.
 
-## sync: Setlists auf jedem Gerät
-Eine Setlist liegt nur in diesem Browser. **Geräte verbinden** erzeugt einen Code, der Handy, Tablet und Laptop verknüpft: Setlists und Songformen, die du auf einem änderst, erscheinen auf den anderen, Ende-zu-Ende verschlüsselt, sodass der Server nur verschlüsselte Daten speichert. Es ist aus, bis du es einschaltest, und der `.txt`-Export bleibt deine Sicherung.
+# share: Teilen
+## devices: Setlists auf jedem Gerät
+Eine Setlist liegt nur in diesem Browser. **Geräte verbinden** verknüpft Handy, Tablet und Laptop, sodass Setlists und Songformen, die du auf einem änderst, auf den anderen erscheinen. Es ist aus, bis du es einschaltest, und der `.txt`-Export bleibt deine Sicherung.
+
+## code: Ein Code verbindet sie
+**Dieses Gerät verbinden** erzeugt einen Code (und einen QR-Code zum Scannen). Scanne oder tippe ihn auf deinem anderen Gerät unter **oder Code eingeben**. Alles wird verschlüsselt, bevor es das Gerät verlässt, der Server speichert also nur verschlüsselte Daten.
+
+## shared: Mit der Band teilen
+Der Tab **Geteilt** ist für deine Bandkolleginnen und -kollegen. Wähle **Einen geteilten Raum starten** und schick ihnen den Link per WhatsApp, E-Mail oder als Code. Alle wählen einen Namen, und du kannst in mehreren Räumen gleichzeitig sein, jeder mit einem eigenen Chip.
+> Deine eigenen Geräte und die Räume der Band sind getrennt: Nichts wird geteilt, bevor du einen Raum startest.
+
+## shelf: Setlists, die alle bearbeiten können
+Jeder geteilte Raum bekommt ein eigenes Regal im Tab **Setlists**, das mit einer eigenen Schaltfläche **Neue Setlist** endet. Eine Setlist, die du dort anlegst, gehört dem Raum: Alle darin können Songs hinzufügen, umsortieren und löschen. Im Menü **Songform** eines Songs findest du außerdem die Versionen, die deine Bandkolleginnen und -kollegen geteilt haben, und kannst eine in deine eigene kopieren.
 
 # learn: Einen Song lernen
 

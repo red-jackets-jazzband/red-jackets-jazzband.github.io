@@ -8,6 +8,7 @@ import {
   insertItemInPersonalSetlist,
 } from "../../lib/setlists/setlists-store.js";
 import { tl } from "../../lib/core/i18n.js";
+import { setlistStorage } from "./scope.js";
 
 /*
   The "Add to setlist" tray at the foot of an open personal setlist: a
@@ -68,9 +69,9 @@ export function createAddSongTray(ctx, { refresh, onInsert }) {
     if (!ctx.state.currentPersonalId) return false;
     const song = { file, key: "" };
     if (insertAt === null) {
-      addSongToPersonalSetlist(ctx.storage(), ctx.state.currentPersonalId, song);
+      addSongToPersonalSetlist(setlistStorage(ctx), ctx.state.currentPersonalId, song);
     } else {
-      insertItemInPersonalSetlist(ctx.storage(), ctx.state.currentPersonalId, insertAt, song);
+      insertItemInPersonalSetlist(setlistStorage(ctx), ctx.state.currentPersonalId, insertAt, song);
       if (onInsert) onInsert(insertAt);
       insertAt += 1; // the next title typed goes right after this one
     }
@@ -203,7 +204,7 @@ export function createAddSongTray(ctx, { refresh, onInsert }) {
       on: {
         click: () => {
           if (!ctx.state.currentPersonalId) return;
-          addDividerToPersonalSetlist(ctx.storage(), ctx.state.currentPersonalId);
+          addDividerToPersonalSetlist(setlistStorage(ctx), ctx.state.currentPersonalId);
           insertAt = null;
           refresh();
         },

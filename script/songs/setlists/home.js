@@ -1,6 +1,7 @@
 import { byId, el, clear } from "../../lib/core/dom.js";
 import { listPersonalSetlists, deletePersonalSetlist } from "../../lib/setlists/setlists-store.js";
 import { songCountLabel, countSetlistSongs } from "./data.js";
+import { listBands, listSharedSetlists, bandSetlistStorage } from "../../lib/sync/band-vault.js";
 import { tl } from "../../lib/core/i18n.js";
 
 const emptyRow = (text) => el("div", { class: "song-list-empty", text });
@@ -35,9 +36,11 @@ function setlistRow(title, count, onOpen, onDelete) {
 }
 
 /*
-  The Setlists-tab home view: two shelves — "From the band" (read-only,
-  committed to the repo) and "Yours" (personal, in localStorage) — ending with
-  a single "New setlist" button that opens the create modal.
+  The Setlists-tab home view: "From the band" (read-only, committed to the
+  repo), "Yours" (personal, in localStorage) and, for every shared space this
+  device is in, a shelf named after the space (editable by everyone in the space, synced
+  through it). Yours and each Shared shelf end with their own "New setlist"
+  button that opens the create modal, aimed at that shelf.
 */
 export function createSetlistHome(ctx) {
   function bandRow(entry) {
@@ -62,11 +65,33 @@ export function createSetlistHome(ctx) {
     ).row;
   }
 
-  function newSetlistButton() {
+  function sharedRow(band, entry) {
+    return setlistRow(
+      entry.name,
+      countSetlistSongs(entry.songs),
+      () => ctx.setlistView.openShared(band.id, entry.id),
+      () => {
+        if (!window.confirm(tl("setlist_delete_shared_confirm", "Delete “{name}” for everyone in “{space}”? This can't be undone.", { name: entry.name, space: band.label }))) return;
+        deletePersonalSetlist(bandSetlistStorage(ctx.storage(), band.id), entry.id);
+        ctx.nav.forgetPersonal(entry.id);
+        render();
+      },
+    ).row;
+  }
+
+  function sharedShelf(listEl, band) {
+    listEl.append(heading(band.label));
+    const entries = listSharedSetlists(ctx.storage(), band.id);
+    if (entries.length === 0) listEl.append(emptyRow(tl("setlists_none_shared", "Nothing shared in this space yet.")));
+    else entries.forEach((entry) => listEl.append(sharedRow(band, entry)));
+    listEl.append(newSetlistButton(band.id));
+  }
+
+  function newSetlistButton(bandId = null) {
     return el("button", {
       type: "button",
       class: "rj-library-new-setlist-btn",
-      on: { click: () => ctx.setlistModal.open() },
+      on: { click: () => ctx.setlistModal.open(bandId) },
     }, [
       el("span", { class: "fa-solid fa-plus", attrs: { "aria-hidden": "true" } }),
       el("span", { text: tl("setlist_new", "New setlist") }),
@@ -93,10 +118,15 @@ export function createSetlistHome(ctx) {
       mine.forEach((entry) => listEl.append(personalRow(entry)));
     }
     listEl.append(newSetlistButton());
+
+    const bands = listBands(ctx.storage());
+    bands.forEach((band) => sharedShelf(listEl, band));
   }
 
   function show() {
     ctx.nav.leaveSetlist();
+    // Pick up what the others changed since this device last looked.
+    if (ctx.band && ctx.band.pullIfStale) ctx.band.pullIfStale(); // NOSONAR: no ?. on Safari 12
     const tools = byId("setlistTools");
     if (tools) tools.hidden = true;
     render();

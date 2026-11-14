@@ -1,6 +1,7 @@
 import { byId, qsa } from "../../lib/core/dom.js";
 import { parseSongsParams, buildSongsHash } from "../../lib/core/song-hash.js";
 import { getPersonalSetlist } from "../../lib/setlists/setlists-store.js";
+import { findSharedSetlistBand } from "../../lib/sync/band-vault.js";
 import { tl } from "../../lib/core/i18n.js";
 
 // The header's language links go to this page in each language; give them
@@ -149,9 +150,9 @@ export function createNavigation(ctx) {
   // sheet — otherwise a stale song / position gets serialised into the hash
   // and can spuriously highlight a row in the new list. A caller that means
   // to open a specific song selects it right after.
-  function enterSetlist({ id, personalId = null }) {
+  function enterSetlist({ id, personalId = null, bandId = null }) {
     setNav({
-      currentSetlistId: id, currentPersonalId: personalId, currentSongFile: null, currentSetlistSongIndex: null,
+      currentSetlistId: id, currentPersonalId: personalId, currentBandId: bandId, currentSongFile: null, currentSetlistSongIndex: null,
     });
   }
 
@@ -172,6 +173,7 @@ export function createNavigation(ctx) {
     setNav({
       setlistsView: "home",
       currentPersonalId: null,
+      currentBandId: null,
       currentSetlistId: null,
       currentSetlistSongIndex: null,
       currentOpenSongs: null,
@@ -179,7 +181,7 @@ export function createNavigation(ctx) {
   }
 
   function forgetPersonal(id) {
-    if (store.get("nav").currentPersonalId === id) setNav({ currentPersonalId: null });
+    if (store.get("nav").currentPersonalId === id) setNav({ currentPersonalId: null, currentBandId: null });
   }
 
   // Previous / next song in whichever list the sidebar is showing: the open
@@ -200,12 +202,17 @@ export function createNavigation(ctx) {
   }
 
   // Open the setlist named by a `sl=` hash value — a personal one by id (from
-  // this device's storage), else a band one by file basename — and call
+  // this device's storage), else a shared one of a band space this device is in, else a band one by file basename — and call
   // `then` once its song list is on screen, or `onMissing` when nothing
   // resolves (a personal `sl=` from another device, say).
   function openSetlistById(id, then, onMissing) {
     if (getPersonalSetlist(ctx.storage(), id)) {
       ctx.setlistView.openPersonal(id, then);
+      return;
+    }
+    const bandId = findSharedSetlistBand(ctx.storage(), id);
+    if (bandId) {
+      ctx.setlistView.openShared(bandId, id, then);
       return;
     }
     const openBand = () => {

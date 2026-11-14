@@ -16,12 +16,14 @@ topicAdjust: Changer la tonalité et le tempo, boucler un passage, exporter un M
 topicInspiration: Écouter des enregistrements à côté de la grille et boucler une phrase.
 topicMixer: Régler le volume de la basse, des accords et de chaque partie.
 topicSetlists: Créer, ordonner et imprimer des setlists pour un concert.
+topicShare: Reliez vos appareils et partagez setlists et formes de morceaux avec le groupe.
 topicLearn: Travailler des traits et des rythmes sur les accords d'un morceau, pour l'apprendre de l'intérieur.
 topicComping: Ajouter une portée d'accompagnement écrite.
 topicLayers: Afficher une aide en plus sur la grille, comme les progressions nommées, les degrés et les doigtés.
-topicsIntro: Huit petites étapes. Touchez-en une pour y aller :
+topicsIntro: Neuf courtes étapes. Touchez-en une pour y aller :
 railComping: Comping
 railSetlists: Sets
+railShare: Partage
 railLearn: Apprendre
 railMixer: Mix
 railInspiration: Jouer avec
@@ -170,8 +172,19 @@ Le bouton `fa-youtube` sous **Écouter** ouvre à la suite tous les morceaux de 
 ## exports: Utiliser une setlist ailleurs
 Une setlist personnelle peut être exportée avec le bouton `fa-file-arrow-down` en fichier **.txt** et réimportée sur un autre appareil. C'est la version setlist des exports Print, MP3 et iReal Pro que vous avez vus pour un seul morceau.
 
-## sync: Vos setlists sur tous vos appareils
-Une setlist n'existe que dans ce navigateur. **Connecter des appareils** crée un code qui relie votre téléphone, votre tablette et votre ordinateur : les setlists et formes de morceaux modifiées sur l'un apparaissent sur les autres, chiffrées de bout en bout, de sorte que le serveur ne détient que des données brouillées. C'est désactivé tant que vous ne l'activez pas, et l'export `.txt` reste votre sauvegarde.
+# share: Partage
+## devices: Vos setlists sur tous vos appareils
+Une setlist n'existe que dans ce navigateur. **Connecter des appareils** relie votre téléphone, votre tablette et votre ordinateur : les setlists et formes de morceaux modifiées sur l'un apparaissent sur les autres. C'est désactivé tant que vous ne l'activez pas, et l'export `.txt` reste votre sauvegarde.
+
+## code: Un code les relie
+**Connecter cet appareil** crée un code (et un QR code à scanner). Scannez-le ou saisissez-le sur votre autre appareil sous **ou saisissez un code**. Tout est chiffré avant de quitter l'appareil, le serveur ne détient donc que des données brouillées.
+
+## shared: Partager avec le groupe
+L'onglet **Partagé** est pour vos partenaires du groupe. Choisissez **Créer un espace partagé**, puis envoyez-leur son lien par WhatsApp, e-mail ou sous forme de code. Chacun choisit un nom, et vous pouvez être dans plusieurs espaces à la fois, un onglet chacun.
+> Vos propres appareils et les espaces du groupe sont séparés : rien n'est partagé tant que vous n'avez pas créé d'espace.
+
+## shelf: Des setlists que tous peuvent modifier
+Chaque espace partagé a sa propre étagère dans l'onglet **Setlists**, qui se termine par son propre bouton **Nouvelle setlist**. Une setlist créée là appartient à l'espace : tous peuvent y ajouter des morceaux, les réordonner et les supprimer. Dans le menu **Forme du morceau** d'un morceau, vous trouvez aussi les versions partagées par vos partenaires, et pouvez en copier une dans la vôtre.
 
 # learn: Apprendre un morceau
 

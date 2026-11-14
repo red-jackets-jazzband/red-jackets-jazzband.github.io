@@ -8,7 +8,10 @@ import {
   updateDividerLabelInPersonalSetlist, updateSongNoteInPersonalSetlist,
   getPersonalSetlist, setPersonalSetlistOrder,
 } from "../../lib/setlists/setlists-store.js";
+import { bandSetlistStorage, listSharedSetlists } from "../../lib/sync/band-vault.js";
 import { createSetlistView } from "./view.js";
+
+const SONG_ROW = ".setlist-song-row";
 
 const DRAG_HANDLE_SELECTOR = ".setlist-song-row .setlist-drag-handle";
 const REMOVE_SELECTOR = ".setlist-song-remove";
@@ -568,7 +571,7 @@ test("openPersonal still renders the setlist when the song index fails to load",
   const view = createSetlistView(ctx);
   try {
     view.openPersonal(entry.id);
-    assert.equal(document.querySelectorAll(".setlist-song-row").length, 1);
+    assert.equal(document.querySelectorAll(SONG_ROW).length, 1);
   } finally {
     page.cleanup();
   }
@@ -592,7 +595,7 @@ test("openBand: a slower earlier pick doesn't open over the band setlist picked 
     loads["second.txt"]({ name: "Second", songs: [{ file: "b.abc", key: "" }], desc: "" });
     loads["first.txt"]({ name: "First", songs: [{ file: "a.abc", key: "" }, { file: "c.abc", key: "" }], desc: "" });
     assert.equal(ctx.state.currentOpenSetlistName, "Second");
-    assert.equal(document.querySelectorAll(".setlist-song-row").length, 1);
+    assert.equal(document.querySelectorAll(SONG_ROW).length, 1);
   } finally {
     page.cleanup();
   }
@@ -632,8 +635,8 @@ test("committing a note (Ctrl+Enter) refocuses the row so Alt+Up/Down reorder st
     // Committing re-renders the row from scratch; without an explicit
     // refocus, focus falls through to <body> and the very next Alt+Down
     // silently does nothing, since moveRowByKeyboard's row lookup
-    // (e.target.closest(".setlist-song-row")) finds nothing to act on.
-    assert.ok(document.activeElement.closest(".setlist-song-row"), "focus stayed inside a row after commit");
+    // (e.target.closest(SONG_ROW)) finds nothing to act on.
+    assert.ok(document.activeElement.closest(SONG_ROW), "focus stayed inside a row after commit");
 
     document.activeElement.dispatchEvent(
       new window.KeyboardEvent("keydown", { key: "ArrowDown", altKey: true, bubbles: true }),
@@ -659,7 +662,7 @@ test("committing a note by clicking another row's drag handle relocates focus th
     // equivalent (song c's drag handle), not get pulled back onto row 0
     // just because that's the row whose note was being edited.
     assert.equal(
-      document.activeElement.closest(".setlist-song-row").dataset.songFile,
+      document.activeElement.closest(SONG_ROW).dataset.songFile,
       "c.abc",
     );
   } finally {
@@ -1128,5 +1131,36 @@ test("naming set 1 (inserting a leading heading) keeps the open song's pointer",
     assert.equal(currentRowFile(), "c.abc");
   } finally {
     cleanup();
+  }
+});
+
+test("openShared renders a space's setlist and edits it in that space, not in the personal list", () => {
+  const page = mountPage();
+  const storage = memoryStorage();
+  const shared = bandSetlistStorage(storage, "b1");
+  const entry = createPersonalSetlist(shared, "Gig");
+  addSongToPersonalSetlist(shared, entry.id, { file: "a.abc", key: "" });
+  addSongToPersonalSetlist(shared, entry.id, { file: "b.abc", key: "" });
+  const ctx = makeCtx({
+    storage: () => storage,
+    songName: (f) => f.replace(".abc", ""),
+    state: { currentPersonalId: null, allSongs: [], allSongsLoaded: true },
+    setlistData: { loadBand: () => {}, ensureSongsLoaded: (cb) => cb() },
+    setlistHome: { show: () => {}, render: () => {} },
+    setlistModal: { init: () => {} },
+    setlistPrint: { buildBooklet: () => {}, print: () => {} },
+    sheet: { render: () => {}, renderFromFile: () => {} },
+  });
+  const view = createSetlistView(ctx);
+  try {
+    view.openShared("b1", entry.id);
+    assert.equal(ctx.state.currentBandId, "b1");
+    assert.equal(ctx.state.currentPersonalId, entry.id);
+    assert.equal(document.querySelectorAll(SONG_ROW).length, 2);
+    document.querySelector(".setlist-song-remove").dispatchEvent(new window.Event("click"));
+    assert.deepEqual(listSharedSetlists(storage, "b1")[0].songs.map((r) => r.file), ["b.abc"]);
+    assert.equal(document.querySelectorAll(SONG_ROW).length, 1);
+  } finally {
+    page.cleanup();
   }
 });

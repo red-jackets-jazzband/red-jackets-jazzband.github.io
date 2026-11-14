@@ -24,6 +24,7 @@ import { createSetlistPrint } from "../setlists/print.js";
 import { createSetlistView } from "../setlists/view.js";
 import { createTour } from "../tour/tour.js";
 import { createSync } from "../sync/sync.js";
+import { createBand } from "../sync/band.js";
 import { createOffline } from "../offline/offline.js";
 import { createLayersPanel } from "../layers/panel.js";
 import { initSkipLinks } from "./skip-links.js";
@@ -130,6 +131,7 @@ export const FEATURES = [
   { name: "setlistView", create: createSetlistView },
   { name: "sidebar", init: initSidebar },
   { name: "sync", create: createSync, init: (ctx) => ctx.sync.init() },
+  { name: "band", create: createBand, init: (ctx) => ctx.band.init() },
   { name: "offline", create: createOffline, init: (ctx) => ctx.offline.init() },
   // Act on the URL the page was loaded with (captured by createNavigation,
   // before settling the default tab rewrote the hash) — once the sheet's text

@@ -69,4 +69,7 @@ test("syncCodeFromHash reads a pairing code and hashWithoutSync removes it", asy
   assert.equal(syncCodeFromHash("#s=basin_street"), null);
   assert.equal(hashWithoutSync("#s=basin_street&sync=ABCD&i=1"), "s=basin_street&i=1");
   assert.equal(hashWithoutSync("#sync=ABCD"), "");
+  assert.equal(syncCodeFromHash("#band=WXYZ", "band"), "WXYZ");
+  assert.equal(syncCodeFromHash("#band=WXYZ"), null);
+  assert.equal(hashWithoutSync("#band=WXYZ&s=a", "band"), "s=a");
 });

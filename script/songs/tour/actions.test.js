@@ -139,6 +139,27 @@ test("isShown is false for [hidden] and for anything under a hidden ancestor", (
   }
 });
 
+test("openSync / openSyncShared open the Connect devices dialog on their tab, and a step that doesn't ask hides it", async () => {
+  const { actions, ctx, cleanup } = setup();
+  try {
+    const overlay = document.getElementById("syncModal");
+    const clicks = [];
+    ["syncTabDevices", "syncTabBand"].forEach((id) => {
+      document.getElementById(id).addEventListener("click", () => clicks.push(id));
+    });
+    ctx.sync = { open: () => { overlay.hidden = false; } };
+    await actions.apply(["openSyncShared"]);
+    assert.equal(overlay.hidden, false);
+    assert.deepEqual(clicks, ["syncTabBand"]);
+    await actions.apply(["openSync"]);
+    assert.deepEqual(clicks, ["syncTabBand", "syncTabDevices"]);
+    await actions.apply([]);
+    assert.equal(overlay.hidden, true);
+  } finally {
+    cleanup();
+  }
+});
+
 test("apply() shuts every panel the step doesn't ask for, and keeps the ones it does", async () => {
   const { actions, calls, ctx, cleanup } = setup({ state: { advancedOpen: true } });
   try {

@@ -4,9 +4,10 @@
    code sits after the `#`, so it never reaches a server.
 */
 
-// The page's own address with `#sync=<code>` as its whole hash.
-export function pairingUrl(pageUrl, code) {
-  return `${String(pageUrl).split("#")[0]}#sync=${encodeURIComponent(code)}`;
+// The page's own address with `#<key>=<code>` as its whole hash (`sync` for
+// the personal vault, `band` for the band space).
+export function pairingUrl(pageUrl, code, key = "sync") {
+  return `${String(pageUrl).split("#")[0]}#${key}=${encodeURIComponent(code)}`;
 }
 
 /*

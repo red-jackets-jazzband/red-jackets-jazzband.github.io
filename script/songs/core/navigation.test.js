@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountPage } from "../../../../tests/helpers/dom.js";
 import { makeCtx, memoryStorage } from "../../../../tests/helpers/ctx.js";
+import { bandSetlistStorage } from "../../lib/sync/band-vault.js";
 import { createPersonalSetlist } from "../../lib/setlists/setlists-store.js";
 import { createNavigation } from "./navigation.js";
 
@@ -28,6 +29,10 @@ function setup({ url, state = {}, storage = memoryStorage() } = {}) {
     },
     openPersonal: (id, then) => {
       calls.push(`openPersonal:${id}`);
+      if (then) then();
+    },
+    openShared: (band, id, then) => {
+      calls.push(`openShared:${band}:${id}`);
       if (then) then();
     },
     openSongInOpenSetlist: (slug) => calls.push(`openSong:${slug}`),
@@ -152,6 +157,34 @@ test("a deep link to a personal setlist opens it straight away", () => {
   try {
     ctx.nav.start();
     assert.ok(calls.includes(`openPersonal:${entry.id}`));
+  } finally {
+    cleanup();
+  }
+});
+
+test("a deep link to a shared setlist opens it in its space", () => {
+  const storage = memoryStorage();
+  storage.setItem("rj.band.list", JSON.stringify([{ id: "b1", label: "My Band" }]));
+  storage.setItem("rj.band.b1.code", "code");
+  const entry = createPersonalSetlist(bandSetlistStorage(storage, "b1"), "Gig");
+  const { ctx, calls, cleanup } = setup({ url: `https://example.test/songs/#sl=${entry.id}`, storage });
+  try {
+    ctx.nav.start();
+    assert.ok(calls.includes(`openShared:b1:${entry.id}`));
+    assert.ok(!calls.some((c) => c.startsWith("openPersonal:")));
+  } finally {
+    cleanup();
+  }
+});
+
+test("entering and leaving a shared setlist sets and clears its space", () => {
+  const { ctx, cleanup } = setup();
+  try {
+    ctx.nav.enterSetlist({ id: "s1", personalId: "s1", bandId: "b1" });
+    assert.equal(ctx.state.currentBandId, "b1");
+    ctx.nav.leaveSetlist();
+    assert.equal(ctx.state.currentBandId, null);
+    assert.equal(ctx.state.currentPersonalId, null);
   } finally {
     cleanup();
   }

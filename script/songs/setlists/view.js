@@ -16,6 +16,8 @@ import {
   exportPersonalSetlistText,
 } from "../../lib/setlists/setlists-store.js";
 import { isBackgroundWrite, isRenderWrite } from "../core/state.js";
+import { bandSetlistStorage } from "../../lib/sync/band-vault.js";
+import { setlistStorage } from "./scope.js";
 import { createSetlistKeys } from "./keys.js";
 import {
   createRowDrag, draggableRows, currentOrder, renumberOpen,
@@ -222,13 +224,15 @@ export function createSetlistView(ctx) {
     });
   }
 
-  function openPersonal(id, afterRender) {
-    const entry = getPersonalSetlist(ctx.storage(), id);
+  // An editable setlist: a personal one (`bandId` null) or one shared in a
+  // band space — both are edited the same way, in whichever storage holds them.
+  function openEditable(bandId, id, afterRender) {
+    const entry = getPersonalSetlist(bandId ? bandSetlistStorage(ctx.storage(), bandId) : ctx.storage(), id);
     if (!entry) return;
     dropBookletCache();
     setlistOpenSeq += 1;
     const seq = setlistOpenSeq;
-    ctx.nav.enterSetlist({ id, personalId: id });
+    ctx.nav.enterSetlist({ id, personalId: id, bandId });
     const open = () => {
       if (seq !== setlistOpenSeq) return;
       renderOpen(entry.name, entry.songs, entry, entry.desc);
@@ -242,9 +246,12 @@ export function createSetlistView(ctx) {
     });
   }
 
+  const openPersonal = (id, afterRender) => { openEditable(null, id, afterRender); };
+  const openShared = (bandId, id, afterRender) => { openEditable(bandId, id, afterRender); };
+
   function refreshOpenPersonal() {
     if (!ctx.state.currentPersonalId) return;
-    const entry = getPersonalSetlist(ctx.storage(), ctx.state.currentPersonalId);
+    const entry = getPersonalSetlist(setlistStorage(ctx), ctx.state.currentPersonalId);
     if (!entry) {
       ctx.setlistHome.show();
       return;
@@ -303,7 +310,7 @@ export function createSetlistView(ctx) {
           change: (e) => {
             const value = e.target.value.trim();
             if (value && value !== setLabel(1)) {
-              insertItemInPersonalSetlist(ctx.storage(), personalId, 0, { divider: value });
+              insertItemInPersonalSetlist(setlistStorage(ctx), personalId, 0, { divider: value });
               shiftOpenIndex(0, 1);
             }
             tray.clearTarget();
@@ -329,10 +336,10 @@ export function createSetlistView(ctx) {
         change: (e) => {
           const value = e.target.value.trim();
           if (setNumber === 1 && !value) {
-            removeSongFromPersonalSetlist(ctx.storage(), personalEntry.id, index);
+            removeSongFromPersonalSetlist(setlistStorage(ctx), personalEntry.id, index);
             shiftOpenIndex(index, -1);
           } else {
-            updateDividerLabelInPersonalSetlist(ctx.storage(), personalEntry.id, index, value);
+            updateDividerLabelInPersonalSetlist(setlistStorage(ctx), personalEntry.id, index, value);
           }
           refreshOpenPersonal();
         },
@@ -365,7 +372,7 @@ export function createSetlistView(ctx) {
       on: {
         click: () => {
           tray.clearTarget();
-          insertItemInPersonalSetlist(ctx.storage(), personalEntry.id, index, { divider: "" });
+          insertItemInPersonalSetlist(setlistStorage(ctx), personalEntry.id, index, { divider: "" });
           shiftOpenIndex(index, 1);
           refreshOpenPersonal();
         },
@@ -460,7 +467,7 @@ export function createSetlistView(ctx) {
         leaveEdit(relatedTarget);
         return;
       }
-      updateSongNoteInPersonalSetlist(ctx.storage(), personalEntry.id, index, value);
+      updateSongNoteInPersonalSetlist(setlistStorage(ctx), personalEntry.id, index, value);
       // The row gets fully rebuilt by this re-render, so the local textEl
       // above won't exist afterward. A keyboard commit / nowhere-else blur
       // hands off to the same post-render refocus mechanism removeRow/
@@ -632,7 +639,7 @@ export function createSetlistView(ctx) {
       const moved = orderIndices.indexOf(open);
       if (moved !== -1) ctx.nav.selectSetlistSong(ctx.state.currentSongFile, moved);
     }
-    setPersonalSetlistOrder(ctx.storage(), personalId, orderIndices);
+    setPersonalSetlistOrder(setlistStorage(ctx), personalId, orderIndices);
     refreshOpenPersonal();
   }
 
@@ -644,7 +651,7 @@ export function createSetlistView(ctx) {
     const pos = rows.indexOf(row);
     tray.clearTarget();
     const removedIndex = Number(row.dataset.setlistIndex);
-    removeSongFromPersonalSetlist(ctx.storage(), personalId, removedIndex);
+    removeSongFromPersonalSetlist(setlistStorage(ctx), personalId, removedIndex);
     shiftOpenIndex(removedIndex, -1);
     if (pos !== -1) {
       if (rows.length > 1) {
@@ -793,7 +800,7 @@ export function createSetlistView(ctx) {
     const commit = () => {
       if (!ctx.state.currentPersonalId) return;
       renamePersonalSetlist(
-        ctx.storage(), ctx.state.currentPersonalId, nameInput.value.trim() || tl("setlist_untitled", "Untitled setlist"),
+        setlistStorage(ctx), ctx.state.currentPersonalId, nameInput.value.trim() || tl("setlist_untitled", "Untitled setlist"),
       );
       refreshOpenPersonal();
     };
@@ -875,7 +882,7 @@ export function createSetlistView(ctx) {
       const n = settings.transpose;
       const stored = Number.isFinite(n) && n !== 0 ? String(n) : "";
       if (stored === String(song.key == null ? "" : song.key)) return;
-      updateSongKeyInPersonalSetlist(ctx.storage(), currentPersonalId, currentSetlistSongIndex, stored);
+      updateSongKeyInPersonalSetlist(setlistStorage(ctx), currentPersonalId, currentSetlistSongIndex, stored);
       afterSheet(isBackgroundWrite(meta), "list", refreshOpenPersonal);
     });
   }
@@ -908,8 +915,8 @@ export function createSetlistView(ctx) {
   function initExport() {
     on("setlistExportBtn", "click", () => {
       if (!ctx.state.currentPersonalId) return;
-      const entry = getPersonalSetlist(ctx.storage(), ctx.state.currentPersonalId);
-      const text = exportPersonalSetlistText(ctx.storage(), ctx.state.currentPersonalId, ctx.songName);
+      const entry = getPersonalSetlist(setlistStorage(ctx), ctx.state.currentPersonalId);
+      const text = exportPersonalSetlistText(setlistStorage(ctx), ctx.state.currentPersonalId, ctx.songName);
       if (!text) return;
       const filename = `${(entry.name || "setlist").toLowerCase().replace(/[^a-z0-9]+/g, "_")}.txt`;
       downloadText(filename, text);
@@ -978,7 +985,7 @@ export function createSetlistView(ctx) {
   }
 
   return {
-    openBand, openPersonal, refreshOpenPersonal, renderOpen,
+    openBand, openPersonal, openShared, refreshOpenPersonal, renderOpen,
     highlightCurrent, stepSong, canStep, openSongInOpenSetlist, openSongAtIndex, initControls,
     addSongByFile: (file) => tray.addSongByFile(file),
   };

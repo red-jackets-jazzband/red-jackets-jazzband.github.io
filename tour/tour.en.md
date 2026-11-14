@@ -16,12 +16,14 @@ topicAdjust: Change the key and tempo, loop a passage, export an MP3.
 topicInspiration: Listen to recordings alongside the sheet and loop a phrase.
 topicMixer: Set the level of bass, chords and each part.
 topicSetlists: Build, order and print setlists for a gig.
+topicShare: Link your devices, and share setlists and song forms with the band.
 topicLearn: Practise runs and rhythms over a tune's chords, to learn it from the inside.
 topicComping: Add a written-out accompaniment staff.
 topicLayers: Show extra help on the sheet, like named progressions, scale degrees and fingerings.
-topicsIntro: Eight short stops. Tap one to jump there:
+topicsIntro: Nine short stops. Tap one to jump there:
 railComping: Comp
 railSetlists: Sets
+railShare: Share
 railLearn: Learn
 railMixer: Mix
 railInspiration: Play along
@@ -269,9 +271,26 @@ setup: createDemoSetlist, addDemoSong1, addDemoSong2
 target: #setlistExportBtn
 A personal setlist can be exported with the `fa-file-arrow-down` button as a **.txt** file and imported again on another device. It's the setlist version of the Print, MP3 and iReal Pro exports you've seen for a single song.
 
-## sync: Keep your setlists on every device
+# share: Sharing
+## devices: Keep your setlists on every device
 target: #syncBtn
-A setlist lives in this browser only. **Connect devices** makes a code that links your phone, tablet and laptop: setlists and song forms you change on one show up on the others, end to end encrypted, so the server only ever holds scrambled data. It's off until you turn it on, and the `.txt` export stays as your backup.
+A setlist lives in this browser only. **Connect devices** links your phone, tablet and laptop, so setlists and song forms you change on one show up on the others. It's off until you turn it on, and the `.txt` export stays as your backup.
+
+## code: One code links them
+setup: openSync
+target: #syncSetup, #syncCodeBox
+**Connect this device** makes a code (and a QR code to scan). On your other device, scan it or type it under **or enter a code**. Everything is encrypted before it leaves the device, so the server only ever holds scrambled data.
+
+## shared: Share with the band
+setup: openSyncShared
+target: #syncPanelBand
+The **Shared** tab is for your bandmates. Press **Start a shared space**, then send them its link by WhatsApp, email or as a code. Everyone picks a name, and you can be in several spaces at once, one chip each.
+> Your own devices and the band's spaces are separate: nothing is shared until you start a space.
+
+## shelf: Setlists everyone can edit
+setup: showSetlists
+target: #songList
+Each shared space gets a shelf of its own on the **Setlists** tab, ending in its own **New setlist** button. A setlist made there belongs to the space: everyone in it can add songs, reorder and delete. In a song's **Song form** menu you also find the versions your bandmates shared, and can copy one to your own.
 
 # learn: Learning a tune
 setup: openDemoSong

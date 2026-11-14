@@ -2,6 +2,29 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://www.redjackets.nl/privacy/</loc>
+    <lastmod>2026-11-13T12:00:00+01:00</lastmod>
+    <xhtml:link
+                rel="alternate"
+                hreflang="en-US"
+                href="https://www.redjackets.nl/privacy/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="nl-NL"
+                href="https://www.redjackets.nl/nl/privacy/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="de-DE"
+                href="https://www.redjackets.nl/de/privacy/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="fr-FR"
+                href="https://www.redjackets.nl/fr/privacy/"
+                />
+  </url><url>
     <loc>https://www.redjackets.nl/songs/</loc>
     <lastmod>2019-03-16T16:26:50+01:00</lastmod>
     <xhtml:link

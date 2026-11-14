@@ -7,6 +7,7 @@ import { pairingUrl, qrPath } from "./qr.js";
 test("pairingUrl replaces any hash with the sync code", () => {
   assert.equal(pairingUrl("https://x.test/songs/#s=a", "RJ7K-Q2MD"), "https://x.test/songs/#sync=RJ7K-Q2MD");
   assert.equal(pairingUrl("https://x.test/nl/songs/", "AB CD"), "https://x.test/nl/songs/#sync=AB%20CD");
+  assert.equal(pairingUrl("https://x.test/songs/", "AB", "band"), "https://x.test/songs/#band=AB");
 });
 
 test("qrPath draws each dark module inside a quiet zone", () => {

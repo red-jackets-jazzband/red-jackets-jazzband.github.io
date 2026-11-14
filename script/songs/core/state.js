@@ -46,10 +46,13 @@ export const NAV_SLICE = {
     // listed under several names), and that row's name.
     currentLibraryIndex: null,
     currentLibrarySongName: undefined,
-    // The open setlist: its `sl=` hash id, its personal-setlist id (null for
+    // The open setlist: its `sl=` hash id, its editable-setlist id (null for
     // a band setlist), its contents, and the open song's position in it.
     currentSetlistId: null,
     currentPersonalId: null,
+    // The band space a shared setlist (also a currentPersonalId: editable)
+    // belongs to; null for a personal one.
+    currentBandId: null,
     currentOpenSongs: null,
     currentOpenSetlistName: "",
     currentOpenSetlistDesc: "",

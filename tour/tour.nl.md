@@ -16,12 +16,14 @@ topicAdjust: Verander toonsoort en tempo, herhaal een passage, exporteer een MP3
 topicInspiration: Luister naar opnames naast het leadsheet en herhaal een frase.
 topicMixer: Stel het volume van bas, akkoorden en elke partij in.
 topicSetlists: Maak, orden en print setlists voor een optreden.
+topicShare: Koppel je apparaten en deel setlists en songvormen met de band.
 topicLearn: Oefen loopjes en ritmes over de akkoorden van een song, om hem van binnenuit te leren.
 topicComping: Voeg een uitgeschreven begeleidingsbalk toe.
 topicLayers: Toon extra hulp op het leadsheet, zoals benoemde akkoordenreeksen, trappen en vingerzettingen.
-topicsIntro: Acht korte stops. Tik er een aan om erheen te gaan:
+topicsIntro: Negen korte stops. Tik er een aan om erheen te gaan:
 railComping: Comping
 railSetlists: Sets
+railShare: Delen
 railLearn: Leren
 railMixer: Mixen
 railInspiration: Meespelen
@@ -170,8 +172,19 @@ De `fa-youtube`-knop onder **Luisteren** opent alle songs van de setlist met een
 ## exports: Neem een setlist ergens anders mee naartoe
 Een eigen setlist kun je met de `fa-file-arrow-down`-knop als **.txt**-bestand exporteren en op een ander apparaat weer importeren. Het is de setlistversie van de Print-, mp3- en iReal Pro-exports die je al kent van een losse song.
 
-## sync: Houd je setlists op elk apparaat bij
-Een setlist staat alleen in deze browser. **Apparaten koppelen** maakt een code die je telefoon, tablet en laptop met elkaar verbindt: setlists en songvormen die je op de een wijzigt, verschijnen op de andere, end-to-end versleuteld, zodat de server alleen versleutelde gegevens bewaart. Het staat uit tot je het aanzet, en de `.txt`-export blijft je back-up.
+# share: Delen
+## devices: Houd je setlists op elk apparaat bij
+Een setlist staat alleen in deze browser. **Apparaten koppelen** verbindt je telefoon, tablet en laptop, zodat setlists en songvormen die je op de een wijzigt op de andere verschijnen. Het staat uit tot je het aanzet, en de `.txt`-export blijft je back-up.
+
+## code: Eén code koppelt ze
+**Dit apparaat koppelen** maakt een code (en een QR-code om te scannen). Scan of typ hem op je andere apparaat onder **of voer een code in**. Alles wordt versleuteld voordat het het apparaat verlaat, dus de server bewaart alleen versleutelde gegevens.
+
+## shared: Deel met de band
+Het tabblad **Gedeeld** is voor je bandgenoten. Kies **Een gedeelde ruimte starten** en stuur ze de link via WhatsApp, e-mail of als code. Iedereen kiest een naam, en je kunt in meerdere ruimtes tegelijk zitten, elk met een eigen knopje.
+> Je eigen apparaten en de ruimtes van de band staan los van elkaar: er wordt niets gedeeld tot je een ruimte start.
+
+## shelf: Setlists die iedereen kan bewerken
+Elke gedeelde ruimte krijgt een eigen plank op het tabblad **Setlists**, die eindigt met een eigen knop **Nieuwe setlist**. Een setlist die je daar maakt hoort bij de ruimte: iedereen erin kan songs toevoegen, verplaatsen en verwijderen. In het menu **Songvorm** van een song vind je ook de versies die je bandgenoten deelden, en kun je er een naar je eigen versie kopiëren.
 
 # learn: Een song leren
 

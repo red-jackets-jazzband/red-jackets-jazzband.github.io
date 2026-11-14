@@ -26,7 +26,7 @@ function firstWins(stampA, deviceA, stampB, deviceB) {
   return stampA !== stampB ? stampA > stampB : deviceA >= deviceB;
 }
 
-function maxTomb(a, b) {
+export function maxTomb(a, b) {
   const out = { ...a };
   Object.keys(b).forEach((key) => {
     out[key] = Math.max(out[key] === undefined ? -Infinity : out[key], b[key]);
@@ -108,7 +108,8 @@ function mergeSetlist(a, b, ctx) {
   return merged;
 }
 
-function mergeSetlists(a, b, ctx) {
+// `ctx` is { tomb, devA, devB }; the band space merges its setlists with this too.
+export function mergeSetlists(a, b, ctx) {
   const mapA = byId(a.setlists, "id");
   const mapB = byId(b.setlists, "id");
   const ids = Object.keys({ ...mapA, ...mapB });

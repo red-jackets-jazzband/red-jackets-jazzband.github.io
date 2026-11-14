@@ -82,6 +82,8 @@ export const TOUR_ACTION_NAMES = [
   "unsplitDemoSetlist",
   "splitDemoSetlist",
   "revealDemoSplit",
+  "openSync",
+  "openSyncShared",
 ];
 
 // The exercise the "Learning a tune" chapter switches on when none is set:
@@ -183,6 +185,12 @@ async function revealDemoSplit() {
   const list = byId("songList");
   const btn = list && list.querySelector(".setlist-split-btn"); // NOSONAR: see revealDemoNote
   if (btn) btn.classList.add(TOUR_REVEAL_SPLIT_CLASS);
+}
+
+// Hides the Connect devices dialog the way its own close button does.
+function closeSync() {
+  const overlay = byId("syncModal");
+  if (overlay) overlay.hidden = true;
 }
 
 export function createTourActions(ctx) {
@@ -341,6 +349,19 @@ export function createTourActions(ctx) {
     ctx.layers.setOpen(true);
   }
 
+  // The Connect devices dialog, on the tab a step is about. Opening it is the
+  // button's own call and the tab a real click; closing just hides it, as its
+  // own close button does. The dialog sits under the tour's overlay (z-index).
+  async function openSyncTab(tabId) {
+    if (!ctx.sync) return;
+    ctx.sync.open();
+    const tab = byId(tabId);
+    if (tab) tab.click();
+  }
+
+  const openSync = async () => openSyncTab("syncTabDevices");
+  const openSyncShared = async () => openSyncTab("syncTabBand");
+
   // Switch one layer on so its marks show on the demo song; the visitor's
   // own layer choices are restored when the tour ends.
   function layerOn(id) {
@@ -417,12 +438,15 @@ export function createTourActions(ctx) {
     unsplitDemoSetlist,
     splitDemoSetlist,
     revealDemoSplit,
+    openSync,
+    openSyncShared,
   };
 
   // Panels are only ever open because the current step asked for them, so the
   // ones a step doesn't name are shut first — stepping Back out of a mixer
   // step, or jumping chapters, leaves nothing dangling over the next spotlight.
   function closeUnrequested(names) {
+    if (!names.some((name) => name === "openSync" || name === "openSyncShared")) closeSync();
     if (!names.includes("openMixer")) ctx.mixer.setOpen(false);
     if (!names.includes("openInspiration")) ctx.inspiration.setOpen(false);
     if (!names.includes("openLayers")) ctx.layers.setOpen(false);
@@ -555,6 +579,7 @@ export function createTourActions(ctx) {
     ctx.mixer.setOpen(false);
     ctx.inspiration.setOpen(false);
     ctx.layers.setOpen(false);
+    closeSync();
     closePractice();
     ctx.store.set("layers", { activeLayers: snap.activeLayers });
     setSettings(snap.settings);

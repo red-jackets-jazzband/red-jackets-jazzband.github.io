@@ -67,14 +67,18 @@ function readStorage(storage) {
   return parsed;
 }
 
+// Whether the list was saved (a full or unavailable storage returns false).
 function writeStorage(storage, list, silent) {
-  if (!storage) return;
+  if (!storage) return false;
+  let saved = true;
   try {
     storage.setItem(STORAGE_KEY, JSON.stringify(list));
   } catch (_e) {
     // storage unavailable/full — the change just won't persist.
+    saved = false;
   }
   if (!silent) notifyLocalChange();
+  return saved;
 }
 
 function generateId() {
@@ -107,7 +111,7 @@ function stampRow(row, at) {
   return { ...row, id: generateId(), updatedAt: at };
 }
 
-function createEntry(storage, data) {
+function createEntryChecked(storage, data) {
   const list = readStorage(storage);
   const at = nextStamp(storage);
   const entry = {
@@ -120,8 +124,11 @@ function createEntry(storage, data) {
     updatedAt: at,
   };
   list.push(entry);
-  writeStorage(storage, list);
-  return entry;
+  return { entry, saved: writeStorage(storage, list) };
+}
+
+function createEntry(storage, data) {
+  return createEntryChecked(storage, data).entry;
 }
 
 export function createPersonalSetlist(storage, name) {
@@ -265,6 +272,16 @@ export function setPersonalSetlistOrder(storage, id, order) {
 // Clones a band setlist's songs into a new, independent personal entry —
 // editing the copy never touches the original band .txt file (which is
 // static and read-only anyway).
+// Like copyBandSetlistToPersonal, but null when the copy couldn't be saved.
+export function tryCopyBandSetlistToPersonal(storage, bandSetlist) {
+  const { entry, saved } = createEntryChecked(storage, {
+    name: bandSetlist.name,
+    desc: bandSetlist.desc || "",
+    songs: bandSetlist.songs,
+  });
+  return saved ? entry : null;
+}
+
 export function copyBandSetlistToPersonal(storage, bandSetlist) {
   return createEntry(storage, {
     name: bandSetlist.name,
