@@ -34,7 +34,7 @@ import {
 //   once published. Bump only when caching *those* changes —
 //   it deletes the soundfonts visitors downloaded with "Download for
 //   offline", so their offline playback is gone until they download again.
-const SHELL_VERSION = "v13";
+const SHELL_VERSION = "v14";
 const ASSET_VERSION = "v1";
 // Every cache this worker owns is named under this prefix, and activate()'s
 // cleanup only ever deletes caches under it — CacheStorage is shared across
