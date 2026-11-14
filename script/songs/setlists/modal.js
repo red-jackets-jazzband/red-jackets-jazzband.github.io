@@ -3,7 +3,7 @@ import { parseSetlistFile } from "../../lib/setlists/setlist-format.js";
 import {
   listPersonalSetlists, getPersonalSetlist, copyBandSetlistToPersonal,
 } from "../../lib/setlists/setlists-store.js";
-import { bandSetlistStorage, connectedBands, listSharedSetlists } from "../../lib/sync/band-vault.js";
+import { bandSetlistStorage, connectedBands, listSharedSetlists } from "../../lib/sync/band-store.js";
 import { tl } from "../../lib/core/i18n.js";
 
 /*

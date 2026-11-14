@@ -2,7 +2,8 @@ import { byId, el, qsa } from "../../lib/core/dom.js";
 import { readPref, removePref, safeStorage, songFormPrefKey, writePref } from "../../lib/core/preferences.js";
 import { addTombstone, nextStamp, setFormStamp } from "../../lib/sync/clock.js";
 import { notifyLocalChange } from "../../lib/sync/changes.js";
-import { connectedBands, isShared, setShared, unshareEverywhere, versionsOf } from "../../lib/sync/band-vault.js";
+import { connectedBands, isShared, setShared, unshareEverywhere } from "../../lib/sync/band-store.js";
+import { versionsOf } from "../../lib/sync/band-vault.js";
 import { tl } from "../../lib/core/i18n.js";
 import {
   MORE, REPEAT_CHOICES, addPart, addRound, addTypedParts, cloneRounds, deleteRound,

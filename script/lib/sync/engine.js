@@ -14,6 +14,9 @@ import { applyDoc, buildLocalDoc } from "./doc.js";
 import { mergeDocs } from "./merge.js";
 import { readMeta, writeMeta } from "./clock.js";
 import { validateDoc } from "./validate.js";
+import { canonical } from "./canonical.js";
+
+export { canonical };
 
 // What differs between vaults: where the code lives, how the document is built
 // from / applied to storage, merged and validated, and where the engine keeps
@@ -64,21 +67,8 @@ function writeCode(storage, key, code) {
   }
 }
 
-// `pending` marks a merged copy the server may not have yet (a PUT is in
-// flight or failed); a later cycle must not take "nothing changed" for "sent".
-// JSON with sorted keys, so two documents compare by content, not key order.
-export function canonical(value) {
-  if (Array.isArray(value)) return `[${value.map(canonical).join()}]`;
-  if (value && typeof value === "object") {
-    return `{${Object.keys(value).sort((a, b) => { return a.localeCompare(b); }).map((key) => {
-      return `${JSON.stringify(key)}:${canonical(value[key])}`;
-    }).join()}}`;
-  }
-  return JSON.stringify(value);
-}
-
 function contentOf(doc) {
-  return canonical({ setlists: doc.setlists, forms: doc.forms, tomb: doc.tomb });
+  return canonical({ setlists: doc.setlists, forms: doc.forms, spaces: doc.spaces || [], tomb: doc.tomb });
 }
 
 // Same setlists, forms and tombstones (the `device` that merged last is no content).

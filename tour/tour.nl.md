@@ -174,7 +174,7 @@ Een eigen setlist kun je met de `fa-file-arrow-down`-knop als **.txt**-bestand e
 
 # share: Delen
 ## devices: Houd je setlists op elk apparaat bij
-Een setlist staat alleen in deze browser. **Apparaten koppelen** verbindt je telefoon, tablet en laptop, zodat setlists en songvormen die je op de een wijzigt op de andere verschijnen. Het staat uit tot je het aanzet, en de `.txt`-export blijft je back-up.
+Een setlist staat alleen in deze browser. **Apparaten koppelen** verbindt je telefoon, tablet en laptop, zodat setlists en songvormen die je op de een wijzigt op de andere verschijnen. De gedeelde ruimtes waarin je zit gaan mee. Het staat uit tot je het aanzet, en de `.txt`-export blijft je back-up.
 
 ## code: Eén code koppelt ze
 **Dit apparaat koppelen** maakt een code (en een QR-code om te scannen). Scan of typ hem op je andere apparaat onder **of voer een code in**. Alles wordt versleuteld voordat het het apparaat verlaat, dus de server bewaart alleen versleutelde gegevens.

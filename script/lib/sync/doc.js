@@ -1,7 +1,8 @@
 /*
    Between local storage and a sync document (docs/device-sync-plan.md, WBS
-   5.1, 5.4, 4.6): `buildLocalDoc` reads setlists, own song forms and the sync
-   metadata into a document (leaving out the guided tour's demo setlist, and
+   5.1, 5.4, 4.6): `buildLocalDoc` reads setlists, own song forms, the shared
+   spaces this device is in (see band-spaces.js) and the sync metadata into a
+   document (leaving out the guided tour's demo setlist, and
    stamping what an older app copy changed without stamping, found by
    comparing with the last-synced snapshot); `applyDoc` writes a merged
    document back and saves it as the new snapshot. Both are synchronous, so
@@ -9,6 +10,8 @@
 */
 import { listPersonalSetlists, replacePersonalSetlists } from "../setlists/setlists-store.js";
 import { songFormPrefKey } from "../core/preferences.js";
+import { applyLocalSpaces, readLocalSpaces } from "./band-spaces.js";
+import { notifyLocalChange } from "./changes.js";
 import { FORMAT, hasInternalMarker } from "./validate.js";
 import { observeStamp, readMeta, rowTombstoneKey, stampAfter, writeMeta } from "./clock.js";
 
@@ -100,6 +103,34 @@ function detectForms(forms, snap, meta, now) {
   });
 }
 
+// A space is stamped where it is new (`addedAt`), or its label / shared files
+// differ from the snapshot's without a newer stamp; one gone since the
+// snapshot gets a tombstone. A space joined again after a deletion is newer.
+function detectSpaces(spaces, snap, meta, now) {
+  const bump = () => { return stampAfter(meta, now); };
+  const old = {};
+  (snap.spaces || []).forEach((space) => { old[space.code] = space; });
+  spaces.forEach((space) => {
+    const was = old[space.code];
+    if (!space.addedAt) space.addedAt = bump();
+    if (!space.labelAt || (was && was.label !== space.label && space.labelAt <= was.labelAt)) space.labelAt = bump();
+    if (!space.sharedAt || (was && !sameFiles(was.shared, space.shared) && space.sharedAt <= was.sharedAt)) space.sharedAt = bump();
+    const deletedAt = meta.tomb.spaces[space.code];
+    if (!was && deletedAt !== undefined && space.addedAt <= deletedAt) space.addedAt = bump();
+    meta.spaces[space.code] = { addedAt: space.addedAt, labelAt: space.labelAt, sharedAt: space.sharedAt };
+  });
+  (snap.spaces || []).forEach((was) => {
+    if (!spaces.some((space) => { return space.code === was.code; })) {
+      recordDeletion(meta.tomb.spaces, was.code, was.addedAt, bump);
+      delete meta.spaces[was.code];
+    }
+  });
+}
+
+function sameFiles(a, b) {
+  return Array.isArray(a) && a.length === b.length && a.every((file, i) => { return file === b[i]; });
+}
+
 function validSnapshot(snap) {
   return Boolean(snap) && Array.isArray(snap.setlists) && Array.isArray(snap.forms);
 }
@@ -113,12 +144,15 @@ export function buildLocalDoc(storage, now) {
     const raw = safe(() => { return storage.getItem(songFormPrefKey(file)); });
     return { file, raw: typeof raw === "string" ? raw : "", at: meta.forms[file] || 0 };
   }).filter((form) => { return form.raw; });
-  if (validSnapshot(meta.snapshot)) {
-    detectSetlists(setlists, meta.snapshot, meta, clock);
-    detectForms(forms, meta.snapshot, meta, clock);
+  const spaces = readLocalSpaces(storage, meta);
+  const snap = validSnapshot(meta.snapshot) ? meta.snapshot : { setlists: [], forms: [], spaces: [] };
+  if (snap === meta.snapshot) {
+    detectSetlists(setlists, snap, meta, clock);
+    detectForms(forms, snap, meta, clock);
   }
+  detectSpaces(spaces, snap, meta, clock);
   writeMeta(storage, meta);
-  return { format: FORMAT, device: meta.deviceId, setlists, forms, tomb: JSON.parse(JSON.stringify(meta.tomb)) };
+  return { format: FORMAT, device: meta.deviceId, setlists, forms, spaces, tomb: JSON.parse(JSON.stringify(meta.tomb)) };
 }
 
 function applyForms(storage, doc, meta) {
@@ -146,10 +180,17 @@ export function applyDoc(storage, doc) {
     entry.songs.forEach((row) => { observeStamp(meta, row.updatedAt); });
   });
   applyForms(storage, doc, meta);
+  // Spaces last: leaving one copies its setlists into the personal ones just written.
+  const copied = applyLocalSpaces(storage, doc.spaces || [], meta);
   meta.tomb = doc.tomb;
   Object.keys(doc.tomb).forEach((kind) => {
     Object.keys(doc.tomb[kind]).forEach((key) => { observeStamp(meta, doc.tomb[kind][key]); });
   });
-  meta.snapshot = doc;
+  // What is here now, which can differ from the document (a space skipped
+  // because this device is already in the most it can be; one that wouldn't
+  // leave): a space missing from the snapshot is not taken for a deletion.
+  meta.snapshot = { ...doc, spaces: readLocalSpaces(storage, meta) };
   writeMeta(storage, meta);
+  // The copies made on leaving aren't in what was just sent: upload them.
+  if (copied) notifyLocalChange();
 }

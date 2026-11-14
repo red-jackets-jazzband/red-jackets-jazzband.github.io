@@ -7,6 +7,7 @@
    data), and a newer `format` is download-only.
 */
 import { readStoredForm } from "../music/song-form.js";
+import { parseCode } from "./crypto.js";
 
 export const FORMAT = 1;
 
@@ -21,6 +22,7 @@ const FORM_KEY = /^[\w.-]{1,120}$/;
 const MAX_ROWS = 500;
 export const MAX_SETLISTS = 100;
 const MAX_FORMS = 200;
+export const MAX_SPACES = 8; // must equal band-store.js MAX_BANDS (this is the lower layer; a test checks it)
 const LIMITS = { name: 200, desc: 5000, note: 2000, divider: 200, key: 20, form: 20000 };
 
 const CONTROL = /[\u0000-\u0009\u000b-\u001f]/; // eslint-disable-line no-control-regex -- detecting internal markers is the point
@@ -88,8 +90,34 @@ function cleanForm(form) {
   return { ...form, at: stamp(form.at) };
 }
 
+// A shared space a device is in, as the personal vault carries it so the
+// device's other devices join it too: { code, label, name, author, at,
+// labelAt, addedAt, shared: [song files], sharedAt }. The code is the secret
+// that opens the space; this document is encrypted under the personal code.
+const SPACE_NAME = 40;
+
+function cleanSpace(space) {
+  if (!isObject(space)) return null;
+  const code = parseCode(space.code);
+  if (code === null || !isId(space.author)) return null;
+  const label = typeof space.label === "string" ? space.label.slice(0, SPACE_NAME) : "";
+  const name = typeof space.name === "string" ? space.name.slice(0, SPACE_NAME) : "";
+  const shared = Array.isArray(space.shared) ? space.shared.filter(isSongFile).slice(0, MAX_FORMS) : [];
+  return {
+    ...space,
+    code,
+    label,
+    name,
+    shared: [...new Set(shared)].sort((a, b) => { return a.localeCompare(b); }),
+    at: stamp(space.at),
+    labelAt: stamp(space.labelAt),
+    addedAt: stamp(space.addedAt),
+    sharedAt: stamp(space.sharedAt),
+  };
+}
+
 export function cleanTombs(tomb) {
-  const out = { setlists: {}, rows: {}, forms: {} };
+  const out = { setlists: {}, rows: {}, forms: {}, spaces: {} };
   if (!isObject(tomb)) return out;
   Object.keys(out).forEach((kind) => {
     const source = isObject(tomb[kind]) ? tomb[kind] : {};
@@ -126,6 +154,7 @@ export function validateDoc(raw) {
       device: typeof raw.device === "string" ? raw.device.slice(0, 64) : "",
       setlists: uniqueBy(cleanList(raw.setlists, MAX_SETLISTS, cleanSetlist), "id"),
       forms: uniqueBy(cleanList(raw.forms, MAX_FORMS, cleanForm), "file"),
+      spaces: uniqueBy(cleanList(raw.spaces, MAX_SPACES, cleanSpace), "code"),
       tomb: cleanTombs(raw.tomb),
     },
   };

@@ -274,7 +274,7 @@ A personal setlist can be exported with the `fa-file-arrow-down` button as a **.
 # share: Sharing
 ## devices: Keep your setlists on every device
 target: #syncBtn
-A setlist lives in this browser only. **Connect devices** links your phone, tablet and laptop, so setlists and song forms you change on one show up on the others. It's off until you turn it on, and the `.txt` export stays as your backup.
+A setlist lives in this browser only. **Connect devices** links your phone, tablet and laptop, so setlists and song forms you change on one show up on the others. The shared spaces you're in come along too. It's off until you turn it on, and the `.txt` export stays as your backup.
 
 ## code: One code links them
 setup: openSync

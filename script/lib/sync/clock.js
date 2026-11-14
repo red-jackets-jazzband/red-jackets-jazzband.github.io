@@ -3,13 +3,16 @@
    WBS 4.5. Everything is plain storage access, no DOM, so the setlists store,
    the song-form editor and the merge can all share it.
 
-   Stored shape (JSON): { v, deviceId, maxStamp, forms, tomb }
+   Stored shape (JSON): { v, deviceId, maxStamp, forms, spaces, tomb }
      deviceId  random per device; breaks ties between equal stamps
      maxStamp  the highest stamp this device has made or seen
      forms     { <song file>: updatedAt } for own song forms (a form's own
                storage key stays exactly what older app copies expect)
+     spaces    { <space code>: { addedAt, labelAt, sharedAt } } stamps of the
+               shared spaces this device is in (lib/sync/band-spaces.js)
      tomb      { setlists: { id: at }, rows: { "<setlist>/<row>": at },
-                 forms: { file: at } } — deletions, pruned after 180 days
+                 forms: { file: at }, spaces: { code: at } } — deletions,
+                 pruned after 180 days
 */
 
 export const META_KEY = "rj.sync.meta";
@@ -46,10 +49,12 @@ function normalizeMeta(raw) {
     deviceId: typeof meta.deviceId === "string" && meta.deviceId ? meta.deviceId : "",
     maxStamp: Number.isFinite(meta.maxStamp) ? meta.maxStamp : 0,
     forms: objectOr(meta.forms),
+    spaces: objectOr(meta.spaces),
     tomb: {
       setlists: objectOr(tomb.setlists),
       rows: objectOr(tomb.rows),
       forms: objectOr(tomb.forms),
+      spaces: objectOr(tomb.spaces),
     },
   };
 }
@@ -106,7 +111,7 @@ export function rowTombstoneKey(setlistId, rowId) {
   return `${setlistId}/${rowId}`;
 }
 
-// kind: "setlists" | "rows" | "forms"
+// kind: "setlists" | "rows" | "forms" | "spaces"
 export function addTombstone(storage, kind, key, at) {
   const meta = readMeta(storage);
   meta.tomb[kind][key] = at;

@@ -4,7 +4,10 @@ import { mountPage } from "../../../../tests/helpers/dom.js";
 import { makeCtx, memoryStorage } from "../../../../tests/helpers/ctx.js";
 import { fakeServer } from "../../../../tests/helpers/sync-server.js";
 import { createBand } from "./band.js";
-import { bandSetlistStorage, isShared, listBands, registerBand, setShared, versionsOf } from "../../lib/sync/band-vault.js";
+import { bandSetlistStorage, isShared, listBands, registerBand, setShared } from "../../lib/sync/band-store.js";
+import { versionsOf } from "../../lib/sync/band-vault.js";
+import { applyLocalSpaces, readLocalSpaces } from "../../lib/sync/band-spaces.js";
+import { readMeta } from "../../lib/sync/clock.js";
 import { createPersonalSetlist, listPersonalSetlists } from "../../lib/setlists/setlists-store.js";
 import { songFormPrefKey } from "../../lib/core/preferences.js";
 
@@ -240,4 +243,42 @@ test("a space left listed without its code (a failed keep) is dropped again on t
   await ctx.band.init();
   assert.equal(listBands(storage).length, 0);
   assert.deepEqual(listPersonalSetlists(storage).map((e) => { return e.name; }), ["Gig"]);
+});
+
+test("refresh: a space the personal sync brought in is synced (its join) and shown; one taken away goes", async () => {
+  mountPage();
+  const server = fakeServer();
+  const realFetch = window.fetch;
+  setFetch(server.fetchFn);
+  try {
+    const phone = memoryStorage();
+    const ctxPhone = build(phone);
+    await ctxPhone.band.init();
+    document.getElementById("bandName").value = "Anna";
+    click("bandConnect");
+    await tick();
+    const entry = readLocalSpaces(phone, readMeta(phone))[0];
+
+    // What the personal sync does on the laptop when the phone's document arrives.
+    mountPage();
+    setFetch(server.fetchFn);
+    const laptop = memoryStorage();
+    const ctxLaptop = build(laptop);
+    await ctxLaptop.band.init();
+    assert.equal(ctxLaptop.band.isConnected(), false);
+    applyLocalSpaces(laptop, [entry], readMeta(laptop));
+    ctxLaptop.band.refresh();
+    await tick();
+    assert.equal(ctxLaptop.band.isConnected(), true);
+    assert.equal(document.getElementById("bandBox").hidden, false);
+    assert.equal(document.getElementById("bandName").value, "Anna");
+    assert.ok(laptop.getItem(`rj.band.${listBands(laptop)[0].id}.doc`), "its first sync ran");
+
+    applyLocalSpaces(laptop, [], readMeta(laptop));
+    ctxLaptop.band.refresh();
+    assert.equal(ctxLaptop.band.isConnected(), false);
+    assert.equal(document.getElementById("bandBox").hidden, true);
+  } finally {
+    setFetch(realFetch);
+  }
 });

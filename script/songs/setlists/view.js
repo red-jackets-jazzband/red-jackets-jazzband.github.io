@@ -16,7 +16,7 @@ import {
   exportPersonalSetlistText,
 } from "../../lib/setlists/setlists-store.js";
 import { isBackgroundWrite, isRenderWrite } from "../core/state.js";
-import { bandSetlistStorage } from "../../lib/sync/band-vault.js";
+import { bandSetlistStorage } from "../../lib/sync/band-store.js";
 import { setlistStorage } from "./scope.js";
 import { createSetlistKeys } from "./keys.js";
 import {

@@ -8,7 +8,7 @@ import {
   updateDividerLabelInPersonalSetlist, updateSongNoteInPersonalSetlist,
   getPersonalSetlist, setPersonalSetlistOrder,
 } from "../../lib/setlists/setlists-store.js";
-import { bandSetlistStorage, listSharedSetlists } from "../../lib/sync/band-vault.js";
+import { bandSetlistStorage, listSharedSetlists } from "../../lib/sync/band-store.js";
 import { createSetlistView } from "./view.js";
 
 const SONG_ROW = ".setlist-song-row";

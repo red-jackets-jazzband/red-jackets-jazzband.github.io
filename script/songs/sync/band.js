@@ -2,15 +2,14 @@ import { byId, clear, el, on } from "../../lib/core/dom.js";
 import { hashWithoutSync, syncCodeFromHash } from "../../lib/core/song-hash.js";
 import { tl } from "../../lib/core/i18n.js";
 import { createVaultEngine } from "../../lib/sync/engine.js";
-import {
-  MAX_BANDS, bandCodec, cleanName, connectedBands, defaultBandLabel, forgetBand, listBands, newBandId, readProfile, registerBand, renameBand, setDisplayName,
-} from "../../lib/sync/band-vault.js";
+import { MAX_BANDS, cleanName, connectedBands, defaultBandLabel, forgetBand, listBands, newBandId, readProfile, registerBand, renameBand, setDisplayName } from "../../lib/sync/band-store.js";
+import { bandCodec } from "../../lib/sync/band-vault.js";
 import { formatCode, parseCode } from "../../lib/sync/crypto.js";
 import { onLocalChange } from "../../lib/sync/changes.js";
 import { pairingUrl } from "../../lib/sync/qr.js";
 import { afterPageLoad } from "../core/after-load.js";
 import { fallbackCopy, flashShareBtn } from "../inspiration/share.js";
-import { clockTime, renderQr, statusText } from "./sync.js";
+import { clockTime, renderQr, statusText, updateStatusRow } from "./dialog-parts.js";
 
 /*
   Band spaces (docs/device-sync-plan.md, phase 2): optional vaults, each with
@@ -62,6 +61,7 @@ export function createBand(ctx) {
   const busy = new Set(); // ids with a sync or an action in flight
   const rerun = new Set(); // ids that were asked to sync while busy: once more when done
   let current = null; // the band id shown, or null while starting / joining another
+  let hadSpaces = false; // whether the last render had any space to show
   let draftResult = { status: "off" };
   let timer = null;
   let lastPull = 0;
@@ -210,12 +210,14 @@ export function createBand(ctx) {
 
   function render() {
     const list = joined();
+    hadSpaces = list.length > 0;
     if (current !== null && !list.some((band) => { return band.id === current; })) current = null;
     renderChips(list);
     const band = currentBand();
     renderBand(band);
     const status = byId("bandStatus");
     if (status) status.textContent = bandStatusText(resultFor(band ? band.id : null));
+    updateStatusRow("bandStatusRow", "bandStatus", "bandNow");
     renderFields(band);
   }
 
@@ -440,6 +442,20 @@ export function createBand(ctx) {
     listBands(storage()).filter((band) => { return !live.has(band.id); }).forEach((band) => { dropSpace(band.id); });
   }
 
+  // The personal sync changed which spaces this device is in (another device
+  // joined or left one, or renamed it): drop what belongs to a space that is
+  // gone, sync the new ones — which is their join — and redraw.
+  function refresh() {
+    const live = new Set(joined().map((band) => { return band.id; }));
+    Array.from(engines.keys()).filter((id) => { return !live.has(id); }).forEach((id) => { engines.delete(id); });
+    if (ctx.state.currentBandId && !live.has(ctx.state.currentBandId)) ctx.nav.leaveSetlist();
+    if ((current !== null && !live.has(current)) || (current === null && !hadSpaces)) showFirstLeft(); // the first space to arrive is shown
+    joined().filter((band) => { return !results.has(band.id) && !busy.has(band.id); }).forEach((band) => {
+      settle(run(band.id), band.id);
+    });
+    render(); // the caller (sync.js redraw) has redrawn the setlists and song forms
+  }
+
   function pullIfStale() {
     if (connected() && Date.now() - lastPull > PULL_GAP_MS) settle(runAll());
   }
@@ -447,6 +463,7 @@ export function createBand(ctx) {
   return {
     isConnected: connected,
     pullIfStale,
+    refresh,
 
     init() {
       retryOrphans();

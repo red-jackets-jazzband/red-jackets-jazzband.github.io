@@ -174,7 +174,7 @@ Une setlist personnelle peut être exportée avec le bouton `fa-file-arrow-down`
 
 # share: Partage
 ## devices: Vos setlists sur tous vos appareils
-Une setlist n'existe que dans ce navigateur. **Connecter des appareils** relie votre téléphone, votre tablette et votre ordinateur : les setlists et formes de morceaux modifiées sur l'un apparaissent sur les autres. C'est désactivé tant que vous ne l'activez pas, et l'export `.txt` reste votre sauvegarde.
+Une setlist n'existe que dans ce navigateur. **Connecter des appareils** relie votre téléphone, votre tablette et votre ordinateur : les setlists et formes de morceaux modifiées sur l'un apparaissent sur les autres. Les espaces partagés dont vous faites partie suivent aussi. C'est désactivé tant que vous ne l'activez pas, et l'export `.txt` reste votre sauvegarde.
 
 ## code: Un code les relie
 **Connecter cet appareil** crée un code (et un QR code à scanner). Scannez-le ou saisissez-le sur votre autre appareil sous **ou saisissez un code**. Tout est chiffré avant de quitter l'appareil, le serveur ne détient donc que des données brouillées.

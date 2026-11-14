@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mountPage } from "../../../../tests/helpers/dom.js";
 import { makeCtx, memoryStorage } from "../../../../tests/helpers/ctx.js";
 import { createPersonalSetlist, listPersonalSetlists } from "../../lib/setlists/setlists-store.js";
-import { bandSetlistStorage, listSharedSetlists, registerBand } from "../../lib/sync/band-vault.js";
+import { bandSetlistStorage, listSharedSetlists, registerBand } from "../../lib/sync/band-store.js";
 import { createSetlistModal } from "./modal.js";
 
 const REMIX_BUTTON = '.rj-modal-choice[data-choice="remix"]';

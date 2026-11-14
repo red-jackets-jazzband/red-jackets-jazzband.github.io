@@ -82,7 +82,7 @@
 
 
 
-<link rel="stylesheet" href="/css/split.min.27cf6cad0ac809a4b22cedbc16966d10dff7252ee7a65dfc31587c6ec2471965.css" type="text/css" media="screen,print" integrity="sha256-J89srQrICaSyLO28FpZtEN/3JS7npl38MVh8bsJHGWU=" />
+<link rel="stylesheet" href="/css/split.min.37ca1f853c65711df4ae1409c60f829c1f1eb247b75a816204dec26aa29674d6.css" type="text/css" media="screen,print" integrity="sha256-N8ofhTxlcR30rhQJxg&#43;CnB8eske3WoFiBN7CaqKWdNY=" />
 
 
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -151,7 +151,7 @@
 
 <script src="/script/abcjs_midi_6.7.1-min.js" type="text/javascript" defer></script>
 <script src="/script/tonal.4.6.9-min.js" type="text/javascript" defer></script>
-<script type="module" src="/script/songs-app.ab4fd5f8816b0bf18c5c7bd5d35a541495a86fb440070d33796de527227fb146.js" integrity="sha256-q0/V&#43;IFrC/GMXHvV01pUFJWob7RABw0zeW3lJyJ/sUY="></script>
+<script type="module" src="/script/songs-app.d4dc8c5403c2191aa9c2c355f2bc04279fd709ea12b26efb5760d50baf1b39ff.js" integrity="sha256-1NyMVAPCGRqpwsNV8rwEJ5/XCeoSsm77V2DVC68bOf8="></script>
 
 <div class="rj-songs-layout" data-default-tab="library">
 
@@ -405,7 +405,7 @@ Tiré de www.redjackets.nl - <span id="instrumentText"></span>
       <button type="button" id="syncTabBand" class="rj-sync-tab" aria-pressed="false">Partagé</button>
     </div>
     <div id="syncPanelDevices">
-    <p id="syncIntro" class="rj-install-note">Les mêmes setlists et versions de morceaux sur tous vos appareils. Chiffrées avant de quitter celui-ci.</p>
+    <p id="syncIntro" class="rj-install-note">Les mêmes setlists, versions de morceaux et espaces partagés sur tous vos appareils. Chiffrées avant de quitter celui-ci.</p>
     <div id="syncSetup" class="rj-sync-section">
       <button type="button" id="syncConnect" class="rj-modal-btn rj-modal-btn-primary rj-sync-wide">Connecter cet appareil</button>
       <div class="rj-sync-or"><label for="syncCodeInput">ou saisissez un code</label></div>
@@ -422,7 +422,7 @@ Tiré de www.redjackets.nl - <span id="instrumentText"></span>
       <p class="rj-install-note rj-sync-hint">Scannez le code QR ou saisissez le code sur votre autre appareil. Gardez-le privé : il ouvre vos setlists.</p>
     </div>
     
-    <div class="rj-sync-section rj-sync-statusrow rj-sync-band-status">
+    <div id="syncStatusRow" class="rj-sync-section rj-sync-statusrow rj-sync-band-status">
       <p id="syncStatus" class="rj-sync-status" role="status" aria-live="polite"></p> 
       <button type="button" id="syncNow" class="rj-modal-btn rj-modal-btn-primary" hidden>Synchroniser maintenant</button>
     </div>
@@ -435,7 +435,7 @@ Tiré de www.redjackets.nl - <span id="instrumentText"></span>
     </div>
     </div>
     <div id="syncPanelBand" class="rj-sync-band" hidden>
-      <p id="bandIntro" class="rj-install-note">Partagez des formes de morceau et des setlists avec vos camarades et voyez les leurs. Chiffrées avant de quitter cet appareil.</p>
+      <p id="bandIntro" class="rj-install-note">Partagez des formes de morceau et des setlists avec vos camarades et voyez les leurs. Chiffrées avant de quitter cet appareil. Vos autres appareils connectés les rejoignent aussi.</p>
       <div id="bandTabs" class="rj-band-chips" role="group" aria-label="Espaces partagés" hidden></div> 
       <div class="rj-sync-fields">
         <div class="rj-sync-field">
@@ -469,7 +469,7 @@ Tiré de www.redjackets.nl - <span id="instrumentText"></span>
         </div>
         <p class="rj-install-note rj-sync-hint">Scannez le QR code ou partagez le lien avec vos camarades. Gardez-le privé : il ouvre ce que le groupe partage.</p>
       </div>
-      <div class="rj-sync-statusrow rj-sync-band-status">
+      <div id="bandStatusRow" class="rj-sync-statusrow rj-sync-band-status">
         <p id="bandStatus" class="rj-sync-status" role="status" aria-live="polite"></p> 
         <button type="button" id="bandNow" class="rj-modal-btn rj-modal-btn-primary" hidden>Synchroniser maintenant</button>
       </div>

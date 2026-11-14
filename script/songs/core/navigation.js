@@ -1,7 +1,7 @@
 import { byId, qsa } from "../../lib/core/dom.js";
 import { parseSongsParams, buildSongsHash } from "../../lib/core/song-hash.js";
 import { getPersonalSetlist } from "../../lib/setlists/setlists-store.js";
-import { findSharedSetlistBand } from "../../lib/sync/band-vault.js";
+import { findSharedSetlistBand } from "../../lib/sync/band-store.js";
 import { tl } from "../../lib/core/i18n.js";
 
 // The header's language links go to this page in each language; give them

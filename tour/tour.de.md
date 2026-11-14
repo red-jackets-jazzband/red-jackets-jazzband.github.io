@@ -174,7 +174,7 @@ Eine eigene Setlist kannst du mit dem Button `fa-file-arrow-down` als **.txt**-D
 
 # share: Teilen
 ## devices: Setlists auf jedem Gerät
-Eine Setlist liegt nur in diesem Browser. **Geräte verbinden** verknüpft Handy, Tablet und Laptop, sodass Setlists und Songformen, die du auf einem änderst, auf den anderen erscheinen. Es ist aus, bis du es einschaltest, und der `.txt`-Export bleibt deine Sicherung.
+Eine Setlist liegt nur in diesem Browser. **Geräte verbinden** verknüpft Handy, Tablet und Laptop, sodass Setlists und Songformen, die du auf einem änderst, auf den anderen erscheinen. Die geteilten Räume, in denen du bist, kommen mit. Es ist aus, bis du es einschaltest, und der `.txt`-Export bleibt deine Sicherung.
 
 ## code: Ein Code verbindet sie
 **Dieses Gerät verbinden** erzeugt einen Code (und einen QR-Code zum Scannen). Scanne oder tippe ihn auf deinem anderen Gerät unter **oder Code eingeben**. Alles wird verschlüsselt, bevor es das Gerät verlässt, der Server speichert also nur verschlüsselte Daten.

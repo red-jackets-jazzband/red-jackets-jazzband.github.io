@@ -2,10 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createVaultEngine } from "./engine.js";
 import { fakeServer, makeStorage } from "../../../../tests/helpers/sync-server.js";
-import {
-  bandCodec, connectedBands, forgetBand, isShared, listBands, mergeBandDocs, readProfile, registerBand, renameBand, setDisplayName, setShared,
-  unshareEverywhere, validateBandDoc, versionsOf, emptyBandDoc, cleanName, bandSetlistStorage, listSharedSetlists, findSharedSetlistBand,
-} from "./band-vault.js";
+import { connectedBands, forgetBand, isShared, listBands, readProfile, registerBand, renameBand, setDisplayName, setShared, unshareEverywhere, cleanName, bandSetlistStorage, listSharedSetlists, findSharedSetlistBand } from "./band-store.js";
+import { bandCodec, mergeBandDocs, validateBandDoc, versionsOf, emptyBandDoc } from "./band-vault.js";
 import {
   addSongToPersonalSetlist, createPersonalSetlist, deletePersonalSetlist, listPersonalSetlists, removeSongFromPersonalSetlist,
   renamePersonalSetlist,

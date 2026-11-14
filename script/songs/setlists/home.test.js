@@ -4,7 +4,7 @@ import { mountPage } from "../../../../tests/helpers/dom.js";
 import { makeCtx, memoryStorage } from "../../../../tests/helpers/ctx.js";
 import { createPersonalSetlist, addSongToPersonalSetlist, listPersonalSetlists } from "../../lib/setlists/setlists-store.js";
 import { createSetlistHome } from "./home.js";
-import { bandSetlistStorage, registerBand } from "../../lib/sync/band-vault.js";
+import { bandSetlistStorage, registerBand } from "../../lib/sync/band-store.js";
 
 function setup() {
   const page = mountPage();

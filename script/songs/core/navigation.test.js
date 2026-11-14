@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mountPage } from "../../../../tests/helpers/dom.js";
 import { makeCtx, memoryStorage } from "../../../../tests/helpers/ctx.js";
-import { bandSetlistStorage } from "../../lib/sync/band-vault.js";
+import { bandSetlistStorage } from "../../lib/sync/band-store.js";
 import { createPersonalSetlist } from "../../lib/setlists/setlists-store.js";
 import { createNavigation } from "./navigation.js";
 

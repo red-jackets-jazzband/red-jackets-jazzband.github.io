@@ -3,8 +3,9 @@
    documents in, one out; the result doesn't depend on which is "local".
 
    Document: { format, device, setlists: [{ id, name, desc, metaAt, orderAt,
-   updatedAt, songs: [row] }], forms: [{ file, raw, at }], tomb: { setlists,
-   rows, forms } }. A row is { id, updatedAt, file | divider, key?, note? }.
+   updatedAt, songs: [row] }], forms: [{ file, raw, at }], spaces: [{ code,
+   label, labelAt, name, author, at, shared, sharedAt, addedAt }], tomb:
+   { setlists, rows, forms, spaces } }. A row is { id, updatedAt, file | divider, key?, note? }.
 
    Rules: setlist name/desc and each song form — newest stamp wins, tie to
    the larger device id. Rows merge by id: rows only one side has are kept
@@ -12,6 +13,9 @@
    newest-wins; the order comes from the side whose `orderAt` is newer, with
    rows only the other side has placed after the row they followed there.
    A tombstone at least as new as an item deletes it; a newer edit beats it.
+   Shared spaces merge by code, each of label / profile (name + author id) /
+   shared song files as a group by its own stamp; only `addedAt` (not a
+   rename) beats a tombstone, so leaving a space on one device sticks.
 */
 import { pruneTombstones, rowTombstoneKey } from "./clock.js";
 
@@ -39,6 +43,7 @@ function mergeTombs(a, b) {
     setlists: maxTomb(a.setlists, b.setlists),
     rows: maxTomb(a.rows, b.rows),
     forms: maxTomb(a.forms, b.forms),
+    spaces: maxTomb(a.spaces || {}, b.spaces || {}),
   };
 }
 
@@ -134,6 +139,43 @@ function mergeForms(a, b, ctx) {
   }).filter(Boolean).sort((x, y) => { return x.file.localeCompare(y.file); });
 }
 
+// One field group of a shared space (label, profile, shared set) follows its
+// own stamp: the side with the newer one supplies all of the group.
+function pickGroup(sa, sb, ctx, stampKey) {
+  return firstWins(sa[stampKey], ctx.devA, sb[stampKey], ctx.devB) ? sa : sb;
+}
+
+function mergeSpace(sa, sb, ctx) {
+  if (!sa || !sb) return sa || sb;
+  const label = pickGroup(sa, sb, ctx, "labelAt");
+  const profile = pickGroup(sa, sb, ctx, "at");
+  const shared = pickGroup(sa, sb, ctx, "sharedAt");
+  return {
+    ...sb,
+    ...sa,
+    code: sa.code,
+    label: label.label,
+    labelAt: Math.max(sa.labelAt, sb.labelAt),
+    name: profile.name,
+    author: profile.author,
+    at: Math.max(sa.at, sb.at),
+    shared: shared.shared,
+    sharedAt: Math.max(sa.sharedAt, sb.sharedAt),
+    addedAt: Math.max(sa.addedAt, sb.addedAt),
+  };
+}
+
+// Shared spaces by code; a tombstone at least as new as `addedAt` removes one
+// (leaving beats a later rename; joining again is a newer `addedAt`).
+function mergeSpaces(a, b, ctx) {
+  const mapA = byId(a.spaces || [], "code");
+  const mapB = byId(b.spaces || [], "code");
+  return Object.keys({ ...mapA, ...mapB }).map((code) => {
+    const space = mergeSpace(mapA[code], mapB[code], ctx);
+    return isDeleted(ctx.tomb.spaces, code, space.addedAt) ? null : space;
+  }).filter(Boolean).sort((x, y) => { return x.code.localeCompare(y.code); });
+}
+
 // `now` only decides which old tombstones are dropped.
 export function mergeDocs(a, b, now) {
   const tomb = pruneTombstones(mergeTombs(a.tomb, b.tomb), now === undefined ? Date.now() : now);
@@ -145,6 +187,7 @@ export function mergeDocs(a, b, now) {
     device: a.device,
     setlists: mergeSetlists(a, b, ctx),
     forms: mergeForms(a, b, ctx),
+    spaces: mergeSpaces(a, b, ctx),
     tomb,
   };
 }
