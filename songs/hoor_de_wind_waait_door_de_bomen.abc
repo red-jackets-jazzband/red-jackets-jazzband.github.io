@@ -5,14 +5,21 @@ N:The A7 in brackets on the sheet is optional.
 M:3/4
 L:1/8
 Q:1/4=150
-K:F
-C3/2 C/2 ||"F"A2 F2 (3CFA | c2 A2 G3/2 A/2 | "Gm"B2 G2 "C7"D3/2 E/2 | "F"F4 C3/2 C/2 |
-w:Hoor de wind waait door de bo-men, hier in huis zelfs waait de _ wind. Zou de
-"F"A2 F2 (3CFA | c2 A2 G3/2 A/2 | "Gm"B2 d2 "C7"c3/2 B/2 | "F"A4 G3/2 A/2 |
+K:Eb
+P:A
+B,3/2 B,/2 || "Eb"G2 E2 (3B,EG | B2 G2 F3/2 G/2 | "Fm"A2 F2 "Bb7"C3/2 D/2 | "Eb"E4 B,3/2 B,/2 |
+w:Hoor de | wind waait door de bo-men, hier in huis zelfs waait de _ wind. Zou de
+"Eb"G2 E2 (3B,EG | B2 G2 F3/2 G/2 | "Fm"A2 c2 "Bb7"B3/2 A/2 | "Eb"G4 F3/2 G/2 |
 w:goe-de Sint wel ko-men, nu hij't _ weer zo le-lijk vindt? Als hij't
-"Gm"B2 G2 "C7"D3/2 E/2 | "F"F4 A3/2 A/2 | "Dm"A3 A "A7"A3/2 A/2 | "Dm"d2 A2 A3/2 G/2 |
-w:weer zo le-lijk vindt? Ja, hij komt in donk'-re nach-ten op zijn
-"Dm"F3 A "G7"G3/2 c/2 | "C7"c4 C3/2 C/2 | "F"A2 F2 (3CFA | c2 A2 G3/2 A/2 |
-w:paard-je, o zo snel. Als hij wist hoe we hem ver-wach-ten, ja, dan
-"Gm"B2 d2 "C7"c3/2 B/2 | "F"A4 G3/2 A/2 | "Gm"B2 G2 "C7"D3/2 E/2 | "F"F4 |]
+"Fm"A2 F2 "Bb7"C3/2 D/2 | "Eb"E4 G3/2 G/2 ||
+w:weer zo le-lijk vindt? Ja, hij
+P:B
+"Cm"G3 G "G7"G3/2 G/2 | "Cm"c2 G2 G3/2 F/2 |
+w:komt in donk'-re nach-ten op zijn
+"Cm"E3 G "F7"F3/2 B/2 | "Bb7"B4 B,3/2 B,/2 ||
+w:paard-je, o zo snel. Als hij
+P:C
+"Eb"G2 E2 (3B,EG | B2 G2 F3/2 G/2 |
+w:wist hoe we hem ver-wach-ten, ja, dan
+"Fm"A2 c2 "Bb7"B3/2 A/2 | "Eb"G4 F3/2 G/2 | "Fm"A2 F2 "Bb7"C3/2 D/2 | "Eb"E6 |]
 w:kwam hij ze-ker wel. Ja, dan kwam hij ze-ker wel.

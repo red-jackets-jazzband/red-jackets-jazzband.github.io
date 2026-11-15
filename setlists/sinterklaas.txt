@@ -1,24 +1,24 @@
 # Sinterklaas
 
-- [Sinterklaasje kom maar binnen](/songs/sinterklaasje_kom_maar_binnen.abc?key=Eb)
-- [Zie ginds komt de stoomboot](/songs/zie_ginds_komt_de_stoomboot.abc?key=G)
+- [Sinterklaasje kom maar binnen](/songs/sinterklaasje_kom_maar_binnen.abc)
+- [Zie ginds komt de stoomboot](/songs/zie_ginds_komt_de_stoomboot.abc)
   > swing / latin
-- [De zak van Sinterklaas](/songs/de_zak_van_sinterklaas.abc?key=Bb)
+- [De zak van Sinterklaas](/songs/de_zak_van_sinterklaas.abc)
   > "zakkeee": vertraging
-- [O kom er eens kijken](/songs/o_kom_er_eens_kijken.abc?key=Eb)
-- [Dag Sinterklaasje](/songs/dag_sinterklaasje.abc?key=Eb)
+- [O kom er eens kijken](/songs/o_kom_er_eens_kijken.abc)
+- [Dag Sinterklaasje](/songs/dag_sinterklaasje.abc)
   > 2e keer
-- [Wie komt er alle jaren](/songs/wie_komt_er_alle_jaren.abc?key=Bb)
+- [Wie komt er alle jaren](/songs/wie_komt_er_alle_jaren.abc)
   > Intro: Tequila (in C), afsluiting: pe-per-noot
-- [Sinterklaas wie kent hem niet](/songs/sinterklaas_wie_kent_hem_niet.abc?key=Bb)
-- [Sinterklaas kapoentje](/songs/sinterklaas_kapoentje.abc?key=Eb)
+- [Sinterklaas wie kent hem niet](/songs/sinterklaas_wie_kent_hem_niet.abc)
+- [Sinterklaas kapoentje](/songs/sinterklaas_kapoentje.abc)
   > swing
-- [Sinterklaas, die goeie heer](/songs/sinterklaas_die_goeie_heer.abc?key=F)
-- [Zie de maan schijnt door de bomen](/songs/zie_de_maan_schijnt_door_de_bomen.abc?key=Bb)
+- [Sinterklaas, die goeie heer](/songs/sinterklaas_die_goeie_heer.abc)
+- [Zie de maan schijnt door de bomen](/songs/zie_de_maan_schijnt_door_de_bomen.abc)
   > Intro: zang op de melodie van Happy Birthday, dan latin ritme (Rico), dan Zie de maan…
-- [Hoor de wind waait door de bomen](/songs/hoor_de_wind_waait_door_de_bomen.abc?key=Eb)
+- [Hoor de wind waait door de bomen](/songs/hoor_de_wind_waait_door_de_bomen.abc)
   > 2e deel swing
-- [Daar wordt aan de deur geklopt](/songs/daar_wordt_aan_de_deur_geklopt.abc?key=G)
+- [Daar wordt aan de deur geklopt](/songs/daar_wordt_aan_de_deur_geklopt.abc)
   > wals / latin
 - [Zie ginds komt de stoomboot (Blueberry Hill)](/songs/zie_ginds_komt_de_stoomboot.abc?key=C)
   > Blueberry Hill

@@ -1,27 +1,23 @@
 X:1
 T:Zie de maan schijnt door de bomen
 C:Traditional
-M:3/4
+M:4/4
 L:1/8
 Q:1/4=150
-K:F
-CC ||
-w:Zie de
-w:O wat
-w:Maar ik
-"F"F2 F2 FG |[M:2/4] A2 F2 |[M:3/4] "C7"GG GG AG | "F"F4 CC |
-w:maan schijnt door de bo-men Mak-kers staakt uw wild ge-raas. 't~Heer-lijk
-w:pret zal 't~zijn te spe-len Met die bon-te har-le-kijn. Eer-lijk
-w:vrees ni~et dat wij kla-gen; Va-der, Moe-der zijn te goed! Was het
-"F"F2 F2 FG |[M:2/4] A2 F2 |[M:3/4] "C7"GG GG AG | "F"F4 FF |
+K:Bb
+FF ||"Bb"B3 B3 Bc |d3 B3 z2 | "F7" z c2c cc dc | "Bb"B2 z2 z2 FF |
+w:Zie de maan schijnt door de bo-men Mak-kers staakt uw wild ge-raas. 't~Heer-lijk
+w:O wat pret zal 't~zijn te spe-len Met die bon-te har-le-kijn. Eer-lijk
+w:Maar ik vrees ni~et dat wij kla-gen; Va-der, Moe-der zijn te goed! Was het
+"Bb"B3 B3 Bc |d3 B3 z2 | "F7" z c2 c cc dc | "Bb"B2 z2 z2 BB |
 w:a-vond j'~is ge-ko-men 't~a-vond-je van Sin-terk-laas. Vol ver-
 w:zul-len w'~a-lles de-len sui-ker-goed en mar-se-pein maar, o
 w:ook ni~et al-le da-gen, mees-tal wa-ren wij toch zoet. Ban dus
-"Bb"B2 B2 AG | "F"A4 AA | "C7"G2 c2 AG |[M:2/4] "F"F4 |
-w:wach-ting klopt ons hart Wie de ko~ek krijgt, wie de gard
-w:wee, o bit-t're smart kre-gen wij voor koek een gard.
-w:vrij de vrees uit 't~hart; 'k~Wed-er ligt geen en-k'le gard.
-[M:3/4] "F"FF FF FG | A4 AA | "C7"G2 F2 EE | "F"F6 |]
-w:Vol ver-wach-ting klopt ons hart Wie de ko~ek krijgt, wie de gard.
-w:Maar, o wee, wat bit-t're smart kre-gen wij voor koek een gard!
-w:Ban dus vrij de vrees uit 't~hart; 'k~Wed-er ligt geen en-k'le gard!
+"Eb"e3 e3 dc |"Bb"d3 z z2 dd | "F7"c3 f3 dc | "Bb"B2 z2 z2 BB |
+w:wach-ting klopt ons hart Wie de ko~ek krijgt, wie de gard Vol ver-
+w:wee, o bit-t're smart kre-gen wij voor koek een gard. Maar, o
+w:vrij de vrees uit 't~hart; 'k~Wed-er ligt geen en-k'le gard. Ban dus
+"Bb"B3B3 Bc  | d3 z z2 dd | "F7"c3B3 AA | "Bb"B2 z6 |]
+w: wach-ting klopt ons hart Wie de ko~ek krijgt, wie de gard.
+w: wee, wat bit-t're smart kre-gen wij voor koek een gard!
+w: vrij de vrees uit 't~hart; 'k~Wed-er ligt geen en-k'le gard!
