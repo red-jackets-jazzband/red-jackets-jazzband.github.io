@@ -24,3 +24,6 @@
 - [Silver Bells](/songs/silver_bells.abc?key=F)
 - [Deck the Halls](/songs/deck_the_halls.abc?key=F)
 - [We Wish You a Merry Christmas](/songs/we_wish_you_a_merry_christmas.abc?key=Bb)
+- [Christmas in New Orleans](/songs/christmas_in_new_orleans.abc)
+- [Blue Christmas](/songs/blue_christmas.abc)
+- [I'll Be Home for Christmas](/songs/ill_be_home_for_christmas.abc)
