@@ -19,6 +19,7 @@ Big Chief,big_chief.abc
 Bill Bailey,bill_bailey.abc
 Blue Heaven,my_blue_heaven.abc
 Blue and Lonesome,im_blue_and_lonesome.abc
+Blueberry Hill,blueberry_hill.abc
 Bogalusa Strut,bogalusa_strut.abc
 Bourbon Street Parade,bourbon_street_parade.abc
 Bucket's gotta hole,buckets_got_a_hole.abc
