@@ -48,6 +48,37 @@ test("filterSongsByQuery is a case-insensitive substring match, empty query retu
   assert.deepEqual(filterSongsByQuery(songs, "xyz"), []);
 });
 
+test("filterSongsByQuery forgives typos, word order, punctuation and accents, best matches first", () => {
+  const songs = [
+    { name: "Basin Street Blues", file: "basin_street.abc" },
+    { name: "Ain't my fault", file: "aint_my_fault.abc" },
+    { name: "Café Blues", file: "cafe.abc" },
+    { name: "Blue Moon", file: "blue_moon.abc" },
+  ];
+  assert.deepEqual(filterSongsByQuery(songs, "basn"), [songs[0]]);
+  assert.deepEqual(filterSongsByQuery(songs, "bsain street"), [songs[0]]);
+  assert.deepEqual(filterSongsByQuery(songs, "street basin"), [songs[0]]);
+  assert.deepEqual(filterSongsByQuery(songs, "aint my"), [songs[1]]);
+  assert.deepEqual(filterSongsByQuery(songs, "cafe"), [songs[2]]);
+  assert.deepEqual(filterSongsByQuery(songs, "blue"), [songs[2], songs[3], songs[0]].sort((a, b) => songs.indexOf(a) - songs.indexOf(b)));
+  assert.deepEqual(filterSongsByQuery(songs, "blus moon"), [songs[3]]);
+  assert.deepEqual(filterSongsByQuery(songs, "xyz"), []);
+});
+
+test("filterSongsByQuery keeps an apostrophe word whole and matches nothing for an unsearchable query", () => {
+  const songs = [
+    { name: "It's Wonderful", file: "its_wonderful.abc" },
+    { name: "All of me", file: "all_of_me.abc" },
+  ];
+  assert.deepEqual(filterSongsByQuery(songs, "its wonderful"), [songs[0]]);
+  assert.deepEqual(filterSongsByQuery(songs, "wonderful its"), [songs[0]]);
+  assert.deepEqual(filterSongsByQuery(songs, "wonderful it\u2019s"), [songs[0]]);
+  assert.deepEqual(filterSongsByQuery(songs, "東京"), []);
+  assert.deepEqual(filterSongsByQuery(songs, "!!!"), []);
+  assert.deepEqual(filterSongsByQuery(songs, "   "), songs);
+  assert.deepEqual(filterSongsByQuery(songs, undefined), songs);
+});
+
 test("songTitleSlug returns the .abc basename", () => {
   assert.equal(songTitleSlug({ file: "auld_lang_syne.abc" }), "auld_lang_syne");
   assert.equal(songTitleSlug({ file: "" }), "");
