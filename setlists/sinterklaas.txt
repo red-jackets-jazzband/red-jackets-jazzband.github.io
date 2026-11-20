@@ -1,7 +1,7 @@
 # Sinterklaas
 
 - [Sinterklaasje kom maar binnen](/songs/sinterklaasje_kom_maar_binnen.abc)
-- [Zie ginds komt de stoomboot](/songs/zie_ginds_komt_de_stoomboot.abc)
+- [Zie ginds komt de stoomboot](/songs/zie_ginds_komt_de_stoomboot.abc?key=F)
   > swing / latin
 - [De zak van Sinterklaas](/songs/de_zak_van_sinterklaas.abc)
   > "zakkeee": vertraging
@@ -20,5 +20,4 @@
   > 2e deel swing
 - [Daar wordt aan de deur geklopt](/songs/daar_wordt_aan_de_deur_geklopt.abc)
   > wals / latin
-- [Zie ginds komt de stoomboot (Blueberry Hill)](/songs/zie_ginds_komt_de_stoomboot.abc?key=C)
-  > Blueberry Hill
+- [Blueberry Hill](/songs/blueberry_hill.abc)
