@@ -1,0 +1,29 @@
+X:1
+T:Blues scales
+M:4/4
+L:1/4
+N:The blues scale (1 b3 4 b5 5 b7) from every root, up and back down.
+K:Bb
+"Bb"B,_DE=E|F_AF=E|E_DB,z||
+K:B
+"B"B,=D E=F|F=AF=F|E=DB,z||
+K:C
+"C"C_EF^F|G_BG_G|F_ECz||
+K:Db
+"Db"D_FG__A|A_cA__A|G_FDz||
+K:D
+"D"D=FG_A|A=cA_A|G=FDz||
+K:Eb
+"Eb"E_GA=A|B_dB=A|A_GEz||
+K:E
+"E"E=GA_B|B=dB_B|A=GEz||
+K:F
+"F"F_AB=B|c_ec=B|B_AFz||
+K:F#
+"F#"F=AB=c|c=ec=c|B=AFz||
+K:G
+"G"G_Bc_d|d=fd_d|c_BGz||
+K:Ab
+"Ab"A,_CD=D|E_GE=D|D_CA,z||
+K:A
+"A"A=cd_e|e=ge_e|d=cAz|]
