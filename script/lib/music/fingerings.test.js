@@ -90,7 +90,7 @@ test("no fingerings for a non-brass instrument", () => {
 });
 
 test("valves print as a three-line diagram, trombone positions stay digits", () => {
-  assert.equal(fingeringGlyphs("trumpet", "13"), "1\\n\u00B7\\n3");
+  assert.equal(fingeringGlyphs("trumpet", "13"), "3\\n\u00B7\\n1");
   assert.equal(fingeringGlyphs("sousaphone", "0"), "\u00B7\\n0\\n\u00B7");
   assert.equal(fingeringGlyphs("trombone", "12"), "12");
 });

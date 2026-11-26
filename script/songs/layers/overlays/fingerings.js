@@ -13,7 +13,7 @@ const VALVE_DIGITS = { 0: "0", 1: "1", 2: "2", 3: "3" };
 
 /*
   One slot of the valve diagram (the annotation lines lib/music/fingerings.js
-  writes, top valve first) drawn as a shape rather than the font's glyph,
+  writes, valve 3 first, valve 1 at the bottom) drawn as a shape rather than the font's glyph,
   which is thin and tiny at annotation size: a pressed valve is a solid
   disc with a bold white number, an open horn a ring with a 0, a valve left
   up a small grey dot. The annotation text stays in place (invisible, via
@@ -44,7 +44,7 @@ function drawValveSlot(text, glyph, centre, box) {
   text.classList.add("rj-layer-fingering--drawn");
 }
 
-// Which line of its note's fingering a text is (a valve diagram's top valve is 0).
+// Which line of its note's fingering a text is (a valve diagram's top line, valve 3, is 0).
 function fingeringSlot(text) {
   const group = text.parentNode;
   return group ? [...group.querySelectorAll(".rj-layer-fingering")].indexOf(text) : 0;

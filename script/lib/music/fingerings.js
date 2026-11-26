@@ -68,8 +68,8 @@ export function fingeringFor(instrument, midi) {
   return instrumentHasFingerings(instrument) ? FINGERING_CHARTS[instrument](midi) : null;
 }
 
-// A valve combination as the three lines of a little valve diagram, top
-// valve first: the pressed valves' numbers (set as filled discs by
+// A valve combination as the three lines of a little valve diagram, third
+// valve first (valve 1 at the bottom, the way a player sees the horn): the pressed valves' numbers (set as filled discs by
 // songs/layers/overlays.js), a "·" for each valve left up, and ⓪ in the
 // middle when nothing is pressed. Printed one column wide so neighbouring
 // notes never run into each other. Trombone positions stay a plain digit.
@@ -86,7 +86,7 @@ export function usesValveDiagram(instrument) {
 export function fingeringGlyphs(instrument, text) {
   if (!usesValveDiagram(instrument)) return text;
   if (text === "0") return [VALVE_UP, VALVE_OPEN, VALVE_UP].join(ABC_NEWLINE);
-  return [1, 2, 3].map((valve) => (text.includes(String(valve)) ? String(valve) : VALVE_UP)).join(ABC_NEWLINE);
+  return [3, 2, 1].map((valve) => (text.includes(String(valve)) ? String(valve) : VALVE_UP)).join(ABC_NEWLINE);
 }
 
 /*
