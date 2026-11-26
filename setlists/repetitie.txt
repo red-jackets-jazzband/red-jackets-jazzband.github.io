@@ -1,11 +1,11 @@
 # Repetitie
 
 ## Opwarmen
-- [Just a little while](/songs/just_a_little_while.abc)
 - [Lilly of the Valley](/songs/lilly_of_the_valley.abc)
+- [When you're Smiling](/songs/when_youre_smiling.abc)
 
 ## Instuderen
 - [Gotta woman](/songs/gotta_woman.abc)
-- [Bellamina](/songs/bellamina.abc)
-- [Go down to New Orleans](/songs/go_down_to_new_orleans.abc)
 - [Dippermouth Blues](/songs/dippermouth_blues.abc)
+- [Bellamina](/songs/bellamina.abc)
+- [Isle of Capri](/songs/isle_of_capri.abc)
